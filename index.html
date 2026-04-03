@@ -1281,6 +1281,65 @@
 
 <!-- ════════ SCRIPT ════════ -->
 <script src="assets/script.js"></script>
+<!-- =============================================== -->
+<!-- MODAL: GONIÓMETRO DIGITAL (Movilidad Articular) -->
+<!-- =============================================== -->
+<div class="modal" id="modal-goniometro">
+  <div class="modal-sheet" style="max-width: 500px;">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="goniometro-title">📐 Goniómetro Digital</div>
+    <div class="modal-sub" id="goniometro-sub">Movilidad de tobillo · Dorsiflexión</div>
 
+    <!-- Área del goniómetro -->
+    <div style="background: var(--bg3); border-radius: var(--r2); padding: 20px; margin-bottom: 20px; text-align: center;">
+      <!-- Círculo graduado -->
+      <div style="position: relative; width: 250px; height: 250px; margin: 0 auto;">
+        <canvas id="goniometro-canvas" width="250" height="250" style="width: 100%; height: auto; background: var(--bg4); border-radius: 50%; box-shadow: 0 0 30px rgba(57,255,122,.1);"></canvas>
+        <!-- Flecha indicadora -->
+        <div id="goniometro-flecha" style="position: absolute; top: 50%; left: 50%; width: 4px; height: 100px; background: var(--neon); transform-origin: 50% 0%; transform: translateX(-50%) rotate(0deg); border-radius: 2px; box-shadow: 0 0 10px var(--neon);">
+          <div style="position: absolute; bottom: -8px; left: -6px; width: 16px; height: 16px; background: var(--neon); border-radius: 50%;"></div>
+        </div>
+      </div>
+
+      <!-- Ángulo en tiempo real -->
+      <div style="margin-top: 16px;">
+        <div style="font-family: var(--mono); font-size: 48px; font-weight: 800; color: var(--neon);" id="goniometro-angulo">0.0</div>
+        <div style="font-size: 11px; color: var(--text3);">° (grados)</div>
+      </div>
+
+      <!-- Estado del sensor -->
+      <div style="margin-top: 12px; padding: 6px 12px; background: var(--bg4); border-radius: 20px; display: inline-block;">
+        <span id="goniometro-estado" style="font-size: 10px; font-family: var(--mono);">🟢 Sensor activo</span>
+      </div>
+    </div>
+
+    <!-- Botones -->
+    <div class="flex" style="gap: 12px; margin-bottom: 20px;">
+      <button class="btn btn-neon btn-full" id="btn-congelar" style="flex: 2;">🔒 Congelar ángulo</button>
+      <button class="btn btn-outline btn-full" id="btn-reiniciar" style="flex: 1;">🔄</button>
+    </div>
+
+    <!-- Lectura actual (congelada o no) -->
+    <div class="card" style="margin-bottom: 20px;">
+      <div class="card-header"><h3>📊 Lectura actual</h3></div>
+      <div class="card-body">
+        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+          <span style="font-size: 14px; color: var(--text2);">Ángulo:</span>
+          <span id="lectura-actual" style="font-family: var(--mono); font-size: 32px; font-weight: 800; color: var(--neon);">0.0°</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+          <span style="font-size: 11px; color: var(--text2);">Estado:</span>
+          <span id="lectura-estado" style="font-size: 11px; font-family: var(--mono);">🔓 En vivo</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botones de confirmación -->
+    <div class="grid-2" style="gap: 12px;">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('modal-goniometro')">Cancelar</button>
+      <button class="btn btn-neon btn-full" id="btn-confirmar-goniometro">✓ Confirmar y Guardar</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
