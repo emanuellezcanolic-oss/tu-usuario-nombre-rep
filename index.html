@@ -604,9 +604,39 @@
         <button class="btn btn-neon btn-sm" onclick="saveMov()">💾 Guardar</button>
       </div>
     </div>
-    <div class="grid-2 mb-16" style="gap:16px">
-      <div class="card"><div class="card-header"><h3>Radar movilidad</h3></div><div class="card-body"><canvas id="mov-radar" height="220"></canvas></div></div>
-      <div id="mov-semaforos"></div>
+    <div class="mb-16" id="mov-semaforos-wrap">
+      <div id="mov-semaforos" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px"></div>
+    </div>
+
+    <!-- Tests funcionales adulto mayor -->
+    <div id="adulto-mayor-tests" class="hidden mb-16">
+      <div class="card">
+        <div class="card-header"><h3>🧓 Tests funcionales — Adulto Mayor</h3><span class="tag tag-y">Salud funcional</span></div>
+        <div class="card-body">
+          <div class="grid-2" style="gap:12px">
+            <div class="ig">
+              <label class="il">Sit-to-Stand 30s (reps)</label>
+              <input class="inp inp-mono" type="number" id="sts-reps" placeholder="12" oninput="saveFuncTests()">
+              <div style="font-size:10px;color:var(--text3);margin-top:3px">Ref: ≥12 reps = normal</div>
+            </div>
+            <div class="ig">
+              <label class="il">Apoyo Unipodal (seg)</label>
+              <input class="inp inp-mono" type="number" id="unipodal-seg" placeholder="20" oninput="saveFuncTests()">
+              <div style="font-size:10px;color:var(--text3);margin-top:3px">Ref: ≥30s = normal</div>
+            </div>
+            <div class="ig">
+              <label class="il">TUG — Timed Up and Go (seg)</label>
+              <input class="inp inp-mono" type="number" step=".1" id="tug-seg" placeholder="10.5" oninput="saveFuncTests()">
+              <div style="font-size:10px;color:var(--text3);margin-top:3px">Ref: &lt;10s = normal · &lt;12s = límite · &gt;12s = riesgo caída</div>
+            </div>
+            <div class="ig">
+              <label class="il">6MWT — Caminata 6 min (metros)</label>
+              <input class="inp inp-mono" type="number" id="dist6min-m" placeholder="450" oninput="saveFuncTests()">
+              <div style="font-size:10px;color:var(--text3);margin-top:3px">Ref: &gt;500m = bueno · &gt;400m = aceptable</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="grid-2" style="gap:12px">
       <div class="card">
