@@ -1073,6 +1073,17 @@ function saveSaltos() {
 // ══════════════════════════════════════════════════════
 
 function onMov() {
+  const tromCadDElem = document.getElementById('trom-cad-d');
+  if (tromCadDElem) tromCadDElem.textContent = tromCadD || '—';
+  
+  const tromCadIElem = document.getElementById('trom-cad-i');
+  if (tromCadIElem) tromCadIElem.textContent = tromCadI || '—';
+  
+  const tromHomDElem = document.getElementById('trom-hom-d');
+  if (tromHomDElem) tromHomDElem.textContent = (riHD + reHD) || '—';
+  
+  const tromHomIElem = document.getElementById('trom-hom-i');
+  if (tromHomIElem) tromHomIElem.textContent = (riHI + reHI) || '—';
   const ld=+document.getElementById('lunge-d')?.value||0, li=+document.getElementById('lunge-i')?.value||0;
   const riD=+document.getElementById('cad-ri-d')?.value||0, reD=+document.getElementById('cad-re-d')?.value||0;
   const riI=+document.getElementById('cad-ri-i')?.value||0, reI=+document.getElementById('cad-re-i')?.value||0;
