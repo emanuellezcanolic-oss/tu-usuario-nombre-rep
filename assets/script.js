@@ -568,23 +568,13 @@ function renderRadar() {
     // ── ADULTO MAYOR: salud funcional ──
     const equilibrioS = s.unipodal ? Math.min(100, s.unipodal/30*100) : 0; // seg apoyo unipodal — ref 30s
     const stsS        = s.sitToStand ? Math.min(100, s.sitToStand/15*100) : 0; // reps en 30s — ref 15 reps
-    labels  = ['Fuerza
-(Sit-to-Stand)', 'Velocidad
-(TUG)', 'Movilidad
-(Tobillo/Cadera)', 'Resistencia
-(6MWT)', 'Equilibrio
-(Unipodal)'];
+    labels  = ['Fuerza\n(Sit-to-Stand)', 'Velocidad\n(TUG)', 'Movilidad\n(Tobillo/Cadera)', 'Resistencia\n(6MWT)', 'Equilibrio\n(Unipodal)'];
     actual  = [stsS, velS, movilS, resS, equilibrioS];
     ideal   = [75, 75, 75, 75, 75];
     targets = ['fuerza','velocidad','movilidad','fatiga','fms'];
   } else {
     // ── DEPORTISTA: rendimiento ──
-    labels  = ['Fuerza
-(F-V rel.)', 'Velocidad
-(Sprint)', 'Movilidad
-(Tobillo/Cad/Hom)', 'Resistencia
-(HRV)', 'Potencia
-(CMJ)'];
+    labels  = ['Fuerza\n(F-V rel.)', 'Velocidad\n(Sprint)', 'Movilidad\n(Tobillo/Cad/Hom)', 'Resistencia\n(HRV)', 'Potencia\n(CMJ)'];
     const cmjS = s.lastCMJ ? Math.min(100, s.lastCMJ/60*100) : 0;
     actual  = [fuerzaS, velS, movilS, resS, cmjS];
     ideal   = [80, 80, 75, 70, 80];
@@ -613,7 +603,7 @@ function renderRadar() {
       onClick:(e, els) => {
         if (els.length && targets) {
           const t = targets[els[0].index];
-          if (t) { const btn = document.querySelector('[onclick*="showProfileTab('' + t + ''"]'); showProfileTab(t, btn); }
+          if (t) { const btn = document.querySelector('[onclick*="showProfileTab(\''+t+'\')"]'); showProfileTab(t, btn); }
         }
       }
     }
