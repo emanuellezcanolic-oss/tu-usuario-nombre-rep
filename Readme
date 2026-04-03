@@ -1,0 +1,38 @@
+# MoveMetrics v12 — Plataforma Deportivo-Clínica
+
+App web de evaluación kinesiológica y rendimiento deportivo.
+Desarrollada por Lic. Emanuel Lezcano — MOVE Centro de Evaluación.
+
+## Estructura
+```
+movemetrics/
+├── index.html          ← abrir este en el navegador
+└── assets/
+    ├── styles.css      ← estilos (estética industrial dark)
+    └── script.js       ← lógica completa (52 funciones)
+```
+
+## Módulos
+- 🏋️ Perfil F-V (Carga-Velocidad) con regresión lineal y R²
+- 🦘 Saltos (CMJ, BJ, Hop) con LSI y simetría
+- 📐 Movilidad (Lunge, TROM Cadera/Hombro) con velocímetros
+- 🏃 Sprint & COD con benchmarks normativos
+- 🎯 FMS / Calidad de Movimiento
+- ⚡ Fatiga diaria (Hooper + HRV)
+- 🏥 Módulo Kinesiológico (Body Chart, Anamnesis MOVE, Tests ortopédicos)
+- 🤖 Informe IA (claude-haiku-4-5) + exportar PDF
+
+## Configuración
+En `assets/script.js`, línea 4:
+```js
+window.MM_API_KEY = 'TU_API_KEY_AQUI';
+```
+Reemplazá con tu API Key de Anthropic (https://console.anthropic.com).
+
+## Uso
+Abrí `index.html` directamente en el navegador, o deployá en GitHub Pages.
+
+## Deploy en GitHub Pages
+1. Subí la carpeta a un repositorio
+2. Settings → Pages → Source: main branch / root
+3. Tu app queda en: https://tu-usuario.github.io/movemetrics/
