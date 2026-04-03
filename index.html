@@ -662,40 +662,63 @@
           <div id="lunge-result"></div>
         </div>
       </div>
-      <div class="card">
-        <div class="card-header"><h3>TROM Cadera</h3><span class="tag tag-b">ROM</span></div>
-        <div class="card-body">
-          <p style="font-size:11px;color:var(--text2);margin-bottom:10px">TROM = RI + RE · 🟢 &gt;90° · 🟡 80–90° · 🔴 &lt;80°</p>
-          <div class="grid-2" style="gap:12px">
-            <div><div style="font-size:10px;color:var(--neon);font-weight:700;margin-bottom:6px;font-family:var(--mono)">DERECHA</div>
-              <div class="ig"><label class="il">RI D (°)</label><input class="inp inp-mono" type="number" id="cad-ri-d" placeholder="0" oninput="onMov()"></div>
-              <div class="ig"><label class="il">RE D (°)</label><input class="inp inp-mono" type="number" id="cad-re-d" placeholder="0" oninput="onMov()"></div>
-            </div>
-            <div><div style="font-size:10px;color:var(--blue);font-weight:700;margin-bottom:6px;font-family:var(--mono)">IZQUIERDA</div>
-              <div class="ig"><label class="il">RI I (°)</label><input class="inp inp-mono" type="number" id="cad-ri-i" placeholder="0" oninput="onMov()"></div>
-              <div class="ig"><label class="il">RE I (°)</label><input class="inp inp-mono" type="number" id="cad-re-i" placeholder="0" oninput="onMov()"></div>
-            </div>
-          </div>
-          <div id="cad-result"></div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-header"><h3>TROM Hombro — GIRD</h3><span class="tag tag-b">ROM</span></div>
-        <div class="card-body">
-          <p style="font-size:11px;color:var(--text2);margin-bottom:10px">GIRD significativo: Δ TROM &gt;18°</p>
-          <div class="grid-2" style="gap:12px">
-            <div><div style="font-size:10px;color:var(--neon);font-weight:700;margin-bottom:6px;font-family:var(--mono)">DERECHA</div>
-              <div class="ig"><label class="il">RI D (°)</label><input class="inp inp-mono" type="number" id="hom-ri-d" placeholder="0" oninput="onMov()"></div>
-              <div class="ig"><label class="il">RE D (°)</label><input class="inp inp-mono" type="number" id="hom-re-d" placeholder="0" oninput="onMov()"></div>
-            </div>
-            <div><div style="font-size:10px;color:var(--blue);font-weight:700;margin-bottom:6px;font-family:var(--mono)">IZQUIERDA</div>
-              <div class="ig"><label class="il">RI I (°)</label><input class="inp inp-mono" type="number" id="hom-ri-i" placeholder="0" oninput="onMov()"></div>
-              <div class="ig"><label class="il">RE I (°)</label><input class="inp inp-mono" type="number" id="hom-re-i" placeholder="0" oninput="onMov()"></div>
-            </div>
-          </div>
-          <div id="hom-result"></div>
-        </div>
-      </div>
+     <div class="ig">
+  <label class="il">RI D (°)</label>
+  <div class="flex" style="gap: 8px;">
+    <input class="inp inp-mono" type="number" id="cad-ri-d" placeholder="0" oninput="onMov()" style="flex: 2;">
+    <button class="btn btn-outline btn-sm" onclick="iniciarGoniometro('cadera-ri-d', 'Cadera RI Derecha')" style="font-size: 10px;">📐 Medir</button>
+  </div>
+</div>
+      <div class="ig">
+  <label class="il">RE D (°)</label>
+  <div class="flex" style="gap: 8px;">
+    <input class="inp inp-mono" type="number" id="cad-re-d" placeholder="0" oninput="onMov()" style="flex: 2;">
+    <button class="btn btn-outline btn-sm" onclick="iniciarGoniometro('cadera-re-d', 'Cadera RE Derecha')" style="font-size: 10px;">📐 Medir</button>
+  </div>
+</div>
+      <div class="ig">
+  <label class="il">RI I (°)</label>
+  <div class="flex" style="gap: 8px;">
+    <input class="inp inp-mono" type="number" id="cad-ri-i" placeholder="0" oninput="onMov()" style="flex: 2;">
+    <button class="btn btn-outline btn-sm" onclick="iniciarGoniometro('cadera-ri-i', 'Cadera RI Izquierda')" style="font-size: 10px;">📐 Medir</button>
+  </div>
+</div>
+      <div class="ig">
+  <label class="il">RE I (°)</label>
+  <div class="flex" style="gap: 8px;">
+    <input class="inp inp-mono" type="number" id="cad-re-i" placeholder="0" oninput="onMov()" style="flex: 2;">
+    <button class="btn btn-outline btn-sm" onclick="iniciarGoniometro('cadera-re-i', 'Cadera RE Izquierda')" style="font-size: 10px;">📐 Medir</button>
+  </div>
+</div>
+      <div class="ig">
+  <label class="il">RI D (°)</label>
+  <div class="flex" style="gap: 8px;">
+    <input class="inp inp-mono" type="number" id="cad-ri-d" placeholder="0" oninput="onMov()" style="flex: 2;">
+    <button class="btn btn-outline btn-sm" onclick="iniciarGoniometro('cadera-ri-d', 'Cadera RI Derecha')" style="font-size: 10px;">📐 Medir</button>
+  </div>
+</div>
+      <div class="ig">
+  <label class="il">RE D (°)</label>
+  <div class="flex" style="gap: 8px;">
+    <input class="inp inp-mono" type="number" id="cad-re-d" placeholder="0" oninput="onMov()" style="flex: 2;">
+    <button class="btn btn-outline btn-sm" onclick="iniciarGoniometro('cadera-re-d', 'Cadera RE Derecha')" style="font-size: 10px;">📐 Medir</button>
+  </div>
+</div>
+      
+    <div class="ig">
+  <label class="il">RI I (°)</label>
+  <div class="flex" style="gap: 8px;">
+    <input class="inp inp-mono" type="number" id="cad-ri-i" placeholder="0" oninput="onMov()" style="flex: 2;">
+    <button class="btn btn-outline btn-sm" onclick="iniciarGoniometro('cadera-ri-i', 'Cadera RI Izquierda')" style="font-size: 10px;">📐 Medir</button>
+  </div>
+</div>
+      <div class="ig">
+  <label class="il">RE I (°)</label>
+  <div class="flex" style="gap: 8px;">
+    <input class="inp inp-mono" type="number" id="cad-re-i" placeholder="0" oninput="onMov()" style="flex: 2;">
+    <button class="btn btn-outline btn-sm" onclick="iniciarGoniometro('cadera-re-i', 'Cadera RE Izquierda')" style="font-size: 10px;">📐 Medir</button>
+  </div>
+</div>
       <div class="card">
         <div class="card-header"><h3>Velocímetros</h3></div>
         <div class="card-body">
