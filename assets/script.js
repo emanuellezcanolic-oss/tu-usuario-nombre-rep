@@ -163,7 +163,35 @@ const ORTHO_TESTS = {
     { id:'thomas',        name:'Thomas',        sub:'Acortamiento psoas', ref:'Sn 0.89 / Sp 0.91' }
   ]
 };
-
+function prepNewAtleta() {
+  document.getElementById('form-title').textContent = 'Nuevo atleta';
+  document.getElementById('edit-id').value = '';
+  
+  // Limpiar campos
+  const campos = ['s-nombre', 's-edad', 's-peso', 's-talla', 's-pierna', 's-lesion', 's-email'];
+  campos.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  
+  // Resetear selects
+  const selects = ['s-sexo', 's-deporte', 's-nivel', 's-objetivo', 's-puesto'];
+  selects.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.selectedIndex = 0;
+  });
+  
+  // Ocultar sección rugby
+  const rugbySec = document.getElementById('rugby-sec');
+  if (rugbySec) rugbySec.classList.add('hidden');
+  
+  // Resetear servicio
+  setSvc('rendimiento');
+  
+  // Resetear foto
+  const prev = document.getElementById('form-photo-prev');
+  if (prev) prev.innerHTML = '👤';
+}
 // ══════════════════════════════════════════════════════
 //  NAVEGACIÓN
 // ══════════════════════════════════════════════════════
