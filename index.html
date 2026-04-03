@@ -644,8 +644,20 @@
         <div class="card-body">
           <p style="font-size:11px;color:var(--text2);margin-bottom:10px">🟢 &gt;40° · 🟡 35–40° · 🔴 &lt;35° · Δ &gt;5° = significativo</p>
           <div class="grid-2" style="gap:12px">
-            <div class="ig"><label class="il">Derecho (°)</label><input class="inp inp-mono" type="number" id="lunge-d" placeholder="0" oninput="onMov()"></div>
-            <div class="ig"><label class="il">Izquierdo (°)</label><input class="inp inp-mono" type="number" id="lunge-i" placeholder="0" oninput="onMov()"></div>
+            <div class="ig">
+  <label class="il">Derecho (°)</label>
+  <div class="flex" style="gap: 8px;">
+    <input class="inp inp-mono" type="number" id="lunge-d" placeholder="0" oninput="onMov()" style="flex: 2;">
+    <button class="btn btn-outline btn-sm" onclick="iniciarGoniometro('tobillo-d', 'Tobillo Derecho')" style="font-size: 10px;">📐 Medir</button>
+  </div>
+</div>
+           <div class="ig">
+  <label class="il">Izquierdo (°)</label>
+  <div class="flex" style="gap: 8px;">
+    <input class="inp inp-mono" type="number" id="lunge-i" placeholder="0" oninput="onMov()" style="flex: 2;">
+    <button class="btn btn-outline btn-sm" onclick="iniciarGoniometro('tobillo-i', 'Tobillo Izquierdo')" style="font-size: 10px;">📐 Medir</button>
+  </div>
+</div>
           </div>
           <div id="lunge-result"></div>
         </div>
