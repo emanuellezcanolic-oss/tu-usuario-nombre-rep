@@ -2,7 +2,7 @@
 //  MoveMetrics v12 — JavaScript completo
 //  CONFIG: colocá tu API Key de Anthropic acá abajo
 // ══════════════════════════════════════════════════════════════
-window.MM_API_KEY = 'TU_API_KEY_AQUI'; // ← reemplazá con tu key
+const GROQ_API_KEY = window.MM_API_KEY || ''; // ← reemplazá con tu key
 //  Todas las funciones referenciadas en el HTML
 // ══════════════════════════════════════════════════════════════
 
