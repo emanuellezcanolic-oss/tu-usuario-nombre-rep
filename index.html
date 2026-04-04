@@ -121,6 +121,7 @@
     <button class="ptab" onclick="showProfileTab('fms',this)">Calidad Mov.</button>
     <button class="ptab" onclick="showProfileTab('fatiga',this)">Fatiga</button>
     <button class="ptab" onclick="showProfileTab('video',this)">🎬 Video</button>
+    <button class="ptab" onclick="showProfileTab('vmp',this)">⚡ VMP</button>
     <button class="ptab" onclick="showProfileTab('historial',this)">Historial</button>
   </div>
 
@@ -1137,6 +1138,218 @@
                 La fórmula divide por 8 porque el tiempo total incluye subida + bajada (t/2 cada una).
               </div>
             </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- TAB: VMP -- Velocidad Media Propulsiva por Video -->
+  <div id="ptab-vmp" class="hidden">
+    <div class="flex-b mb-16">
+      <div>
+        <div style="font-size:15px;font-weight:700">⚡ Encoder de Barra por Video</div>
+        <div style="font-size:12px;color:var(--text2)">Tracking semi-automatico · VMP · Integracion F-V · Perfil lateral</div>
+      </div>
+      <button class="btn btn-neon btn-sm" onclick="saveVMPResult()">💾 Guardar en F-V</button>
+    </div>
+
+    <div class="grid-2" style="gap:18px;align-items:start">
+
+      <!-- COLUMNA IZQUIERDA: Video + canvas tracking -->
+      <div style="display:flex;flex-direction:column;gap:12px">
+
+        <!-- Config ejercicio y carga -->
+        <div class="card">
+          <div class="card-header"><h3>⚙️ Configuracion del ejercicio</h3></div>
+          <div class="card-body">
+            <div class="grid-2" style="gap:10px">
+              <div class="ig">
+                <label class="il">Ejercicio</label>
+                <select class="inp" id="vmp-ejercicio" onchange="onVmpConfig()">
+                  <option value="sentadilla">Sentadilla</option>
+                  <option value="press-banca">Press Banca</option>
+                  <option value="peso-muerto">Peso Muerto</option>
+                  <option value="remo-invertido">Remo Invertido</option>
+                </select>
+              </div>
+              <div class="ig">
+                <label class="il">Carga total (kg)</label>
+                <input class="inp inp-mono" type="number" id="vmp-carga" placeholder="60" step="0.5" oninput="onVmpConfig()">
+              </div>
+              <div class="ig">
+                <label class="il">FPS del video</label>
+                <select class="inp" id="vmp-fps">
+                  <option value="30">30 FPS</option>
+                  <option value="60" selected>60 FPS</option>
+                  <option value="120">120 FPS (recomendado)</option>
+                  <option value="240">240 FPS</option>
+                </select>
+              </div>
+              <div class="ig">
+                <label class="il">Escala (cm / px referencia)</label>
+                <div class="flex" style="gap:6px">
+                  <input class="inp inp-mono" type="number" id="vmp-escala-cm" placeholder="100" step="1" style="flex:1">
+                  <button class="btn btn-ghost btn-sm" onclick="iniciarCalibracion()" style="flex-shrink:0;font-size:10px">📏 Calibrar</button>
+                </div>
+                <div style="font-size:9px;color:var(--text2);margin-top:3px;font-family:var(--mono)">Marcas 2 puntos de distancia conocida</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Video player con canvas overlay -->
+        <div class="card card-glow">
+          <div class="card-header"><h3>📹 Video + Tracking</h3><span id="vmp-tracking-status" class="tag tag-y">Sin video</span></div>
+          <div class="card-body" style="padding:10px">
+
+            <div id="vmp-upload-area" style="border:2px dashed rgba(57,255,122,.2);border-radius:10px;padding:28px;text-align:center;cursor:pointer;margin-bottom:10px" onclick="document.getElementById('vmp-file-inp').click()">
+              <div style="font-size:28px;margin-bottom:6px">🎬</div>
+              <div style="font-size:13px;font-weight:700;color:var(--neon)">Cargar video de perfil</div>
+              <div style="font-size:11px;color:var(--text2);margin-top:4px">Camara lateral -- barra visible todo el recorrido</div>
+            </div>
+            <input type="file" id="vmp-file-inp" accept="video/*" class="hidden" onchange="loadVMPVideo(this)">
+
+            <!-- Canvas overlay sobre video -->
+            <div id="vmp-player-wrap" style="display:none;position:relative">
+              <div style="position:relative;display:inline-block;width:100%">
+                <video id="vmp-video" style="width:100%;display:block;border-radius:8px;background:#000" preload="metadata"></video>
+                <canvas id="vmp-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;cursor:crosshair;border-radius:8px"></canvas>
+              </div>
+
+              <!-- Controles frame -->
+              <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;flex-wrap:wrap">
+                <button class="btn btn-ghost btn-sm" onclick="vmpJump(-10)">-10</button>
+                <button class="btn btn-ghost btn-sm" onclick="vmpJump(-1)">-1</button>
+                <button class="btn btn-ghost" onclick="vmpTogglePlay()" id="vmp-play-btn" style="padding:7px 18px">▶</button>
+                <button class="btn btn-ghost btn-sm" onclick="vmpJump(1)">+1</button>
+                <button class="btn btn-ghost btn-sm" onclick="vmpJump(10)">+10</button>
+              </div>
+
+              <!-- Info frame -->
+              <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--text2);margin-top:6px;padding:0 4px">
+                <span>Frame: <span id="vmp-frame-cur" style="color:var(--neon)">0</span> / <span id="vmp-frame-tot">0</span></span>
+                <span>Tiempo: <span id="vmp-time-cur" style="color:var(--neon)">0.000s</span></span>
+                <span>Puntos: <span id="vmp-points-count" style="color:var(--neon)">0</span></span>
+              </div>
+              <input type="range" id="vmp-scrubber" min="0" max="1000" value="0" style="width:100%;margin-top:6px;accent-color:var(--neon)" oninput="vmpScrub(this.value)">
+            </div>
+          </div>
+        </div>
+
+        <!-- Instrucciones modo -->
+        <div class="card" id="vmp-instructions-card">
+          <div class="card-header"><h3>📋 Instrucciones</h3><span id="vmp-mode-badge" class="tag tag-b">Esperando video</span></div>
+          <div class="card-body" id="vmp-instructions-body">
+            <div style="font-size:12px;color:var(--text2);line-height:1.7">
+              <b style="color:var(--white)">1.</b> Carga un video grabado de perfil<br>
+              <b style="color:var(--white)">2.</b> Configura ejercicio, carga y FPS<br>
+              <b style="color:var(--white)">3.</b> Calibra la escala marcando 2 puntos de distancia conocida<br>
+              <b style="color:var(--white)">4.</b> Navega al inicio del movimiento y hace clic en la barra<br>
+              <b style="color:var(--white)">5.</b> Avanza frame a frame -- el tracker sigue la barra automaticamente<br>
+              <b style="color:var(--white)">6.</b> Presiona STOP cuando termina la fase propulsiva<br>
+              <b style="color:var(--white)">7.</b> El sistema calcula VMP y velocidad pico automaticamente
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- COLUMNA DERECHA: Controles + Resultados -->
+      <div style="display:flex;flex-direction:column;gap:12px">
+
+        <!-- Controles de tracking -->
+        <div class="card">
+          <div class="card-header"><h3>🎯 Control de Tracking</h3></div>
+          <div class="card-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+              <button class="btn btn-neon btn-full" id="btn-vmp-start" onclick="startVMPTracking()" disabled>
+                🎯 Marcar barra
+              </button>
+              <button class="btn btn-red btn-full" id="btn-vmp-stop" onclick="stopVMPTracking()" disabled>
+                ⏹ Detener
+              </button>
+              <button class="btn btn-outline btn-full" onclick="clearVMPTracking()">
+                🗑️ Limpiar
+              </button>
+              <button class="btn btn-ghost btn-full" onclick="undoLastVMPPoint()">
+                ↩ Deshacer
+              </button>
+            </div>
+
+            <!-- Fase del movimiento -->
+            <div class="ig">
+              <label class="il">Fase a analizar</label>
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-sm" id="fase-btn-prop" onclick="setVMPFase('propulsiva')" style="flex:1;background:rgba(57,255,122,.1);border:1px solid rgba(57,255,122,.3);color:var(--neon);font-size:10px">Propulsiva</button>
+                <button class="btn btn-ghost btn-sm" id="fase-btn-exc" onclick="setVMPFase('excentrica')" style="flex:1;font-size:10px">Excentrica</button>
+                <button class="btn btn-ghost btn-sm" id="fase-btn-todo" onclick="setVMPFase('completo')" style="flex:1;font-size:10px">Completo</button>
+              </div>
+            </div>
+
+            <!-- Puntos registrados mini tabla -->
+            <div style="margin-top:10px">
+              <div style="font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Puntos registrados</div>
+              <div id="vmp-points-table" style="max-height:160px;overflow-y:auto;font-family:var(--mono);font-size:10px">
+                <div style="color:var(--text3);text-align:center;padding:12px">Sin puntos aun</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grafico de velocidad -->
+        <div class="card card-glow">
+          <div class="card-header"><h3>📈 Perfil de velocidad</h3></div>
+          <div class="card-body" style="padding:12px">
+            <canvas id="vmp-velocity-chart" height="160"></canvas>
+          </div>
+        </div>
+
+        <!-- Resultados -->
+        <div class="card" id="vmp-result-card" style="display:none">
+          <div class="card-header"><h3>🏆 Resultado</h3><span id="vmp-result-badge" class="tag"></span></div>
+          <div class="card-body">
+            <div style="text-align:center;padding:12px 0">
+              <div style="font-size:10px;color:var(--text2);font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">VMP</div>
+              <div id="vmp-result-vmp" style="font-family:var(--mono);font-size:52px;font-weight:800;color:var(--neon);line-height:1;text-shadow:0 0 30px rgba(57,255,122,.3)">0.00</div>
+              <div style="font-size:13px;color:var(--text2);margin-top:4px">m/s</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px">
+              <div style="background:var(--bg4);border-radius:8px;padding:10px;text-align:center">
+                <div style="font-size:9px;color:var(--text2);font-family:var(--mono)">V. PICO</div>
+                <div id="vmp-result-vpico" style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--blue)">0.00</div>
+                <div style="font-size:9px;color:var(--text3)">m/s</div>
+              </div>
+              <div style="background:var(--bg4);border-radius:8px;padding:10px;text-align:center">
+                <div style="font-size:9px;color:var(--text2);font-family:var(--mono)">ROM</div>
+                <div id="vmp-result-rom" style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--amber)">0</div>
+                <div style="font-size:9px;color:var(--text3)">cm</div>
+              </div>
+              <div style="background:var(--bg4);border-radius:8px;padding:10px;text-align:center">
+                <div style="font-size:9px;color:var(--text2);font-family:var(--mono)">TIEMPO</div>
+                <div id="vmp-result-tiempo" style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--purple,#a78bfa)">0</div>
+                <div style="font-size:9px;color:var(--text3)">ms</div>
+              </div>
+            </div>
+
+            <!-- Comparativa VMP referencia -->
+            <div id="vmp-ref-compare" style="margin-top:12px;padding:10px;background:var(--bg4);border-radius:8px;font-size:11px;line-height:1.7"></div>
+
+            <!-- Zona F-V -->
+            <div style="margin-top:10px;padding:10px;background:rgba(57,255,122,.04);border:1px solid rgba(57,255,122,.1);border-radius:8px">
+              <div style="font-size:10px;font-family:var(--mono);color:var(--text2);margin-bottom:4px">INTEGRACION F-V</div>
+              <div id="vmp-fv-preview" style="font-size:12px;color:var(--text)">Guarda el resultado para agregarlo al perfil F-V</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Referencia VMP por ejercicio -->
+        <div class="card">
+          <div class="card-header"><h3>📊 Referencias VMP</h3></div>
+          <div class="card-body">
+            <div id="vmp-ref-table" style="font-size:11px;line-height:2;color:var(--text2)"></div>
           </div>
         </div>
 
