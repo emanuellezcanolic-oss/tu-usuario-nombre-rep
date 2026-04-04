@@ -348,4 +348,132 @@ function dibujarGoniometro(angulo) {
     const x1 = cx + (radio - 8) * Math.sin(rad), y1 = cy + (radio - 8) * Math.cos(rad);
     const x2 = cx + radio * Math.sin(rad), y2 = cy + radio * Math.cos(rad);
     ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-    if (i !== 0) { ctx.font = 'bold 8px monospace'; ctx.fillStyle = '#39FF7A'; const tx = cx + (radio + 10) * Math.sin(rad), ty = cy + (radio + 8) * Math
+    if (i !== 0) { ctx.font = 'bold 8px monospace'; ctx.fillStyle = '#39FF7A'; const tx = cx + (radio + 10) * Math.sin(rad), ty = cy + (radio + 8) * Math.cos(rad); ctx.fillText(i + '°', tx - 3, ty + 2); }
+  }
+}
+
+function actualizarFlecha(angulo) { const f = document.getElementById('goniometro-flecha'); if (f) f.style.transform = `translateX(-50%) rotate(${-angulo}deg)`; }
+function calibrarGoniometro() { calibrado = false; anguloOffset = 0; anguloActual = 0; document.getElementById('goniometro-angulo').textContent = '0.0'; document.getElementById('lectura-actual').textContent = '0.0°'; dibujarGoniometro(0); actualizarFlecha(0); }
+function toggleCongelar() { const btn = document.getElementById('btn-congelar'); if (goniometroCongelado) { goniometroCongelado = false; btn.textContent = '🔒 Congelar'; btn.className = 'btn btn-neon'; document.getElementById('lectura-estado').innerHTML = '🔓 En vivo'; } else { goniometroCongelado = true; anguloCongelado = anguloActual; btn.textContent = '🔓 Descongelar'; btn.className = 'btn btn-outline'; document.getElementById('lectura-estado').innerHTML = '🔒 Congelado'; } }
+function reiniciarGoniometro() { goniometroCongelado = false; anguloActual = 0; calibrado = false; document.getElementById('btn-congelar').textContent = '🔒 Congelar'; document.getElementById('btn-congelar').className = 'btn btn-neon'; document.getElementById('lectura-estado').innerHTML = '🔓 En vivo'; document.getElementById('goniometro-angulo').textContent = '0.0'; document.getElementById('lectura-actual').textContent = '0.0°'; dibujarGoniometro(0); actualizarFlecha(0); }
+function confirmarGoniometro() { if (!cur || !testEnCurso) { alert('Error'); return; } const anguloFinal = goniometroCongelado ? anguloCongelado : anguloActual; if (testEnCurso === 'tobillo-d') { cur.lungeD = anguloFinal; document.getElementById('lunge-d').value = anguloFinal; } if (testEnCurso === 'tobillo-i') { cur.lungeI = anguloFinal; document.getElementById('lunge-i').value = anguloFinal; } if (testEnCurso.includes('cadera')) { const partes = testEnCurso.split('-'); if (partes[1] === 'ri' && partes[2] === 'd') cur.cadRiD = anguloFinal; if (partes[1] === 're' && partes[2] === 'd') cur.cadReD = anguloFinal; if (partes[1] === 'ri' && partes[2] === 'i') cur.cadRiI = anguloFinal; if (partes[1] === 're' && partes[2] === 'i') cur.cadReI = anguloFinal; } atletas = atletas.map(a => a.id === cur.id ? cur : a); saveData(); onMov(); detenerGoniometro(); closeModal('modal-goniometro'); showToast('✓ Ángulo guardado'); }
+function detenerGoniometro() { goniometroActivo = false; window.removeEventListener('deviceorientation', manejarOrientacion); }
+
+// Movilidad
+function onMov() {
+  const ld = +document.getElementById('lunge-d')?.value || 0, li = +document.getElementById('lunge-i')?.value || 0;
+  const semL = v => !v ? '' : v < 35 ? `🔴 ${v}°` : v <= 40 ? `🟡 ${v}°` : `🟢 ${v}°`;
+  document.getElementById('lunge-result').innerHTML = `<div class="flex" style="gap:12px; justify-content:center">${ld ? semL(ld) : ''}${li ? semL(li) : ''}</div>`;
+  const riD = +document.getElementById('cad-ri-d')?.value || 0, reD = +document.getElementById('cad-re-d')?.value || 0, riI = +document.getElementById('cad-ri-i')?.value || 0, reI = +document.getElementById('cad-re-i')?.value || 0;
+  const tromD = riD + reD, tromI = riI + reI;
+  const semC = v => v > 90 ? `🟢 ${v}°` : v >= 80 ? `🟡 ${v}°` : `🔴 ${v}°`;
+  document.getElementById('cad-result').innerHTML = `<div class="flex" style="gap:12px; justify-content:center">D: ${semC(tromD)} I: ${semC(tromI)}</div>`;
+  if (cur) { cur.lungeD = ld; cur.lungeI = li; cur.cadRiD = riD; cur.cadReD = reD; cur.cadRiI = riI; cur.cadReI = reI; }
+}
+
+function saveMovilidad() { if (!cur) { alert('Seleccioná un atleta'); return; } atletas = atletas.map(a => a.id === cur.id ? cur : a); saveData(); alert('Movilidad guardada'); }
+
+// Video Salto
+function loadVideo(input) {
+  if (!input.files.length) return;
+  const file = input.files[0];
+  const url = URL.createObjectURL(file);
+  const video = document.getElementById('video-player');
+  video.src = url;
+  video.load();
+  document.getElementById('video-player-wrap').style.display = 'block';
+  document.getElementById('video-upload-area').style.display = 'none';
+}
+
+function jumpFrames(n) {
+  const video = document.getElementById('video-player');
+  if (!video) return;
+  video.pause();
+  const fps = 30;
+  const frameDuration = 1 / fps;
+  video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + n * frameDuration));
+}
+
+function markTakeoff() {
+  const video = document.getElementById('video-player');
+  if (!video) { alert('Cargá un video'); return; }
+  videoState.takeoffTime = video.currentTime;
+  document.getElementById('takeoff-time-display').textContent = video.currentTime.toFixed(3) + 's';
+  document.getElementById('btn-takeoff').style.background = 'rgba(57,255,122,.2)';
+  if (videoState.landingTime) calcVideoJump();
+}
+
+function markLanding() {
+  const video = document.getElementById('video-player');
+  if (!video) { alert('Cargá un video'); return; }
+  if (videoState.takeoffTime === null) { alert('Marcá primero el despegue'); return; }
+  if (video.currentTime <= videoState.takeoffTime) { alert('El aterrizaje debe ser después del despegue'); return; }
+  videoState.landingTime = video.currentTime;
+  document.getElementById('landing-time-display').textContent = video.currentTime.toFixed(3) + 's';
+  document.getElementById('btn-landing').style.background = 'rgba(255,68,68,.2)';
+  calcVideoJump();
+}
+
+function calcVideoJump() {
+  if (videoState.takeoffTime === null || videoState.landingTime === null) return;
+  const t = videoState.landingTime - videoState.takeoffTime;
+  const g = 9.81;
+  const hCm = ((g * t * t) / 8) * 100;
+  document.getElementById('video-result-card').style.display = 'block';
+  document.getElementById('video-height-display').textContent = hCm.toFixed(1);
+  videoState.result = { hCm: hCm.toFixed(1), t, takeoff: videoState.takeoffTime, landing: videoState.landingTime };
+}
+
+function saveVideoSalto() {
+  if (!cur) { alert('Seleccioná un atleta'); return; }
+  if (!videoState.result) { alert('Calculá un salto primero'); return; }
+  cur.lastCMJ = videoState.result.hCm;
+  atletas = atletas.map(a => a.id === cur.id ? cur : a);
+  saveData();
+  alert('Salto guardado: ' + videoState.result.hCm + ' cm');
+}
+
+// FMS
+function cargarImagen(input, slotId) {
+  if (!input.files.length) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const slot = document.getElementById(slotId);
+    slot.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;">`;
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function marcarFMS(btn, tipo) {
+  const parent = btn.closest('.fms-check');
+  parent.querySelectorAll('.fms-btn').forEach(b => b.classList.remove('yes', 'no'));
+  btn.classList.add(tipo);
+}
+
+function guardarFMS() {
+  if (!cur) { alert('Seleccioná un atleta'); return; }
+  const checks = document.querySelectorAll('#ohs-checks .fms-check');
+  const resultados = [];
+  checks.forEach(check => {
+    const btnYes = check.querySelector('.fms-btn.yes');
+    const btnNo = check.querySelector('.fms-btn.no');
+    if (btnYes) resultados.push('si');
+    else if (btnNo) resultados.push('no');
+    else resultados.push(null);
+  });
+  cur.fmsOHS = resultados;
+  atletas = atletas.map(a => a.id === cur.id ? cur : a);
+  saveData();
+  alert('FMS guardado');
+}
+
+// Inicialización
+document.addEventListener('DOMContentLoaded', () => {
+  renderAtletas();
+  document.getElementById('btn-congelar')?.addEventListener('click', toggleCongelar);
+  document.getElementById('btn-reiniciar')?.addEventListener('click', reiniciarGoniometro);
+  document.getElementById('btn-confirmar-goniometro')?.addEventListener('click', confirmarGoniometro);
+});
+</script>
+</body>
+</html>
