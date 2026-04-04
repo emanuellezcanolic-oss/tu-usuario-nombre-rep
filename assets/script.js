@@ -3080,7 +3080,10 @@ function saveVMPResult() {
 // ========================================================
 
 let vjState = {
-  targetKey: null,   // key del test destino (sj, cmj, abk, dj, djb)
+  targetKey: null,
+  calMode: 'auto',
+  calFactor: null,
+  fpsPreset: null,   // key del test destino (sj, cmj, abk, dj, djb)
   targetField: null, // id del input destino
   takeoff: null,
   landing: null,
@@ -3130,27 +3133,72 @@ function getVJFpsRepro() {
   return parseFloat(document.getElementById('vj-fps-repro')?.value || 30);
 }
 
-function getVJSlowFactor() {
-  // Factor de correccion: FPS_repro / FPS_grab
-  // iPhone 240fps grabado pero reproducido a 30fps -> factor 30/240 = 0.125
-  return getVJFpsRepro() / getVJFps();
+
+function setVJMode(mode) {
+  document.getElementById('vj-mode-auto').style.display     = mode === 'auto'     ? 'block' : 'none';
+  document.getElementById('vj-mode-calibrar').style.display = mode === 'calibrar' ? 'block' : 'none';
+  document.getElementById('vj-mode-btn-auto').style.background = mode === 'auto' ? 'rgba(57,255,122,.15)' : '';
+  document.getElementById('vj-mode-btn-auto').style.borderColor = mode === 'auto' ? 'rgba(57,255,122,.3)' : '';
+  document.getElementById('vj-mode-btn-auto').style.color = mode === 'auto' ? 'var(--neon)' : '';
+  document.getElementById('vj-mode-btn-cal').style.background = mode === 'calibrar' ? 'rgba(255,176,32,.15)' : '';
+  document.getElementById('vj-mode-btn-cal').style.borderColor = mode === 'calibrar' ? 'rgba(255,176,32,.3)' : '';
+  document.getElementById('vj-mode-btn-cal').style.color = mode === 'calibrar' ? 'var(--amber)' : '';
+  vjState.calMode = mode;
 }
 
-function vjUpdateFpsInfo() {
-  const grab  = getVJFps();
-  const repro = getVJFpsRepro();
-  const factor = (repro / grab).toFixed(4);
-  const el = document.getElementById('vj-fps-info');
+function vjCalibrar() {
+  const hReal  = parseFloat(document.getElementById('vj-cal-altura')?.value) || 0;
+  const tVideo = parseFloat(document.getElementById('vj-cal-tvideo')?.value) || 0;
+  const el     = document.getElementById('vj-cal-result');
   if (!el) return;
-  if (grab === repro) {
-    el.textContent = 'Sin slow motion -- tiempo de video = tiempo real';
-    el.style.color = 'var(--text2)';
-  } else {
-    const mult = (grab / repro).toFixed(0);
-    el.textContent = 'Factor correccion: ' + mult + 'x -- cada segundo de video = ' + factor + 's real';
-    el.style.color = 'var(--neon)';
+  if (!hReal || !tVideo) { el.textContent = 'Ingresa los valores para calibrar'; el.style.color = 'var(--text2)'; return; }
+  // From h = g*t²/8 -> t_real = sqrt(8*h/g)
+  const tReal  = Math.sqrt(8 * (hReal/100) / 9.81);
+  const factor = tReal / (tVideo/1000);
+  vjState.calFactor = factor;
+  el.textContent = 'Factor calibrado: ' + factor.toFixed(4) + ' -- t_real = t_video x ' + factor.toFixed(4);
+  el.style.color = 'var(--neon)';
+}
+
+// Presets: { grab, repro, factor, label, tip }
+const VJ_PRESETS = [
+  { id:'n30',  grab:30,  repro:30,  factor:1.0,   label:'30 fps',        tip:'Video normal -- mas preciso' },
+  { id:'n60',  grab:60,  repro:60,  factor:1.0,   label:'60 fps',        tip:'Video normal 60fps' },
+  { id:'s120', grab:120, repro:30,  factor:0.25,  label:'Slow 120fps',   tip:'Slow mo 120fps -- reproduce a 30fps' },
+  { id:'s240', grab:240, repro:30,  factor:0.125, label:'Slow 240fps',   tip:'iPhone Slo-Mo 240fps -- reproduce a 30fps' },
+  { id:'s480', grab:480, repro:30,  factor:0.0625,label:'Slow 480fps',   tip:'Super slow mo 480fps' },
+  { id:'s960', grab:960, repro:30,  factor:0.03125,label:'Slow 960fps',  tip:'Ultra slow mo 960fps' },
+];
+
+function setVJFps(presetId, btn) {
+  const preset = VJ_PRESETS.find(p => p.id === presetId);
+  if (!preset) return;
+  vjState.fpsPreset = preset;
+  document.querySelectorAll('#vj-fps-btns button').forEach(b => {
+    b.className = 'btn btn-ghost btn-sm';
+    b.style.fontSize = '10px';
+  });
+  if (btn) { btn.className = 'btn btn-neon btn-sm'; btn.style.fontSize = '10px'; }
+  const tipEl = document.getElementById('vj-fps-tip');
+  if (tipEl) {
+    tipEl.textContent = preset.tip;
+    tipEl.style.color = preset.factor === 1.0 ? 'var(--neon)' : 'var(--amber)';
   }
 }
+
+function getVJFps() {
+  return vjState.fpsPreset ? vjState.fpsPreset.grab : 30;
+}
+
+function getVJFpsRepro() {
+  return vjState.fpsPreset ? vjState.fpsPreset.repro : 30;
+}
+
+function getVJSlowFactor() {
+  return vjState.fpsPreset ? vjState.fpsPreset.factor : 1.0;
+}
+
+function vjUpdateFpsInfo() {}
 
 function updateVJFrameInfo() {
   const v   = document.getElementById('vj-video');
@@ -3212,35 +3260,28 @@ function vjMarkLanding() {
 
 function calcVJJump() {
   if (vjState.takeoff === null || vjState.landing === null) return;
-  const tVideo  = vjState.landing - vjState.takeoff; // tiempo en el video (estirado por slow mo)
-  const factor  = getVJSlowFactor();                  // ej: 30/240 = 0.125
-  const tReal   = tVideo * factor;                    // tiempo de vuelo real en segundos
+  const tVideo  = vjState.landing - vjState.takeoff;
+  const factor  = getVJSlowFactor();
+  const tReal   = tVideo * factor;
+  const fps     = getVJFps();
+  const fpsRep  = getVJFpsRepro();
   const tMs     = Math.round(tReal * 1000);
   const hCm     = ((9.81 * tReal * tReal) / 8) * 100;
-  const fpsGrab = getVJFps();
-  const fpsRep  = getVJFpsRepro();
-  const framesVideo = Math.round(tVideo * fpsRep);   // frames en el video
-  const framesReal  = Math.round(tReal  * fpsGrab);  // frames reales de vuelo
+  const frames  = Math.round(tVideo * fpsRep);
   const c = hCm >= 40 ? 'var(--neon)' : hCm >= 30 ? 'var(--amber)' : 'var(--red)';
-  const isSlow = fpsGrab !== fpsRep;
   document.getElementById('vj-result-area').innerHTML =
     '<div style="background:var(--dark4);border-radius:10px;padding:16px;text-align:center;margin-top:12px">' +
     '<div style="font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;margin-bottom:6px">Altura calculada</div>' +
-    '<div style="font-family:var(--mono);font-size:48px;font-weight:800;color:' + c + ';line-height:1;text-shadow:0 0 20px ' + c + '33">' + hCm.toFixed(1) + '</div>' +
+    '<div style="font-family:var(--mono);font-size:52px;font-weight:800;color:' + c + ';line-height:1;text-shadow:0 0 20px ' + c + '33">' + hCm.toFixed(1) + '</div>' +
     '<div style="font-size:13px;color:var(--text2);margin-top:4px">cm</div>' +
-    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px">' +
-    '<div style="background:rgba(57,255,122,.05);border-radius:6px;padding:8px">' +
-    '<div style="font-family:var(--mono);font-size:8px;color:var(--text3);text-transform:uppercase">Vuelo real</div>' +
-    '<div style="font-family:var(--mono);font-size:16px;font-weight:800;color:' + c + '">' + tMs + 'ms</div></div>' +
-    '<div style="background:rgba(77,158,255,.05);border-radius:6px;padding:8px">' +
-    '<div style="font-family:var(--mono);font-size:8px;color:var(--text3);text-transform:uppercase">Frames video</div>' +
-    '<div style="font-family:var(--mono);font-size:16px;font-weight:800;color:var(--blue)">' + framesVideo + '</div></div>' +
-    '<div style="background:rgba(255,176,32,.05);border-radius:6px;padding:8px">' +
-    '<div style="font-family:var(--mono);font-size:8px;color:var(--text3);text-transform:uppercase">Factor</div>' +
-    '<div style="font-family:var(--mono);font-size:16px;font-weight:800;color:var(--amber)">' + factor.toFixed(4) + 'x</div></div>' +
-    '</div>' +
-    (isSlow ? '<div style="font-family:var(--mono);font-size:9px;color:var(--text2);margin-top:8px;text-align:center">Correccion slow motion aplicada: ' + fpsGrab + 'fps grabacion / ' + fpsRep + 'fps reproduccion</div>' : '') +
-    '</div>';
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">' +
+    '<div style="background:rgba(57,255,122,.05);border-radius:6px;padding:8px;text-align:center">' +
+    '<div style="font-family:var(--mono);font-size:8px;color:var(--text3);text-transform:uppercase;margin-bottom:2px">Tiempo de vuelo</div>' +
+    '<div style="font-family:var(--mono);font-size:18px;font-weight:800;color:' + c + '">' + tMs + ' ms</div></div>' +
+    '<div style="background:rgba(77,158,255,.05);border-radius:6px;padding:8px;text-align:center">' +
+    '<div style="font-family:var(--mono);font-size:8px;color:var(--text3);text-transform:uppercase;margin-bottom:2px">Frames de vuelo</div>' +
+    '<div style="font-family:var(--mono);font-size:18px;font-weight:800;color:var(--blue)">' + frames + ' @ ' + fps + 'fps</div></div>' +
+    '</div></div>';
   vjState.resultCm = hCm;
 }
 
