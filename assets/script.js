@@ -124,8 +124,46 @@ const BOSCO_NORMS = {
   ms15:{ male:{ mean:38.18, sd:15.43 }, female:{ mean:32.61, sd:11.57 } }
 };
 
-// Normas Side Hop -- Gustavsson et al.
+// Normas Side Hop -- Gustavsson et al. (2006)
 const SIDEHOP_NORMS = { male:{ min:55 }, female:{ min:41 } };
+
+// Normas Hop Tests -- LSI return to sport (Limb Symmetry Index)
+// Referencia: Noyes et al. 1991, Moksnes & Risberg 2009, Reid et al. 2007
+const HOP_NORMS = {
+  sh:  {
+    lsi_rts: 90,   // % LSI minimo para retorno al deporte
+    lsi_elite: 95, // % LSI atletas elite
+    // Valores absolutos referencia (cm) -- adultos activos
+    male:   { mean: 165, sd: 20 },
+    female: { mean: 135, sd: 18 }
+  },
+  '3h': {
+    lsi_rts: 90,
+    lsi_elite: 95,
+    male:   { mean: 490, sd: 55 },
+    female: { mean: 400, sd: 48 }
+  },
+  ch: {
+    lsi_rts: 90,
+    lsi_elite: 95,
+    male:   { mean: 480, sd: 52 },
+    female: { mean: 385, sd: 45 }
+  },
+  t6h: {
+    lsi_rts: 90,
+    lsi_elite: 95,
+    lowerIsBetter: true,
+    // Menor tiempo = mejor -- LSI se calcula al reves
+    male:   { mean: 2.1, sd: 0.3 },  // segundos
+    female: { mean: 2.4, sd: 0.3 }
+  },
+  djb: {
+    lsi_rts: 90,
+    lsi_elite: 95,
+    male:   { mean: 28, sd: 6 },
+    female: { mean: 22, sd: 5 }
+  }
+};
 
 const ORTHO_TESTS = {
   subacro: [
@@ -1248,17 +1286,25 @@ function buildSaltosGrid() {
   horiz.forEach(def => {
     if (def.type === 'bilateral') {
       html += `<div class="card">
-        <div class="card-header"><h3>${def.label}</h3><span class="tag tag-b">${def.desc}</span></div>
+        <div class="card-header"><h3>Broad Jump</h3><span class="tag tag-b">Salto horizontal bilateral</span></div>
         <div class="card-body">
           <div class="grid-2" style="gap:8px">
-            <div class="ig"><label class="il">Rep 1</label><input class="inp inp-mono" type="number" step=".1" id="${def.key}-r1" placeholder="0" oninput="calcSalto('${def.key}','${def.key}-r2')"></div>
-            <div class="ig"><label class="il">Rep 2</label><input class="inp inp-mono" type="number" step=".1" id="${def.key}-r2" placeholder="0" oninput="calcSalto('${def.key}','${def.key}-r2')"></div>
+            <div class="ig"><label class="il">Rep 1 (cm)</label><input class="inp inp-mono" type="number" step=".1" id="bj-r1" placeholder="0" oninput="calcSalto('bj','bj-r2')"></div>
+            <div class="ig"><label class="il">Rep 2 (cm)</label><input class="inp inp-mono" type="number" step=".1" id="bj-r2" placeholder="0" oninput="calcSalto('bj','bj-r2')"></div>
           </div>
-          <div style="background:var(--bg4);border-radius:10px;padding:10px;text-align:center;margin-top:8px">
-            <div id="${def.key}-avg" style="font-family:var(--mono);font-size:28px;font-weight:800;color:var(--neon)" data-val="">--</div>
+          <div style="background:var(--bg4);border-radius:10px;padding:12px;text-align:center;margin-top:8px">
+            <div style="font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;margin-bottom:4px">Promedio</div>
+            <div id="bj-avg" style="font-family:var(--mono);font-size:32px;font-weight:800;color:var(--neon)" data-val="">--</div>
             <div style="font-size:10px;color:var(--text3)">cm</div>
           </div>
-          <div id="${def.key}-mejora" style="text-align:center;margin-top:6px"></div>
+          <div style="background:var(--bg4);border-radius:8px;padding:8px 12px;margin-top:8px;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:10px;color:var(--text2)">Ratio vs altura (ref: &gt;1.3x altura)</span>
+            <span id="bj-ratio" style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--neon)">--</span>
+          </div>
+          <div style="font-size:10px;color:var(--text3);margin-top:6px;font-family:var(--mono)">
+            Ref: Elite &gt;200cm (V) / &gt;170cm (M) -- Activo &gt;165cm (V) / &gt;140cm (M)
+          </div>
+          <div id="bj-mejora" style="text-align:center;margin-top:6px"></div>
         </div>
       </div>`;
     } else if (def.key === 'sideh') {
@@ -1314,11 +1360,12 @@ function buildSaltosGrid() {
             </div>
           </div>
           <div style="background:var(--bg4);border:1px solid rgba(57,255,122,.1);border-radius:8px;padding:10px;text-align:center;margin-top:8px">
-            <div style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-bottom:3px">${lowerLabel}</div>
+            <div style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-bottom:3px">LSI -- Simetria</div>
             <div id="${def.key}-sim" style="font-family:var(--mono);font-size:24px;font-weight:800">--</div>
             <div id="${def.key}-sim-st" style="font-size:10px;margin-top:3px"></div>
           </div>
-          <div id="${def.key}-mejora" style="text-align:center;margin-top:6px"></div>
+          <div id="${def.key}-norm-badge" style="text-align:center;margin-top:6px"></div>
+          <div id="${def.key}-mejora" style="text-align:center;margin-top:4px"></div>
         </div>
       </div>`;
     }
@@ -1365,19 +1412,55 @@ function calcSimetriaHop(key) {
   const ir1 = +document.getElementById(key+'-i-r1')?.value||0, ir2 = +document.getElementById(key+'-i-r2')?.value||0;
   const avgD = dr1&&dr2?(dr1+dr2)/2:dr1||dr2, avgI = ir1&&ir2?(ir1+ir2)/2:ir1||ir2;
   const elD = document.getElementById(key+'-d-avg'), elI = document.getElementById(key+'-i-avg');
-  if (elD) { elD.textContent = avgD?avgD.toFixed(1):'--'; elD.dataset.val = avgD||''; }
-  if (elI) { elI.textContent = avgI?avgI.toFixed(1):'--'; elI.dataset.val = avgI||''; }
+  const decimals = key === 't6h' ? 2 : 1;
+  if (elD) { elD.textContent = avgD?avgD.toFixed(decimals):'--'; elD.dataset.val = avgD||''; }
+  if (elI) { elI.textContent = avgI?avgI.toFixed(decimals):'--'; elI.dataset.val = avgI||''; }
   if (avgD && avgI) {
-    const mayor = Math.max(avgD,avgI), menor = Math.min(avgD,avgI);
-    const lsi = (menor/mayor*100).toFixed(1);
-    const asim = ((mayor-menor)/mayor*100).toFixed(1);
-    const isCrit = +asim > 15;
-    const c = +lsi>=90?'var(--neon)':+lsi>=85?'var(--amber)':'var(--red)';
+    const def = SALTOS_DEF.find(d => d.key === key);
+    const norm = HOP_NORMS[key];
+    const lowerIsBetter = def?.lowerIsBetter || false;
+    // LSI: para tests donde menor es mejor (tiempo), la pierna "mejor" es la mas rapida (menor valor)
+    let lsi;
+    if (lowerIsBetter) {
+      const mejor = Math.min(avgD, avgI);
+      const peor  = Math.max(avgD, avgI);
+      lsi = (mejor / peor * 100).toFixed(1); // LSI = mejor/peor (al reves)
+    } else {
+      const mayor = Math.max(avgD, avgI);
+      const menor = Math.min(avgD, avgI);
+      lsi = (menor / mayor * 100).toFixed(1);
+    }
+    const lsiNum = +lsi;
+    const lsi_rts = norm?.lsi_rts || 90;
+    const c = lsiNum >= lsi_rts ? 'var(--neon)' : lsiNum >= 85 ? 'var(--amber)' : 'var(--red)';
     const el = document.getElementById(key+'-sim');
-    if (el) { el.textContent = lsi+'%'; el.style.color = c; el.style.textShadow = isCrit?'0 0 12px rgba(255,68,68,.6)':'none'; }
+    if (el) { el.textContent = lsi+'%'; el.style.color = c; }
     const st = document.getElementById(key+'-sim-st');
-    if (st) { st.innerHTML = +lsi>=90?'✓ Simétrico (LSI ≥90%)':+lsi>=85?`⚠️ Asimetría leve (${asim}%)`:`<b style="color:var(--red)">🔴 ASIMETRÍA CRÍTICA: ${asim}% -- SUPERA EL 15%</b>`; st.style.color=c; }
-    if (isCrit) { const card = el?.closest('.card'); if (card) { card.style.borderColor='rgba(255,68,68,.4)'; card.style.boxShadow='0 0 20px rgba(255,68,68,.15)'; } }
+    if (st) {
+      const rtsOk = lsiNum >= lsi_rts;
+      st.innerHTML = rtsOk
+        ? '<span style="color:var(--neon)">LSI ≥' + lsi_rts + '% -- Apto retorno al deporte</span>'
+        : lsiNum >= 85
+          ? '<span style="color:var(--amber)">LSI ' + lsi + '% -- Deficit leve (RTS ≥' + lsi_rts + '%)</span>'
+          : '<span style="color:var(--red);font-weight:700">LSI ' + lsi + '% -- NO APTO RTS (requiere ≥' + lsi_rts + '%)</span>';
+    }
+    // Highlight card if below RTS threshold
+    const card = el?.closest('.card');
+    if (card) {
+      card.style.borderColor = !rtsOk ? 'rgba(255,59,59,.3)' : '';
+      card.style.boxShadow   = !rtsOk ? '0 0 20px rgba(255,59,59,.1)' : '';
+    }
+    // Norma absoluta
+    const sexo = cur?.sexo || 'M';
+    const n = norm ? (sexo === 'F' ? norm.female : norm.male) : null;
+    if (n) {
+      const val = (avgD + avgI) / 2;
+      const z = ((val - n.mean) / n.sd).toFixed(2);
+      const zLabel = +z >= 1 ? 'Elite' : +z >= 0 ? 'Promedio' : +z >= -1 ? 'Bajo' : 'Muy bajo';
+      const zC = +z >= 0.5 ? 'var(--neon)' : +z >= -0.5 ? 'var(--amber)' : 'var(--red)';
+      const normEl = document.getElementById(key+'-norm-badge');
+      if (normEl) normEl.innerHTML = '<span class="tag" style="background:' + zC + '22;color:' + zC + '">' + zLabel + ' (z=' + (z>0?'+':'') + z + ')</span>';
+    }
   }
   renderSimetriasTabla();
 }
@@ -1405,15 +1488,18 @@ function renderSimetriasTabla() {
     const lsi = mayor?(menor/mayor*100).toFixed(1):'--';
     const asim = mayor?((mayor-menor)/mayor*100).toFixed(1):'--';
     const c = +lsi>=90?'var(--neon)':+lsi>=85?'var(--amber)':'var(--red)';
-    const isCrit = asim!=='--'&&+asim>15;
-    return `<tr>
-      <td>${def.icon} ${def.label}</td>
-      <td class="mono-cell">${dAvg?dAvg.toFixed(1):'--'} cm</td>
-      <td class="mono-cell">${iAvg?iAvg.toFixed(1):'--'} cm</td>
-      <td class="mono-cell" style="color:${c};font-weight:800;${isCrit?'text-shadow:0 0 8px rgba(255,68,68,.5)':''}">${lsi}%</td>
-      <td class="mono-cell" style="color:${c}">${asim}%</td>
-      <td><span class="tag" style="background:${c}22;color:${c}">${+lsi>=90?'✓ OK':+lsi>=85?'⚠️ Leve':'🔴 CRÍTICA'}</span></td>
-    </tr>`;
+    const norm = HOP_NORMS[def.key];
+    const lsi_rts = norm?.lsi_rts || 90;
+    const rtsOk = +lsi >= lsi_rts;
+    const unit = def.unit || 'cm';
+    return '<tr>' +
+      '<td style="font-weight:600">' + def.label + '</td>' +
+      '<td class="mono-cell">' + (dAvg?dAvg.toFixed(def.lowerIsBetter?2:1):'--') + ' ' + unit + '</td>' +
+      '<td class="mono-cell">' + (iAvg?iAvg.toFixed(def.lowerIsBetter?2:1):'--') + ' ' + unit + '</td>' +
+      '<td class="mono-cell" style="color:' + c + ';font-weight:800">' + lsi + '%</td>' +
+      '<td class="mono-cell" style="font-size:9px;color:var(--text2)">&ge;' + lsi_rts + '%</td>' +
+      '<td><span class="tag" style="background:' + c + '22;color:' + c + '">' + (rtsOk ? 'APTO RTS' : +lsi>=85 ? 'Deficit leve' : 'NO APTO RTS') + '</span></td>' +
+      '</tr>';
   }).filter(Boolean);
   if (!rows.length) { area.innerHTML = '<p style="font-size:12px;color:var(--text3)">Completá datos bilaterales de saltos para ver la tabla.</p>'; return; }
   area.innerHTML = `<table class="data-table"><thead><tr><th>Test</th><th>Derecha</th><th>Izquierda</th><th>LSI %</th><th>Asim. %</th><th>Estado</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
