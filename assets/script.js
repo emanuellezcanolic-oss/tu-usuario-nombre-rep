@@ -1198,6 +1198,10 @@ function buildSaltosGrid() {
                 <div id="dj-rsi-display" style="font-family:var(--mono);font-size:22px;font-weight:800;color:var(--blue)">--</div></div>
             </div>
           </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
+            <button class="btn btn-ghost btn-sm" onclick="abrirVideoJump('dj','dj-r1')" style="font-size:10px">🎬 Video Rep 1</button>
+            <button class="btn btn-ghost btn-sm" onclick="abrirVideoJump('dj','dj-r2')" style="font-size:10px">🎬 Video Rep 2</button>
+          </div>
           <div id="dj-mejora" style="text-align:center;margin-top:6px"></div>
         </div>
       </div>`;
@@ -1222,6 +1226,10 @@ function buildSaltosGrid() {
           <div id="${def.key}-badge" style="margin-top:6px"></div>
         </div>
         ${normLine ? `<div style="font-size:10px;color:var(--text3);margin-top:6px;font-family:var(--mono)">${normLine}</div>` : ''}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
+          <button class="btn btn-ghost btn-sm" onclick="abrirVideoJump('${def.key}','${def.key}-r1')" style="font-size:10px">🎬 Video Rep 1</button>
+          <button class="btn btn-ghost btn-sm" onclick="abrirVideoJump('${def.key}','${def.key}-r2')" style="font-size:10px">🎬 Video Rep 2</button>
+        </div>
         <div id="${def.key}-mejora" style="text-align:center;margin-top:6px"></div>
       </div>
     </div>`;
@@ -3063,6 +3071,166 @@ function saveVMPResult() {
   showSaveToast();
   document.getElementById('vmp-fv-preview').innerHTML =
     '<span style="color:var(--neon)">Guardado en el perfil del atleta!</span>';
+}
+
+
+// ========================================================
+//  VIDEO JUMP MODAL -- Reutilizable para cualquier test
+//  Se invoca con: abrirVideoJump('cmj') -> escribe en cmj-r1
+// ========================================================
+
+let vjState = {
+  targetKey: null,   // key del test destino (sj, cmj, abk, dj, djb)
+  targetField: null, // id del input destino
+  takeoff: null,
+  landing: null,
+  fps: 60
+};
+
+function abrirVideoJump(key, field) {
+  vjState.targetKey  = key;
+  vjState.targetField = field || (key + '-r1');
+  vjState.takeoff = null;
+  vjState.landing = null;
+  // Reset UI
+  const ids = ['vj-takeoff-disp','vj-landing-disp','vj-result-area'];
+  ids.forEach(id => { const e = document.getElementById(id); if(e) e.innerHTML = ''; });
+  const v = document.getElementById('vj-video');
+  if (v) { v.src = ''; v.load(); }
+  document.getElementById('vj-player-wrap').style.display = 'none';
+  document.getElementById('vj-upload-area').style.display = 'block';
+  document.getElementById('vj-btn-takeoff').style.background = '';
+  document.getElementById('vj-btn-landing').style.background = '';
+  document.getElementById('vj-modal-title').textContent = 'Video Salto -- ' + key.toUpperCase();
+  openModal('modal-vj');
+}
+
+function loadVJVideo(input) {
+  if (!input.files.length) return;
+  const url = URL.createObjectURL(input.files[0]);
+  const v   = document.getElementById('vj-video');
+  v.src = url; v.load();
+  document.getElementById('vj-player-wrap').style.display = 'block';
+  document.getElementById('vj-upload-area').style.display = 'none';
+  v.addEventListener('loadedmetadata', () => {
+    const fps = getVJFps();
+    document.getElementById('vj-frame-tot').textContent = Math.floor(v.duration * fps);
+    updateVJFrameInfo();
+  });
+  v.addEventListener('timeupdate', updateVJFrameInfo);
+}
+
+function getVJFps() {
+  return parseFloat(document.getElementById('vj-fps')?.value || 60);
+}
+
+function updateVJFrameInfo() {
+  const v   = document.getElementById('vj-video');
+  if (!v || !v.duration) return;
+  const fps = getVJFps();
+  document.getElementById('vj-frame-cur').textContent = Math.round(v.currentTime * fps);
+  document.getElementById('vj-time-cur').textContent  = v.currentTime.toFixed(3) + 's';
+  const s = document.getElementById('vj-scrubber');
+  if (s) s.value = Math.round((v.currentTime / v.duration) * 1000);
+}
+
+function vjJump(n) {
+  const v = document.getElementById('vj-video');
+  if (!v || !v.src) return;
+  v.pause(); document.getElementById('vj-play-btn').textContent = 'Play';
+  v.currentTime = Math.max(0, Math.min(v.duration, v.currentTime + n / getVJFps()));
+  setTimeout(updateVJFrameInfo, 40);
+}
+
+function vjTogglePlay() {
+  const v   = document.getElementById('vj-video');
+  const btn = document.getElementById('vj-play-btn');
+  if (!v) return;
+  if (v.paused) { v.play(); btn.textContent = 'Pausa'; }
+  else          { v.pause(); btn.textContent = 'Play'; }
+}
+
+function vjScrub(val) {
+  const v = document.getElementById('vj-video');
+  if (!v || !v.duration) return;
+  v.currentTime = (val / 1000) * v.duration;
+}
+
+function vjMarkTakeoff() {
+  const v = document.getElementById('vj-video');
+  if (!v || !v.src) { alert('Carga un video primero'); return; }
+  v.pause(); document.getElementById('vj-play-btn').textContent = 'Play';
+  vjState.takeoff = v.currentTime;
+  const fps = getVJFps();
+  document.getElementById('vj-takeoff-disp').textContent =
+    v.currentTime.toFixed(3) + 's  (frame ' + Math.round(v.currentTime * fps) + ')';
+  document.getElementById('vj-btn-takeoff').style.background = 'rgba(57,255,122,.2)';
+  if (vjState.landing !== null) calcVJJump();
+}
+
+function vjMarkLanding() {
+  const v = document.getElementById('vj-video');
+  if (!v || !v.src) { alert('Carga un video primero'); return; }
+  if (vjState.takeoff === null) { alert('Marca primero el Despegue'); return; }
+  if (v.currentTime <= vjState.takeoff) { alert('El aterrizaje debe ser despues del despegue'); return; }
+  v.pause(); document.getElementById('vj-play-btn').textContent = 'Play';
+  vjState.landing = v.currentTime;
+  const fps = getVJFps();
+  document.getElementById('vj-landing-disp').textContent =
+    v.currentTime.toFixed(3) + 's  (frame ' + Math.round(v.currentTime * fps) + ')';
+  document.getElementById('vj-btn-landing').style.background = 'rgba(255,59,59,.2)';
+  calcVJJump();
+}
+
+function calcVJJump() {
+  if (vjState.takeoff === null || vjState.landing === null) return;
+  const t    = vjState.landing - vjState.takeoff;
+  const tMs  = Math.round(t * 1000);
+  const hCm  = ((9.81 * t * t) / 8) * 100;
+  const fps  = getVJFps();
+  const frames = Math.round(t * fps);
+  const c = hCm >= 40 ? 'var(--neon)' : hCm >= 30 ? 'var(--amber)' : 'var(--red)';
+  document.getElementById('vj-result-area').innerHTML =
+    '<div style="background:var(--dark4);border-radius:10px;padding:16px;text-align:center;margin-top:12px">' +
+    '<div style="font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;margin-bottom:6px">Altura calculada</div>' +
+    '<div style="font-family:var(--mono);font-size:48px;font-weight:800;color:' + c + ';line-height:1;text-shadow:0 0 20px ' + c + '33">' + hCm.toFixed(1) + '</div>' +
+    '<div style="font-size:13px;color:var(--text2);margin-top:4px">cm</div>' +
+    '<div style="display:flex;justify-content:center;gap:20px;margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--text2)">' +
+    '<span>Vuelo: <b style="color:' + c + '">' + tMs + 'ms</b></span>' +
+    '<span>Frames: <b style="color:' + c + '">' + frames + '</b></span>' +
+    '<span>FPS: <b>' + fps + '</b></span>' +
+    '</div></div>';
+  // Store for confirm
+  vjState.resultCm = hCm;
+}
+
+function confirmarVJResult() {
+  if (!vjState.resultCm) { alert('Calcula el salto primero'); return; }
+  const h = +vjState.resultCm.toFixed(1);
+  // Write to the correct input (rep1 or specified field)
+  const inp = document.getElementById(vjState.targetField);
+  if (inp) {
+    inp.value = h;
+    inp.dispatchEvent(new Event('input'));
+  }
+  // Also trigger calcSalto
+  const key = vjState.targetKey;
+  if (key) {
+    // find r2id
+    const r2inp = document.getElementById(key + '-r2');
+    calcSalto(key, key + '-r2');
+  }
+  closeModal('modal-vj');
+  showSaveToast();
+}
+
+function vjClearMarkers() {
+  vjState.takeoff = null; vjState.landing = null; vjState.resultCm = null;
+  document.getElementById('vj-takeoff-disp').textContent = '';
+  document.getElementById('vj-landing-disp').textContent = '';
+  document.getElementById('vj-result-area').innerHTML   = '';
+  document.getElementById('vj-btn-takeoff').style.background = '';
+  document.getElementById('vj-btn-landing').style.background = '';
 }
 
 // ══════════════════════════════════════════════════════
