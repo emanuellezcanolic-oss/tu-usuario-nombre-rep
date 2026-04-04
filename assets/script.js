@@ -3121,7 +3121,35 @@ function loadVJVideo(input) {
 }
 
 function getVJFps() {
-  return parseFloat(document.getElementById('vj-fps')?.value || 60);
+  // FPS de grabacion (real)
+  return parseFloat(document.getElementById('vj-fps-grab')?.value || 240);
+}
+
+function getVJFpsRepro() {
+  // FPS de reproduccion del video (normalmente 30)
+  return parseFloat(document.getElementById('vj-fps-repro')?.value || 30);
+}
+
+function getVJSlowFactor() {
+  // Factor de correccion: FPS_repro / FPS_grab
+  // iPhone 240fps grabado pero reproducido a 30fps -> factor 30/240 = 0.125
+  return getVJFpsRepro() / getVJFps();
+}
+
+function vjUpdateFpsInfo() {
+  const grab  = getVJFps();
+  const repro = getVJFpsRepro();
+  const factor = (repro / grab).toFixed(4);
+  const el = document.getElementById('vj-fps-info');
+  if (!el) return;
+  if (grab === repro) {
+    el.textContent = 'Sin slow motion -- tiempo de video = tiempo real';
+    el.style.color = 'var(--text2)';
+  } else {
+    const mult = (grab / repro).toFixed(0);
+    el.textContent = 'Factor correccion: ' + mult + 'x -- cada segundo de video = ' + factor + 's real';
+    el.style.color = 'var(--neon)';
+  }
 }
 
 function updateVJFrameInfo() {
@@ -3161,9 +3189,9 @@ function vjMarkTakeoff() {
   if (!v || !v.src) { alert('Carga un video primero'); return; }
   v.pause(); document.getElementById('vj-play-btn').textContent = 'Play';
   vjState.takeoff = v.currentTime;
-  const fps = getVJFps();
+  const fpsR = getVJFpsRepro();
   document.getElementById('vj-takeoff-disp').textContent =
-    v.currentTime.toFixed(3) + 's  (frame ' + Math.round(v.currentTime * fps) + ')';
+    v.currentTime.toFixed(3) + 's  (frame ' + Math.round(v.currentTime * fpsR) + ')';
   document.getElementById('vj-btn-takeoff').style.background = 'rgba(57,255,122,.2)';
   if (vjState.landing !== null) calcVJJump();
 }
@@ -3175,32 +3203,44 @@ function vjMarkLanding() {
   if (v.currentTime <= vjState.takeoff) { alert('El aterrizaje debe ser despues del despegue'); return; }
   v.pause(); document.getElementById('vj-play-btn').textContent = 'Play';
   vjState.landing = v.currentTime;
-  const fps = getVJFps();
+  const fpsR = getVJFpsRepro();
   document.getElementById('vj-landing-disp').textContent =
-    v.currentTime.toFixed(3) + 's  (frame ' + Math.round(v.currentTime * fps) + ')';
+    v.currentTime.toFixed(3) + 's  (frame ' + Math.round(v.currentTime * fpsR) + ')';
   document.getElementById('vj-btn-landing').style.background = 'rgba(255,59,59,.2)';
   calcVJJump();
 }
 
 function calcVJJump() {
   if (vjState.takeoff === null || vjState.landing === null) return;
-  const t    = vjState.landing - vjState.takeoff;
-  const tMs  = Math.round(t * 1000);
-  const hCm  = ((9.81 * t * t) / 8) * 100;
-  const fps  = getVJFps();
-  const frames = Math.round(t * fps);
+  const tVideo  = vjState.landing - vjState.takeoff; // tiempo en el video (estirado por slow mo)
+  const factor  = getVJSlowFactor();                  // ej: 30/240 = 0.125
+  const tReal   = tVideo * factor;                    // tiempo de vuelo real en segundos
+  const tMs     = Math.round(tReal * 1000);
+  const hCm     = ((9.81 * tReal * tReal) / 8) * 100;
+  const fpsGrab = getVJFps();
+  const fpsRep  = getVJFpsRepro();
+  const framesVideo = Math.round(tVideo * fpsRep);   // frames en el video
+  const framesReal  = Math.round(tReal  * fpsGrab);  // frames reales de vuelo
   const c = hCm >= 40 ? 'var(--neon)' : hCm >= 30 ? 'var(--amber)' : 'var(--red)';
+  const isSlow = fpsGrab !== fpsRep;
   document.getElementById('vj-result-area').innerHTML =
     '<div style="background:var(--dark4);border-radius:10px;padding:16px;text-align:center;margin-top:12px">' +
     '<div style="font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;margin-bottom:6px">Altura calculada</div>' +
     '<div style="font-family:var(--mono);font-size:48px;font-weight:800;color:' + c + ';line-height:1;text-shadow:0 0 20px ' + c + '33">' + hCm.toFixed(1) + '</div>' +
     '<div style="font-size:13px;color:var(--text2);margin-top:4px">cm</div>' +
-    '<div style="display:flex;justify-content:center;gap:20px;margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--text2)">' +
-    '<span>Vuelo: <b style="color:' + c + '">' + tMs + 'ms</b></span>' +
-    '<span>Frames: <b style="color:' + c + '">' + frames + '</b></span>' +
-    '<span>FPS: <b>' + fps + '</b></span>' +
-    '</div></div>';
-  // Store for confirm
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px">' +
+    '<div style="background:rgba(57,255,122,.05);border-radius:6px;padding:8px">' +
+    '<div style="font-family:var(--mono);font-size:8px;color:var(--text3);text-transform:uppercase">Vuelo real</div>' +
+    '<div style="font-family:var(--mono);font-size:16px;font-weight:800;color:' + c + '">' + tMs + 'ms</div></div>' +
+    '<div style="background:rgba(77,158,255,.05);border-radius:6px;padding:8px">' +
+    '<div style="font-family:var(--mono);font-size:8px;color:var(--text3);text-transform:uppercase">Frames video</div>' +
+    '<div style="font-family:var(--mono);font-size:16px;font-weight:800;color:var(--blue)">' + framesVideo + '</div></div>' +
+    '<div style="background:rgba(255,176,32,.05);border-radius:6px;padding:8px">' +
+    '<div style="font-family:var(--mono);font-size:8px;color:var(--text3);text-transform:uppercase">Factor</div>' +
+    '<div style="font-family:var(--mono);font-size:16px;font-weight:800;color:var(--amber)">' + factor.toFixed(4) + 'x</div></div>' +
+    '</div>' +
+    (isSlow ? '<div style="font-family:var(--mono);font-size:9px;color:var(--text2);margin-top:8px;text-align:center">Correccion slow motion aplicada: ' + fpsGrab + 'fps grabacion / ' + fpsRep + 'fps reproduccion</div>' : '') +
+    '</div>';
   vjState.resultCm = hCm;
 }
 
