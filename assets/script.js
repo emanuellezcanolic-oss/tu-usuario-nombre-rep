@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════
-//  MoveMetrics v12 -- JavaScript completo
+//  MoveMetrics v12 -- JavaScript completo (CORREGIDO)
 // ══════════════════════════════════════════════════════════════
 
 // ── API KEY MANAGER ──
@@ -18,6 +18,10 @@ function hasApiKey() {
   return !!getApiKey();
 }
 
+// Exponer funciones de API key globalmente
+window.saveApiKey = saveApiKey;
+window.clearApiKey = clearApiKey;
+
 function showApiKeyModal() {
   const existing = getApiKey();
   const modal = document.createElement('div');
@@ -25,37 +29,61 @@ function showApiKeyModal() {
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px)';
   modal.innerHTML = `
     <div style="background:#0f0f0f;border:1px solid rgba(57,255,122,.25);border-radius:16px;padding:32px 28px;width:100%;max-width:420px;margin:16px">
-      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#39FF7A;letter-spacing:.12em;margin-bottom:8px;text-transform:uppercase">∧ MoveMetrics</div>
-      <div style="font-size:20px;font-weight:700;margin-bottom:6px;color:#f0f0f0">API Key de Anthropic</div>
+      <div style="font-family:"JetBrains Mono",monospace;font-size:11px;color:#39FF7A;letter-spacing:.12em;margin-bottom:8px;text-transform:uppercase">∧ MoveMetrics</div>
+      <div style="font-size:20px;font-weight:700;margin-bottom:6px;color:#f0f0f0">API Key de Groq</div>
       <div style="font-size:13px;color:#888;margin-bottom:20px;line-height:1.6">
         Ingresá tu API Key para generar informes con IA.<br>
         Se guarda <b style="color:#f0f0f0">solo en tu navegador</b> -- nunca se sube a ningún servidor.
       </div>
       <input id="api-key-input" type="password"
-        placeholder="sk-ant-api03-..."
+        placeholder="gsk_..."
         value="${existing}"
-        style="width:100%;background:#141414;border:1px solid rgba(57,255,122,.2);border-radius:8px;color:#f0f0f0;padding:10px 14px;font-size:13px;font-family:'JetBrains Mono',monospace;outline:none;margin-bottom:8px;box-sizing:border-box"
+        style="width:100%;background:#141414;border:1px solid rgba(57,255,122,.2);border-radius:8px;color:#f0f0f0;padding:10px 14px;font-size:13px;font-family:"JetBrains Mono",monospace;outline:none;margin-bottom:8px;box-sizing:border-box"
       >
-      <div style="font-size:11px;color:#3a3a3a;margin-bottom:16px;font-family:'JetBrains Mono',monospace">
+      <div style="font-size:11px;color:#3a3a3a;margin-bottom:16px;font-family:"JetBrains Mono",monospace">
         Obtené tu key gratis en console.groq.com → API Keys
       </div>
       <div style="display:flex;gap:10px">
-        <button onclick="
-          const k=document.getElementById('api-key-input').value.trim();
-          if(!k){alert('Ingresá una API Key');return;}
-          saveApiKey(k);
-          document.getElementById('api-key-modal').remove();
-          showSaveToast();
-        " style="flex:1;background:#39FF7A;color:#000;border:none;border-radius:8px;padding:11px;font-weight:700;font-size:13px;cursor:pointer">
+        <button id="api-key-save-btn" style="flex:1;background:#39FF7A;color:#000;border:none;border-radius:8px;padding:11px;font-weight:700;font-size:13px;cursor:pointer">
           Guardar y continuar
         </button>
-        ${existing ? `<button onclick="document.getElementById('api-key-modal').remove()" style="background:#1c1c1c;color:#888;border:1px solid #252525;border-radius:8px;padding:11px 16px;font-size:13px;cursor:pointer">Cancelar</button>` : ''}
+        ${existing ? `<button id="api-key-cancel-btn" style="background:#1c1c1c;color:#888;border:1px solid #252525;border-radius:8px;padding:11px 16px;font-size:13px;cursor:pointer">Cancelar</button>` : ''}
       </div>
-      ${existing ? `<div style="text-align:center;margin-top:12px"><button onclick="clearApiKey();document.getElementById('api-key-input').value=''" style="background:none;border:none;color:#3a3a3a;font-size:11px;cursor:pointer;text-decoration:underline">Borrar key guardada</button></div>` : ''}
+      ${existing ? `<div style="text-align:center;margin-top:12px"><button id="api-key-clear-btn" style="background:none;border:none;color:#3a3a3a;font-size:11px;cursor:pointer;text-decoration:underline">Borrar key guardada</button></div>` : ''}
     </div>`;
   document.body.appendChild(modal);
+  
+  // Bind eventos después de agregar al DOM
+  const saveBtn = document.getElementById('api-key-save-btn');
+  if (saveBtn) {
+    saveBtn.onclick = function() {
+      const k = document.getElementById('api-key-input').value.trim();
+      if (!k) { alert('Ingresá una API Key'); return; }
+      saveApiKey(k);
+      document.getElementById('api-key-modal').remove();
+      showSaveToast();
+    };
+  }
+  const cancelBtn = document.getElementById('api-key-cancel-btn');
+  if (cancelBtn) {
+    cancelBtn.onclick = function() {
+      document.getElementById('api-key-modal').remove();
+    };
+  }
+  const clearBtn = document.getElementById('api-key-clear-btn');
+  if (clearBtn) {
+    clearBtn.onclick = function() {
+      clearApiKey();
+      const inp = document.getElementById('api-key-input');
+      if (inp) inp.value = '';
+    };
+  }
+  
   setTimeout(() => document.getElementById('api-key-input')?.focus(), 100);
 }
+
+// Exponer showApiKeyModal globalmente
+window.showApiKeyModal = showApiKeyModal;
 
 // ── DATOS GLOBALES ──
 let atletas = JSON.parse(localStorage.getItem('mm_v12_atletas') || '[]');
@@ -330,6 +358,9 @@ function showPage(id) {
   }
 }
 
+// Exponer showPage globalmente
+window.showPage = showPage;
+
 function showProfileTab(tab, btn) {
   const tabs = ['dashboard','kinesio','fuerza','saltos','movilidad','velocidad','fms','fatiga','video','vmp','historial'];
   tabs.forEach(t => document.getElementById('ptab-' + t)?.classList.toggle('hidden', t !== tab));
@@ -355,8 +386,16 @@ function showProfileTab(tab, btn) {
   }
 }
 
+// Exponer showProfileTab globalmente
+window.showProfileTab = showProfileTab;
+
 function openModal(id)  { document.getElementById(id).classList.add('open');    document.body.style.overflow = 'hidden'; }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
+
+// Exponer funciones de modal globalmente
+window.openModal = openModal;
+window.closeModal = closeModal;
+
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.modal').forEach(m =>
     m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); })
@@ -380,6 +419,10 @@ function showSaveToast() {
   t._timer = setTimeout(() => t.style.opacity = '0', 2000);
 }
 
+// Exponer funciones de persistencia globalmente
+window.saveData = saveData;
+window.showSaveToast = showSaveToast;
+
 // ══════════════════════════════════════════════════════
 //  ATLETAS CRUD
 // ══════════════════════════════════════════════════════
@@ -390,10 +433,15 @@ function setSvc(v) {
   document.getElementById('svc-kine').className = 'btn btn-full ' + (v === 'kinesio'     ? 'btn-neon' : 'btn-ghost');
 }
 
+// Exponer setSvc globalmente
+window.setSvc = setSvc;
+
 function checkRugby() {
   const d = document.getElementById('s-deporte').value;
   document.getElementById('rugby-sec').classList.toggle('hidden', d !== 'Rugby');
 }
+
+window.checkRugby = checkRugby;
 
 function previewFormPhoto(input) {
   if (!input.files.length) return;
@@ -405,6 +453,8 @@ function previewFormPhoto(input) {
   };
   reader.readAsDataURL(input.files[0]);
 }
+
+window.previewFormPhoto = previewFormPhoto;
 
 function updateProfilePhoto(input) {
   if (!input.files.length || !cur) return;
@@ -418,6 +468,8 @@ function updateProfilePhoto(input) {
   };
   reader.readAsDataURL(input.files[0]);
 }
+
+window.updateProfilePhoto = updateProfilePhoto;
 
 function prepNewAtleta() {
   document.getElementById('form-title').textContent = 'Nuevo atleta';
@@ -433,6 +485,8 @@ function prepNewAtleta() {
   const prev = document.getElementById('form-photo-prev'); if (prev) prev.innerHTML = '👤';
   _pendingPhoto = null;
 }
+
+window.prepNewAtleta = prepNewAtleta;
 
 function editAtletaById(id) {
   const s = atletas.find(a => a.id === id); if (!s) return;
@@ -455,6 +509,8 @@ function editAtletaById(id) {
   _pendingPhoto = null;
   openModal('modal-atleta-form');
 }
+
+window.editAtletaById = editAtletaById;
 
 function saveAtleta() {
   const nombre = document.getElementById('s-nombre').value.trim();
@@ -492,6 +548,8 @@ function saveAtleta() {
   if (cur?.id === data.id) renderProfileHero();
 }
 
+window.saveAtleta = saveAtleta;
+
 function deleteAtleta(id, ev) {
   ev?.stopPropagation();
   if (!confirm('¿Eliminar este atleta y todos sus datos?')) return;
@@ -499,6 +557,8 @@ function deleteAtleta(id, ev) {
   if (cur?.id === id) { cur = null; showPage('atletas'); }
   saveData(); renderAtletas();
 }
+
+window.deleteAtleta = deleteAtleta;
 
 function selectAtleta(id) {
   cur = atletas.find(a => a.id === id);
@@ -510,6 +570,8 @@ function selectAtleta(id) {
   showPage('tests');
   showProfileTab('dashboard', document.querySelector('.ptab'));
 }
+
+window.selectAtleta = selectAtleta;
 
 function renderAtletas() {
   const grid = document.getElementById('atletas-grid');
@@ -563,6 +625,8 @@ function renderAtletas() {
   }).join('');
 }
 
+window.renderAtletas = renderAtletas;
+
 function filterAtletas(q) {
   const f = atletas.filter(s =>
     s.nombre.toLowerCase().includes(q.toLowerCase()) ||
@@ -575,6 +639,8 @@ function filterAtletas(q) {
       <div><div style="font-size:14px;font-weight:700">${s.nombre}</div><div style="font-size:11px;color:var(--text2)">${s.deporte || '--'}</div></div></div>
     </div>`).join('');
 }
+
+window.filterAtletas = filterAtletas;
 
 // ══════════════════════════════════════════════════════
 //  PROFILE HERO
@@ -642,6 +708,8 @@ function renderProfileHero() {
   }
 }
 
+window.renderProfileHero = renderProfileHero;
+
 function getLastEval(type) {
   if (!cur) return null;
   return Object.entries(cur.evals || {})
@@ -662,6 +730,8 @@ function renderDashboard() {
   renderDashFatiga();
   renderDashTimeline();
 }
+
+window.renderDashboard = renderDashboard;
 
 function renderRadar() {
   const s = cur; if (!s) return;
@@ -940,6 +1010,8 @@ function renderHistorial() {
     </div>`).join('') + '</div>';
 }
 
+window.renderHistorial = renderHistorial;
+
 // ══════════════════════════════════════════════════════
 //  F-V MODULE
 // ══════════════════════════════════════════════════════
@@ -957,6 +1029,8 @@ function addFVRow() {
   wrap.appendChild(row);
 }
 
+window.addFVRow = addFVRow;
+
 function onFvEjChange() {
   const newEj = document.getElementById('fv-ej')?.value;
   if (_lastFvEj && _lastFvEj !== newEj) {
@@ -968,6 +1042,8 @@ function onFvEjChange() {
   _lastFvEj = newEj;
   renderFVHist();
 }
+
+window.onFvEjChange = onFvEjChange;
 
 function calcFV() {
   if (!cur) { alert('Seleccioná un atleta'); return; }
@@ -1022,7 +1098,7 @@ function calcFV() {
   const pcts = [100,95,90,85,80,75,70,65,60,55,50];
   document.getElementById('fv-pct-table').innerHTML = pcts.map(p => {
     const load = oneRM ? (oneRM*p/100) : null; const vmp = load ? (a+b*load) : null; const ok = vmp && vmp > 0;
-    return `<tr><td class="mono-cell">${p}%</td><td class="mono-cell">${load?load.toFixed(1):'--'}</td><td class="mono-cell" style="color:${ok?'var(--neon)':'var(--text3)'}">${ok?vmp.toFixed(3):'--'}</td></tr>`;
+    return `<td><td class="mono-cell">${p}%</td><td class="mono-cell">${load?load.toFixed(1):'--'}</td><td class="mono-cell" style="color:${ok?'var(--neon)':'var(--text3)'}">${ok?vmp.toFixed(3):'--'}</td></tr>`;
   }).join('');
   // Save
   const evalIdx = document.getElementById('fv-eval-num')?.value || '0';
@@ -1039,6 +1115,8 @@ function calcFV() {
   renderDashSemaforos();
   renderProfileHero();
 }
+
+window.calcFV = calcFV;
 
 function renderFVHist() {
   if (!cur) return;
@@ -1059,6 +1137,8 @@ function renderFVHist() {
       return `<tr><td class="mono-cell">${e.evalN}ra</td><td>${e.fecha||'--'}</td><td class="mono-cell text-neon">${e.oneRM?.toFixed(1)||'--'}</td><td class="mono-cell" style="color:${frC}">${fr}×PC</td><td class="mono-cell ${e.r2>=0.99?'text-neon':e.r2>=0.95?'text-amber':'text-red'}">${e.r2?.toFixed(4)||'--'}</td><td class="mono-cell">${e.V0?.toFixed(3)||'--'}</td></tr>`;
     }).join('') + '</tbody></table>';
 }
+
+window.renderFVHist = renderFVHist;
 
 // ══════════════════════════════════════════════════════
 //  SALTOS
@@ -1166,6 +1246,8 @@ function calcMultiSalto15() {
   }
   calcBoscoIndices();
 }
+
+window.calcMultiSalto15 = calcMultiSalto15;
 
 function buildSaltosGrid() {
   const grid = document.getElementById('saltos-grid'); if (!grid) return;
@@ -1374,6 +1456,8 @@ function buildSaltosGrid() {
   grid.innerHTML = html;
 }
 
+window.buildSaltosGrid = buildSaltosGrid;
+
 function calcSalto(key, r2id) {
   const r1 = +document.getElementById(key + '-r1')?.value || 0;
   const r2 = +document.getElementById(r2id)?.value || 0;
@@ -1400,12 +1484,16 @@ function calcSalto(key, r2id) {
   calcBoscoIndices();
 }
 
+window.calcSalto = calcSalto;
+
 function calcImpulso() {
   const avg = parseFloat(document.getElementById('bj-avg')?.dataset.val) || 0;
   const pc = +document.getElementById('bj-pc')?.value || 0;
   const el = document.getElementById('bj-imp');
   if (el && avg && pc) el.textContent = ((avg/100)*pc).toFixed(2);
 }
+
+window.calcImpulso = calcImpulso;
 
 function calcSimetriaHop(key) {
   const dr1 = +document.getElementById(key+'-d-r1')?.value||0, dr2 = +document.getElementById(key+'-d-r2')?.value||0;
@@ -1465,6 +1553,8 @@ function calcSimetriaHop(key) {
   renderSimetriasTabla();
 }
 
+window.calcSimetriaHop = calcSimetriaHop;
+
 function checkMejoraSalto(key, curVal) {
   if (!cur || !curVal) return;
   const evalIdx = +document.getElementById('saltos-eval-num')?.value || 0;
@@ -1505,6 +1595,7 @@ function renderSimetriasTabla() {
   area.innerHTML = `<table class="data-table"><thead><tr><th>Test</th><th>Derecha</th><th>Izquierda</th><th>LSI %</th><th>Asim. %</th><th>Estado</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
 }
 
+window.renderSimetriasTabla = renderSimetriasTabla;
 
 function calcSideHop() {
   const vD = +document.getElementById('sideh-d-r1')?.value || 0;
@@ -1535,6 +1626,8 @@ function calcSideHop() {
   renderSimetriasTabla();
 }
 
+window.calcSideHop = calcSideHop;
+
 function saveSaltos() {
   if (!cur) { alert('Seleccioná un atleta'); return; }
   const evalIdx = document.getElementById('saltos-eval-num').value;
@@ -1561,6 +1654,8 @@ function saveSaltos() {
   saveData();
   renderProfileHero();
 }
+
+window.saveSaltos = saveSaltos;
 
 // ══════════════════════════════════════════════════════
 //  MOVILIDAD
@@ -1594,6 +1689,8 @@ function onMov() {
   if (cur) { cur.lungeD=ld;cur.lungeI=li;cur.tromCadD=tromCadD;cur.tromCadI=tromCadI;cur.tromHomD=tromHomD;cur.tromHomI=tromHomI; }
   renderMovSemaforos(ld,li,tromCadD,tromCadI,tromHomD,tromHomI);
 }
+
+window.onMov = onMov;
 
 function renderMovSemaforos(ld,li,tcd,tci,thd,thi) {
   const area = document.getElementById('mov-semaforos'); if (!area) return;
@@ -1665,6 +1762,8 @@ function redrawGauges(){
   drawGauge('g-tcd',riD+reD,0,120,'trom'); drawGauge('g-tci',riI+reI,0,120,'trom');
 }
 
+window.redrawGauges = redrawGauges;
+
 function saveMov(){
   if(!cur)return;
   const evalIdx=document.getElementById('mov-eval-num').value;
@@ -1683,6 +1782,8 @@ function saveMov(){
   cur.lungeD=ld;cur.lungeI=li;cur.tromCadD=riD+reD;cur.tromCadI=riI+reI;cur.tromHomD=riHD+reHD;cur.tromHomI=riHI+reHI;
   atletas=atletas.map(a=>a.id===cur.id?cur:a);saveData();
 }
+
+window.saveMov = saveMov;
 
 // ══════════════════════════════════════════════════════
 //  VELOCIDAD / SPRINT
@@ -1709,6 +1810,8 @@ function calcSprintBench(){
   html+='</div></div>';area.innerHTML=html;
 }
 
+window.calcSprintBench = calcSprintBench;
+
 function saveSprint(){
   if(!cur)return;
   const evalIdx=document.getElementById('sprint-eval-num').value;
@@ -1717,6 +1820,8 @@ function saveSprint(){
   cur.evals['sprint_'+evalIdx]={sp10:+document.getElementById('sp-10').value||null,sp20:+document.getElementById('sp-20').value||null,sp30:+document.getElementById('sp-30').value||null,vmax:+document.getElementById('sp-vmax').value||null,ttest:+document.getElementById('sp-ttest').value||null,d505:+document.getElementById('sp-505d').value||null,i505:+document.getElementById('sp-505i').value||null,fecha};
   atletas=atletas.map(a=>a.id===cur.id?cur:a);saveData();
 }
+
+window.saveSprint = saveSprint;
 
 // ══════════════════════════════════════════════════════
 //  FMS -- CALIDAD DE MOVIMIENTO
@@ -1736,6 +1841,8 @@ function loadSlot(input,slotId){
   reader.readAsDataURL(input.files[0]);
 }
 
+window.loadSlot = loadSlot;
+
 function setFMS(btn,type){
   btn.parentElement.querySelectorAll('.fms-btn').forEach(b=>{b.classList.remove('yes','no');});
   btn.classList.add(type);
@@ -1753,6 +1860,8 @@ function setFMS(btn,type){
   });
 }
 
+window.setFMS = setFMS;
+
 function calcValgo(){
   const d=+document.getElementById('valgo-d')?.value||0,i=+document.getElementById('valgo-i')?.value||0;
   const el=document.getElementById('valgo-result');if(!el)return;
@@ -1761,6 +1870,8 @@ function calcValgo(){
   if(i)parts.push(`I: <b style="color:${i>10?'var(--red)':'var(--neon)'}">${i}°</b> ${i>10?'⚠️ >10°':''}`);
   el.innerHTML=`<div style="font-size:12px;margin-top:8px">${parts.join(' · ')}</div>`;
 }
+
+window.calcValgo = calcValgo;
 
 function saveFMS(){
   if(!cur)return;
@@ -1771,6 +1882,8 @@ function saveFMS(){
   cur.evals['fms_'+fecha]={fecha,ohs:{criterios:ohsCriterios,obs:document.getElementById('ohs-obs')?.value},sd:{criterios:sdCriterios,valgoD:+document.getElementById('valgo-d')?.value||0,valgoI:+document.getElementById('valgo-i')?.value||0,obs:document.getElementById('sd-obs')?.value}};
   atletas=atletas.map(a=>a.id===cur.id?cur:a);saveData();
 }
+
+window.saveFMS = saveFMS;
 
 // ══════════════════════════════════════════════════════
 //  FATIGA
@@ -1792,6 +1905,8 @@ function buildHooperFields(){
     <div id="hooper-status" style="font-size:11px;color:var(--text2);margin-top:4px">--</div>
   </div>`;
 }
+
+window.buildHooperFields = buildHooperFields;
 
 function calcFatiga(){
   const ids=['fat-h-sueno','fat-h-estres','fat-h-fatiga','fat-h-doms'];
@@ -1819,6 +1934,8 @@ function calcFatiga(){
   if(rc)rc.textContent=score>=80?'Podés realizar la sesión planificada.':score>=60?'Reducí volumen un 20-30%. Priorizá técnica.':'Descanso activo. No entrenamiento intenso hoy.';
 }
 
+window.calcFatiga = calcFatiga;
+
 function saveFatiga(){
   if(!cur){alert('Seleccioná un atleta');return;}
   const fecha=document.getElementById('fat-fecha').value||new Date().toISOString().split('T')[0];
@@ -1827,6 +1944,8 @@ function saveFatiga(){
   cur.evals['fatiga_'+fecha]={hooper,hrv:+document.getElementById('fat-hrv')?.value||null,hrvBase:+document.getElementById('fat-hrv-base')?.value||null,fecha};
   atletas=atletas.map(a=>a.id===cur.id?cur:a);saveData();
 }
+
+window.saveFatiga = saveFatiga;
 
 // ══════════════════════════════════════════════════════
 //  KINESIO MODULE
@@ -1853,6 +1972,8 @@ function initKinesio(){
   setBodyView('front');
   if(!document.getElementById('kine-fecha').value){document.getElementById('kine-fecha').value=new Date().toISOString().split('T')[0];}
 }
+
+window.initKinesio = initKinesio;
 
 function buildOrthoPanels(){
   buildOrthoPanel('tp-subacro',           ORTHO_TESTS.subacro);
@@ -1977,6 +2098,8 @@ function setOrthoTest(id,result){
   }
   updateKinePositivos();
 }
+
+window.setOrthoTest = setOrthoTest;
 
 function updateKinePositivos(){
   const allTests=[...ORTHO_TESTS.subacro,...ORTHO_TESTS.manguito,...ORTHO_TESTS.biceps,...ORTHO_TESTS.ligamentos,...ORTHO_TESTS.meniscos,...ORTHO_TESTS.funcionales,...ORTHO_TESTS.tobillo,...ORTHO_TESTS.lumbar,...ORTHO_TESTS.cadera,...ORTHO_TESTS.dohaAductores,...ORTHO_TESTS.dohaPsoas,...ORTHO_TESTS.dohaInguinal,...ORTHO_TESTS.dohaComplementarios,...ORTHO_TESTS.cervicalNeural,...ORTHO_TESTS.cervicalArticular,...ORTHO_TESTS.cervicalMuscular,...ORTHO_TESTS.codoLateral,...ORTHO_TESTS.codoMedial,...ORTHO_TESTS.codoLigamentos,...ORTHO_TESTS.patelo,...ORTHO_TESTS.tendonesRodilla,...ORTHO_TESTS.pie,...ORTHO_TESTS.muneca];
@@ -2121,6 +2244,8 @@ function saveKinesio(){
   renderProfileHero();
 }
 
+window.saveKinesio = saveKinesio;
+
 // ══════════════════════════════════════════════════════
 //  INFORME IA + PDF
 // ══════════════════════════════════════════════════════
@@ -2130,6 +2255,8 @@ function openInformeIA(){
   openModal('modal-informe');
   regenerarInforme();
 }
+
+window.openInformeIA = openInformeIA;
 
 async function regenerarInforme(){
   const s=cur;if(!s)return;
@@ -2217,6 +2344,8 @@ Incluir: 1RM/PC, CMJ, LSI, Lunge, TROM. Usá | para separar columnas]
   }
 }
 
+window.regenerarInforme = regenerarInforme;
+
 function exportarPDF(){
   const{jsPDF}=window.jspdf;if(!jsPDF){alert('Error al cargar jsPDF');return;}
   const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
@@ -2276,12 +2405,15 @@ function exportarPDF(){
   doc.save(`MoveMetrics_${s.nombre.replace(/\s/g,'_')}_${new Date().toISOString().split('T')[0]}.pdf`);
 }
 
+window.exportarPDF = exportarPDF;
+
 function exportAllData(){
   const blob=new Blob([JSON.stringify(atletas,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
   a.href=url;a.download='movemetrics_data_'+new Date().toISOString().split('T')[0]+'.json';a.click();URL.revokeObjectURL(url);
 }
 
+window.exportAllData = exportAllData;
 
 // ══════════════════════════════════════════════════════
 //  VIDEO SALTO -- Módulo de salto vertical por video
@@ -2322,6 +2454,8 @@ function onFpsChange() {
   }
 }
 
+window.onFpsChange = onFpsChange;
+
 function loadVideo(input) {
   if (!input.files.length) return;
   const file = input.files[0];
@@ -2343,6 +2477,8 @@ function loadVideo(input) {
   video.addEventListener('timeupdate', updateVideoUI);
 }
 
+window.loadVideo = loadVideo;
+
 function handleVideoDrop(e) {
   e.preventDefault();
   const file = e.dataTransfer.files[0];
@@ -2353,6 +2489,8 @@ function handleVideoDrop(e) {
   input.files = dt.files;
   loadVideo(input);
 }
+
+window.handleVideoDrop = handleVideoDrop;
 
 function updateVideoUI() {
   const video = document.getElementById('video-player');
@@ -2392,11 +2530,15 @@ function jumpFrames(n) {
   setTimeout(updateVideoUI, 50);
 }
 
+window.jumpFrames = jumpFrames;
+
 function scrubVideo(val) {
   const video = document.getElementById('video-player');
   if (!video || !video.duration) return;
   video.currentTime = (val / 1000) * video.duration;
 }
+
+window.scrubVideo = scrubVideo;
 
 function togglePlay() {
   const video = document.getElementById('video-player');
@@ -2405,6 +2547,8 @@ function togglePlay() {
   if (video.paused) { video.play(); btn.textContent = '⏸'; }
   else { video.pause(); btn.textContent = '▶'; }
 }
+
+window.togglePlay = togglePlay;
 
 function markTakeoff() {
   const video = document.getElementById('video-player');
@@ -2421,6 +2565,8 @@ function markTakeoff() {
   updateVideoUI();
   if (videoState.landingTime !== null) calcVideoJump();
 }
+
+window.markTakeoff = markTakeoff;
 
 function markLanding() {
   const video = document.getElementById('video-player');
@@ -2439,6 +2585,8 @@ function markLanding() {
   updateVideoUI();
   calcVideoJump();
 }
+
+window.markLanding = markLanding;
 
 function calcVideoJump() {
   if (videoState.takeoffTime === null || videoState.landingTime === null) return;
@@ -2492,6 +2640,8 @@ function clearMarkers() {
   ['bar-takeoff','bar-landing'].forEach(id => { const e=document.getElementById(id); if(e) e.style.display='none'; });
 }
 
+window.clearMarkers = clearMarkers;
+
 function saveVideoSalto() {
   if (!cur) { alert('Seleccioná un atleta'); return; }
   if (!videoState.result) { alert('Calculá un salto primero'); return; }
@@ -2512,6 +2662,7 @@ function saveVideoSalto() {
   showSaveToast();
 }
 
+window.saveVideoSalto = saveVideoSalto;
 
 function saveFuncTests() {
   if (!cur) return;
@@ -2528,6 +2679,7 @@ function saveFuncTests() {
   renderRadar();
 }
 
+window.saveFuncTests = saveFuncTests;
 
 // ========================================================
 //  GONIOMETRO INTERACTIVO
@@ -2567,6 +2719,8 @@ function iniciarGoniometro(testId, testNombre, maxAngulo) {
   }
   openModal('modal-goniometro');
 }
+
+window.iniciarGoniometro = iniciarGoniometro;
 
 function manejarOrientacion(event) {
   if (!goniometroActivo || goniometroCongelado) return;
@@ -2628,6 +2782,8 @@ function toggleCongelarGonio() {
   }
 }
 
+window.toggleCongelarGonio = toggleCongelarGonio;
+
 function reiniciarGoniometro() {
   goniometroCongelado = false; anguloActual = 0; calibrado = false; anguloOffset = 0;
   document.getElementById('btn-congelar-gonio').textContent = 'Congelar';
@@ -2637,6 +2793,8 @@ function reiniciarGoniometro() {
   document.getElementById('lectura-actual').textContent = '0.0deg';
   dibujarGoniometro(0); actualizarFlecha(0);
 }
+
+window.reiniciarGoniometro = reiniciarGoniometro;
 
 function confirmarGoniometro() {
   if (!cur || !testEnCurso) return;
@@ -2657,11 +2815,12 @@ function confirmarGoniometro() {
   saveData(); detenerGoniometro(); closeModal('modal-goniometro');
 }
 
+window.confirmarGoniometro = confirmarGoniometro;
+
 function detenerGoniometro() {
   goniometroActivo = false;
   window.removeEventListener('deviceorientation', manejarOrientacion);
 }
-
 
 // ========================================================
 //  VMP -- ENCODER DE BARRA POR VIDEO
@@ -2713,6 +2872,8 @@ function loadVMPVideo(input) {
   video.addEventListener('timeupdate', updateVMPFrameInfo);
 }
 
+window.loadVMPVideo = loadVMPVideo;
+
 function resizeVMPCanvas() {
   const video  = document.getElementById('vmp-video');
   const canvas = document.getElementById('vmp-canvas');
@@ -2748,6 +2909,8 @@ function vmpJump(n) {
   setTimeout(updateVMPFrameInfo, 50);
 }
 
+window.vmpJump = vmpJump;
+
 function vmpTogglePlay() {
   const video = document.getElementById('vmp-video');
   const btn   = document.getElementById('vmp-play-btn');
@@ -2756,17 +2919,23 @@ function vmpTogglePlay() {
   else { video.pause(); btn.textContent = '▶'; }
 }
 
+window.vmpTogglePlay = vmpTogglePlay;
+
 function vmpScrub(val) {
   const video = document.getElementById('vmp-video');
   if (!video || !video.duration) return;
   video.currentTime = (val / 1000) * video.duration;
 }
 
+window.vmpScrub = vmpScrub;
+
 function onVmpConfig() {
   vmpState.ejercicio = document.getElementById('vmp-ejercicio')?.value || 'sentadilla';
   vmpState.carga     = parseFloat(document.getElementById('vmp-carga')?.value) || null;
   updateVMPRefTable();
 }
+
+window.onVmpConfig = onVmpConfig;
 
 function setVMPFase(fase) {
   vmpState.fase = fase;
@@ -2786,6 +2955,8 @@ function setVMPFase(fase) {
   }
 }
 
+window.setVMPFase = setVMPFase;
+
 // ── CALIBRACION ──
 function iniciarCalibracion() {
   const video = document.getElementById('vmp-video');
@@ -2804,6 +2975,8 @@ function iniciarCalibracion() {
     '<b style="color:var(--neon)">Tip:</b> Usa las placas del disco como referencia (ej: 45cm de diametro)</div>';
   canvas.onclick = handleVMPCalibrationClick;
 }
+
+window.iniciarCalibracion = iniciarCalibracion;
 
 function handleVMPCalibrationClick(e) {
   const canvas = document.getElementById('vmp-canvas');
@@ -2867,6 +3040,8 @@ function startVMPTracking() {
   canvas.ontouchend   = handleVMPTouchEnd;
 }
 
+window.startVMPTracking = startVMPTracking;
+
 function stopVMPTracking() {
   vmpState.tracking = false;
   const canvas = document.getElementById('vmp-canvas');
@@ -2877,6 +3052,8 @@ function stopVMPTracking() {
   document.getElementById('vmp-tracking-status').textContent = 'Procesando...';
   calcVMPResult();
 }
+
+window.stopVMPTracking = stopVMPTracking;
 
 function getCanvasPoint(e, canvas) {
   const rect   = canvas.getBoundingClientRect();
@@ -2929,6 +3106,8 @@ function undoLastVMPPoint() {
   redrawVMPCanvas();
 }
 
+window.undoLastVMPPoint = undoLastVMPPoint;
+
 function clearVMPTracking() {
   vmpState.points = []; vmpState.calPoints = [];
   vmpState.tracking = false; vmpState.calibrating = false;
@@ -2943,6 +3122,8 @@ function clearVMPTracking() {
   redrawVMPCanvas();
   if (vmpState.velocityChart) { vmpState.velocityChart.destroy(); vmpState.velocityChart = null; }
 }
+
+window.clearVMPTracking = clearVMPTracking;
 
 // ── DIBUJO CANVAS ──
 function redrawVMPCanvas() {
@@ -3004,7 +3185,8 @@ function updateVMPPointsTable() {
         '<td style="padding:3px 6px;color:var(--text2)">' + (idx+1) + '</td>' +
         '<td style="text-align:center;color:var(--neon)">' + pt.frame + '</td>' +
         '<td style="text-align:center;color:var(--amber)">' + Math.round(pt.y) + '</td>' +
-        '<td style="text-align:center;color:var(--text2)">' + pt.t.toFixed(3) + '</td></tr>';
+        '<td style="text-align:center;color:var(--text2)">' + pt.t.toFixed(3) + '</td>' +
+        '</tr>';
     }).join('') + '</table>';
 }
 
@@ -3184,6 +3366,7 @@ function saveVMPResult() {
     '<span style="color:var(--neon)">Guardado en el perfil del atleta!</span>';
 }
 
+window.saveVMPResult = saveVMPResult;
 
 // ========================================================
 //  VIDEO JUMP MODAL -- Reutilizable para cualquier test
@@ -3219,6 +3402,8 @@ function abrirVideoJump(key, field) {
   openModal('modal-vj');
 }
 
+window.abrirVideoJump = abrirVideoJump;
+
 function loadVJVideo(input) {
   if (!input.files.length) return;
   const url = URL.createObjectURL(input.files[0]);
@@ -3234,6 +3419,8 @@ function loadVJVideo(input) {
   v.addEventListener('timeupdate', updateVJFrameInfo);
 }
 
+window.loadVJVideo = loadVJVideo;
+
 function getVJFps() {
   // FPS de grabacion (real)
   return parseFloat(document.getElementById('vj-fps-grab')?.value || 240);
@@ -3243,7 +3430,6 @@ function getVJFpsRepro() {
   // FPS de reproduccion del video (normalmente 30)
   return parseFloat(document.getElementById('vj-fps-repro')?.value || 30);
 }
-
 
 function setVJMode(mode) {
   document.getElementById('vj-mode-auto').style.display     = mode === 'auto'     ? 'block' : 'none';
@@ -3256,6 +3442,8 @@ function setVJMode(mode) {
   document.getElementById('vj-mode-btn-cal').style.color = mode === 'calibrar' ? 'var(--amber)' : '';
   vjState.calMode = mode;
 }
+
+window.setVJMode = setVJMode;
 
 function vjCalibrar() {
   const hReal  = parseFloat(document.getElementById('vj-cal-altura')?.value) || 0;
@@ -3270,6 +3458,8 @@ function vjCalibrar() {
   el.textContent = 'Factor calibrado: ' + factor.toFixed(4) + ' -- t_real = t_video x ' + factor.toFixed(4);
   el.style.color = 'var(--neon)';
 }
+
+window.vjCalibrar = vjCalibrar;
 
 // Presets: { grab, repro, factor, label, tip }
 const VJ_PRESETS = [
@@ -3296,6 +3486,8 @@ function setVJFps(presetId, btn) {
     tipEl.style.color = preset.factor === 1.0 ? 'var(--neon)' : 'var(--amber)';
   }
 }
+
+window.setVJFps = setVJFps;
 
 function getVJFps() {
   return vjState.fpsPreset ? vjState.fpsPreset.grab : 30;
@@ -3329,6 +3521,8 @@ function vjJump(n) {
   setTimeout(updateVJFrameInfo, 40);
 }
 
+window.vjJump = vjJump;
+
 function vjTogglePlay() {
   const v   = document.getElementById('vj-video');
   const btn = document.getElementById('vj-play-btn');
@@ -3337,11 +3531,15 @@ function vjTogglePlay() {
   else          { v.pause(); btn.textContent = 'Play'; }
 }
 
+window.vjTogglePlay = vjTogglePlay;
+
 function vjScrub(val) {
   const v = document.getElementById('vj-video');
   if (!v || !v.duration) return;
   v.currentTime = (val / 1000) * v.duration;
 }
+
+window.vjScrub = vjScrub;
 
 function vjMarkTakeoff() {
   const v = document.getElementById('vj-video');
@@ -3354,6 +3552,8 @@ function vjMarkTakeoff() {
   document.getElementById('vj-btn-takeoff').style.background = 'rgba(57,255,122,.2)';
   if (vjState.landing !== null) calcVJJump();
 }
+
+window.vjMarkTakeoff = vjMarkTakeoff;
 
 function vjMarkLanding() {
   const v = document.getElementById('vj-video');
@@ -3368,6 +3568,8 @@ function vjMarkLanding() {
   document.getElementById('vj-btn-landing').style.background = 'rgba(255,59,59,.2)';
   calcVJJump();
 }
+
+window.vjMarkLanding = vjMarkLanding;
 
 function calcVJJump() {
   if (vjState.takeoff === null || vjState.landing === null) return;
@@ -3416,6 +3618,8 @@ function confirmarVJResult() {
   showSaveToast();
 }
 
+window.confirmarVJResult = confirmarVJResult;
+
 function vjClearMarkers() {
   vjState.takeoff = null; vjState.landing = null; vjState.resultCm = null;
   document.getElementById('vj-takeoff-disp').textContent = '';
@@ -3425,6 +3629,7 @@ function vjClearMarkers() {
   document.getElementById('vj-btn-landing').style.background = '';
 }
 
+window.vjClearMarkers = vjClearMarkers;
 
 // ========================================================
 //  VALGO DE RODILLA -- Analizador de angulo sobre video
@@ -3457,6 +3662,8 @@ function loadValgoVideo(input) {
   v.addEventListener('timeupdate', updateValgoFrameInfo);
 }
 
+window.loadValgoVideo = loadValgoVideo;
+
 function initValgoCanvas() {
   const v = document.getElementById('valgo-video');
   const c = document.getElementById('valgo-canvas');
@@ -3486,6 +3693,8 @@ function setValgoFps(fps, btn) {
   document.getElementById('valgo-fps').value = fps;
 }
 
+window.setValgoFps = setValgoFps;
+
 function valgoJump(n) {
   const v = document.getElementById('valgo-video');
   if (!v || !v.src) return;
@@ -3493,6 +3702,8 @@ function valgoJump(n) {
   v.currentTime = Math.max(0, Math.min(v.duration, v.currentTime + n / valgoState.fps));
   setTimeout(() => { updateValgoFrameInfo(); redrawValgoCanvas(); }, 40);
 }
+
+window.valgoJump = valgoJump;
 
 function valgoTogglePlay() {
   const v = document.getElementById('valgo-video');
@@ -3502,11 +3713,15 @@ function valgoTogglePlay() {
   else          { v.pause(); btn.textContent = 'Play'; redrawValgoCanvas(); }
 }
 
+window.valgoTogglePlay = valgoTogglePlay;
+
 function valgoScrub(val) {
   const v = document.getElementById('valgo-video');
   if (!v || !v.duration) return;
   v.currentTime = (val / 1000) * v.duration;
 }
+
+window.valgoScrub = valgoScrub;
 
 function setValgoMode(mode) {
   valgoState.mode = mode;
@@ -3521,12 +3736,16 @@ function setValgoMode(mode) {
   }
 }
 
+window.setValgoMode = setValgoMode;
+
 function setValgoColor(color, el) {
   valgoState.color = color;
   document.querySelectorAll('[id^="vc-"]').forEach(e => e.style.border = '2px solid transparent');
   if (el) el.style.border = '2px solid #fff';
   redrawValgoCanvas();
 }
+
+window.setValgoColor = setValgoColor;
 
 function handleValgoClick(e) {
   const canvas = document.getElementById('valgo-canvas');
@@ -3572,12 +3791,16 @@ function undoValgoPoint() {
   }
 }
 
+window.undoValgoPoint = undoValgoPoint;
+
 function clearValgoLines() {
   valgoState.linea1 = []; valgoState.linea2 = []; valgoState.angle = null;
   setValgoMode('linea1');
   redrawValgoCanvas();
   document.getElementById('valgo-result-card').style.display = 'none';
 }
+
+window.clearValgoLines = clearValgoLines;
 
 function redrawValgoCanvas() {
   const canvas = document.getElementById('valgo-canvas');
@@ -3711,6 +3934,8 @@ function saveValgoResult() {
   showSaveToast();
 }
 
+window.saveValgoResult = saveValgoResult;
+
 function captureValgoImage() {
   const canvas = document.getElementById('valgo-canvas');
   if (!canvas) return;
@@ -3721,6 +3946,7 @@ function captureValgoImage() {
   link.click();
 }
 
+window.captureValgoImage = captureValgoImage;
 
 // ══════════════════════════════════════════════════════
 //  SEGUIMIENTO DE LESION
@@ -3738,6 +3964,8 @@ function setLesEstado(estado) {
   cur.lesionSeguimiento.estado = estado;
 }
 
+window.setLesEstado = setLesEstado;
+
 function updateRTSPercent() {
   const cbs = document.querySelectorAll('.les-rts-cb');
   const total = cbs.length;
@@ -3751,6 +3979,8 @@ function updateRTSPercent() {
   if (tag2) tag2.textContent = checked + ' / ' + total;
   if (bar)  { bar.style.width = pct + '%'; bar.style.background = c; }
 }
+
+window.updateRTSPercent = updateRTSPercent;
 
 function updateLesDias() {
   const dias    = +document.getElementById('les-dias')?.value    || 0;
@@ -3775,6 +4005,8 @@ function updateLesDias() {
   }
 }
 
+window.updateLesDias = updateLesDias;
+
 function saveLesionSeguimiento() {
   if (!cur) return;
   const data = {
@@ -3798,6 +4030,8 @@ function saveLesionSeguimiento() {
   if (data.tipo && data.estructura) cur.lesion = data.tipo + ' — ' + data.estructura;
 }
 
+window.saveLesionSeguimiento = saveLesionSeguimiento;
+
 function restoreLesionSeguimiento() {
   const d = cur?.lesionSeguimiento;
   if (!d) return;
@@ -3816,6 +4050,7 @@ function restoreLesionSeguimiento() {
   updateLesDias();
 }
 
+window.restoreLesionSeguimiento = restoreLesionSeguimiento;
 
 // ══════════════════════════════════════════════════════
 //  SHEETS CLÍNICOS — Hombro, Rodilla, Tobillo, LBP, Groin
@@ -3974,6 +4209,8 @@ function toggleSheetSection(id) {
   el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
+window.toggleSheetSection = toggleSheetSection;
+
 function initKlinicalSheet(panel) {
   // Build content based on which sheet opened
   if (panel === 'hombro' || panel === 'codo' || panel === 'munieca') initHombroSheet();
@@ -3982,6 +4219,8 @@ function initKlinicalSheet(panel) {
   if (panel === 'lumbar' || panel === 'lumbar-post' || panel === 'dorsal' || panel === 'cervical') initLBPSheet();
   if (panel === 'ingle') initGroinSheet();
 }
+
+window.initKlinicalSheet = initKlinicalSheet;
 
 function initHombroSheet() {
   buildHombroROM();
@@ -4027,6 +4266,9 @@ function showHTab(tab, btn) {
   });
   if(btn) { btn.className = 'btn btn-neon btn-sm'; btn.style.whiteSpace='nowrap'; btn.style.fontSize='10px'; }
 }
+
+window.showHTab = showHTab;
+
 function showRTab(tab, btn) {
   ['spf','lca','lig','men','cuest','rtp'].forEach(t => {
     const el = document.getElementById('rtab-' + t); if(el) el.style.display = t === tab ? 'block' : 'none';
@@ -4036,6 +4278,9 @@ function showRTab(tab, btn) {
   });
   if(btn) { btn.className = 'btn btn-neon btn-sm'; btn.style.whiteSpace='nowrap'; btn.style.fontSize='10px'; }
 }
+
+window.showRTab = showRTab;
+
 function showTTab(tab, btn) {
   ['lig','func','tcuest','tvisa'].forEach(t => {
     const el = document.getElementById('ttab-' + t); if(el) el.style.display = t === tab ? 'block' : 'none';
@@ -4045,12 +4290,17 @@ function showTTab(tab, btn) {
   });
   if(btn) { btn.className = 'btn btn-neon btn-sm'; btn.style.whiteSpace='nowrap'; btn.style.fontSize='10px'; }
 }
+
+window.showTTab = showTTab;
+
 function setFAAMTab2(tab, btn) {
   document.getElementById('faam-avd-sheet').style.display = tab === 'avd' ? 'block' : 'none';
   document.getElementById('faam-dep-sheet').style.display = tab === 'dep' ? 'block' : 'none';
   document.querySelectorAll('#faam-avd-btn, #faam-dep-btn').forEach(b => b.className = 'btn btn-ghost btn-sm');
   if(btn) btn.className = 'btn btn-neon btn-sm';
 }
+
+window.setFAAMTab2 = setFAAMTab2;
 
 // ── BUILDERS ──
 function buildHombroROM() {
@@ -4086,6 +4336,8 @@ function calcTROMSheet() {
     elG.innerHTML = `Diferencia TROM: <span style="color:${c};font-weight:700">${diff}°</span> ${diff>=18?'⚠️ GIRD ≥18° significativo':'✓ Normal'}`;
   }
 }
+
+window.calcTROMSheet = calcTROMSheet;
 
 function buildHombroTests() {
   const c = document.getElementById('hombro-tests-rapidos'); if(!c || c.innerHTML) return;
@@ -4132,6 +4384,8 @@ function calcHombroAsimetria() {
   if(el) el.innerHTML = results.length ? results.join('')+'<div style="font-size:9px;color:var(--text3);margin-top:4px">MDC: 15–20% · CPG 2025</div>' : 'Completá valores para calcular asimetría';
 }
 
+window.calcHombroAsimetria = calcHombroAsimetria;
+
 function buildASES() {
   const c = document.getElementById('ases-actividades-list'); if(!c || c.innerHTML) return;
   c.innerHTML = ASES_ITEMS.map((act,i) => `
@@ -4155,6 +4409,9 @@ function calcASES2() {
   const total = func!==null?Math.round(pain+func):null;
   const el = document.getElementById('ases-total'); if(el) el.textContent = total!==null?total:'—';
 }
+
+window.selectASES = selectASES;
+window.calcASES2 = calcASES2;
 
 function buildWORC() {
   const c = document.getElementById('worc-fields-sheet'); if(!c || c.innerHTML) return;
@@ -4184,6 +4441,8 @@ function calcWORC2() {
   const ep = document.getElementById('worc-pct-sheet'); if(ep) ep.textContent = pct+'% función';
 }
 
+window.calcWORC2 = calcWORC2;
+
 function buildDASH() {
   const c = document.getElementById('dash-fields-sheet'); if(!c || c.innerHTML) return;
   c.innerHTML = DASH_ITEMS.map((item,i) => `
@@ -4206,6 +4465,8 @@ function selectDASH(btn, idx, val) {
   }
 }
 
+window.selectDASH = selectDASH;
+
 function calcSPADI() {
   const sliders = document.querySelectorAll('#spadi-body .eva-slider');
   if(sliders.length>=2){
@@ -4215,11 +4476,15 @@ function calcSPADI() {
   }
 }
 
+window.calcSPADI = calcSPADI;
+
 function checkHombroRedFlags() {
   const cbs = document.querySelectorAll('.hombro-redflag');
   const any = [...cbs].some(c=>c.checked);
   const el = document.getElementById('hombro-redflag-alert'); if(el) el.style.display=any?'block':'none';
 }
+
+window.checkHombroRedFlags = checkHombroRedFlags;
 
 function buildRodillaSPF() {
   const c = document.getElementById('rodilla-spf-fields'); if(!c || c.innerHTML) return;
@@ -4250,6 +4515,8 @@ function checkValgoSPF(side) {
   const val = +document.getElementById('valgo-spf-'+side)?.value;
   const alert = document.getElementById('valgo-spf-'+side+'-alert'); if(alert) alert.style.display=val>10?'block':'none';
 }
+
+window.checkValgoSPF = checkValgoSPF;
 
 function buildRodillaLCA() {
   const c = document.getElementById('rodilla-lca-fields'); if(!c || c.innerHTML) return;
@@ -4298,6 +4565,8 @@ function calcRatioIQ(side) {
   el.innerHTML = `Ratio ${side.toUpperCase()}: <span style="font-family:var(--mono);color:${rc};font-weight:700">${ratio}</span> ${+ratio<0.6?'⚠️ <0.60 (déficit)':'✓ Normal'}`;
 }
 
+window.calcRatioIQ = calcRatioIQ;
+
 function buildHopRTP() {
   const c = document.getElementById('hop-tests-rtp'); if(!c || c.innerHTML) return;
   const tests = ['Single hop','Triple hop','6m hop (tiempo)','Cross-over triple hop'];
@@ -4321,6 +4590,8 @@ function calcLSISheet(i) {
   el.innerHTML = `LSI: <span style="font-family:var(--mono);font-weight:700;color:${c}">${lsi}%</span> ${+lsi>=90?'✓ Criterio RTP':'⚠️ No alcanza RTP (≥90%)'}`;
 }
 
+window.calcLSISheet = calcLSISheet;
+
 function buildVISAP() {
   const c = document.getElementById('visap-fields'); if(!c || c.innerHTML) return;
   visapVals = new Array(8).fill(null);
@@ -4337,6 +4608,8 @@ function calcVISAP() {
   const total = visapVals.reduce((a,b)=>a+(b||0),0);
   const el = document.getElementById('visap-total'); if(el){ el.textContent=total; el.style.color=total>=80?'var(--neon)':total>=60?'var(--amber)':'var(--red)'; }
 }
+
+window.calcVISAP = calcVISAP;
 
 function buildTobilloLig() {
   const c = document.getElementById('tobillo-lig-fields'); if(!c || c.innerHTML) return;
@@ -4362,6 +4635,8 @@ function calcDropNavicular(side) {
   el.innerHTML = `Drop ${side.toUpperCase()}: <span style="font-family:var(--mono);font-weight:700;color:${c}">${drop}mm</span> ${drop>10?'⚠️ Pronación excesiva':drop>6?'⚠️ Límite':'✓ Normal'}`;
 }
 
+window.calcDropNavicular = calcDropNavicular;
+
 function calcLungeTob() {
   const d = +document.getElementById('tob-lunge-d')?.value;
   const i = +document.getElementById('tob-lunge-i')?.value;
@@ -4376,6 +4651,8 @@ function calcLungeTob() {
   }
 }
 
+window.calcLungeTob = calcLungeTob;
+
 function calcCadencia() {
   const val = +document.getElementById('cadencia-actual')?.value;
   const el = document.getElementById('cadencia-result'); if(!val||!el) return;
@@ -4383,6 +4660,8 @@ function calcCadencia() {
   el.innerHTML = `<span style="color:${c};font-weight:700">${val<170?'⚠️':'✓'} ${val} pasos/min</span><br>
     <span style="font-size:10px;color:var(--text3)">+5%: ${Math.round(val*1.05)} · +10%: ${Math.round(val*1.10)} · Objetivo: 170–180</span>`;
 }
+
+window.calcCadencia = calcCadencia;
 
 function buildSEBT() {
   const c = document.getElementById('sebt-sheet-fields'); if(!c || c.innerHTML) return;
@@ -4422,6 +4701,8 @@ function calcCAIT2() {
     if(interp) interp.innerHTML=`<span style="color:${total<=27?'var(--red)':'var(--neon)'}">${total<=27?'⚠️ IAC sugerida':'✓ Sin IAC'}</span>`;
   }
 }
+
+window.calcCAIT2 = calcCAIT2;
 
 function buildFAAM2() {
   const avd = document.getElementById('faam-avd-sheet'); if(!avd || avd.innerHTML) return;
@@ -4463,6 +4744,8 @@ function calcFAAM2(type) {
   }
 }
 
+window.calcFAAM2 = calcFAAM2;
+
 function buildVISAA() {
   const c = document.getElementById('visaa-fields'); if(!c || c.innerHTML) return;
   visaaVals = new Array(8).fill(null);
@@ -4480,6 +4763,8 @@ function calcVISAA() {
   const el = document.getElementById('visaa-total');
   if(el){ el.textContent=total; el.style.color=total>=75?'var(--neon)':total>=50?'var(--amber)':'var(--red)'; }
 }
+
+window.calcVISAA = calcVISAA;
 
 function buildStartBack() {
   const c = document.getElementById('startback-sheet-fields'); if(!c || c.innerHTML) return;
@@ -4509,6 +4794,8 @@ function calcStartBack2() {
   else { grupo='Alto riesgo'; c='var(--red)'; }
   const el=document.getElementById('startback-sheet-result'); if(el){ el.textContent=grupo; el.style.color=c; }
 }
+
+window.calcStartBack2 = calcStartBack2;
 
 function buildDoha() {
   const c = document.getElementById('doha-entidades-sheet'); if(!c || c.innerHTML) return;
@@ -4573,6 +4860,8 @@ function toggleOT(btn, type) {
   btn.classList.add(type);
 }
 
+window.toggleOT = toggleOT;
+
 function saveKlinicalSheet(type) {
   if(!cur) return;
   if(!cur.klinical) cur.klinical = {};
@@ -4592,6 +4881,8 @@ function saveKlinicalSheet(type) {
   saveData();
   showSaveToast();
 }
+
+window.saveKlinicalSheet = saveKlinicalSheet;
 
 // ══════════════════════════════════════════════════════
 //  INIT
