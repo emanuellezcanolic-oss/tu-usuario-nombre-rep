@@ -1,3813 +1,2692 @@
-// ══════════════════════════════════════════════════════════════
-//  MoveMetrics v12 -- JavaScript completo
-// ══════════════════════════════════════════════════════════════
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>MoveMetrics — Prof Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
 
-// ── API KEY MANAGER ──
-// La key se guarda en localStorage del navegador.
-// Nunca queda expuesta en el código fuente.
-function getApiKey() {
-  return localStorage.getItem('mm_api_key') || '';
-}
-function saveApiKey(key) {
-  localStorage.setItem('mm_api_key', key.trim());
-}
-function clearApiKey() {
-  localStorage.removeItem('mm_api_key');
-}
-function hasApiKey() {
-  return !!getApiKey();
-}
+<!-- ════════ LAYOUT ════════ -->
+<div class="app">
 
-function showApiKeyModal() {
-  const existing = getApiKey();
-  const modal = document.createElement('div');
-  modal.id = 'api-key-modal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px)';
-  modal.innerHTML = `
-    <div style="background:#0f0f0f;border:1px solid rgba(57,255,122,.25);border-radius:16px;padding:32px 28px;width:100%;max-width:420px;margin:16px">
-      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#39FF7A;letter-spacing:.12em;margin-bottom:8px;text-transform:uppercase">∧ MoveMetrics</div>
-      <div style="font-size:20px;font-weight:700;margin-bottom:6px;color:#f0f0f0">API Key de Anthropic</div>
-      <div style="font-size:13px;color:#888;margin-bottom:20px;line-height:1.6">
-        Ingresá tu API Key para generar informes con IA.<br>
-        Se guarda <b style="color:#f0f0f0">solo en tu navegador</b> -- nunca se sube a ningún servidor.
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <h1><span class="accent">∧</span> MOVEMETRICS</h1>
+    <p>Plataforma deportivo-clínica</p>
+    <div class="version-badge">v12 · INVESTOR EDITION</div>
+  </div>
+
+  <nav class="nav-list">
+    <div class="nav-section-title">Principal</div>
+
+    <div class="nav-item active" onclick="showPage('atletas')" id="nav-atletas">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      Atletas
+    </div>
+
+    <div class="nav-item" onclick="showPage('tests')" id="nav-tests">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+      Tests & Módulos
+    </div>
+
+    <div class="nav-sep"></div>
+    <div class="nav-section-title">Configuración</div>
+
+    <div class="nav-item" onclick="showPage('ajustes')" id="nav-ajustes">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M20 12h2M2 12h2M17.66 17.66l-1.41-1.41M6.34 17.66l1.41-1.41"/></svg>
+      VMP & Ajustes
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div id="sb-atleta-info" style="color:var(--neon);margin-bottom:4px">Sin atleta activo</div>
+    <div>∧ MoveMetrics <span>v12.0</span></div>
+    <div>Lic. Emanuel Lezcano</div>
+    <button onclick="showApiKeyModal()" style="margin-top:8px;width:100%;background:rgba(57,255,122,.08);border:1px solid rgba(57,255,122,.15);border-radius:6px;color:#39FF7A;font-size:10px;font-family:'JetBrains Mono',monospace;padding:5px 8px;cursor:pointer;letter-spacing:.06em" id="api-key-btn">🔑 API KEY</button>
+  </div>
+</aside>
+
+<!-- ── MOBILE NAV ── -->
+<nav class="mobile-nav">
+  <button class="mn-btn active" onclick="showPage('atletas')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Atletas</button>
+  <button class="mn-btn" onclick="showPage('tests')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>Tests</button>
+  <button class="mn-btn" onclick="showPage('ajustes')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41"/></svg>Más</button>
+</nav>
+
+<!-- ═══════════ MAIN ═══════════ -->
+<main class="main" id="main-content">
+
+<!-- ────────────────────────────────────────
+     PAGE: ATLETAS
+──────────────────────────────────────────── -->
+<div class="page active" id="page-atletas">
+  <div class="page-header">
+    <div>
+      <h2>Atletas</h2>
+      <p id="atletas-count">0 atletas registrados</p>
+    </div>
+    <div class="flex" style="gap:10px">
+      <input class="inp" style="width:200px" placeholder="🔍 Buscar..." oninput="filterAtletas(this.value)" id="search-atletas">
+      <button class="btn btn-neon" onclick="prepNewAtleta();openModal('modal-atleta-form')">+ Nuevo atleta</button>
+    </div>
+  </div>
+  <div id="atletas-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px"></div>
+</div>
+
+<!-- ────────────────────────────────────────
+     PAGE: TESTS → PERFIL ATLETA
+──────────────────────────────────────────── -->
+<div class="page" id="page-tests">
+
+  <!-- Indicator -->
+  <div style="background:var(--bg4);border:1px solid var(--border);border-radius:var(--r2);padding:10px 16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between">
+    <div class="flex" style="gap:8px">
+      <div style="font-size:11px;color:var(--text3);font-family:var(--mono)">ATLETA ACTIVO</div>
+      <div id="tests-atleta-indicator" style="font-size:13px;font-weight:700;color:var(--neon)">— Seleccioná un atleta →</div>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="showPage('atletas')">← Cambiar</button>
+  </div>
+
+  <!-- PROFILE HERO -->
+  <div class="profile-hero mb-16" id="profile-hero-area" style="display:none">
+    <div class="flex mb-12" style="align-items:flex-start;gap:14px">
+      <div class="profile-av" id="profile-av-lg" onclick="document.getElementById('photo-profile-input').click()">?
+        <div class="profile-av-edit">✏️</div>
       </div>
-      <input id="api-key-input" type="password"
-        placeholder="sk-ant-api03-..."
-        value="${existing}"
-        style="width:100%;background:#141414;border:1px solid rgba(57,255,122,.2);border-radius:8px;color:#f0f0f0;padding:10px 14px;font-size:13px;font-family:'JetBrains Mono',monospace;outline:none;margin-bottom:8px;box-sizing:border-box"
-      >
-      <div style="font-size:11px;color:#3a3a3a;margin-bottom:16px;font-family:'JetBrains Mono',monospace">
-        Obtené tu key gratis en console.groq.com → API Keys
+      <input type="file" id="photo-profile-input" accept="image/*" class="hidden" onchange="updateProfilePhoto(this)">
+      <div style="flex:1">
+        <div id="profile-name2" style="font-size:19px;font-weight:700;margin-bottom:4px;letter-spacing:-.3px">—</div>
+        <div id="profile-meta" style="font-size:12px;color:var(--text2);margin-bottom:6px">—</div>
+        <div id="profile-tags"></div>
       </div>
-      <div style="display:flex;gap:10px">
-        <button onclick="
-          const k=document.getElementById('api-key-input').value.trim();
-          if(!k){alert('Ingresá una API Key');return;}
-          saveApiKey(k);
-          document.getElementById('api-key-modal').remove();
-          showSaveToast();
-        " style="flex:1;background:#39FF7A;color:#000;border:none;border-radius:8px;padding:11px;font-weight:700;font-size:13px;cursor:pointer">
-          Guardar y continuar
-        </button>
-        ${existing ? `<button onclick="document.getElementById('api-key-modal').remove()" style="background:#1c1c1c;color:#888;border:1px solid #252525;border-radius:8px;padding:11px 16px;font-size:13px;cursor:pointer">Cancelar</button>` : ''}
+      <div id="fuerza-rel-kpi"></div>
+    </div>
+    <div id="profile-stats-row" class="grid-4"></div>
+  </div>
+
+  <!-- TABS -->
+  <div class="profile-tabs" id="profile-tab-bar">
+    <button class="ptab active" onclick="showProfileTab('dashboard',this)">Dashboard</button>
+    <button class="ptab" id="tab-kinesio" onclick="showProfileTab('kinesio',this)">🏥 Kinesio</button>
+    <button class="ptab" onclick="showProfileTab('fuerza',this)">F-V</button>
+    <button class="ptab" onclick="showProfileTab('saltos',this)">Saltos</button>
+    <button class="ptab" onclick="showProfileTab('movilidad',this)">Movilidad</button>
+    <button class="ptab" onclick="showProfileTab('velocidad',this)">Sprint</button>
+    <button class="ptab" onclick="showProfileTab('fms',this)">Calidad Mov.</button>
+    <button class="ptab" onclick="showProfileTab('fatiga',this)">🌿 Wellness</button>
+    <button class="ptab" onclick="showProfileTab('video',this)">🎬 Video</button>
+    <button class="ptab" onclick="showProfileTab('vmp',this)">⚡ VMP</button>
+    <button class="ptab" onclick="showProfileTab('historial',this)">Historial</button>
+  </div>
+
+  <!-- ══ TAB: DASHBOARD ══ -->
+  <div id="ptab-dashboard">
+    <div class="grid-2 mb-16" style="gap:16px">
+      <div class="card card-glow">
+        <div class="card-header"><h3>Radar — Perfil de rendimiento</h3><span id="radar-obj-tag" class="tag tag-g">—</span></div>
+        <div class="card-body">
+          <canvas id="radar-chart" height="230"></canvas>
+          <div class="flex mt-8" style="justify-content:center;gap:14px;font-size:10px;color:var(--text2)">
+            <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:rgba(57,255,122,.6);margin-right:4px;vertical-align:middle"></span>Actual</span>
+            <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:rgba(77,158,255,.3);margin-right:4px;vertical-align:middle"></span>Objetivo</span>
+          </div>
+        </div>
       </div>
-      ${existing ? `<div style="text-align:center;margin-top:12px"><button onclick="clearApiKey();document.getElementById('api-key-input').value=''" style="background:none;border:none;color:#3a3a3a;font-size:11px;cursor:pointer;text-decoration:underline">Borrar key guardada</button></div>` : ''}
-    </div>`;
-  document.body.appendChild(modal);
-  setTimeout(() => document.getElementById('api-key-input')?.focus(), 100);
-}
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="card card-glow">
+          <div class="card-header"><h3>💪 Fuerza relativa — Semáforos</h3></div>
+          <div class="card-body" id="dash-semaforos"><p style="font-size:12px;color:var(--text3)">Realizá un perfil F-V para ver los semáforos.</p></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>⚡ Fatiga — Último registro</h3></div>
+          <div class="card-body" id="dash-fatiga-mini"><p style="font-size:12px;color:var(--text3)">Sin registros de fatiga.</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="card mb-16 card-glow">
+      <div class="card-header"><h3>📈 Perfil Carga-Velocidad</h3><button class="btn btn-outline btn-sm" onclick="showProfileTab('fuerza',document.querySelector('.ptab:nth-child(3)'))">Ver módulo →</button></div>
+      <div class="card-body"><canvas id="dash-fv-chart" height="170"></canvas><div id="dash-fv-stats" class="mt-8"></div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>🕐 Historial — últimas evaluaciones</h3></div>
+      <div class="card-body" id="dash-timeline" style="max-height:280px;overflow-y:auto"></div>
+    </div>
+  </div>
 
-// ── DATOS GLOBALES ──
-let atletas = JSON.parse(localStorage.getItem('mm_v12_atletas') || '[]');
-let cur = null;
-let fvChart = null, radarChart = null, movRadarChart = null, dashFvChart = null;
-let fvRowCount = 0;
-let _pendingPhoto = null;
-let _lastFvEj = null;
-let kineState = { bodyZones: {}, tests: {}, form: {} };
+  <!-- ══ TAB: KINESIO ══ -->
+  <div id="ptab-kinesio" class="hidden">
+    <div class="flex-b mb-16">
+      <div>
+        <div style="font-size:15px;font-weight:700">🏥 Kinesiología / Evaluación Osteomioarticular</div>
+        <div style="font-size:12px;color:var(--text2)">Anamnesis · Body Chart · EVA · Tests ortopédicos · ROM activo/pasivo</div>
+      </div>
+      <div class="flex" style="gap:8px">
+        <input class="inp" type="date" id="kine-fecha" style="width:150px;font-size:12px">
+        <button class="btn btn-neon btn-sm" onclick="saveKinesio()">💾 Guardar evaluación</button>
+      </div>
+    </div>
 
-// ── CONSTANTES ──
-const VMP_REF = {
-  sentadilla: 0.32, 'press-banca': 0.18, 'peso-muerto': 0.14,
-  'bench-pull': 0.53, 'hip-thrust': 0.24, 'media-sent': 0.33,
-  'military-press': 0.20, dominadas: 0.22
-};
+    <!-- GRID: Body Chart + Anamnesis -->
+    <div class="grid-2 mb-14" style="gap:16px;align-items:start">
 
-const STR_NORMS = {
-  sentadilla:   { name: 'Sentadilla',    red: 1.0,  amber: 1.5 },
-  'press-banca':{ name: 'Press Banca',   red: 0.75, amber: 1.25 },
-  'peso-muerto':{ name: 'Peso Muerto',   red: 1.25, amber: 2.0 },
-  'hip-thrust': { name: 'Hip Thrust',    red: 1.0,  amber: 2.0 }
-};
+      <!-- BODY CHART -->
+      <div class="card card-glow">
+        <div class="card-header">
+          <h3>🗺️ Body Chart — mapa del dolor</h3>
+          <div class="flex" style="gap:5px">
+            <button class="btn btn-neon btn-sm" id="btn-front" onclick="setBodyView('front')" style="font-size:10px;padding:4px 10px">Frente</button>
+            <button class="btn btn-ghost btn-sm" id="btn-back" onclick="setBodyView('back')" style="font-size:10px;padding:4px 10px">Posterior</button>
+          </div>
+        </div>
+        <div class="card-body" style="padding:10px">
+          <p style="font-size:9px;font-family:var(--mono);color:var(--text3);text-align:center;margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em">Tocá una zona para marcarla · 2° toque = Recuperado</p>
 
-const RUGBY = {
-  pilares:       { n:'Pilares (1/3)',      tipo:'Forward', squat:[155,165,175], vert:[35,37.5,40], horiz:[2.10,2.20,2.30], sp10:[1.75,1.70,1.65] },
-  hooker:        { n:'Hooker (2)',         tipo:'Forward', squat:[145,155,165], vert:[35,37.5,40], horiz:[2.15,2.25,2.30], sp10:[1.74,1.69,1.64] },
-  '2da-linea':   { n:'2da Línea (4/5)',   tipo:'Forward', squat:[130,140,150], vert:[40,42.5,45], horiz:[2.25,2.30,2.40], sp10:[1.72,1.67,1.62] },
-  '3ras-lineas': { n:'3ras Líneas (6/7/8)',tipo:'Forward',squat:[135,145,155], vert:[45,47.5,50], horiz:[2.40,2.45,2.50], sp10:[1.68,1.63,1.58] },
-  'medio-scrum': { n:'Medio Scrum (9)',   tipo:'Back',    squat:[120,130,140], vert:[47.5,50,52.5],horiz:[2.30,2.40,2.45],sp10:[1.63,1.58,1.53] },
-  apertura:      { n:'Apertura (10)',      tipo:'Back',    squat:[125,135,145], vert:[47.5,50,52.5],horiz:[2.35,2.45,2.50],sp10:[1.62,1.57,1.52] },
-  centros:       { n:'Centros (12/13)',    tipo:'Back',    squat:[125,135,145], vert:[47.5,50,52.5],horiz:[2.35,2.45,2.50],sp10:[1.62,1.57,1.52] },
-  'wing-fb':     { n:'Wings/FB (11/14/15)',tipo:'Back',   squat:[120,130,140], vert:[50,52.5,55],  horiz:[2.40,2.50,2.55],sp10:[1.58,1.53,1.48] }
-};
+          <!-- SVG FRONTAL -->
+          <div id="body-front" class="body-chart-container">
+            <svg viewBox="0 0 200 440" width="170" style="cursor:pointer">
+              <!-- Cabeza -->
+              <ellipse cx="100" cy="28" rx="22" ry="26" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
+              <!-- Cuello -->
+              <rect x="92" y="52" width="16" height="15" rx="4" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
+              <!-- Torso -->
+              <path d="M66 67 Q55 72 52 92 L50 162 Q53 170 100 170 Q147 170 150 162 L148 92 Q145 72 134 67 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
+              <!-- Brazo D -->
+              <path d="M52 70 L34 138 L50 140 L65 80 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
+              <!-- Brazo I -->
+              <path d="M148 70 L166 138 L150 140 L135 80 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
+              <!-- Antebrazo D -->
+              <path d="M34 148 L26 198 L44 200 L50 148 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
+              <!-- Antebrazo I -->
+              <path d="M166 148 L174 198 L156 200 L150 148 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
+              <!-- Muslo D -->
+              <path d="M70 188 L60 272 L84 274 L90 188 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
+              <!-- Muslo I -->
+              <path d="M130 188 L140 272 L116 274 L110 188 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
+              <!-- Pantorrilla D -->
+              <path d="M60 290 L58 374 L84 374 L82 290 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
+              <!-- Pantorrilla I -->
+              <path d="M140 290 L142 374 L116 374 L118 290 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
+              <!-- Pie D -->
+              <ellipse cx="72" cy="388" rx="15" ry="8" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
+              <!-- Pie I -->
+              <ellipse cx="128" cy="388" rx="15" ry="8" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
 
-const SPRINT_NORMS = {
-  Rugby:   { Forward:{ sp10:[1.78,1.72,1.65], sp30:[4.50,4.35,4.20], ttest:[9.8,9.5,9.2]  },
-             Back:   { sp10:[1.70,1.63,1.57], sp30:[4.25,4.10,3.95], ttest:[9.5,9.2,8.9]  } },
-  Fútbol:  { general:{ sp10:[1.75,1.70,1.65], sp30:[4.30,4.20,4.10], ttest:[9.6,9.3,9.0]  } },
-  Básquet: { general:{ sp10:[1.80,1.74,1.68], sp30:[4.45,4.30,4.15], ttest:[9.9,9.6,9.3]  } }
-};
+              <!-- ── ZONAS INTERACTIVAS ── -->
+              <!-- Hombro D -->
+              <ellipse id="z-hombro-d" class="body-zone" data-zone="hombro-d" data-label="Hombro Derecho" data-panel="hombro"
+                cx="57" cy="82" rx="17" ry="15" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
+              <!-- Hombro I -->
+              <ellipse id="z-hombro-i" class="body-zone" data-zone="hombro-i" data-label="Hombro Izquierdo" data-panel="hombro"
+                cx="143" cy="82" rx="17" ry="15" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
+              <!-- Codo D -->
+              <ellipse id="z-codo-d" class="body-zone" data-zone="codo-d" data-label="Codo Derecho" data-panel="codo"
+                cx="42" cy="140" rx="11" ry="9" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
+              <!-- Codo I -->
+              <ellipse id="z-codo-i" class="body-zone" data-zone="codo-i" data-label="Codo Izquierdo" data-panel="codo"
+                cx="158" cy="140" rx="11" ry="9" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
+              <!-- Lumbar (frente = abdomen/lumbar) -->
+              <rect id="z-lumbar" class="body-zone" data-zone="lumbar" data-label="Lumbar" data-panel="lumbar"
+                x="80" y="132" width="40" height="32" rx="8" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
+              <!-- Cadera D -->
+              <!-- Ingle D/I -->
+              <ellipse id="z-ingle-d" class="body-zone" data-zone="ingle-d" data-label="Ingle Derecha" data-panel="ingle"
+                cx="108" cy="205" rx="14" ry="10" fill="rgba(57,255,122,.04)" stroke="rgba(57,255,122,.15)" stroke-width="1"/>
+              <ellipse id="z-ingle-i" class="body-zone" data-zone="ingle-i" data-label="Ingle Izquierda" data-panel="ingle"
+                cx="82" cy="205" rx="14" ry="10" fill="rgba(57,255,122,.04)" stroke="rgba(57,255,122,.15)" stroke-width="1"/>
+              <ellipse id="z-cadera-d" class="body-zone" data-zone="cadera-d" data-label="Cadera Derecha" data-panel="cadera"
+                cx="68" cy="178" rx="22" ry="16" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
+              <!-- Cadera I -->
+              <ellipse id="z-cadera-i" class="body-zone" data-zone="cadera-i" data-label="Cadera Izquierda" data-panel="cadera"
+                cx="132" cy="178" rx="22" ry="16" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
+              <!-- Rodilla D -->
+              <ellipse id="z-rodilla-d" class="body-zone" data-zone="rodilla-d" data-label="Rodilla Derecha" data-panel="rodilla"
+                cx="70" cy="282" rx="16" ry="14" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
+              <!-- Rodilla I -->
+              <ellipse id="z-rodilla-i" class="body-zone" data-zone="rodilla-i" data-label="Rodilla Izquierda" data-panel="rodilla"
+                cx="130" cy="282" rx="16" ry="14" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
+              <!-- Tobillo D -->
+              <ellipse id="z-tobillo-d" class="body-zone" data-zone="tobillo-d" data-label="Tobillo Derecho" data-panel="tobillo"
+                cx="70" cy="378" rx="14" ry="10" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
+              <!-- Tobillo I -->
+              <ellipse id="z-tobillo-i" class="body-zone" data-zone="tobillo-i" data-label="Tobillo Izquierdo" data-panel="tobillo"
+                cx="130" cy="378" rx="14" ry="10" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
 
-// ── BATERIA COMPLETA BOSCO ──
-const SALTOS_DEF = [
-  // Verticales bilaterales
-  { key:'sj',   label:'SJ',             icon:'', unit:'cm', type:'bilateral',  cat:'vertical',   desc:'Squat Jump -- fuerza explosiva pura' },
-  { key:'cmj',  label:'CMJ',            icon:'', unit:'cm', type:'bilateral',  cat:'vertical',   desc:'Countermovement Jump -- fuerza elastico-explosiva' },
-  { key:'abk',  label:'Abalakov',       icon:'', unit:'cm', type:'bilateral',  cat:'vertical',   desc:'CMJ con brazos -- coordin. neuromotora' },
-  { key:'dj',   label:'Drop Jump',      icon:'', unit:'cm', type:'bilateral',  cat:'vertical',   desc:'DJ 20-40cm -- fuerza reflejo-elastico-explosiva', hasRSI:true },
-  { key:'ms15', label:'Multi-salto 15s',icon:'', unit:'W/kg',type:'bilateral', cat:'vertical',   desc:'Potencia anaerob. alactica -- 15 segundos' },
-  // Horizontales unilaterales
-  { key:'bj',   label:'Broad Jump',     icon:'', unit:'cm', type:'bilateral',  cat:'horizontal', desc:'Salto horizontal bilateral' },
-  { key:'sh',   label:'Single Hop',     icon:'', unit:'cm', type:'unilateral', cat:'horizontal', desc:'Hop for distance -- LSI' },
-  { key:'3h',   label:'Triple Hop',     icon:'', unit:'cm', type:'unilateral', cat:'horizontal', desc:'Triple Hop for distance -- LSI' },
-  { key:'ch',   label:'Cross-over Hop', icon:'', unit:'cm', type:'unilateral', cat:'horizontal', desc:'Cross-over 3 saltos -- LSI' },
-  { key:'t6h',  label:'Timed 6m Hop',   icon:'', unit:'s',  type:'unilateral', cat:'horizontal', desc:'6 metros -- tiempo -- LSI', lowerIsBetter:true },
-  { key:'djb',  label:'DJ Unilateral',  icon:'', unit:'cm', type:'unilateral', cat:'vertical',   desc:'Drop Jump unilateral -- LSI + RSI', hasRSI:true },
-  { key:'sideh',label:'Side Hop',       icon:'', unit:'reps',type:'unilateral',cat:'horizontal', desc:'Saltos laterales 30s -- Gustavsson' }
-];
+              <!-- Labels -->
+              <text x="57" y="86" text-anchor="middle" font-size="5" fill="#3a3a3a" font-family="JetBrains Mono">H.D</text>
+              <text x="143" y="86" text-anchor="middle" font-size="5" fill="#3a3a3a" font-family="JetBrains Mono">H.I</text>
+              <text x="100" y="150" text-anchor="middle" font-size="5" fill="#3a3a3a" font-family="JetBrains Mono">LUMB</text>
+              <text x="68" y="182" text-anchor="middle" font-size="5" fill="#3a3a3a" font-family="JetBrains Mono">CAD.D</text>
+              <text x="132" y="182" text-anchor="middle" font-size="5" fill="#3a3a3a" font-family="JetBrains Mono">CAD.I</text>
+              <text x="70" y="286" text-anchor="middle" font-size="5" fill="#3a3a3a" font-family="JetBrains Mono">ROD.D</text>
+              <text x="130" y="286" text-anchor="middle" font-size="5" fill="#3a3a3a" font-family="JetBrains Mono">ROD.I</text>
+              <text x="70" y="382" text-anchor="middle" font-size="5" fill="#3a3a3a" font-family="JetBrains Mono">TOB.D</text>
+              <text x="130" y="382" text-anchor="middle" font-size="5" fill="#3a3a3a" font-family="JetBrains Mono">TOB.I</text>
+            </svg>
+          </div>
 
-// Normas Bosco (Garrido-Chamorro, EFDeportes 2004, N=765 deportistas alto nivel)
-const BOSCO_NORMS = {
-  sj:  { male:{ mean:34.49, sd:5.13 }, female:{ mean:26.31, sd:4.47 } },
-  cmj: { male:{ mean:39.23, sd:5.58 }, female:{ mean:29.47, sd:10.86 } },
-  abk: { male:{ mean:47.20, sd:10.23 }, female:{ mean:33.49, sd:5.30 } },
-  ms15:{ male:{ mean:38.18, sd:15.43 }, female:{ mean:32.61, sd:11.57 } }
-};
+          <!-- SVG POSTERIOR -->
+          <div id="body-back" class="body-chart-container" style="display:none">
+            <svg viewBox="0 0 200 440" width="170" style="cursor:pointer">
+              <!-- Cabeza -->
+              <ellipse cx="100" cy="28" rx="22" ry="26" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
+              <rect x="92" y="52" width="16" height="15" rx="4" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
+              <!-- Torso -->
+              <path d="M66 67 Q55 72 52 92 L50 162 Q53 170 100 170 Q147 170 150 162 L148 92 Q145 72 134 67 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
+              <!-- Brazos -->
+              <path d="M52 70 L34 138 L50 140 L65 80 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
+              <path d="M148 70 L166 138 L150 140 L135 80 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
+              <path d="M34 148 L26 198 L44 200 L50 148 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
+              <path d="M166 148 L174 198 L156 200 L150 148 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
+              <!-- Muslos -->
+              <path d="M70 188 L60 272 L84 274 L90 188 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
+              <path d="M130 188 L140 272 L116 274 L110 188 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
+              <!-- Pantorrillas -->
+              <path d="M60 290 L58 374 L84 374 L82 290 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
+              <path d="M140 290 L142 374 L116 374 L118 290 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
+              <ellipse cx="72" cy="388" rx="15" ry="8" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
+              <ellipse cx="128" cy="388" rx="15" ry="8" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
 
-// Normas Side Hop -- Gustavsson et al. (2006)
-const SIDEHOP_NORMS = { male:{ min:55 }, female:{ min:41 } };
+              <!-- ZONAS POSTERIORES -->
+              <ellipse id="z-cervical" class="body-zone" data-zone="cervical" data-label="Cervical" data-panel="cervical"
+                cx="100" cy="58" rx="14" ry="8" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
+              <rect id="z-dorsal" class="body-zone" data-zone="dorsal" data-label="Dorsal/Torácica" data-panel="lumbar"
+                x="82" y="82" width="36" height="40" rx="8" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
+              <ellipse id="z-lumbar-post" class="body-zone" data-zone="lumbar-post" data-label="Lumbar Posterior" data-panel="lumbar"
+                cx="100" cy="148" rx="24" ry="18" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
+              <ellipse id="z-hombro-pd" class="body-zone" data-zone="hombro-pd" data-label="Hombro Post. D" data-panel="hombro"
+                cx="57" cy="82" rx="17" ry="15" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
+              <ellipse id="z-hombro-pi" class="body-zone" data-zone="hombro-pi" data-label="Hombro Post. I" data-panel="hombro"
+                cx="143" cy="82" rx="17" ry="15" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
+              <ellipse id="z-gluteo-d" class="body-zone" data-zone="gluteo-d" data-label="Glúteo Derecho" data-panel="cadera"
+                cx="76" cy="178" rx="22" ry="18" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
+              <ellipse id="z-gluteo-i" class="body-zone" data-zone="gluteo-i" data-label="Glúteo Izquierdo" data-panel="cadera"
+                cx="124" cy="178" rx="22" ry="18" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
+              <ellipse id="z-pantorrilla-d" class="body-zone" data-zone="pantorrilla-d" data-label="Pantorrilla D" data-panel="tobillo"
+                cx="70" cy="330" rx="14" ry="24" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
+              <ellipse id="z-pantorrilla-i" class="body-zone" data-zone="pantorrilla-i" data-label="Pantorrilla I" data-panel="tobillo"
+                cx="130" cy="330" rx="14" ry="24" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
 
-// Normas Hop Tests -- LSI return to sport (Limb Symmetry Index)
-// Referencia: Noyes et al. 1991, Moksnes & Risberg 2009, Reid et al. 2007
-const HOP_NORMS = {
-  sh:  {
-    lsi_rts: 90,   // % LSI minimo para retorno al deporte
-    lsi_elite: 95, // % LSI atletas elite
-    // Valores absolutos referencia (cm) -- adultos activos
-    male:   { mean: 165, sd: 20 },
-    female: { mean: 135, sd: 18 }
-  },
-  '3h': {
-    lsi_rts: 90,
-    lsi_elite: 95,
-    male:   { mean: 490, sd: 55 },
-    female: { mean: 400, sd: 48 }
-  },
-  ch: {
-    lsi_rts: 90,
-    lsi_elite: 95,
-    male:   { mean: 480, sd: 52 },
-    female: { mean: 385, sd: 45 }
-  },
-  t6h: {
-    lsi_rts: 90,
-    lsi_elite: 95,
-    lowerIsBetter: true,
-    // Menor tiempo = mejor -- LSI se calcula al reves
-    male:   { mean: 2.1, sd: 0.3 },  // segundos
-    female: { mean: 2.4, sd: 0.3 }
-  },
-  djb: {
-    lsi_rts: 90,
-    lsi_elite: 95,
-    male:   { mean: 28, sd: 6 },
-    female: { mean: 22, sd: 5 }
-  }
-};
+              <!-- Labels post -->
+              <text x="100" y="62" text-anchor="middle" font-size="5" fill="#3a3a3a" font-family="JetBrains Mono">CERV</text>
+              <text x="100" y="104" text-anchor="middle" font-size="5" fill="#3a3a3a" font-family="JetBrains Mono">DORS</text>
+              <text x="100" y="152" text-anchor="middle" font-size="5" fill="#3a3a3a" font-family="JetBrains Mono">LUMB</text>
+              <text x="76" y="182" text-anchor="middle" font-size="5" fill="#3a3a3a" font-family="JetBrains Mono">GLUT.D</text>
+              <text x="124" y="182" text-anchor="middle" font-size="5" fill="#3a3a3a" font-family="JetBrains Mono">GLUT.I</text>
+            </svg>
+          </div>
 
-const ORTHO_TESTS = {
-  subacro: [
-    { id:'neer',    name:'Neer',            sub:'Compresión subacromial',   ref:'Sn 0.72 / Sp 0.66' },
-    { id:'hawkins', name:'Hawkins-Kennedy', sub:'Compresión subacromial',   ref:'Sn 0.83 / Sp 0.56 -- DESCARTAR RC' },
-    { id:'yocum',   name:'Yocum',           sub:'Espacio subacromial',      ref:'Sn 0.78 / Sp 0.61' }
-  ],
-  manguito: [
-    { id:'jobe',        name:'Jobe (Empty Can)',   sub:'Supraespinoso',          ref:'Sn 0.69 / Sp 0.66' },
-    { id:'patte',       name:'Patte',              sub:'Infraespinoso/Red. menor',ref:'Sn 0.92 / Sp 0.30' },
-    { id:'gerber',      name:'Gerber (Lift-off)',  sub:'Subescapular',           ref:'Sn 0.79 / Sp 0.89' },
-    { id:'painful-arc', name:'Arco doloroso',      sub:'60-120° = RC',           ref:'LR+ 3.44 -- CONFIRMAR RC' }
-  ],
-  biceps: [
-    { id:'speed',       name:'Speed',           sub:'Tendón bíceps proximal', ref:'Sn 0.69 / Sp 0.56' },
-    { id:'yergason',    name:'Yergason',        sub:'Tendón bíceps / SLAP',   ref:'Sn 0.43 / Sp 0.79' },
-    { id:'apprehension',name:'Apprehension',    sub:'Inestabilidad anterior', ref:'Sn 0.72 / Sp 0.96' },
-    { id:'obrien',      name:"O'Brien (SLAP)",  sub:'Labrum superior',        ref:'Sn 0.47 / Sp 0.89' }
-  ],
-  ligamentos: [
-    { id:'lachman',    name:'Lachman',           sub:'LCA -- Gold standard',  ref:'Sn 0.86 / Sp 0.91' },
-    { id:'cajon-ant',  name:'Cajón anterior',    sub:'LCA',                  ref:'Sn 0.54 / Sp 0.72' },
-    { id:'cajon-post', name:'Cajón posterior',   sub:'LCP',                  ref:'Sn 0.90 / Sp 0.99' },
-    { id:'pivot-shift',name:'Pivot Shift',       sub:'LCA rotacional',       ref:'Sn 0.28 / Sp 0.98' },
-    { id:'lelli',      name:'Lelli (Palanca)',   sub:'LCA -- alta Sn agudo',  ref:'Sn 1.00 / Sp 0.97' },
-    { id:'valgo-est',  name:'Stress valgo 0°/30°',sub:'LLI',                ref:'Laxitud LLI' },
-    { id:'varo-est',   name:'Stress varo 0°/30°', sub:'LLE',                ref:'Laxitud LLE' }
-  ],
-  meniscos: [
-    { id:'mcmurray', name:'McMurray', sub:'Menisco medial/lateral', ref:'Sn 0.70 / Sp 0.71' },
-    { id:'apley',    name:'Apley',    sub:'Menisco',                ref:'Sn 0.61 / Sp 0.70' },
-    { id:'thessaly', name:'Thessaly', sub:'Menisco -- carga',        ref:'Sn 0.89 / Sp 0.97' }
-  ],
-  funcionales: [
-    { id:'single-leg', name:'Single Leg Squat', sub:'Control motor rodilla', ref:'Valgo >10° = positivo' },
-    { id:'step-down',  name:'Step-Down',        sub:'Control motor rodilla', ref:'Valgo dinámico' },
-    { id:'ratio-iq',   name:'Ratio I/Q (HHD)',  sub:'<0.60 = déficit',       ref:'Valkyria / PushPull' }
-  ],
-  tobillo: [
-    { id:'drawer-tob',  name:'Anterior Drawer', sub:'ATFL',          ref:'Sn 0.73 / Sp 0.60' },
-    { id:'talar-tilt',  name:'Talar Tilt',      sub:'CFL',           ref:'Sn 0.50 / Sp 0.88' },
-    { id:'thompson',    name:'Thompson',         sub:'Tendón Aquiles',ref:'Sn 0.96 / Sp 0.93' }
-  ],
-  lumbar: [
-    { id:'slr',        name:'SLR (Lasègue)', sub:'L4-S1 · Pos <60°',    ref:'Sn 0.91 / Sp 0.26' },
-    { id:'slump',      name:'SLUMP test',    sub:'Tensión dural',        ref:'Sn 0.84 / Sp 0.83' },
-    { id:'aslr',       name:'ASLR',          sub:'Estabilidad lumbopélv',ref:'Estabilidad TP' },
-    { id:'slr-cruzado',name:'SLR cruzado',   sub:'Hernia grave',         ref:'Sn 0.29 / Sp 0.88' }
-  ],
-  cadera: [
-    { id:'fadir',         name:'FADIR',        sub:'FAI / Labrum',       ref:'Sn 0.96 / Sp 0.10' },
-    { id:'faber',         name:'FABER (Patrick)',sub:'Articulación SI / Cápsula',ref:'Sn 0.57 / Sp 0.71' },
-    { id:'trendelenburg', name:'Trendelenburg', sub:'Glúteo medio',       ref:'Sn 0.73 / Sp 0.77' },
-    { id:'ober',          name:'Ober',          sub:'Banda iliotibial',   ref:'Tensión IT band' },
-    { id:'thomas',        name:'Thomas',        sub:'Acortamiento psoas', ref:'Sn 0.89 / Sp 0.91' }
-  ],
-  dohaAductores: [
-    { id:'doha-squeeze-0',    name:'Squeeze test 0 deg',         sub:'Aductores -- ingle atletica',         ref:'Sn 0.78 / Sp 0.50 -- cadera 0 grados' },
-    { id:'doha-squeeze-45',   name:'Squeeze test 45 deg',        sub:'Aductores -- mas especifico',         ref:'Sn 0.56 / Sp 0.73 -- cadera 45 grados' },
-    { id:'doha-squeeze-90',   name:'Squeeze test 90 deg',        sub:'Aductores / gracilis',                ref:'Complementario -- 90 grados rodilla' },
-    { id:'doha-aduct-dolor',  name:'Palpacion aductor largo',    sub:'Proximal -- Criterio Doha obligatorio',ref:'Sn 0.90 -- punto de mayor dolor' },
-    { id:'doha-aduct-resist', name:'Resistencia aductores',      sub:'Contraccion isometrica 0-45 deg',     ref:'Criterio Doha -- dolor reproducible' },
-    { id:'doha-aduct-estir',  name:'Estiramiento aductor',       sub:'Abduccion pasiva maxima',             ref:'Criterio complementario Doha' }
-  ],
-  dohaPsoas: [
-    { id:'doha-psoas-dolor',  name:'Palpacion iliopsoas',        sub:'Tendon distal / vientre -- Doha',     ref:'Criterio obligatorio ingle anterior' },
-    { id:'doha-psoas-resist', name:'Resistencia flexion cadera', sub:'Isometrica supino 90 deg -- Doha',    ref:'Dolor reproducible = positivo Doha' },
-    { id:'doha-psoas-estir',  name:'Estiramiento psoas',         sub:'Thomas modificado -- extension pasiva',ref:'Criterio complementario Doha' },
-    { id:'doha-stork',        name:'Stork test (Flamingo)',      sub:'SIJ / Psoas bajo carga',              ref:'Sn 0.17 / Sp 0.79 -- SIJ loading' },
-    { id:'doha-flex-activa',  name:'Flexion activa cadera',      sub:'Hip flexion pain provocation',        ref:'Criterio Doha -- ingle anterior' }
-  ],
-  dohaInguinal: [
-    { id:'doha-ing-dolor',    name:'Palpacion canal inguinal',   sub:'Anillo inguinal superficial -- Doha', ref:'Criterio obligatorio hernia deportiva' },
-    { id:'doha-ing-resist',   name:'Resistencia abd + flex',     sub:'Contraccion combinada -- Doha',       ref:'Criterio Doha inguinal' },
-    { id:'doha-valsalva',     name:'Valsalva / tos provocada',   sub:'Aumento presion intraabdominal',      ref:'Hernia inguinal / deportiva' },
-    { id:'doha-gibbon',       name:'Gibbon (inguinal sling)',     sub:'Canal inguinal bajo carga',           ref:'Sn 0.99 / Sp 0.99 -- hernia deportiva' }
-  ],
-  dohaComplementarios: [
-    { id:'doha-pubis',        name:'Palpacion pubis',            sub:'Symphysis pubis -- osteitis pubis',   ref:'Criterio complementario Doha' },
-    { id:'doha-rectus',       name:'Palpacion recto abdominal',  sub:'Insercion pubica -- Doha',            ref:'Criterio complementario abdomen bajo' },
-    { id:'doha-cadera-rom',   name:'Dolor ROM cadera activo',    sub:'RI / RE bajo carga -- FAI asociado',  ref:'Descartar FAI concomitante' },
-    { id:'doha-posterior',    name:'Dolor posterior cadera',     sub:'Gluteo / isquion -- diferencial',     ref:'Descartar tendinopatia isquiosural' }
-  ],
-  cervicalNeural: [
-    { id:'spurling',          name:'Spurling',                   sub:'Compresion raiz nerviosa cervical',   ref:'Sn 0.50 / Sp 0.86 -- LR+ 3.5' },
-    { id:'distraccion-cx',    name:'Distraccion cervical',       sub:'Alivio = compresion discal / facet',  ref:'Sn 0.44 / Sp 0.90 -- complementa Spurling' },
-    { id:'valsalva-cx',       name:'Valsalva cervical',          sub:'Hernia discal / lesion ocupante',     ref:'Aumento presion intradiscal' },
-    { id:'ultt1',             name:'ULTT1 (brachial tension)',   sub:'Tension neural miembro superior',     ref:'Sn 0.97 / Sp 0.22 -- descartar compresion' },
-    { id:'ultt2',             name:'ULTT2 (mediano / radial)',   sub:'Tension nervio mediano / radial',     ref:'Diferencia > 10 deg = positivo' },
-    { id:'roos',              name:'Roos (EAST)',                 sub:'Desfiladero toracico',                ref:'3 min -- parestesias = positivo' }
-  ],
-  cervicalArticular: [
-    { id:'flexion-rot',       name:'Flexion-Rotation test',      sub:'C1-C2 -- cervicogenico',              ref:'Sn 0.91 / Sp 0.90 -- cefalea cervicogenica' },
-    { id:'alar-lig',          name:'Alar ligament test',         sub:'Estabilidad alar -- trauma',          ref:'Sn 0.27 / Sp 0.64 -- post whiplash' },
-    { id:'sharp-purser',      name:'Sharp-Purser',                sub:'Inestabilidad C0-C2',                 ref:'Sn 0.69 / Sp 0.96 -- AR / trauma' },
-    { id:'ppivm-cx',          name:'PPIVM cervical',              sub:'Movilidad intervertebral pasiva',     ref:'Hipomovil / hipermovil por segmento' }
-  ],
-  cervicalMuscular: [
-    { id:'deep-flex-cx',      name:'Deep Neck Flexor test',      sub:'Resistencia flexores profundos',      ref:'< 38 mmHg = deficit -- Stabilizer' },
-    { id:'cranio-cx',         name:'Craniocervical flexion test', sub:'Longus colli activation',             ref:'5 niveles: 10-22-26-30 mmHg' },
-    { id:'fuerza-cx-lat',     name:'Fuerza lateral cervical',    sub:'HHD o escala manual',                 ref:'Asimetria > 10% = significativa' }
-  ],
-  codoLateral: [
-    { id:'cozen',             name:'Cozen',                      sub:'Epicondilalgia lateral',              ref:'Sn 0.84 / Sp 0.75 -- extension muneca resist.' },
-    { id:'mill',              name:'Mill',                       sub:'Epicondilalgia lateral',              ref:'Sn 0.53 / Sp 0.69 -- estiramiento extensores' },
-    { id:'maudsley',          name:'Maudsley (dedo medio)',      sub:'ECRB -- epicondilo lateral',          ref:'Extension dedo medio con resistencia' },
-    { id:'chair-test',        name:'Chair lifting test',         sub:'Epicondilalgia lateral funcional',    ref:'Dolor al levantar silla con carga' }
-  ],
-  codoMedial: [
-    { id:'golfer-elbow',      name:'Golfer elbow test',          sub:'Epicondilalgia medial',               ref:'Sn 0.64 / Sp 0.69 -- flexion muneca resist.' },
-    { id:'valgus-codo',       name:'Stress valgo codo',          sub:'LCU (cubital colateral)',             ref:'Valgus en 20-30 deg flexion -- lanzadores' },
-    { id:'milking',           name:'Milking maneuver',            sub:'LCU -- atletas overhead',             ref:'Sn 0.76 -- lanzadores / overhead' }
-  ],
-  codoLigamentos: [
-    { id:'tinel-cubital',     name:'Tinel cubital tunnel',       sub:'Nervio cubital',                      ref:'Parestesias 4-5 dedo = positivo' },
-    { id:'elbow-flex-test',   name:'Elbow flexion test',         sub:'Nervio cubital -- compresion',        ref:'Sn 0.75 / Sp 0.99 -- flexion max 3 min' },
-    { id:'lateral-pivot-codo',name:'Lateral pivot shift codo',   sub:'LUCL -- inestabilidad lateral',       ref:'Sn 0.38 / Sp 1.0' }
-  ],
-  patelo: [
-    { id:'clarke',            name:'Clarke (Grind test)',        sub:'Articulacion patelofemoral',          ref:'Baja especificidad -- usar en contexto' },
-    { id:'zohlen',            name:'Zohlen test',                sub:'Compresion patelar activa',           ref:'Dolor al contraer cuad con compresion' },
-    { id:'patela-tilt',       name:'Patellar tilt test',         sub:'Retinaculopatia lateral',             ref:'< 0 deg tilt = tension retinacular' },
-    { id:'jsign',             name:'J-sign (patellar glide)',    sub:'Tracking patelar -- VMO',             ref:'J-sign = disfuncion VMO / PFPS' },
-    { id:'apprehension-pat',  name:'Patella apprehension',       sub:'Inestabilidad / luxacion patelar',    ref:'Sn 0.39 / Sp 0.93 -- luxacion recurrente' }
-  ],
-  tendonesRodilla: [
-    { id:'single-decline',    name:'Single Leg Decline Squat',   sub:'Carga excentrica tendon patelar',    ref:'Gold standard funcional tendinopatia' },
-    { id:'royal-london',      name:'Royal London Hop test',       sub:'Tendinopatia patelar funcional',     ref:'VAS > 3/10 = positivo' },
-    { id:'arc-patelar',       name:'Arc test patelar',            sub:'Tendinopatia -- palpacion en ext.',  ref:'Sn 0.78 -- extension completa' },
-    { id:'quad-tendon',       name:'Tendon cuadricipital',        sub:'Insercion proximal patelar',         ref:'Polo superior -- adultos > 40' }
-  ],
-  pie: [
-    { id:'thompson-aq',       name:'Thompson (Aquiles)',          sub:'Ruptura tendon de Aquiles',          ref:'Sn 0.96 / Sp 0.93 -- squeeze pantorrilla' },
-    { id:'arc-aquiles',       name:'Arc sign Aquiles',            sub:'Insercion vs midportion',            ref:'Desaparece en dorsiflexion = insercion' },
-    { id:'windlass',          name:'Windlass test',               sub:'Fascia plantar',                     ref:'Sn 0.32 / Sp 1.0 -- fasciitis plantar' },
-    { id:'too-many-toes',     name:'Too many toes sign',          sub:'PTTD -- tibial posterior',           ref:'Valgo pie / colapso arco medial' },
-    { id:'single-heel-rise',  name:'Single heel rise',            sub:'Tibial posterior / Aquiles fuerza',  ref:'< 25 reps o asimetria = deficit' },
-    { id:'mulder',            name:'Mulder click (Morton)',       sub:'Neuroma de Morton',                  ref:'Click + dolor = neuroma interdigital' }
-  ],
-  muneca: [
-    { id:'finkelstein',       name:'Finkelstein',                 sub:'De Quervain -- 1er compartimento',   ref:'Sn 0.89 / Sp 0.14 -- muy sensible' },
-    { id:'phalen',            name:'Phalen',                      sub:'Tunel carpiano -- mediano',          ref:'Sn 0.68 / Sp 0.73 -- 60 seg flexion max' },
-    { id:'tinel-carpo',       name:'Tinel carpo',                 sub:'Nervio mediano -- tunel carpiano',   ref:'Sn 0.50 / Sp 0.77 -- percusion' },
-    { id:'durkan',            name:'Durkan (compresion directa)', sub:'Tunel carpiano -- mas especifico',   ref:'Sn 0.87 / Sp 0.90' },
-    { id:'tfcc-grind',        name:'TFCC grind test',             sub:'Complejo triangular fibrocartilago', ref:'Dolor ulnar en rotacion + carga' },
-    { id:'watson',            name:'Watson (scaphoid shift)',      sub:'Inestabilidad escafoides / SL',      ref:'Sn 0.69 / Sp 0.64 -- clunk = positivo' }
-  ]
-};
+          <!-- Zones list -->
+          <div id="body-zones-list" class="mt-8" style="min-height:28px">
+            <div style="font-size:9px;color:var(--text3);font-family:var(--mono);text-align:center">Sin zonas marcadas</div>
+          </div>
+        </div>
+      </div>
 
-// ══════════════════════════════════════════════════════
-//  NAVEGACIÓN
-// ══════════════════════════════════════════════════════
-
-function showPage(id) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.querySelectorAll('.mn-btn').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-' + id)?.classList.add('active');
-  const navMap = { atletas: 0, tests: 1, ajustes: 2 };
-  const idx = navMap[id];
-  if (idx !== undefined) {
-    document.querySelectorAll('.nav-item')[idx]?.classList.add('active');
-    document.querySelectorAll('.mn-btn')[idx]?.classList.add('active');
-  }
-}
-
-function showProfileTab(tab, btn) {
-  const tabs = ['dashboard','kinesio','fuerza','saltos','movilidad','velocidad','fms','fatiga','video','vmp','historial'];
-  tabs.forEach(t => document.getElementById('ptab-' + t)?.classList.toggle('hidden', t !== tab));
-  document.querySelectorAll('#profile-tab-bar .ptab').forEach(b => b.classList.remove('active'));
-  btn?.classList.add('active');
-  if (tab === 'dashboard')  renderDashboard();
-  if (tab === 'historial')  renderHistorial();
-  if (tab === 'kinesio')    initKinesio();
-  if (tab === 'fuerza')     renderFVHist();
-  if (tab === 'saltos')     renderSimetriasTabla();
-  if (tab === 'movilidad') {
-    setTimeout(redrawGauges, 60);
-    const amPanel = document.getElementById('adulto-mayor-tests');
-    if (amPanel && cur) {
-      amPanel.classList.toggle('hidden', cur.deporte !== 'Adulto Mayor');
-      if (cur.deporte === 'Adulto Mayor') {
-        if (cur.sitToStand) document.getElementById('sts-reps').value = cur.sitToStand;
-        if (cur.unipodal)   document.getElementById('unipodal-seg').value = cur.unipodal;
-        if (cur.tug)        document.getElementById('tug-seg').value = cur.tug;
-        if (cur.dist6min)   document.getElementById('dist6min-m').value = cur.dist6min;
-      }
-    }
-  }
-}
-
-function openModal(id)  { document.getElementById(id).classList.add('open');    document.body.style.overflow = 'hidden'; }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.modal').forEach(m =>
-    m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); })
-  );
-});
-
-// ══════════════════════════════════════════════════════
-//  PERSISTENCIA
-// ══════════════════════════════════════════════════════
-
-function saveData() {
-  localStorage.setItem('mm_v12_atletas', JSON.stringify(atletas));
-  showSaveToast();
-}
-
-function showSaveToast() {
-  const t = document.getElementById('save-toast');
-  if (!t) return;
-  t.style.opacity = '1';
-  clearTimeout(t._timer);
-  t._timer = setTimeout(() => t.style.opacity = '0', 2000);
-}
-
-// ══════════════════════════════════════════════════════
-//  ATLETAS CRUD
-// ══════════════════════════════════════════════════════
-
-function setSvc(v) {
-  document.getElementById('s-servicio').value = v;
-  document.getElementById('svc-rend').className = 'btn btn-full ' + (v === 'rendimiento' ? 'btn-neon' : 'btn-ghost');
-  document.getElementById('svc-kine').className = 'btn btn-full ' + (v === 'kinesio'     ? 'btn-neon' : 'btn-ghost');
-}
-
-function checkRugby() {
-  const d = document.getElementById('s-deporte').value;
-  document.getElementById('rugby-sec').classList.toggle('hidden', d !== 'Rugby');
-}
-
-function previewFormPhoto(input) {
-  if (!input.files.length) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    _pendingPhoto = e.target.result;
-    const prev = document.getElementById('form-photo-prev');
-    if (prev) { prev.innerHTML = ''; const img = document.createElement('img'); img.src = _pendingPhoto; img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:12px'; prev.appendChild(img); }
-  };
-  reader.readAsDataURL(input.files[0]);
-}
-
-function updateProfilePhoto(input) {
-  if (!input.files.length || !cur) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    cur.foto = e.target.result;
-    atletas = atletas.map(a => a.id === cur.id ? cur : a);
-    saveData();
-    renderProfileHero();
-    renderAtletas();
-  };
-  reader.readAsDataURL(input.files[0]);
-}
-
-function prepNewAtleta() {
-  document.getElementById('form-title').textContent = 'Nuevo atleta';
-  document.getElementById('edit-id').value = '';
-  ['s-nombre','s-edad','s-peso','s-talla','s-pierna','s-lesion','s-email'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.value = '';
-  });
-  ['s-sexo','s-deporte','s-nivel','s-objetivo','s-puesto'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.selectedIndex = 0;
-  });
-  document.getElementById('rugby-sec').classList.add('hidden');
-  setSvc('rendimiento');
-  const prev = document.getElementById('form-photo-prev'); if (prev) prev.innerHTML = '👤';
-  _pendingPhoto = null;
-}
-
-function editAtletaById(id) {
-  const s = atletas.find(a => a.id === id); if (!s) return;
-  cur = s;
-  document.getElementById('form-title').textContent = 'Editar atleta';
-  document.getElementById('edit-id').value = s.id;
-  ['nombre','edad','peso','talla','pierna','lesion','email'].forEach(k => {
-    const el = document.getElementById('s-' + k); if (el) el.value = s[k] || '';
-  });
-  setSvc(s.servicio || 'rendimiento');
-  ['sexo','deporte','nivel','objetivo','puesto'].forEach(k => {
-    const el = document.getElementById('s-' + k); if (el && s[k]) el.value = s[k];
-  });
-  document.getElementById('rugby-sec').classList.toggle('hidden', s.deporte !== 'Rugby');
-  const prev = document.getElementById('form-photo-prev');
-  if (prev) {
-    if (s.foto) { prev.innerHTML = ''; const img = document.createElement('img'); img.src = s.foto; img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:12px'; prev.appendChild(img); }
-    else prev.innerHTML = '👤';
-  }
-  _pendingPhoto = null;
-  openModal('modal-atleta-form');
-}
-
-function saveAtleta() {
-  const nombre = document.getElementById('s-nombre').value.trim();
-  if (!nombre) { alert('Ingresá el nombre'); return; }
-  const eid = +document.getElementById('edit-id').value || null;
-  const existing = eid ? atletas.find(a => a.id === eid) : null;
-  const data = {
-    id:       eid || Date.now(),
-    nombre,
-    edad:     document.getElementById('s-edad').value,
-    sexo:     document.getElementById('s-sexo').value,
-    peso:     document.getElementById('s-peso').value,
-    talla:    document.getElementById('s-talla').value,
-    pierna:   document.getElementById('s-pierna').value,
-    servicio: document.getElementById('s-servicio').value,
-    deporte:  document.getElementById('s-deporte').value,
-    puesto:   document.getElementById('s-puesto').value,
-    nivel:    document.getElementById('s-nivel').value,
-    objetivo: document.getElementById('s-objetivo').value,
-    lesion:   document.getElementById('s-lesion').value,
-    email:    document.getElementById('s-email').value,
-    foto:     _pendingPhoto || existing?.foto || null,
-    creado:   existing?.creado || new Date().toISOString(),
-    evals:    existing?.evals || {},
-    evalsByDate: existing?.evalsByDate || {},
-    kinesio:  existing?.kinesio || null
-  };
-  _pendingPhoto = null;
-  if (eid) atletas = atletas.map(a => a.id === eid ? data : a);
-  else atletas.push(data);
-  if (!eid || cur?.id === eid) cur = data;
-  saveData();
-  closeModal('modal-atleta-form');
-  renderAtletas();
-  if (cur?.id === data.id) renderProfileHero();
-}
-
-function deleteAtleta(id, ev) {
-  ev?.stopPropagation();
-  if (!confirm('¿Eliminar este atleta y todos sus datos?')) return;
-  atletas = atletas.filter(a => a.id !== id);
-  if (cur?.id === id) { cur = null; showPage('atletas'); }
-  saveData(); renderAtletas();
-}
-
-function selectAtleta(id) {
-  cur = atletas.find(a => a.id === id);
-  if (!cur) return;
-  document.getElementById('sb-atleta-info').textContent = cur.nombre;
-  document.getElementById('tests-atleta-indicator').textContent = cur.nombre;
-  document.getElementById('profile-hero-area').style.display = 'block';
-  renderProfileHero();
-  showPage('tests');
-  showProfileTab('dashboard', document.querySelector('.ptab'));
-}
-
-function renderAtletas() {
-  const grid = document.getElementById('atletas-grid');
-  document.getElementById('atletas-count').textContent =
-    atletas.length + ' atleta' + (atletas.length !== 1 ? 's' : '') + ' registrado' + (atletas.length !== 1 ? 's' : '');
-  if (!atletas.length) {
-    grid.innerHTML = [
-      '<div style="grid-column:1/-1;text-align:center;padding:100px 20px">',
-      '<div style="width:80px;height:80px;border-radius:20px;background:rgba(57,255,122,.06);',
-      'border:1px solid rgba(57,255,122,.12);display:flex;align-items:center;',
-      'justify-content:center;font-size:32px;margin:0 auto 24px">&#128100;</div>',
-      '<div style="font-size:32px;font-weight:800;letter-spacing:.08em;color:#fff;margin-bottom:10px">SIN ATLETAS</div>',
-      '<p style="font-size:13px;color:rgba(255,255,255,.3);line-height:1.8">',
-      'Crea tu primer atleta para comenzar.</p></div>'
-    ].join('');
-    return;
-  }
-  grid.innerHTML = atletas.map(s => {
-    const evalCount = Object.keys(s.evals || {}).length;
-    const hasInjury = s.lesion || (s.kinesio && Object.values(s.kinesio.bodyZones || {}).some(z => !z.recuperado));
-    const photoHtml = s.foto
-      ? `<img src="${s.foto}" style="width:40px;height:40px;border-radius:10px;object-fit:cover;border:1px solid var(--border2);flex-shrink:0">`
-      : `<div class="athlete-av-sm">${s.nombre.charAt(0)}</div>`;
-    return `<div class="athlete-card ${hasInjury ? 'has-injury' : ''}" onclick="selectAtleta(${s.id})">
-      <div class="athlete-card-inner">
-        <div class="flex mb-12" style="align-items:flex-start;gap:14px">
-          ${photoHtml}
-          <div style="flex:1;min-width:0">
-            <div style="font-size:16px;font-weight:800;margin-bottom:3px;color:#fff;letter-spacing:-.3px">${s.nombre}</div>
-            <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:4px">${s.deporte || 'Sin deporte'}${s.puesto ? ' · ' + s.puesto : ''} · ${s.edad || '?'} años · ${s.peso || '?'} kg</div>
-            <div style="display:flex;align-items:center;gap:6px">
-              <span style="font-size:10px;font-weight:700;color:var(--neon);font-family:var(--mono)">${s.servicio === 'kinesio' ? '🏥 KINESIO' : '⚡ RENDIMIENTO'}</span>
-              ${s.lesion ? `<span style="font-size:10px;color:var(--amber)">· 📌 ${s.lesion}</span>` : ''}
+      <!-- ANAMNESIS -->
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <!-- Motivo + mecanismo -->
+        <div class="card">
+          <div class="card-header"><h3>📋 Anamnesis — Historia clínica MOVE</h3></div>
+          <div class="card-body">
+            <div class="ig"><label class="il">Motivo de consulta</label>
+              <textarea class="inp" id="kine-motivo" rows="2" placeholder="Motivo principal de la consulta..."></textarea></div>
+            <div class="ig"><label class="il">¿Cómo fue que te lesionaste?</label>
+              <textarea class="inp" id="kine-mecanismo" rows="2" placeholder="Mecanismo de lesión..."></textarea></div>
+            <div class="grid-2" style="gap:8px">
+              <div class="ig"><label class="il">Fecha lesión / aprox.</label><input class="inp inp-mono" type="date" id="kine-fecha-lesion"></div>
+              <div class="ig"><label class="il">Fecha de cirugía</label><input class="inp inp-mono" type="date" id="kine-fecha-cx"></div>
+            </div>
+            <div class="ig"><label class="il">Médico a cargo / mail-teléfono</label><input class="inp" id="kine-medico" placeholder="Dr. / contacto..."></div>
+            <div class="ig"><label class="il">¿Cuál fue el diagnóstico médico?</label><input class="inp" id="kine-dx" placeholder="Diagnóstico oficial..."></div>
+            <div class="ig">
+              <label class="il">¿Realizaste tratamiento previo?</label>
+              <div style="display:flex;gap:6px;margin-top:4px;align-items:center">
+                <button class="fms-btn" id="kine-trat-si" onclick="setKineTrat('si')">SI</button>
+                <button class="fms-btn" id="kine-trat-no" onclick="setKineTrat('no')">NO</button>
+                <input class="inp" id="kine-trat-cual" placeholder="¿Cuál?" style="flex:1;font-size:12px">
+              </div>
+            </div>
+            <div class="ig">
+              <label class="il">Estudios complementarios (marcá con círculo)</label>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
+                <button class="fms-btn" id="est-resonancia"   onclick="toggleEstudio('resonancia')">Resonancia</button>
+                <button class="fms-btn" id="est-radiografia"  onclick="toggleEstudio('radiografia')">Radiografía</button>
+                <button class="fms-btn" id="est-ecografia"    onclick="toggleEstudio('ecografia')">Ecografía</button>
+                <button class="fms-btn" id="est-tomografia"   onclick="toggleEstudio('tomografia')">Tomografía</button>
+              </div>
             </div>
           </div>
-          <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">
-            <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();editAtletaById(${s.id})" style="padding:4px 8px;font-size:10px;opacity:.5">✏️</button>
-            <button class="btn btn-red btn-sm"   onclick="deleteAtleta(${s.id},event)" style="padding:4px 8px;font-size:10px;opacity:.5">🗑️</button>
+        </div>
+
+        <!-- EVA -->
+        <div class="card">
+          <div class="card-header"><h3>📊 EVA — Escala Visual Analógica</h3></div>
+          <div class="card-body">
+            <p style="font-size:11px;color:var(--text2);margin-bottom:10px">Con un círculo indicá ¿cómo se encuentra actualmente?</p>
+            <input type="range" id="kine-eva" class="eva-slider" min="0" max="10" value="0" oninput="updateEVA()">
+            <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3);font-family:var(--mono);margin-bottom:10px">
+              <span>0 No Dolor</span><span>5 Moderado</span><span>10 Insoportable</span>
+            </div>
+            <div class="eva-display eva-0-3" id="eva-val">0</div>
+            <div id="eva-label" style="text-align:center;font-size:12px;color:var(--text2);margin-top:4px">Sin dolor</div>
+            <div class="ig mt-8"><label class="il">¿En qué movimiento se intensifica el dolor?</label>
+              <textarea class="inp" id="kine-dolor-mov" rows="2" placeholder="Al elevar el brazo, al caminar cuesta abajo..."></textarea></div>
           </div>
         </div>
-        <div style="height:1px;background:rgba(255,255,255,.05);margin-bottom:12px"></div>
-        <div style="display:flex;gap:6px;align-items:center;justify-content:space-between">
-          <div style="display:flex;gap:5px">
-            <span class="tag ${s.nivel === 'elite' ? 'tag-g' : s.nivel === 'semi-pro' ? 'tag-b' : 'tag-y'}">${s.nivel || '--'}</span>
-            <span class="tag" style="background:rgba(255,255,255,.05);color:rgba(255,255,255,.4)">${evalCount} eval</span>
+
+        <!-- Antecedentes patológicos -->
+        <div class="card">
+          <div class="card-header"><h3>🏥 Antecedentes personales patológicos</h3></div>
+          <div class="card-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
+              <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg4)"><input type="checkbox" class="kine-antec" value="Genitourinarias" style="accent-color:var(--neon)"> Genitourinarias</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg4)"><input type="checkbox" class="kine-antec" value="Digestivas" style="accent-color:var(--neon)"> Digestivas</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg4)"><input type="checkbox" class="kine-antec" value="Hormonales" style="accent-color:var(--neon)"> Hormonales</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg4)"><input type="checkbox" class="kine-antec" value="Sanguíneas" style="accent-color:var(--neon)"> Sanguíneas</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg4)"><input type="checkbox" class="kine-antec" value="Cardiovasculares" style="accent-color:var(--neon)"> Cardiovasculares</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg4)"><input type="checkbox" class="kine-antec" value="Neurológicas" style="accent-color:var(--neon)"> Neurológicas</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg4)"><input type="checkbox" class="kine-antec" value="Reumatológicas" style="accent-color:var(--neon)"> Reumatológicas</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg4)"><input type="checkbox" class="kine-antec" value="Psicológicas" style="accent-color:var(--neon)"> Psicológicas</label>
+            </div>
+            <div class="ig"><label class="il">Otras observaciones / Cirugías previas</label>
+              <textarea class="inp" id="kine-antec-obs" rows="2" placeholder="Otras enfermedades, cirugías..."></textarea></div>
           </div>
-          ${hasInjury ? '<span style="font-size:9px;font-family:var(--mono);color:var(--red);font-weight:700">● LESIÓN ACTIVA</span>' : '<span style="font-size:9px;font-family:var(--mono);color:rgba(57,255,122,.4)">● ACTIVO</span>'}
+        </div>
+
+        <!-- Historia activa -->
+        <div class="card">
+          <div class="card-header"><h3>🏃 Historia activa / Deportiva</h3></div>
+          <div class="card-body">
+            <div class="ig"><label class="il">Deportes/actividades realizadas anteriormente</label><input class="inp" id="kine-deporte-prev" placeholder="Fútbol, natación, musculación..."></div>
+            <div class="ig"><label class="il">Actividad física actual (último mes)</label><input class="inp" id="kine-act-actual" placeholder="Describe la actividad actual..."></div>
+            <div class="grid-2" style="gap:8px">
+              <div class="ig"><label class="il">Frecuencia semanal</label><input class="inp inp-mono" id="kine-frec" placeholder="3 veces/sem"></div>
+              <div class="ig"><label class="il">Horas / semana</label><input class="inp inp-mono" id="kine-horas" placeholder="4 hs"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Objetivos -->
+        <div class="card">
+          <div class="card-header"><h3>🎯 Objetivos del tratamiento</h3></div>
+          <div class="card-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+              <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg4)"><input type="checkbox" class="kine-objetivo" value="Deportivo" style="accent-color:var(--neon)"> Deportivo</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg4)"><input type="checkbox" class="kine-objetivo" value="Acondicionamiento General" style="accent-color:var(--neon)"> Acond. General</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg4)"><input type="checkbox" class="kine-objetivo" value="Salud" style="accent-color:var(--neon)"> Salud</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg4)"><input type="checkbox" class="kine-objetivo" value="Calidad de Vida" style="accent-color:var(--neon)"> Calidad de Vida</label>
+            </div>
+            <div class="ig"><label class="il">Puede desarrollar objetivos</label>
+              <textarea class="inp" id="kine-obj-det" rows="2" placeholder="Objetivos específicos adicionales..."></textarea></div>
+          </div>
         </div>
       </div>
-    </div>`;
-  }).join('');
-}
-
-function filterAtletas(q) {
-  const f = atletas.filter(s =>
-    s.nombre.toLowerCase().includes(q.toLowerCase()) ||
-    (s.deporte || '').toLowerCase().includes(q.toLowerCase())
-  );
-  const grid = document.getElementById('atletas-grid');
-  grid.innerHTML = f.map(s => `
-    <div class="athlete-card" onclick="selectAtleta(${s.id})">
-      <div class="flex gap-12"><div class="athlete-av-sm">${s.nombre.charAt(0)}</div>
-      <div><div style="font-size:14px;font-weight:700">${s.nombre}</div><div style="font-size:11px;color:var(--text2)">${s.deporte || '--'}</div></div></div>
-    </div>`).join('');
-}
-
-// ══════════════════════════════════════════════════════
-//  PROFILE HERO
-// ══════════════════════════════════════════════════════
-
-function renderProfileHero() {
-  if (!cur) return;
-  const s = cur;
-  document.getElementById('tests-atleta-indicator').textContent = s.nombre;
-  // Avatar
-  const av = document.getElementById('profile-av-lg');
-  if (av) {
-    if (s.foto) { av.innerHTML = `<img src="${s.foto}"><div class="profile-av-edit">✏️</div>`; }
-    else { av.textContent = s.nombre.charAt(0); av.innerHTML += '<div class="profile-av-edit">✏️</div>'; }
-  }
-  document.getElementById('profile-meta').textContent =
-    `${s.deporte || '--'}${s.puesto ? ' · ' + s.puesto : ''} · ${s.edad || '?'} años · ${s.peso || '?'} kg · ${s.talla || '?'} cm`;
-  const tags = document.getElementById('profile-tags');
-  if (tags) tags.innerHTML = [
-    `<span class="tag tag-g">${s.objetivo || '--'}</span>`,
-    `<span class="tag tag-b">${s.nivel || '--'}</span>`,
-    s.lesion ? `<span class="tag tag-y">📌 ${s.lesion}</span>` : ''
-  ].join(' ');
-  // Fuerza relativa KPI
-  const frkpi = document.getElementById('fuerza-rel-kpi');
-  if (frkpi && s.lastFV?.oneRM && s.peso) {
-    const ratio = (s.lastFV.oneRM / +s.peso).toFixed(2);
-    const normKey = Object.keys(STR_NORMS).find(k => s.lastFV.ejercicio?.toLowerCase().includes(STR_NORMS[k].name.toLowerCase().split(' ')[0].toLowerCase()));
-    const norm = STR_NORMS[normKey];
-    const color = norm ? (+ratio >= norm.amber ? 'var(--neon)' : +ratio >= norm.red ? 'var(--amber)' : 'var(--red)') : 'var(--neon)';
-    const label = norm ? (+ratio >= norm.amber ? 'Elite' : +ratio >= norm.red ? 'Moderado' : 'Déficit') : '--';
-    frkpi.innerHTML = `<div style="text-align:right"><div class="il">Fuerza Relativa</div><div style="font-family:var(--mono);font-size:22px;font-weight:800;color:${color};text-shadow:0 0 12px ${color}">${ratio}×PC</div><span class="tag" style="background:${color}22;color:${color}">${label}</span></div>`;
-  } else if (frkpi) frkpi.innerHTML = '';
-  // Stats
-  const lastSp = getLastEval('sprint');
-  const evalTotal = Object.keys(s.evals || {}).length;
-  const statsRow = document.getElementById('profile-stats-row');
-  if (statsRow) statsRow.innerHTML = `
-    <div class="kpi ${s.lastCMJ >= 40 ? 'kpi-green' : s.lastCMJ >= 30 ? '' : s.lastCMJ ? 'kpi-red' : ''}">
-      <div class="kpi-label">CMJ último</div>
-      <div class="kpi-val">${s.lastCMJ ? s.lastCMJ.toFixed(1) : '--'}</div>
-      <div class="kpi-sub">cm altura</div>
     </div>
-    <div class="kpi">
-      <div class="kpi-label">1RM estimado</div>
-      <div class="kpi-val">${s.lastFV?.oneRM ? s.lastFV.oneRM.toFixed(0) : '--'}</div>
-      <div class="kpi-sub">${s.lastFV?.ejercicio || '--'}</div>
-    </div>
-    <div class="kpi">
-      <div class="kpi-label">10m sprint</div>
-      <div class="kpi-val">${lastSp?.sp10 || '--'}</div>
-      <div class="kpi-sub">segundos</div>
-    </div>
-    <div class="kpi">
-      <div class="kpi-label">Evaluaciones</div>
-      <div class="kpi-val">${evalTotal}</div>
-      <div class="kpi-sub">registros</div>
-    </div>`;
-  // Kinesio badge en tab
-  const kineTab = document.getElementById('tab-kinesio');
-  if (kineTab) {
-    const activeZones = Object.values(s.kinesio?.bodyZones || {}).filter(z => !z.recuperado).length;
-    kineTab.textContent = activeZones ? `🏥 Kinesio 🔴${activeZones}` : '🏥 Kinesio';
-    kineTab.classList.toggle('kine-active', activeZones > 0);
-  }
-}
 
-function getLastEval(type) {
-  if (!cur) return null;
-  return Object.entries(cur.evals || {})
-    .filter(([k]) => k.startsWith(type + '_'))
-    .map(([, v]) => v)
-    .sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0))[0] || null;
-}
-
-// ══════════════════════════════════════════════════════
-//  DASHBOARD
-// ══════════════════════════════════════════════════════
-
-function renderDashboard() {
-  if (!cur) return;
-  renderRadar();
-  renderDashSemaforos();
-  renderDashFV();
-  renderDashFatiga();
-  renderDashTimeline();
-}
-
-function renderRadar() {
-  const s = cur; if (!s) return;
-  const esAdultoMayor = s.deporte === 'Adulto Mayor';
-
-  // ── Helpers de score ──
-  const sp      = getLastEval('sprint');
-  const lastSal = getLastEval('saltos');
-  const lastMov = getLastEval('movilidad') || s;
-
-  // FUERZA: promedio de fuerza relativa de todos los ejercicios F-V registrados
-  const fvEvals = Object.entries(s.evals || {})
-    .filter(([k]) => k.startsWith('fv_'))
-    .map(([,v]) => v)
-    .filter(v => v.oneRM && s.peso);
-  const fzaScores = fvEvals.map(v => {
-    const ratio = v.oneRM / +s.peso;
-    const nk = Object.keys(STR_NORMS).find(k => v.ejercicio?.toLowerCase().includes(STR_NORMS[k].name.toLowerCase().split(' ')[0].toLowerCase()));
-    const norm = nk ? STR_NORMS[nk] : { red: 1.0, amber: 1.5 };
-    return Math.min(100, (ratio / norm.amber) * 100);
-  });
-  const fuerzaS = fzaScores.length ? fzaScores.reduce((a,b)=>a+b,0)/fzaScores.length : 0;
-
-  // MOVILIDAD: promedio tobillo (Lunge), cadera (TROM), hombro (TROM)
-  const lungeAvg   = ((+s.lungeD||0)+(+s.lungeI||0))/2;
-  const tromCadAvg = ((+s.tromCadD||0)+(+s.tromCadI||0))/2;
-  const tromHomAvg = ((+s.tromHomD||0)+(+s.tromHomI||0))/2;
-  const movScores  = [lungeAvg?Math.min(100,lungeAvg/50*100):null, tromCadAvg?Math.min(100,tromCadAvg/120*100):null, tromHomAvg?Math.min(100,tromHomAvg/150*100):null].filter(v=>v!==null);
-  const movilS     = movScores.length ? movScores.reduce((a,b)=>a+b,0)/movScores.length : 0;
-
-  // VELOCIDAD: 10m sprint (deportista) o TUG (adulto mayor)
-  let velS = 0;
-  if (esAdultoMayor) {
-    const tug = s.tug || null; // segundos -- referencia: <10s normal, <12s límite
-    velS = tug ? Math.min(100, (12/tug)*100) : 0;
-  } else {
-    velS = sp?.sp10 ? Math.min(100, (1.80/sp.sp10)*100) : 0;
-  }
-
-  // RESISTENCIA: VO2max estimado o 6MWT (adulto mayor)
-  let resS = 0;
-  if (esAdultoMayor) {
-    const dist6min = s.dist6min || null; // metros -- referencia: >500m bueno
-    resS = dist6min ? Math.min(100, dist6min/600*100) : 0;
-  } else {
-    const lastFat = getLastEval('fatiga');
-    resS = lastFat?.hrv ? Math.min(100, lastFat.hrv/80*100) : 0;
-  }
-
-  let labels, actual, ideal, targets;
-
-  if (esAdultoMayor) {
-    // ── ADULTO MAYOR: salud funcional ──
-    const equilibrioS = s.unipodal ? Math.min(100, s.unipodal/30*100) : 0; // seg apoyo unipodal -- ref 30s
-    const stsS        = s.sitToStand ? Math.min(100, s.sitToStand/15*100) : 0; // reps en 30s -- ref 15 reps
-    labels  = ['Fuerza\n(Sit-to-Stand)', 'Velocidad\n(TUG)', 'Movilidad\n(Tobillo/Cadera)', 'Resistencia\n(6MWT)', 'Equilibrio\n(Unipodal)'];
-    actual  = [stsS, velS, movilS, resS, equilibrioS];
-    ideal   = [75, 75, 75, 75, 75];
-    targets = ['fuerza','velocidad','movilidad','fatiga','fms'];
-  } else {
-    // ── DEPORTISTA: rendimiento ──
-    labels  = ['Fuerza\n(F-V rel.)', 'Velocidad\n(Sprint)', 'Movilidad\n(Tobillo/Cad/Hom)', 'Resistencia\n(HRV)', 'Potencia\n(CMJ)'];
-    const cmjS = s.lastCMJ ? Math.min(100, s.lastCMJ/60*100) : 0;
-    actual  = [fuerzaS, velS, movilS, resS, cmjS];
-    ideal   = [80, 80, 75, 70, 80];
-    targets = ['fuerza','velocidad','movilidad','fatiga','saltos'];
-  }
-
-  const tag = document.getElementById('radar-obj-tag');
-  if (tag) tag.textContent = esAdultoMayor ? 'Adulto Mayor' : (s.objetivo||'Rendimiento');
-
-  const ctx = document.getElementById('radar-chart'); if (!ctx) return;
-  if (radarChart) radarChart.destroy();
-  radarChart = new Chart(ctx, {
-    type: 'radar',
-    data: { labels, datasets: [
-      { label:'Referencia', data:ideal, backgroundColor:'rgba(77,158,255,.06)', borderColor:'rgba(77,158,255,.25)', borderWidth:1.5, pointRadius:2 },
-      { label:'Actual',     data:actual, backgroundColor:'rgba(57,255,122,.10)', borderColor:'rgba(57,255,122,.8)', borderWidth:2, pointRadius:5, pointBackgroundColor:'#39FF7A', pointHoverRadius:8 }
-    ]},
-    options: { responsive:true, animation:{ duration:700 },
-      plugins:{ legend:{ display:false },
-        tooltip:{ callbacks:{ label: ctx => ' ' + ctx.dataset.label + ': ' + ctx.raw.toFixed(0) + '%' } } },
-      scales:{ r:{ beginAtZero:true, max:100,
-        grid:{ color:'rgba(255,255,255,.05)' },
-        angleLines:{ color:'rgba(255,255,255,.06)' },
-        pointLabels:{ color:'rgba(255,255,255,.5)', font:{ size:10, weight:'600' } },
-        ticks:{ display:false } } },
-      onClick:(e, els) => {
-        if (els.length && targets) {
-          const t = targets[els[0].index];
-          if (t) { const btn = document.querySelector('[onclick*="showProfileTab(\''+t+'\')"]'); showProfileTab(t, btn); }
-        }
-      }
-    }
-  });
-}
-
-function renderDashSemaforos() {
-  const s = cur; const area = document.getElementById('dash-semaforos'); if (!area) return;
-  if (!s?.lastFV || !s.peso) { area.innerHTML = '<p style="font-size:12px;color:var(--text3)">Realizá un perfil F-V para ver los semáforos.</p>'; return; }
-  let html = '';
-  Object.entries(STR_NORMS).forEach(([key, norm]) => {
-    const fvEntries = Object.entries(s.evals || {}).filter(([k]) => k.startsWith('fv_' + key + '_')).map(([, v]) => v).sort((a, b) => new Date(b.fecha||0) - new Date(a.fecha||0));
-    if (!fvEntries.length) return;
-    const fv = fvEntries[0]; if (!fv.oneRM) return;
-    const ratio = (fv.oneRM / +s.peso).toFixed(2);
-    const color = +ratio >= norm.amber ? 'var(--neon)' : +ratio >= norm.red ? 'var(--amber)' : 'var(--red)';
-    const pct = Math.min(100, (+ratio / (norm.amber * 1.2)) * 100);
-    const label = +ratio >= norm.amber ? 'Elite' : +ratio >= norm.red ? 'Moderado' : 'Déficit';
-    html += `<div style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-        <div style="font-size:12px;font-weight:700">${norm.name}</div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-family:var(--mono);font-size:16px;font-weight:800;color:${color}">${ratio}×PC</span>
-          <span class="tag" style="background:${color}22;color:${color}">${label}</span>
+    <!-- TESTS ORTOPÉDICOS POR ZONA -->
+    <div id="kinesio-tests-area">
+      <div class="flex-b mb-12">
+        <div style="font-family:var(--mono);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.10em;color:var(--neon)">
+          🔬 Tests ortopédicos — <span id="kine-zona-label">seleccioná una zona</span>
         </div>
       </div>
-      <div class="prog-wrap"><div class="prog-bar" style="width:${pct.toFixed(0)}%;background:${color}"></div></div>
-      <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3);font-family:var(--mono);margin-top:2px">
-        <span>🔴 &lt;${norm.red}</span><span>🟡 ${norm.red}-${norm.amber}</span><span>🟢 &gt;${norm.amber}</span>
-      </div></div>`;
-  });
-  area.innerHTML = html || '<p style="font-size:12px;color:var(--text3)">Sin datos de fuerza.</p>';
-  const fuelFR = document.getElementById('fv-fuerza-rel');
-  if (fuelFR) fuelFR.innerHTML = html;
-}
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;padding:12px;background:rgba(57,255,122,.03);border:1px solid rgba(57,255,122,.08);border-radius:12px">
+        <div style="width:100%;font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Acceso rapido por zona</div>
+        <button class="btn btn-ghost btn-sm" onclick="showKinePanel('hombro','Hombro')" style="font-size:10px">Hombro</button>
+        <button class="btn btn-ghost btn-sm" onclick="showKinePanel('codo','Codo')" style="font-size:10px">Codo</button>
+        <button class="btn btn-ghost btn-sm" onclick="showKinePanel('cervical','Cervical')" style="font-size:10px">Cervical</button>
+        <button class="btn btn-ghost btn-sm" onclick="showKinePanel('lumbar','Lumbar')" style="font-size:10px">Lumbar</button>
+        <button class="btn btn-ghost btn-sm" onclick="showKinePanel('cadera','Cadera')" style="font-size:10px">Cadera</button>
+        <button class="btn btn-sm" onclick="showKinePanel('ingle','Ingle Doha')" style="font-size:10px;background:rgba(255,176,32,.08);border:1px solid rgba(255,176,32,.2);color:#FFB020">Ingle/Doha</button>
+        <button class="btn btn-ghost btn-sm" onclick="showKinePanel('rodilla','Rodilla')" style="font-size:10px">Rodilla</button>
+        <button class="btn btn-ghost btn-sm" onclick="showKinePanel('patelo','Patelofemoral')" style="font-size:10px">Patelofemoral</button>
+        <button class="btn btn-ghost btn-sm" onclick="showKinePanel('tobillo','Tobillo')" style="font-size:10px">Tobillo</button>
+        <button class="btn btn-ghost btn-sm" onclick="showKinePanel('muneca','Muneca y Pie')" style="font-size:10px">Muneca / Pie</button>
+      </div>
 
-function renderDashFV() {
-  const s = cur; if (!s?.lastFV) return;
-  const fv = s.lastFV; if (!fv.a || !fv.b || !fv.cargas) return;
-  const ctx = document.getElementById('dash-fv-chart'); if (!ctx) return;
-  if (dashFvChart) dashFvChart.destroy();
-  const minC = Math.min(...fv.cargas) * 0.9, maxC = Math.max(...fv.cargas) * 1.1;
-  const curvX = [], curvY = [];
-  for (let i = 0; i <= 25; i++) { const x = minC + (maxC - minC) * i / 25; curvX.push(+x.toFixed(1)); curvY.push(Math.max(0, +(fv.a + fv.b * x).toFixed(4))); }
-  dashFvChart = new Chart(ctx, { type:'line',
-    data:{ labels:curvX, datasets:[
-      { label:'Curva F-V', data:curvY, borderColor:'#39FF7A', backgroundColor:'rgba(57,255,122,.04)', borderWidth:2, pointRadius:0, tension:0 },
-      { label:'Datos', data:fv.cargas.map((c,i)=>({x:c,y:fv.vmps[i]})), borderColor:'#4D9EFF', backgroundColor:'#4D9EFF', type:'scatter', pointRadius:5, showLine:false, xAxisID:'x' }
-    ]},
-    options:{ responsive:true, plugins:{ legend:{ display:false } },
-      scales:{ x:{ type:'linear', grid:{color:'rgba(255,255,255,.03)'}, ticks:{color:'#444',font:{family:'JetBrains Mono',size:9}} },
-               y:{ grid:{color:'rgba(255,255,255,.03)'}, ticks:{color:'#444',font:{family:'JetBrains Mono',size:9}} } } }
-  });
-  const stats = document.getElementById('dash-fv-stats');
-  if (stats) stats.innerHTML = `<div class="flex" style="gap:8px;flex-wrap:wrap">
-    <span class="tag tag-g">${fv.ejercicio || '--'}</span>
-    <span class="tag tag-b">V₀: ${fv.V0?.toFixed(3) || '--'} m/s</span>
-    <span class="tag tag-b">1RM≈ ${fv.oneRM?.toFixed(1) || '--'} kg</span>
-    <span class="tag ${fv.r2 >= 0.99 ? 'tag-g' : fv.r2 >= 0.95 ? 'tag-y' : 'tag-r'}">R² = ${fv.r2?.toFixed(4) || '--'}</span>
-  </div>`;
-}
+      <!-- Panel hombro -->
+      <div id="tests-panel-hombro" class="kine-panel hidden">
+        <div class="grid-2" style="gap:12px">
+          <div class="card">
+            <div class="card-header"><h3>Espacio subacromial</h3><span class="tag tag-b">Impingement</span></div>
+            <div class="card-body" id="tp-subacro"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Manguito Rotador</h3><span class="tag tag-y">Integridad</span></div>
+            <div class="card-body" id="tp-manguito"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Bíceps e Inestabilidad</h3><span class="tag tag-r">Inestabilidad</span></div>
+            <div class="card-body" id="tp-biceps"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>ROM Hombro</h3><span class="tag tag-b">Act / Pas</span></div>
+            <div class="card-body" id="tp-rom-hombro"></div>
+          </div>
+        </div>
+      </div>
 
-function renderDashFatiga() {
-  const s = cur; const area = document.getElementById('dash-fatiga-mini'); if (!area) return;
-  const lastFat = getLastEval('fatiga');
-  if (!lastFat) { area.innerHTML = '<p style="font-size:12px;color:var(--text3)">Sin registros de fatiga.</p>'; return; }
-  const t = lastFat.hooper?.reduce((a, b) => a + b, 0) || 0;
-  const c = t <= 12 ? 'var(--neon)' : t <= 19 ? 'var(--amber)' : 'var(--red)';
-  area.innerHTML = `<div class="flex-b"><div><div class="il">HOOPER INDEX</div><div style="font-family:var(--mono);font-size:24px;font-weight:800;color:${c}">${t}</div></div><div style="font-size:11px;color:var(--text2)">${lastFat.fecha || '--'}</div></div>
-  <div class="prog-wrap mt-8"><div class="prog-bar" style="width:${Math.min(100,t/28*100).toFixed(0)}%;background:${c}"></div></div>
-  <div style="font-size:10px;color:var(--text3);margin-top:4px;font-family:var(--mono)">HRV: ${lastFat.hrv || '--'}ms vs basal ${lastFat.hrvBase || '--'}ms</div>`;
-}
+      <!-- Panel rodilla -->
+      <div id="tests-panel-rodilla" class="kine-panel hidden">
+        <div class="grid-2" style="gap:12px">
+          <div class="card">
+            <div class="card-header"><h3>Ligamentos</h3><span class="tag tag-r">Estabilidad</span></div>
+            <div class="card-body" id="tp-ligamentos"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Meniscos</h3><span class="tag tag-y">Menisco</span></div>
+            <div class="card-body" id="tp-meniscos"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Funcionales</h3><span class="tag tag-g">Función</span></div>
+            <div class="card-body" id="tp-funcionales"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>ROM Rodilla + Valgo dinámico</h3><span class="tag tag-b">Act / Pas</span></div>
+            <div class="card-body" id="tp-rom-rodilla"></div>
+          </div>
+        </div>
+      </div>
 
-function renderDashTimeline() {
-  const s = cur; if (!s) return;
-  const area = document.getElementById('dash-timeline'); if (!area) return;
-  const items = buildTimelineItems().slice(0, 7);
-  if (!items.length) { area.innerHTML = '<p style="font-size:12px;color:var(--text3)">Sin evaluaciones aún.</p>'; return; }
-  area.innerHTML = '<div class="tl-wrap">' + items.map(it => `
-    <div class="tl-item">
-      <div class="tl-dot ${it.dotClass}"></div>
-      <div class="tl-date">${it.fecha}</div>
-      <div class="tl-title">${it.icon} ${it.title}</div>
-      <div class="tl-body">${it.detail}</div>
-      ${it.statusHtml}
-    </div>`).join('') + '</div>';
-}
+      <!-- Panel tobillo -->
+      <div id="tests-panel-tobillo" class="kine-panel hidden">
+        <div class="grid-2" style="gap:12px">
+          <div class="card">
+            <div class="card-header"><h3>Ligamentos tobillo</h3><span class="tag tag-r">Estabilidad</span></div>
+            <div class="card-body" id="tp-tobillo"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>ROM Tobillo</h3><span class="tag tag-b">Act / Pas</span></div>
+            <div class="card-body" id="tp-rom-tobillo"></div>
+          </div>
+        </div>
+      </div>
 
-// ══════════════════════════════════════════════════════
-//  HISTORIAL -- TIMELINE COLOREADA
-// ══════════════════════════════════════════════════════
+      <!-- Panel lumbar -->
+      <div id="tests-panel-lumbar" class="kine-panel hidden">
+        <div class="grid-2" style="gap:12px">
+          <div class="card">
+            <div class="card-header"><h3>Tests neurales / columna</h3><span class="tag tag-r">Neural</span></div>
+            <div class="card-body" id="tp-lumbar"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>ROM Columna</h3><span class="tag tag-b">Goniometría</span></div>
+            <div class="card-body" id="tp-rom-columna"></div>
+          </div>
+        </div>
+      </div>
 
-function buildTimelineItems() {
-  if (!cur) return [];
-  const items = [];
-  Object.entries(cur.evals || {}).forEach(([key, data]) => {
-    if (!data?.fecha) return;
-    const tipo = key.startsWith('saltos_') ? 'saltos' : key.startsWith('fv_') ? 'fv' : key.startsWith('sprint_') ? 'sprint' :
-      key.startsWith('mov_') ? 'movilidad' : key.startsWith('fatiga_') ? 'fatiga' : key.startsWith('fms_') ? 'fms' :
-      key.startsWith('kinesio_') ? 'kinesio' : null;
-    if (tipo) items.push(buildTLItem(tipo, data, data.fecha));
-  });
-  return items.filter(Boolean).sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-}
+      <!-- Panel cadera -->
+      <div id="tests-panel-cadera" class="kine-panel hidden">
+        <div class="grid-2" style="gap:12px">
+          <div class="card">
+            <div class="card-header"><h3>Tests cadera</h3><span class="tag tag-y">Cadera / SIJ</span></div>
+            <div class="card-body" id="tp-cadera"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>ROM Cadera</h3><span class="tag tag-b">Act / Pas</span></div>
+            <div class="card-body" id="tp-rom-cadera"></div>
+          </div>
+        </div>
+      </div>
 
-function buildTLItem(tipo, data, fecha) {
-  let icon = '📋', title = '', detail = '', status = '', color = 'dot-b', statusCls = '';
-  if (tipo === 'saltos') {
-    icon = '🦘'; title = 'Saltos';
-    const a = data.avg || {}; const parts = [];
-    if (a.cmj) parts.push(`CMJ: ${a.cmj.toFixed(1)}cm`);
-    if (a.bj)  parts.push(`BJ: ${a.bj.toFixed(1)}cm`);
-    if (a.shD && a.shI) {
-      const lsi = (Math.min(a.shD, a.shI) / Math.max(a.shD, a.shI) * 100).toFixed(1);
-      const asim = ((Math.max(a.shD,a.shI)-Math.min(a.shD,a.shI))/Math.max(a.shD,a.shI)*100).toFixed(1);
-      const isCrit = +asim > 15;
-      parts.push(`LSI: <span style="color:${isCrit?'var(--red)':'var(--neon)'};font-weight:800">${lsi}%${isCrit?' ⚠️':''}</span>`);
-      color = +lsi >= 90 ? 'dot-g' : +lsi >= 80 ? 'dot-y' : 'dot-r';
-    }
-    detail = parts.join(' · ') || 'Sin datos';
-    status = color === 'dot-g' ? '🟢 Simétrico' : color === 'dot-r' ? '🔴 Asimetría' : '🟡 Moderado';
-    statusCls = color === 'dot-g' ? 'tl-s-g' : color === 'dot-r' ? 'tl-s-r' : 'tl-s-y';
-  } else if (tipo === 'fv') {
-    icon = '📈'; title = `F-V -- ${data.ejercicio || '--'}`;
-    const r = data.r2; color = r >= 0.99 ? 'dot-g' : r >= 0.95 ? 'dot-y' : 'dot-r';
-    detail = `V₀: ${data.V0?.toFixed(3)||'--'} · 1RM≈${data.oneRM?.toFixed(0)||'--'} kg · R²: ${data.r2?.toFixed(4)||'--'}`;
-    if (data.oneRM && cur?.peso) { const fr = (data.oneRM / +cur.peso).toFixed(2); const frc = +fr>=1.5?'var(--neon)':+fr>=1.0?'var(--amber)':'var(--red)'; detail += ` · <span style="color:${frc};font-family:var(--mono)">${fr}×PC</span>`; }
-    status = r >= 0.99 ? '🟢 Alta fiabilidad' : r >= 0.95 ? '🟡 Aceptable' : '🔴 Baja fiabilidad';
-    statusCls = r >= 0.99 ? 'tl-s-g' : r >= 0.95 ? 'tl-s-y' : 'tl-s-r';
-  } else if (tipo === 'sprint') {
-    icon = '🏃'; title = 'Sprint & COD';
-    detail = `10m: ${data.sp10||'--'}s · 30m: ${data.sp30||'--'}s · T-Test: ${data.ttest||'--'}s`;
-    color = 'dot-b';
-  } else if (tipo === 'movilidad') {
-    icon = '📐'; title = 'Movilidad';
-    const ld = data.lungeD, li = data.lungeI;
-    const ok = ld && li && ld > 40 && li > 40 && Math.abs(ld - li) <= 5;
-    color = ok ? 'dot-g' : (ld && ld < 35 ? 'dot-r' : 'dot-y');
-    detail = `Lunge D/I: ${ld||'--'}°/${li||'--'}° · TROM Cad D: ${data.tromCadD||'--'}°`;
-    status = ok ? '🟢 Normal' : ld && ld < 35 ? '🔴 Déficit tobillo' : '🟡 Revisar';
-    statusCls = ok ? 'tl-s-g' : ld && ld < 35 ? 'tl-s-r' : 'tl-s-y';
-  } else if (tipo === 'fatiga') {
-    icon = '⚡'; title = 'Fatiga diaria';
-    const t = data.hooper?.reduce((a, b) => a + b, 0) || 0;
-    color = t <= 12 ? 'dot-g' : t <= 19 ? 'dot-y' : 'dot-r';
-    detail = `Hooper: ${t} · HRV: ${data.hrv||'--'}ms`;
-    status = t <= 12 ? '🟢 Óptimo' : t <= 19 ? '🟡 Moderado' : '🔴 Sobrecarga';
-    statusCls = t <= 12 ? 'tl-s-g' : t <= 19 ? 'tl-s-y' : 'tl-s-r';
-  } else if (tipo === 'fms') {
-    icon = '🎯'; title = 'FMS -- Calidad Movimiento';
-    const ohsY = (data.ohs?.criterios || []).filter(v => v === 'si').length;
-    const pct = ohsY / (data.ohs?.criterios?.length || 4) * 100;
-    color = pct >= 80 ? 'dot-g' : pct >= 50 ? 'dot-y' : 'dot-r';
-    detail = `OHS: ${ohsY}/${data.ohs?.criterios?.length||4} criterios · Valgo D: ${data.sd?.valgoD||'--'}°`;
-    status = pct >= 80 ? '🟢 Buena calidad' : pct >= 50 ? '🟡 Compensaciones' : '🔴 Déficits';
-    statusCls = pct >= 80 ? 'tl-s-g' : pct >= 50 ? 'tl-s-y' : 'tl-s-r';
-  } else if (tipo === 'kinesio') {
-    icon = '🏥'; title = 'Evaluación Kinesiológica';
-    const zonas = Object.values(data.zonas || {});
-    const posTests = (data.testsPositivos || []).length;
-    const eva = data.eva || 0;
-    color = eva >= 7 ? 'dot-r' : eva >= 4 ? 'dot-y' : 'dot-g';
-    detail = `${data.motivo || 'Consulta kinesiológica'}${zonas.length ? ' · ' + zonas.length + ' zona(s)' : ''}${posTests ? ' · ' + posTests + ' test(s) positivo(s)' : ''}`;
-    if (data.dx) detail += ` · Dx: ${data.dx}`;
-    status = eva >= 7 ? `🔴 Dolor severo (EVA ${eva})` : eva >= 4 ? `🟡 Moderado (EVA ${eva})` : `🟢 Leve (EVA ${eva})`;
-    statusCls = eva >= 7 ? 'tl-s-r' : eva >= 4 ? 'tl-s-y' : 'tl-s-g';
-  }
-  return { fecha, icon, title, detail, dotClass: color, statusHtml: status ? `<span class="tl-status ${statusCls}">${status}</span>` : '' };
-}
 
-function renderHistorial() {
-  const el = document.getElementById('historial-timeline'); if (!el || !cur) return;
-  const items = buildTimelineItems();
-  if (!items.length) {
-    el.innerHTML = '<div style="text-align:center;padding:60px;color:var(--text3)"><div style="font-size:40px;margin-bottom:12px">📊</div><div style="font-size:16px;font-weight:700">Sin evaluaciones aún</div><p style="font-size:13px;margin-top:6px">Empezá cargando datos en cualquier módulo</p></div>';
-    return;
-  }
-  el.innerHTML = '<div class="tl-wrap">' + items.map(it => `
-    <div class="tl-item">
-      <div class="tl-dot ${it.dotClass}"></div>
-      <div class="tl-date">${it.fecha}</div>
-      <div class="tl-title">${it.icon} ${it.title}</div>
-      <div class="tl-body">${it.detail}</div>
-      ${it.statusHtml}
-    </div>`).join('') + '</div>';
-}
+      <!-- Panel ingle / Doha -->
+      <div id="tests-panel-ingle" class="kine-panel hidden">
+        <div class="grid-2" style="gap:12px">
+          <div class="card">
+            <div class="card-header"><h3>Consenso de Doha -- Aductores</h3><span class="tag tag-r">Ingle deportiva</span></div>
+            <div class="card-body" id="tp-doha-aductores"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Consenso de Doha -- Iliopsoas</h3><span class="tag tag-y">Ingle anterior</span></div>
+            <div class="card-body" id="tp-doha-psoas"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Consenso de Doha -- Inguinal</h3><span class="tag tag-b">Canal inguinal</span></div>
+            <div class="card-body" id="tp-doha-inguinal"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Tests complementarios</h3><span class="tag tag-g">Cadera / Pubis</span></div>
+            <div class="card-body" id="tp-doha-complementarios"></div>
+          </div>
+        </div>
+      </div>
 
-// ══════════════════════════════════════════════════════
-//  F-V MODULE
-// ══════════════════════════════════════════════════════
+      <!-- Panel cervical -->
+      <div id="tests-panel-cervical" class="kine-panel hidden">
+        <div class="grid-2" style="gap:12px">
+          <div class="card">
+            <div class="card-header"><h3>Tests neurales cervicales</h3><span class="tag tag-r">Neural / Compresion</span></div>
+            <div class="card-body" id="tp-cervical-neural"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Tests articulares</h3><span class="tag tag-y">Articular / Ligamentario</span></div>
+            <div class="card-body" id="tp-cervical-articular"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>ROM Cervical</h3><span class="tag tag-b">Goniometria</span></div>
+            <div class="card-body" id="tp-rom-cervical"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Tests musculares</h3><span class="tag tag-g">Fuerza / Estabilidad</span></div>
+            <div class="card-body" id="tp-cervical-muscular"></div>
+          </div>
+        </div>
+      </div>
 
-function addFVRow() {
-  fvRowCount++;
-  const wrap = document.getElementById('fv-rows-wrap');
-  const row = document.createElement('div');
-  row.className = 'fv-data-row';
-  row.style.cssText = 'display:grid;grid-template-columns:60px 1fr 1fr 24px;gap:6px;margin-bottom:6px;align-items:center';
-  row.innerHTML = `<span style="font-family:var(--mono);font-size:10px;color:var(--text3)">Par ${fvRowCount}</span>
-    <input class="inp inp-mono fv-carga" type="number" step=".5" placeholder="60" style="font-size:12px">
-    <input class="inp inp-mono fv-vmp"   type="number" step=".001" placeholder="0.650" style="font-size:12px">
-    <button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:2px;line-height:1">×</button>`;
-  wrap.appendChild(row);
-}
+      <!-- Panel codo -->
+      <div id="tests-panel-codo" class="kine-panel hidden">
+        <div class="grid-2" style="gap:12px">
+          <div class="card">
+            <div class="card-header"><h3>Epicondilalgia lateral</h3><span class="tag tag-r">Tenis / Lateral</span></div>
+            <div class="card-body" id="tp-codo-lateral"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Epicondilalgia medial</h3><span class="tag tag-y">Golfer / Medial</span></div>
+            <div class="card-body" id="tp-codo-medial"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Ligamentos codo</h3><span class="tag tag-b">Estabilidad</span></div>
+            <div class="card-body" id="tp-codo-ligamentos"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>ROM Codo</h3><span class="tag tag-b">Goniometria</span></div>
+            <div class="card-body" id="tp-rom-codo"></div>
+          </div>
+        </div>
+      </div>
 
-function onFvEjChange() {
-  const newEj = document.getElementById('fv-ej')?.value;
-  if (_lastFvEj && _lastFvEj !== newEj) {
-    const pairs = [...document.querySelectorAll('.fv-data-row')]
-      .map(r => ({ c: +r.querySelector('.fv-carga').value, v: +r.querySelector('.fv-vmp').value }))
-      .filter(p => p.c > 0 && p.v > 0);
-    if (pairs.length >= 3 && cur) { calcFV(); setTimeout(() => { document.getElementById('fv-rows-wrap').innerHTML = ''; fvRowCount = 0; for (let i = 0; i < 5; i++) addFVRow(); document.getElementById('fv-output').classList.add('hidden'); }, 200); }
-  }
-  _lastFvEj = newEj;
-  renderFVHist();
-}
+      <!-- Panel patelofemoral / pie -->
+      <div id="tests-panel-patelo" class="kine-panel hidden">
+        <div class="grid-2" style="gap:12px">
+          <div class="card">
+            <div class="card-header"><h3>Articulacion patelofemoral</h3><span class="tag tag-y">Rotula</span></div>
+            <div class="card-body" id="tp-patelo"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Tendones rodilla</h3><span class="tag tag-r">Patelar / Cuadricipital</span></div>
+            <div class="card-body" id="tp-tendones-rodilla"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Pie y Aquiles</h3><span class="tag tag-b">Tendones / Fascia</span></div>
+            <div class="card-body" id="tp-pie"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Muñeca y mano</h3><span class="tag tag-g">Ligamentos / Tendones</span></div>
+            <div class="card-body" id="tp-muneca"></div>
+          </div>
+        </div>
+      </div>
 
-function calcFV() {
-  if (!cur) { alert('Seleccioná un atleta'); return; }
-  const rows = [...document.querySelectorAll('.fv-data-row')];
-  const pairs = rows.map(r => ({ c: +r.querySelector('.fv-carga').value, v: +r.querySelector('.fv-vmp').value })).filter(p => p.c > 0 && p.v > 0);
-  if (pairs.length < 3) { alert('Mínimo 3 pares carga/VMP'); return; }
-  const cargas = pairs.map(p => p.c), vmps = pairs.map(p => p.v);
-  const n = cargas.length;
-  const sumX = cargas.reduce((a,b)=>a+b,0), sumY = vmps.reduce((a,b)=>a+b,0);
-  const sumXY = cargas.reduce((s,x,i)=>s+x*vmps[i],0), sumX2 = cargas.reduce((s,x)=>s+x*x,0);
-  const b = (n*sumXY - sumX*sumY) / (n*sumX2 - sumX*sumX);
-  const a = sumY/n - b*sumX/n;
-  const meanY = sumY/n;
-  const ssTot = vmps.reduce((s,y)=>s+(y-meanY)**2,0);
-  const ssRes = cargas.reduce((s,x,i)=>s+(vmps[i]-(a+b*x))**2,0);
-  const r2 = 1 - ssRes/ssTot;
-  const F0 = b < 0 ? (-a/b) : null;
-  const V0 = a;
-  const Pmax = F0 && V0 ? (F0*V0/4) : null;
-  const ejId = document.getElementById('fv-ej').value;
-  const vmpRef = VMP_REF[ejId] || 0.18;
-  const oneRM = b < 0 ? ((vmpRef-a)/b) : null;
-  const fiab = r2 >= 0.99 ? 'Alta' : r2 >= 0.95 ? 'Aceptable' : 'Baja';
-  const r2Color = r2 >= 0.99 ? 'var(--neon)' : r2 >= 0.95 ? 'var(--amber)' : 'var(--red)';
-  const ejName = document.getElementById('fv-ej').options[document.getElementById('fv-ej').selectedIndex].text;
-  // Chart
-  document.getElementById('fv-output').classList.remove('hidden');
-  const minC = Math.min(...cargas)*0.9, maxC = Math.max(...cargas)*1.1;
-  const curvX = [], curvY = [];
-  for (let i=0;i<=30;i++){const x=minC+(maxC-minC)*i/30;curvX.push(+x.toFixed(1));curvY.push(Math.max(0,+(a+b*x).toFixed(4)));}
-  const ctx = document.getElementById('fv-chart').getContext('2d');
-  if (fvChart) fvChart.destroy();
-  fvChart = new Chart(ctx, { type:'line',
-    data:{ labels:curvX, datasets:[
-      { label:'Curva F-V', data:curvY, borderColor:'#39FF7A', backgroundColor:'rgba(57,255,122,.04)', borderWidth:2, pointRadius:0, tension:0 },
-      { label:'Datos', data:cargas.map((c,i)=>({x:c,y:vmps[i]})), borderColor:'#4D9EFF', backgroundColor:'#4D9EFF', type:'scatter', pointRadius:6, showLine:false, xAxisID:'x' }
-    ]},
-    options:{ responsive:true, plugins:{ legend:{ labels:{ color:'#666', font:{ family:'JetBrains Mono', size:10 } } } },
-      scales:{ x:{type:'linear',grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#444',font:{family:'JetBrains Mono',size:9}},title:{display:true,text:'Carga (kg)',color:'#555'}},
-               y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#444',font:{family:'JetBrains Mono',size:9}},title:{display:true,text:'VMP (m/s)',color:'#555'}} } }
-  });
-  const badge = document.getElementById('fv-r2-badge');
-  badge.textContent = `R² = ${r2.toFixed(4)} -- ${fiab}`;
-  badge.className = 'tag ' + (r2>=0.99?'tag-g':r2>=0.95?'tag-y':'tag-r');
-  document.getElementById('fv-res-table').innerHTML = `
-    <div class="flex-b mb-8"><span style="font-size:12px;color:var(--text2)">Ejercicio</span><span style="font-family:var(--mono);font-weight:700">${ejName}</span></div>
-    <div class="flex-b mb-8"><span style="font-size:12px;color:var(--text2)">V₀</span><span style="font-family:var(--mono);font-weight:700;color:var(--neon)">${V0.toFixed(4)} m/s</span></div>
-    ${F0?`<div class="flex-b mb-8"><span style="font-size:12px;color:var(--text2)">F₀ (VMP=0)</span><span style="font-family:var(--mono);font-weight:700;color:var(--blue)">${F0.toFixed(1)} kg</span></div>`:''}
-    ${Pmax?`<div class="flex-b mb-8"><span style="font-size:12px;color:var(--text2)">Pmax estimada</span><span style="font-family:var(--mono);font-weight:700;color:var(--amber)">${Pmax.toFixed(1)} W</span></div>`:''}
-    ${oneRM?`<div class="flex-b mb-8"><span style="font-size:12px;color:var(--text2)">1RM (VMP ${vmpRef})</span><span style="font-family:var(--mono);font-weight:700;color:var(--purple)">${oneRM.toFixed(1)} kg</span></div>`:''}
-    <div class="flex-b"><span style="font-size:12px;color:var(--text2)">Fórmula</span><span style="font-family:var(--mono);font-size:11px">VMP = ${V0.toFixed(3)} + ${b.toFixed(5)}×C</span></div>`;
-  const pcts = [100,95,90,85,80,75,70,65,60,55,50];
-  document.getElementById('fv-pct-table').innerHTML = pcts.map(p => {
-    const load = oneRM ? (oneRM*p/100) : null; const vmp = load ? (a+b*load) : null; const ok = vmp && vmp > 0;
-    return `<tr><td class="mono-cell">${p}%</td><td class="mono-cell">${load?load.toFixed(1):'--'}</td><td class="mono-cell" style="color:${ok?'var(--neon)':'var(--text3)'}">${ok?vmp.toFixed(3):'--'}</td></tr>`;
-  }).join('');
-  // Save
-  const evalIdx = document.getElementById('fv-eval-num')?.value || '0';
-  const fechaFV = document.getElementById('fv-fecha').value || new Date().toISOString().split('T')[0];
-  if (!cur.evals) cur.evals = {};
-  cur.evals['fv_' + ejId + '_' + evalIdx] = { a, b, r2, F0, V0, Pmax, oneRM, vmpRef, ejercicio:ejName, ejId, fecha:fechaFV, cargas, vmps };
-  if (!cur.evalsByDate) cur.evalsByDate = {};
-  if (!cur.evalsByDate[fechaFV]) cur.evalsByDate[fechaFV] = {};
-  cur.evalsByDate[fechaFV][ejId] = { a, b, r2, F0, V0, Pmax, oneRM, cargas, vmps, ejercicio:ejName };
-  cur.lastFV = { a, b, r2, F0, V0, Pmax, oneRM, vmpRef, ejercicio:ejName, ejId, cargas, vmps };
-  if (oneRM) cur.last1RM = oneRM;
-  atletas = atletas.map(a => a.id === cur.id ? cur : a);
-  saveData();
-  renderDashSemaforos();
-  renderProfileHero();
-}
+      <!-- Tests positivos summary -->
 
-function renderFVHist() {
-  if (!cur) return;
-  const ejId = document.getElementById('fv-ej')?.value || 'sentadilla';
-  const ejName = document.getElementById('fv-ej')?.options[document.getElementById('fv-ej')?.selectedIndex]?.text || ejId;
-  const titleEl = document.getElementById('fv-hist-title');
-  if (titleEl) titleEl.textContent = ejName;
-  const area = document.getElementById('fv-hist-table'); if (!area) return;
-  const entries = Object.entries(cur.evals || {})
-    .filter(([k]) => k.startsWith('fv_' + ejId + '_'))
-    .map(([k, v]) => ({ evalN: +k.split('_').slice(-1)[0]+1, ...v }))
-    .sort((a, b) => new Date(b.fecha||0) - new Date(a.fecha||0));
-  if (!entries.length) { area.innerHTML = '<p style="font-size:12px;color:var(--text3)">Sin historial para este ejercicio.</p>'; return; }
-  area.innerHTML = `<table class="data-table"><thead><tr><th>Eval #</th><th>Fecha</th><th>1RM (kg)</th><th>Fza.Rel.</th><th>R²</th><th>V₀ m/s</th></tr></thead><tbody>` +
-    entries.map(e => {
-      const fr = e.oneRM && cur.peso ? (e.oneRM/+cur.peso).toFixed(2) : '--';
-      const frC = fr !== '--' ? (+fr>=1.5?'var(--neon)':+fr>=1.0?'var(--amber)':'var(--red)') : 'var(--text3)';
-      return `<tr><td class="mono-cell">${e.evalN}ra</td><td>${e.fecha||'--'}</td><td class="mono-cell text-neon">${e.oneRM?.toFixed(1)||'--'}</td><td class="mono-cell" style="color:${frC}">${fr}×PC</td><td class="mono-cell ${e.r2>=0.99?'text-neon':e.r2>=0.95?'text-amber':'text-red'}">${e.r2?.toFixed(4)||'--'}</td><td class="mono-cell">${e.V0?.toFixed(3)||'--'}</td></tr>`;
-    }).join('') + '</tbody></table>';
-}
+      <!-- ══ SEGUIMIENTO DE LESIÓN ══ -->
+      <div class="card mt-16" style="border-color:rgba(255,176,32,.2)">
+        <div class="card-header">
+          <h3 style="color:var(--amber)">📌 Seguimiento de Lesión Activa</h3>
+          <span class="tag tag-y">Estado · Etapa · RTS</span>
+        </div>
+        <div class="card-body">
+          <div class="grid-2" style="gap:14px">
 
-// ══════════════════════════════════════════════════════
-//  SALTOS
-// ══════════════════════════════════════════════════════
+            <!-- Columna 1: Estado y etapa -->
+            <div style="display:flex;flex-direction:column;gap:12px">
 
-// ── BOSCO CALCULATIONS ──
-function boscoZScore(key, val, sexo) {
-  const norm = BOSCO_NORMS[key];
-  if (!norm || !val) return null;
-  const n = sexo === 'F' ? norm.female : norm.male;
-  return +((val - n.mean) / n.sd).toFixed(2);
-}
+              <div class="ig">
+                <label class="il">Tipo de lesión</label>
+                <select class="inp" id="les-tipo">
+                  <option value="">— Seleccionar —</option>
+                  <option>Esguince ligamentario</option>
+                  <option>Rotura muscular parcial</option>
+                  <option>Rotura muscular total</option>
+                  <option>Tendinopatia</option>
+                  <option>Rotura LCA</option>
+                  <option>Rotura LCA + reconstruccion</option>
+                  <option>Rotura meniscal</option>
+                  <option>Fractura</option>
+                  <option>Luxacion</option>
+                  <option>Contusion</option>
+                  <option>Sobrecarga</option>
+                  <option>Hernia discal</option>
+                  <option>Pubalgia / ingle deportiva</option>
+                  <option>Tendon de Aquiles (rotura)</option>
+                  <option>Tendinopatia Aquiles</option>
+                  <option>Osteitis pubis</option>
+                  <option>Otro</option>
+                </select>
+              </div>
 
-function boscoBadge(key, val, sexo) {
-  const z = boscoZScore(key, val, sexo);
-  if (z === null) return '';
-  const label = z >= 1.5 ? 'Elite' : z >= 0.5 ? 'Alto' : z >= -0.5 ? 'Promedio' : z >= -1.5 ? 'Bajo' : 'Muy bajo';
-  const c = z >= 1 ? 'var(--neon)' : z >= 0 ? 'var(--blue)' : z >= -1 ? 'var(--amber)' : 'var(--red)';
-  return `<span class="tag" style="background:${c}22;color:${c}">${label} (z=${z>0?'+':''}${z})</span>`;
-}
+              <div class="ig">
+                <label class="il">Estructura afectada</label>
+                <input class="inp" id="les-estructura" placeholder="Ej: LCA derecho, bíceps femoral proximal...">
+              </div>
 
-function calcBoscoIndices() {
-  const sj  = parseFloat(document.getElementById('sj-avg')?.dataset.val  || '') || 0;
-  const cmj = parseFloat(document.getElementById('cmj-avg')?.dataset.val || '') || 0;
-  const abk = parseFloat(document.getElementById('abk-avg')?.dataset.val || '') || 0;
-  const el  = document.getElementById('bosco-indices');
-  if (!el) return;
-  if (!sj && !cmj && !abk) { el.innerHTML = ''; return; }
-  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-top:12px">';
+              <div class="ig">
+                <label class="il">Estado actual</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                  <button class="fms-btn" id="les-est-agudo" onclick="setLesEstado('agudo')">Agudo</button>
+                  <button class="fms-btn" id="les-est-subagudo" onclick="setLesEstado('subagudo')">Subagudo</button>
+                  <button class="fms-btn" id="les-est-cronico" onclick="setLesEstado('cronico')">Crónico</button>
+                  <button class="fms-btn" id="les-est-readap" onclick="setLesEstado('readap')">Readaptación</button>
+                </div>
+              </div>
 
-  // Indice elasticidad (CEA lento): ((CMJ-SJ)/SJ)*100
-  if (sj && cmj) {
-    const ie = ((cmj - sj) / sj * 100).toFixed(1);
-    const c  = +ie >= 15 ? 'var(--neon)' : +ie >= 8 ? 'var(--amber)' : 'var(--red)';
-    html += `<div style="background:var(--bg4);border:1px solid ${c}44;border-radius:10px;padding:12px;text-align:center">
-      <div style="font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;margin-bottom:4px">Indice Elasticidad</div>
-      <div style="font-family:var(--mono);font-size:24px;font-weight:800;color:${c}">${ie}%</div>
-      <div style="font-size:10px;color:var(--text2);margin-top:3px">CMJ - SJ / SJ · CEA lento</div>
-      <div style="font-size:10px;margin-top:4px;color:${c}">${+ie>=15?'Excelente uso elastico':+ie>=8?'Buen uso elastico':'Deficit elastico'}</div>
-    </div>`;
-  }
+              <div class="ig">
+                <label class="il">Etapa de rehabilitación</label>
+                <select class="inp" id="les-etapa" onchange="updateLesDias()">
+                  <option value="">— Seleccionar —</option>
+                  <option value="0">Fase 0 — Protección / Reposo</option>
+                  <option value="1">Fase 1 — Control del dolor e inflamación</option>
+                  <option value="2">Fase 2 — Recuperación del ROM</option>
+                  <option value="3">Fase 3 — Fortalecimiento progresivo</option>
+                  <option value="4">Fase 4 — Entrenamiento funcional</option>
+                  <option value="5">Fase 5 — Retorno al deporte (RTS)</option>
+                  <option value="rts">RTS — Alta deportiva</option>
+                </select>
+              </div>
 
-  // Indice coordinacion de brazos: ((ABK-CMJ)/CMJ)*100
-  if (cmj && abk) {
-    const ib = ((abk - cmj) / cmj * 100).toFixed(1);
-    let interpBraz = '', cBraz = '';
-    if (+ib < 10)      { interpBraz = 'Mala coordinacion de brazos'; cBraz = 'var(--red)'; }
-    else if (+ib <= 20){ interpBraz = 'Buen aprovechamiento de brazos'; cBraz = 'var(--neon)'; }
-    else               { interpBraz = 'Deficit CEA -- dependencia excesiva brazos'; cBraz = 'var(--amber)'; }
-    html += `<div style="background:var(--bg4);border:1px solid ${cBraz}44;border-radius:10px;padding:12px;text-align:center">
-      <div style="font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;margin-bottom:4px">Coord. de Brazos</div>
-      <div style="font-family:var(--mono);font-size:24px;font-weight:800;color:${cBraz}">${ib}%</div>
-      <div style="font-size:10px;color:var(--text2);margin-top:3px">ABK - CMJ / CMJ</div>
-      <div style="font-size:10px;margin-top:4px;color:${cBraz}">${interpBraz}</div>
-    </div>`;
-  }
+              <div class="grid-2" style="gap:8px">
+                <div class="ig">
+                  <label class="il">Días desde lesión</label>
+                  <input class="inp inp-mono" type="number" id="les-dias" placeholder="0" oninput="updateLesDias()">
+                </div>
+                <div class="ig">
+                  <label class="il">Días estimados RTS</label>
+                  <input class="inp inp-mono" type="number" id="les-dias-rts" placeholder="0">
+                </div>
+              </div>
 
-  // Potencia Bosco (formula de Bosco et al. 1983)
-  if (cmj && cur?.peso) {
-    const h = cmj / 100;
-    const P = Math.pow(4.9, 0.5) * +cur.peso * Math.pow(h, 0.5);
-    html += `<div style="background:var(--bg4);border:1px solid rgba(77,158,255,.3);border-radius:10px;padding:12px;text-align:center">
-      <div style="font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;margin-bottom:4px">Potencia mecanica</div>
-      <div style="font-family:var(--mono);font-size:24px;font-weight:800;color:var(--blue)">${P.toFixed(1)}</div>
-      <div style="font-size:10px;color:var(--text2);margin-top:3px">kgm/s -- Formula Bosco 1983</div>
-    </div>`;
-  }
+            </div>
 
-  // RSI si hay DJ
-  const djAvg = parseFloat(document.getElementById('dj-avg')?.dataset.val || '') || 0;
-  const djTc  = parseFloat(document.getElementById('dj-tc')?.value || '') || 0;
-  if (djAvg && djTc) {
-    const rsi = (djAvg / 100 / (djTc / 1000)).toFixed(2);
-    const cRsi = +rsi >= 2.5 ? 'var(--neon)' : +rsi >= 1.5 ? 'var(--amber)' : 'var(--red)';
-    html += `<div style="background:var(--bg4);border:1px solid ${cRsi}44;border-radius:10px;padding:12px;text-align:center">
-      <div style="font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;margin-bottom:4px">RSI Modificado</div>
-      <div style="font-family:var(--mono);font-size:24px;font-weight:800;color:${cRsi}">${rsi}</div>
-      <div style="font-size:10px;color:var(--text2);margin-top:3px">h(m) / Tc(s) -- DJ reactivo</div>
-      <div style="font-size:10px;margin-top:4px;color:${cRsi}">${+rsi>=2.5?'Elite reactivo':+rsi>=1.5?'Promedio reactivo':'Bajo reactivo'}</div>
-    </div>`;
-  }
+            <!-- Columna 2: Criterios RTS y observaciones -->
+            <div style="display:flex;flex-direction:column;gap:12px">
 
-  html += '</div>';
-  el.innerHTML = html;
-}
+              <!-- RTS checklist -->
+              <div class="card">
+                <div class="card-header"><h3>Criterios RTS</h3><span id="les-rts-pct" class="tag tag-y">0%</span></div>
+                <div class="card-body" style="padding:12px">
+                  <div style="display:flex;flex-direction:column;gap:6px" id="les-rts-checks">
+                    <label style="display:flex;align-items:center;gap:8px;font-size:11px;cursor:pointer">
+                      <input type="checkbox" class="les-rts-cb" style="accent-color:var(--neon)" onchange="updateRTSPercent()">
+                      Sin dolor en reposo (EVA 0/10)
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;font-size:11px;cursor:pointer">
+                      <input type="checkbox" class="les-rts-cb" style="accent-color:var(--neon)" onchange="updateRTSPercent()">
+                      ROM completo bilateral
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;font-size:11px;cursor:pointer">
+                      <input type="checkbox" class="les-rts-cb" style="accent-color:var(--neon)" onchange="updateRTSPercent()">
+                      Fuerza ≥90% miembro contralateral (LSI)
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;font-size:11px;cursor:pointer">
+                      <input type="checkbox" class="les-rts-cb" style="accent-color:var(--neon)" onchange="updateRTSPercent()">
+                      Hop tests LSI ≥90%
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;font-size:11px;cursor:pointer">
+                      <input type="checkbox" class="les-rts-cb" style="accent-color:var(--neon)" onchange="updateRTSPercent()">
+                      Sin dolor en gesto deportivo específico
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;font-size:11px;cursor:pointer">
+                      <input type="checkbox" class="les-rts-cb" style="accent-color:var(--neon)" onchange="updateRTSPercent()">
+                      Alta médica
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;font-size:11px;cursor:pointer">
+                      <input type="checkbox" class="les-rts-cb" style="accent-color:var(--neon)" onchange="updateRTSPercent()">
+                      Apto psicológico (confianza deportiva)
+                    </label>
+                  </div>
+                  <!-- Barra de progreso RTS -->
+                  <div style="margin-top:12px">
+                    <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--text2);margin-bottom:4px">
+                      <span>Progreso RTS</span>
+                      <span id="les-rts-pct2">0 / 7</span>
+                    </div>
+                    <div style="height:6px;background:var(--bg5);border-radius:3px;overflow:hidden">
+                      <div id="les-rts-bar" style="height:100%;width:0%;border-radius:3px;background:var(--neon);transition:width .4s"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-function calcMultiSalto15() {
-  const reps  = +document.getElementById('ms15-reps')?.value  || 0;
-  const avgH  = +document.getElementById('ms15-r1')?.value    || 0;
-  const peso  = cur?.peso ? +cur.peso : (+document.getElementById('bj-pc')?.value || 0);
-  const el    = document.getElementById('ms15-avg');
-  const elPot = document.getElementById('ms15-pot');
-  if (el) { el.textContent = avgH ? avgH.toFixed(1) : '--'; el.dataset.val = avgH || ''; }
-  if (elPot && avgH && peso) {
-    // Formula Bosco potencia anaerobia: P = (4*h*m*g*n) / (4*t*n - Pi*tv)
-    // Simplificada: P = sqrt(4.9) * m * sqrt(h/100)
-    const P = Math.pow(4.9, 0.5) * peso * Math.pow(avgH / 100, 0.5);
-    elPot.textContent = P.toFixed(1) + ' kgm/s';
-    const sexo  = cur?.sexo || 'M';
-    const norms = BOSCO_NORMS.ms15;
-    const n     = sexo === 'F' ? norms.female : norms.male;
-    const z     = ((P - n.mean) / n.sd).toFixed(2);
-    const c     = +z >= 1 ? 'var(--neon)' : +z >= 0 ? 'var(--blue)' : +z >= -1 ? 'var(--amber)' : 'var(--red)';
-    elPot.style.color = c;
-  }
-  calcBoscoIndices();
-}
+              <!-- Observaciones clínicas -->
+              <div class="ig">
+                <label class="il">Notas clínicas / Plan de tratamiento</label>
+                <textarea class="inp" id="les-obs" rows="3" placeholder="Describí el plan de tratamiento, objetivos de la semana, ejercicios, etc..."></textarea>
+              </div>
 
-function buildSaltosGrid() {
-  const grid = document.getElementById('saltos-grid'); if (!grid) return;
-  const sexo = cur?.sexo || 'M';
-  const vert = SALTOS_DEF.filter(d => d.cat === 'vertical');
-  const horiz = SALTOS_DEF.filter(d => d.cat === 'horizontal');
+              <!-- Timeline visual -->
+              <div id="les-timeline-display" style="background:var(--bg4);border-radius:10px;padding:12px;display:none">
+                <div style="font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;margin-bottom:8px">Timeline estimado</div>
+                <div id="les-timeline-bar" style="position:relative;height:12px;background:var(--bg5);border-radius:6px;overflow:visible;margin-bottom:6px">
+                  <div id="les-prog-bar" style="height:100%;border-radius:6px;background:linear-gradient(90deg,var(--neon),var(--amber));transition:width .5s"></div>
+                  <div id="les-prog-dot" style="position:absolute;top:50%;transform:translateY(-50%);width:16px;height:16px;border-radius:50%;background:var(--neon);border:2px solid var(--dark2);box-shadow:0 0 10px var(--neon);transition:left .5s"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--text2)">
+                  <span>Día 0</span>
+                  <span id="les-dias-mid">—</span>
+                  <span id="les-rts-label">RTS</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-  let html = '';
-
-  // ── SECCION VERTICALES ──
-  html += `<div style="grid-column:1/-1">
-    <div style="font-family:var(--mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--neon);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid rgba(57,255,122,.1)">
-      Saltos verticales -- Bateria Bosco
+      <div class="card card-danger mt-16" id="kine-positivos-card" style="display:none">
+        <div class="card-header"><h3 style="color:var(--red)">🔴 Tests positivos activos</h3><span style="font-size:10px;color:var(--text2);font-family:var(--mono)">Incluidos en el informe PDF</span></div>
+        <div class="card-body" id="kine-positivos-list"></div>
+      </div>
     </div>
-  </div>`;
+  </div>
 
-  vert.forEach(def => {
-    if (def.key === 'ms15') {
-      // Multisalto 15s -- card especial
-      html += `<div class="card">
-        <div class="card-header"><h3>Multi-salto 15s</h3><span class="tag tag-y">Potencia anaerob. alactica</span></div>
+  <!-- ══ TAB: FUERZA F-V ══ -->
+  <div id="ptab-fuerza" class="hidden">
+    <div class="card mb-14">
+      <div class="card-header">
+        <h3>Perfil Carga-Velocidad — Regresión lineal (R²)</h3>
+        <div class="flex" style="gap:8px">
+          <select class="inp inp-mono" id="fv-ej" style="width:180px;font-size:11px" onchange="onFvEjChange()">
+            <option value="sentadilla">Sentadilla / Back Squat</option>
+            <option value="press-banca">Press de Banca</option>
+            <option value="peso-muerto">Peso Muerto / Deadlift</option>
+            <option value="bench-pull">Bench Pull / Remo</option>
+            <option value="hip-thrust">Hip Thrust</option>
+            <option value="media-sent">Media Sentadilla</option>
+            <option value="military-press">Military Press</option>
+            <option value="dominadas">Dominadas / Pull Up</option>
+          </select>
+          <select class="inp inp-mono" id="fv-eval-num" style="width:80px;font-size:11px"><option value="0">1ra</option><option value="1">2da</option><option value="2">3ra</option><option value="3">4ta</option></select>
+          <input class="inp" type="date" id="fv-fecha" style="width:150px;font-size:12px">
+        </div>
+      </div>
+      <div class="card-body">
+        <div style="background:var(--bg4);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:12px">
+          <div class="flex-b mb-8"><span class="il" style="margin:0">Pares Carga (kg) / VMP (m/s)</span><button class="btn btn-ghost btn-sm" onclick="addFVRow()">+ Fila</button></div>
+          <div style="display:grid;grid-template-columns:60px 1fr 1fr 24px;gap:6px;margin-bottom:6px">
+            <span class="il" style="margin:0">N°</span><span class="il" style="margin:0">Carga kg</span><span class="il" style="margin:0">VMP m/s</span><span></span>
+          </div>
+          <div id="fv-rows-wrap"></div>
+        </div>
+        <button class="btn btn-neon btn-full" onclick="calcFV()">📊 Calcular y Guardar Perfil F-V</button>
+      </div>
+    </div>
+    <div class="card mb-14">
+      <div class="card-header"><h3>Historial F-V — <span id="fv-hist-title" class="text-neon">Sentadilla</span></h3></div>
+      <div class="card-body" id="fv-hist-table" style="overflow-x:auto"></div>
+    </div>
+    <div id="fv-output" class="hidden">
+      <div class="card mb-12 card-glow">
+        <div class="card-header"><h3>Curva Carga-Velocidad</h3><span id="fv-r2-badge" class="tag"></span></div>
+        <div class="card-body"><canvas id="fv-chart" height="220"></canvas></div>
+      </div>
+      <div class="grid-2 mb-12" style="gap:12px">
+        <div class="card"><div class="card-header"><h3>Resultados F-V</h3></div><div class="card-body" id="fv-res-table"></div></div>
+        <div class="card"><div class="card-header"><h3>% RM → Carga → VMP</h3></div><div class="card-body" style="overflow-x:auto"><table class="data-table"><thead><tr><th>%RM</th><th>Carga kg</th><th>VMP m/s</th></tr></thead><tbody id="fv-pct-table"></tbody></table></div></div>
+      </div>
+      <div class="card card-glow">
+        <div class="card-header"><h3>Semáforo Fuerza Relativa — 1RM / Peso corporal</h3></div>
+        <div class="card-body" id="fv-fuerza-rel"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB: SALTOS ══ -->
+  <div id="ptab-saltos" class="hidden">
+    <div class="flex-b mb-16">
+      <div>
+        <div style="font-size:15px;font-weight:700">Bateria de Saltos -- Protocolo Bosco</div>
+        <div style="font-size:12px;color:var(--text2)">Verticales · Horizontales · Indices Bosco · LSI · Normas Garrido-Chamorro 2004 (N=765)</div>
+      </div>
+      <div class="flex" style="gap:8px">
+        <select class="inp inp-mono" id="saltos-eval-num" style="width:120px;font-size:11px">
+          <option value="0">1ra Eval</option><option value="1">2da Eval</option><option value="2">3ra Eval</option><option value="3">4ta Eval</option>
+        </select>
+        <input class="inp" type="date" id="saltos-fecha" style="width:150px;font-size:12px">
+        <button class="btn btn-neon btn-sm" onclick="saveSaltos()">💾 Guardar</button>
+      </div>
+    </div>
+    <div id="saltos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px"></div>
+    <div class="card mt-16">
+      <div class="card-header">
+        <h3>Tabla de Simetrias -- todos los hop tests</h3>
+        <span style="font-size:10px;color:var(--text2);font-family:var(--mono)">LSI: 🔴 &lt;85% · 🟡 85-89% · 🟢 ≥90%</span>
+      </div>
+      <div class="card-body" id="simetrias-tabla" style="overflow-x:auto"></div>
+    </div>
+
+    <!-- ANALIZADOR DE VALGO DE RODILLA -->
+    <div class="card mt-16">
+      <div class="card-header">
+        <h3>Analisis de Valgo de Rodilla</h3>
+        <span class="tag tag-r">Evaluacion de angulo</span>
+      </div>
+      <div class="card-body">
+        <div class="grid-2" style="gap:18px;align-items:start">
+          <!-- VIDEO -->
+          <div>
+            <div class="ig">
+              <label class="il">Test a analizar</label>
+              <select class="inp" id="valgo-test-type" style="font-size:12px">
+                <option value="CMJ bilateral">CMJ Bilateral</option>
+                <option value="DJ bilateral">Drop Jump Bilateral</option>
+                <option value="CMJ unilateral D">CMJ Unilateral Derecha</option>
+                <option value="CMJ unilateral I">CMJ Unilateral Izquierda</option>
+                <option value="DJ unilateral D">DJ Unilateral Derecha</option>
+                <option value="DJ unilateral I">DJ Unilateral Izquierda</option>
+                <option value="Single Leg Squat D">Single Leg Squat Derecha</option>
+                <option value="Single Leg Squat I">Single Leg Squat Izquierda</option>
+              </select>
+            </div>
+            <div id="valgo-upload-area" style="border:2px dashed rgba(57,255,122,.2);border-radius:10px;padding:24px;text-align:center;cursor:pointer;margin-bottom:10px" onclick="document.getElementById('valgo-file-inp').click()">
+              <div style="font-size:24px;margin-bottom:6px">🎬</div>
+              <div style="font-size:13px;font-weight:700;color:var(--neon)">Cargar video frontal</div>
+              <div style="font-size:11px;color:var(--text2);margin-top:4px">Camara frontal -- se deben ver ambas rodillas</div>
+            </div>
+            <input type="file" id="valgo-file-inp" accept="video/*" class="hidden" onchange="loadValgoVideo(this)">
+            <div id="valgo-player-wrap" style="display:none">
+              <div style="position:relative;width:100%;display:block">
+                <video id="valgo-video" style="width:100%;display:block;border-radius:8px;background:#000" preload="metadata"></video>
+                <canvas id="valgo-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;border-radius:8px;cursor:crosshair"></canvas>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px">
+                <button class="btn btn-ghost btn-sm" onclick="valgoJump(-10)" style="font-size:10px">-10</button>
+                <button class="btn btn-ghost btn-sm" onclick="valgoJump(-1)" style="font-size:10px">-1</button>
+                <button class="btn btn-ghost btn-sm" onclick="valgoTogglePlay()" id="valgo-play-btn" style="padding:6px 16px;font-size:11px">Play</button>
+                <button class="btn btn-ghost btn-sm" onclick="valgoJump(1)" style="font-size:10px">+1</button>
+                <button class="btn btn-ghost btn-sm" onclick="valgoJump(10)" style="font-size:10px">+10</button>
+              </div>
+              <input type="range" id="valgo-scrubber" min="0" max="1000" value="0" style="width:100%;margin-top:6px;accent-color:var(--neon)" oninput="valgoScrub(this.value)">
+              <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--text2);margin-top:2px">
+                <span>Frame <span id="valgo-frame-cur">0</span> / <span id="valgo-frame-tot">0</span></span>
+                <span id="valgo-time-cur">0.000s</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+                <label style="font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;white-space:nowrap">FPS</label>
+                <div style="display:flex;gap:4px" id="valgo-fps-btns">
+                  <button class="btn btn-neon btn-sm" onclick="setValgoFps(30,this)" style="font-size:10px;padding:4px 10px">30</button>
+                  <button class="btn btn-ghost btn-sm" onclick="setValgoFps(60,this)" style="font-size:10px;padding:4px 10px">60</button>
+                  <button class="btn btn-ghost btn-sm" onclick="setValgoFps(120,this)" style="font-size:10px;padding:4px 10px">120</button>
+                  <button class="btn btn-ghost btn-sm" onclick="setValgoFps(240,this)" style="font-size:10px;padding:4px 10px">240</button>
+                </div>
+                <input type="hidden" id="valgo-fps" value="30">
+              </div>
+            </div>
+          </div>
+
+          <!-- HERRAMIENTAS -->
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div class="card">
+              <div class="card-header"><h3>Herramienta de medicion</h3></div>
+              <div class="card-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
+                  <button class="btn btn-outline btn-full btn-sm" id="valgo-btn-linea1" onclick="setValgoMode('linea1')" style="font-size:11px">Linea 1 -- Femur</button>
+                  <button class="btn btn-ghost btn-full btn-sm" id="valgo-btn-linea2" onclick="setValgoMode('linea2')" style="font-size:11px">Linea 2 -- Tibia</button>
+                </div>
+                <div id="valgo-mode-info" style="font-size:11px;color:var(--text2);line-height:1.7;padding:8px;background:rgba(255,255,255,.02);border-radius:8px;margin-bottom:10px">
+                  1. Congela el frame en el momento de mayor valgo<br>
+                  2. Selecciona Linea 1 y traza el eje del femur (2 puntos)<br>
+                  3. Selecciona Linea 2 y traza el eje de la tibia (2 puntos)<br>
+                  4. El angulo se calcula automaticamente
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">
+                  <button class="btn btn-ghost btn-sm" onclick="clearValgoLines()" style="font-size:11px">Limpiar</button>
+                  <button class="btn btn-ghost btn-sm" onclick="undoValgoPoint()" style="font-size:11px">Deshacer</button>
+                </div>
+                <div class="ig">
+                  <label class="il">Color de lineas</label>
+                  <div style="display:flex;gap:6px;align-items:center">
+                    <div style="width:26px;height:26px;border-radius:6px;background:#39FF7A;cursor:pointer;border:2px solid #fff" onclick="setValgoColor('#39FF7A',this)" id="vc-1"></div>
+                    <div style="width:26px;height:26px;border-radius:6px;background:#FF4444;cursor:pointer" onclick="setValgoColor('#FF4444',this)" id="vc-2"></div>
+                    <div style="width:26px;height:26px;border-radius:6px;background:#4D9EFF;cursor:pointer" onclick="setValgoColor('#4D9EFF',this)" id="vc-3"></div>
+                    <div style="width:26px;height:26px;border-radius:6px;background:#FFB020;cursor:pointer" onclick="setValgoColor('#FFB020',this)" id="vc-4"></div>
+                    <div style="width:26px;height:26px;border-radius:6px;background:#fff;cursor:pointer;border:1px solid #444" onclick="setValgoColor('#ffffff',this)" id="vc-5"></div>
+                    <span style="font-family:var(--mono);font-size:9px;color:var(--text2)">Grosor:</span>
+                    <input type="range" id="valgo-line-width" min="1" max="6" value="2" style="flex:1;accent-color:var(--neon)" oninput="redrawValgoCanvas()">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- RESULTADO -->
+            <div class="card card-glow" id="valgo-result-card" style="display:none">
+              <div class="card-header"><h3>Angulo de Valgo</h3><span id="valgo-result-badge" class="tag"></span></div>
+              <div class="card-body" style="text-align:center;padding:16px">
+                <div style="font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;margin-bottom:6px">Angulo medido</div>
+                <div id="valgo-angle-display" style="font-family:var(--mono);font-size:52px;font-weight:800;color:var(--neon);line-height:1">--</div>
+                <div style="font-size:13px;color:var(--text2);margin-top:4px">grados</div>
+                <div id="valgo-interp" style="margin-top:10px;font-size:12px;line-height:1.7"></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+                  <button class="btn btn-outline btn-sm" onclick="saveValgoResult()" style="font-size:11px">Guardar</button>
+                  <button class="btn btn-ghost btn-sm" onclick="captureValgoImage()" style="font-size:11px">Captura</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Referencias -->
+            <div class="card">
+              <div class="card-header"><h3>Referencia clinica</h3></div>
+              <div class="card-body" style="font-size:11px;color:var(--text2);line-height:2.2">
+                <div style="display:grid;grid-template-columns:auto 1fr;gap:2px 10px">
+                  <span style="font-family:var(--mono);color:var(--neon)">&lt; 5deg</span><span>Normal -- sin valgo significativo</span>
+                  <span style="font-family:var(--mono);color:var(--amber)">5 - 10deg</span><span>Valgo leve -- monitorear</span>
+                  <span style="font-family:var(--mono);color:var(--red)">&gt; 10deg</span><span>Valgo critico -- riesgo LCA</span>
+                </div>
+                <div style="margin-top:8px;font-size:9px;color:var(--text3);font-family:var(--mono)">Ref: Sigward &amp; Powers 2006 · Hewett et al. 2005</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ TAB: MOVILIDAD ══ -->
+  <div id="ptab-movilidad" class="hidden">
+    <div class="flex-b mb-14">
+      <div><div style="font-size:15px;font-weight:700">Movilidad Articular</div><div style="font-size:12px;color:var(--text2)">Tobillo · Cadera · Hombro — Semáforos + Velocímetros</div></div>
+      <div class="flex" style="gap:8px">
+        <select class="inp inp-mono" id="mov-eval-num" style="width:120px;font-size:11px"><option value="0">1ra</option><option value="1">2da</option><option value="2">3ra</option><option value="3">4ta</option></select>
+        <button class="btn btn-neon btn-sm" onclick="saveMov()">💾 Guardar</button>
+      </div>
+    </div>
+    <div class="mb-16" id="mov-semaforos-wrap">
+      <div id="mov-semaforos" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px"></div>
+    </div>
+
+    <!-- Tests funcionales adulto mayor -->
+    <div id="adulto-mayor-tests" class="hidden mb-16">
+      <div class="card">
+        <div class="card-header"><h3>🧓 Tests funcionales — Adulto Mayor</h3><span class="tag tag-y">Salud funcional</span></div>
+        <div class="card-body">
+          <div class="grid-2" style="gap:12px">
+            <div class="ig">
+              <label class="il">Sit-to-Stand 30s (reps)</label>
+              <input class="inp inp-mono" type="number" id="sts-reps" placeholder="12" oninput="saveFuncTests()">
+              <div style="font-size:10px;color:var(--text3);margin-top:3px">Ref: ≥12 reps = normal</div>
+            </div>
+            <div class="ig">
+              <label class="il">Apoyo Unipodal (seg)</label>
+              <input class="inp inp-mono" type="number" id="unipodal-seg" placeholder="20" oninput="saveFuncTests()">
+              <div style="font-size:10px;color:var(--text3);margin-top:3px">Ref: ≥30s = normal</div>
+            </div>
+            <div class="ig">
+              <label class="il">TUG — Timed Up and Go (seg)</label>
+              <input class="inp inp-mono" type="number" step=".1" id="tug-seg" placeholder="10.5" oninput="saveFuncTests()">
+              <div style="font-size:10px;color:var(--text3);margin-top:3px">Ref: &lt;10s = normal · &lt;12s = límite · &gt;12s = riesgo caída</div>
+            </div>
+            <div class="ig">
+              <label class="il">6MWT — Caminata 6 min (metros)</label>
+              <input class="inp inp-mono" type="number" id="dist6min-m" placeholder="450" oninput="saveFuncTests()">
+              <div style="font-size:10px;color:var(--text3);margin-top:3px">Ref: &gt;500m = bueno · &gt;400m = aceptable</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="grid-2" style="gap:12px">
+      <div class="card">
+        <div class="card-header"><h3>Lunge Test — Dorsiflexión</h3><span class="tag tag-b">ROM</span></div>
+        <div class="card-body">
+          <p style="font-size:11px;color:var(--text2);margin-bottom:10px">🟢 &gt;40° · 🟡 35–40° · 🔴 &lt;35° · Δ &gt;5° = significativo</p>
+          <div class="grid-2" style="gap:12px">
+            <div class="ig"><label class="il">Derecho (°)</label>
+              <div class="flex" style="gap:6px">
+                <input class="inp inp-mono" type="number" id="lunge-d" placeholder="0" oninput="onMov()" style="flex:1">
+                <button class="btn btn-outline btn-sm" onclick="iniciarGoniometro('tobillo-d','Tobillo Derecho',70)" style="flex-shrink:0;padding:6px 10px;font-size:11px">📐 Medir</button>
+              </div>
+            </div>
+            <div class="ig"><label class="il">Izquierdo (°)</label>
+              <div class="flex" style="gap:6px">
+                <input class="inp inp-mono" type="number" id="lunge-i" placeholder="0" oninput="onMov()" style="flex:1">
+                <button class="btn btn-outline btn-sm" onclick="iniciarGoniometro('tobillo-i','Tobillo Izquierdo',70)" style="flex-shrink:0;padding:6px 10px;font-size:11px">📐 Medir</button>
+              </div>
+            </div>
+          </div>
+          <div id="lunge-result"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>TROM Cadera</h3><span class="tag tag-b">ROM</span></div>
+        <div class="card-body">
+          <p style="font-size:11px;color:var(--text2);margin-bottom:10px">TROM = RI + RE · 🟢 &gt;90° · 🟡 80–90° · 🔴 &lt;80°</p>
+          <div class="grid-2" style="gap:12px">
+            <div><div style="font-size:10px;color:var(--neon);font-weight:700;margin-bottom:6px;font-family:var(--mono)">DERECHA</div>
+              <div class="ig"><label class="il">RI D (°)</label>
+                <div class="flex" style="gap:5px"><input class="inp inp-mono" type="number" id="cad-ri-d" placeholder="0" oninput="onMov()" style="flex:1"><button class="btn btn-ghost btn-sm" onclick="iniciarGoniometro('cadera-ri-d','Cadera RI DERECHA',60)" style="flex-shrink:0;padding:5px 8px;font-size:10px">📐</button></div></div>
+              <div class="ig"><label class="il">RE D (°)</label>
+                <div class="flex" style="gap:5px"><input class="inp inp-mono" type="number" id="cad-re-d" placeholder="0" oninput="onMov()" style="flex:1"><button class="btn btn-ghost btn-sm" onclick="iniciarGoniometro('cadera-re-d','Cadera RE DERECHA',60)" style="flex-shrink:0;padding:5px 8px;font-size:10px">📐</button></div></div>
+            </div>
+            <div><div style="font-size:10px;color:var(--blue);font-weight:700;margin-bottom:6px;font-family:var(--mono)">IZQUIERDA</div>
+              <div class="ig"><label class="il">RI I (°)</label>
+                <div class="flex" style="gap:5px"><input class="inp inp-mono" type="number" id="cad-ri-i" placeholder="0" oninput="onMov()" style="flex:1"><button class="btn btn-ghost btn-sm" onclick="iniciarGoniometro('cadera-ri-i','Cadera RI IZQUIERDA',60)" style="flex-shrink:0;padding:5px 8px;font-size:10px">📐</button></div></div>
+              <div class="ig"><label class="il">RE I (°)</label>
+                <div class="flex" style="gap:5px"><input class="inp inp-mono" type="number" id="cad-re-i" placeholder="0" oninput="onMov()" style="flex:1"><button class="btn btn-ghost btn-sm" onclick="iniciarGoniometro('cadera-re-i','Cadera RE IZQUIERDA',60)" style="flex-shrink:0;padding:5px 8px;font-size:10px">📐</button></div></div>
+            </div>
+          </div>
+          <div id="cad-result"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>TROM Hombro — GIRD</h3><span class="tag tag-b">ROM</span></div>
+        <div class="card-body">
+          <p style="font-size:11px;color:var(--text2);margin-bottom:10px">GIRD significativo: Δ TROM &gt;18°</p>
+          <div class="grid-2" style="gap:12px">
+            <div><div style="font-size:10px;color:var(--neon);font-weight:700;margin-bottom:6px;font-family:var(--mono)">DERECHA</div>
+              <div class="ig"><label class="il">RI D (°)</label>
+                <div class="flex" style="gap:5px"><input class="inp inp-mono" type="number" id="hom-ri-d" placeholder="0" oninput="onMov()" style="flex:1"><button class="btn btn-ghost btn-sm" onclick="iniciarGoniometro('hombro-ri-d','Hombro RI DERECHA',100)" style="flex-shrink:0;padding:5px 8px;font-size:10px">📐</button></div></div>
+              <div class="ig"><label class="il">RE D (°)</label>
+                <div class="flex" style="gap:5px"><input class="inp inp-mono" type="number" id="hom-re-d" placeholder="0" oninput="onMov()" style="flex:1"><button class="btn btn-ghost btn-sm" onclick="iniciarGoniometro('hombro-re-d','Hombro RE DERECHA',100)" style="flex-shrink:0;padding:5px 8px;font-size:10px">📐</button></div></div>
+            </div>
+            <div><div style="font-size:10px;color:var(--blue);font-weight:700;margin-bottom:6px;font-family:var(--mono)">IZQUIERDA</div>
+              <div class="ig"><label class="il">RI I (°)</label>
+                <div class="flex" style="gap:5px"><input class="inp inp-mono" type="number" id="hom-ri-i" placeholder="0" oninput="onMov()" style="flex:1"><button class="btn btn-ghost btn-sm" onclick="iniciarGoniometro('hombro-ri-i','Hombro RI IZQUIERDA',100)" style="flex-shrink:0;padding:5px 8px;font-size:10px">📐</button></div></div>
+              <div class="ig"><label class="il">RE I (°)</label>
+                <div class="flex" style="gap:5px"><input class="inp inp-mono" type="number" id="hom-re-i" placeholder="0" oninput="onMov()" style="flex:1"><button class="btn btn-ghost btn-sm" onclick="iniciarGoniometro('hombro-re-i','Hombro RE IZQUIERDA',100)" style="flex-shrink:0;padding:5px 8px;font-size:10px">📐</button></div></div>
+            </div>
+          </div>
+          <div id="hom-result"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>Velocímetros</h3></div>
+        <div class="card-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div style="text-align:center"><div class="il mb-4">Lunge D</div><canvas id="g-ld" width="120" height="74"></canvas><div id="gv-ld" style="font-family:var(--mono);font-size:20px;font-weight:700;margin-top:2px;color:var(--text3)">—</div></div>
+            <div style="text-align:center"><div class="il mb-4">Lunge I</div><canvas id="g-li" width="120" height="74"></canvas><div id="gv-li" style="font-family:var(--mono);font-size:20px;font-weight:700;margin-top:2px;color:var(--text3)">—</div></div>
+            <div style="text-align:center"><div class="il mb-4">TROM Cad D</div><canvas id="g-tcd" width="120" height="74"></canvas><div id="gv-tcd" style="font-family:var(--mono);font-size:20px;font-weight:700;margin-top:2px;color:var(--text3)">—</div></div>
+            <div style="text-align:center"><div class="il mb-4">TROM Cad I</div><canvas id="g-tci" width="120" height="74"></canvas><div id="gv-tci" style="font-family:var(--mono);font-size:20px;font-weight:700;margin-top:2px;color:var(--text3)">—</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB: VELOCIDAD ══ -->
+  <div id="ptab-velocidad" class="hidden">
+    <div class="flex-b mb-16">
+      <div><div style="font-size:15px;font-weight:700">Sprint & COD</div><div style="font-size:12px;color:var(--text2)">10m · 30m · T-Test · 505 + Benchmark normativo</div></div>
+      <div class="flex" style="gap:8px">
+        <select class="inp inp-mono" id="sprint-eval-num" style="width:120px;font-size:11px"><option value="0">1ra</option><option value="1">2da</option><option value="2">3ra</option><option value="3">4ta</option></select>
+        <input class="inp" type="date" id="sprint-fecha" style="width:150px;font-size:12px">
+        <button class="btn btn-neon btn-sm" onclick="saveSprint()">💾 Guardar</button>
+      </div>
+    </div>
+    <div class="grid-2 mb-16" style="gap:12px">
+      <div class="card">
+        <div class="card-header"><h3>Tiempos de sprint</h3></div>
+        <div class="card-body">
+          <div class="grid-2" style="gap:12px">
+            <div class="ig"><label class="il">10m (seg)</label><input class="inp inp-mono" type="number" step=".01" id="sp-10" placeholder="1.70" oninput="calcSprintBench()"></div>
+            <div class="ig"><label class="il">20m (seg)</label><input class="inp inp-mono" type="number" step=".01" id="sp-20" placeholder="2.90" oninput="calcSprintBench()"></div>
+            <div class="ig"><label class="il">30m (seg)</label><input class="inp inp-mono" type="number" step=".01" id="sp-30" placeholder="4.10" oninput="calcSprintBench()"></div>
+            <div class="ig"><label class="il">Vel. máx (km/h)</label><input class="inp inp-mono" type="number" step=".1" id="sp-vmax" placeholder="28"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>COD — Cambio de dirección</h3></div>
+        <div class="card-body">
+          <div class="ig"><label class="il">T-Test (seg)</label><input class="inp inp-mono" type="number" step=".01" id="sp-ttest" placeholder="9.5" oninput="calcSprintBench()"></div>
+          <div class="grid-2" style="gap:8px">
+            <div class="ig"><label class="il">505 Derecho (seg)</label><input class="inp inp-mono" type="number" step=".01" id="sp-505d" placeholder="2.4" oninput="calcSprintBench()"></div>
+            <div class="ig"><label class="il">505 Izquierdo (seg)</label><input class="inp inp-mono" type="number" step=".01" id="sp-505i" placeholder="2.4" oninput="calcSprintBench()"></div>
+          </div>
+          <div id="sp-505-asim"></div>
+        </div>
+      </div>
+    </div>
+    <div id="sprint-bench-area"></div>
+  </div>
+
+  <!-- ══ TAB: FMS ══ -->
+  <div id="ptab-fms" class="hidden">
+    <div class="flex-b mb-16">
+      <div><div style="font-size:15px;font-weight:700">Calidad de Movimiento</div><div style="font-size:12px;color:var(--text2)">OHS (2 fotos) · Step-Down (4 fotos) · Criterios SÍ/NO</div></div>
+      <button class="btn btn-neon btn-sm" onclick="saveFMS()">💾 Guardar FMS</button>
+    </div>
+    <div class="grid-2" style="gap:14px">
+      <div class="card">
+        <div class="card-header"><h3>Overhead Squat</h3><span class="tag tag-y">2 slots</span></div>
+        <div class="card-body">
+          <div class="grid-2 mb-12" style="gap:10px">
+            <div>
+              <div class="il mb-4">Frente</div>
+              <div class="img-slot" id="slot-ohs-frente" onclick="document.getElementById('ohs-frente-inp').click()"><div style="font-size:22px">📷</div></div>
+              <input type="file" id="ohs-frente-inp" accept="image/*" class="hidden" onchange="loadSlot(this,'slot-ohs-frente')">
+            </div>
+            <div>
+              <div class="il mb-4">Perfil</div>
+              <div class="img-slot" id="slot-ohs-perfil" onclick="document.getElementById('ohs-perfil-inp').click()"><div style="font-size:22px">📷</div></div>
+              <input type="file" id="ohs-perfil-inp" accept="image/*" class="hidden" onchange="loadSlot(this,'slot-ohs-perfil')">
+            </div>
+          </div>
+          <div class="il mb-8">Criterios — punto de máx. flexión</div>
+          <div id="ohs-checks">
+            <div class="fms-check"><span style="font-size:12px">Rodillas alineadas con los pies</span><div class="fms-btns"><button class="fms-btn" onclick="setFMS(this,'yes')">SÍ</button><button class="fms-btn" onclick="setFMS(this,'no')">NO</button></div></div>
+            <div class="fms-check"><span style="font-size:12px">Fémur debajo de la horizontal</span><div class="fms-btns"><button class="fms-btn" onclick="setFMS(this,'yes')">SÍ</button><button class="fms-btn" onclick="setFMS(this,'no')">NO</button></div></div>
+            <div class="fms-check"><span style="font-size:12px">Torso paralelo a la tibia</span><div class="fms-btns"><button class="fms-btn" onclick="setFMS(this,'yes')">SÍ</button><button class="fms-btn" onclick="setFMS(this,'no')">NO</button></div></div>
+            <div class="fms-check"><span style="font-size:12px">Barra alineada sobre los pies</span><div class="fms-btns"><button class="fms-btn" onclick="setFMS(this,'yes')">SÍ</button><button class="fms-btn" onclick="setFMS(this,'no')">NO</button></div></div>
+          </div>
+          <div id="ohs-score" class="mt-8"></div>
+          <div class="ig mt-8"><label class="il">Observaciones</label><textarea class="inp" id="ohs-obs" rows="2" placeholder="Compensaciones, hallazgos..."></textarea></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>Step-Down</h3><span class="tag tag-y">4 slots</span></div>
+        <div class="card-body">
+          <div class="grid-2 mb-12" style="gap:8px">
+            <div><div class="il" style="color:var(--neon)" >Frente D</div><div class="img-slot" id="slot-sd-fd" onclick="document.getElementById('sd-fd-inp').click()"><div style="font-size:18px">📷</div></div><input type="file" id="sd-fd-inp" accept="image/*" class="hidden" onchange="loadSlot(this,'slot-sd-fd')"></div>
+            <div><div class="il" style="color:var(--neon)">Perfil D</div><div class="img-slot" id="slot-sd-pd" onclick="document.getElementById('sd-pd-inp').click()"><div style="font-size:18px">📷</div></div><input type="file" id="sd-pd-inp" accept="image/*" class="hidden" onchange="loadSlot(this,'slot-sd-pd')"></div>
+            <div><div class="il" style="color:var(--blue)">Frente I</div><div class="img-slot" id="slot-sd-fi" onclick="document.getElementById('sd-fi-inp').click()"><div style="font-size:18px">📷</div></div><input type="file" id="sd-fi-inp" accept="image/*" class="hidden" onchange="loadSlot(this,'slot-sd-fi')"></div>
+            <div><div class="il" style="color:var(--blue)">Perfil I</div><div class="img-slot" id="slot-sd-pi" onclick="document.getElementById('sd-pi-inp').click()"><div style="font-size:18px">📷</div></div><input type="file" id="sd-pi-inp" accept="image/*" class="hidden" onchange="loadSlot(this,'slot-sd-pi')"></div>
+          </div>
+          <div id="sd-checks">
+            <div class="fms-check"><span style="font-size:12px">Rodilla alineada (sin valgo)</span><div class="fms-btns"><button class="fms-btn" onclick="setFMS(this,'yes')">SÍ</button><button class="fms-btn" onclick="setFMS(this,'no')">NO</button></div></div>
+            <div class="fms-check"><span style="font-size:12px">Cadera estable (sin Trendelenburg)</span><div class="fms-btns"><button class="fms-btn" onclick="setFMS(this,'yes')">SÍ</button><button class="fms-btn" onclick="setFMS(this,'no')">NO</button></div></div>
+            <div class="fms-check"><span style="font-size:12px">Tronco erecto</span><div class="fms-btns"><button class="fms-btn" onclick="setFMS(this,'yes')">SÍ</button><button class="fms-btn" onclick="setFMS(this,'no')">NO</button></div></div>
+          </div>
+          <div id="sd-score" class="mt-8"></div>
+          <div class="grid-2 mt-8" style="gap:8px">
+            <div class="ig"><label class="il">Valgo D (°)</label><input class="inp inp-mono" type="number" id="valgo-d" placeholder="0" oninput="calcValgo()"></div>
+            <div class="ig"><label class="il">Valgo I (°)</label><input class="inp inp-mono" type="number" id="valgo-i" placeholder="0" oninput="calcValgo()"></div>
+          </div>
+          <div id="valgo-result"></div>
+          <div class="ig mt-8"><label class="il">Observaciones</label><textarea class="inp" id="sd-obs" rows="2" placeholder="Diferencias D/I, compensaciones..."></textarea></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB: FATIGA ══ -->
+  <div id="ptab-fatiga" class="hidden">
+    <div class="flex-b mb-14">
+      <div><div style="font-size:15px;font-weight:700">🌿 Wellness — Control del Atleta</div><div style="font-size:12px;color:var(--text2)">Hooper Index · HRV · Pérdida de velocidad · Bienestar diario</div></div>
+      <div class="flex" style="gap:8px">
+        <input class="inp" type="date" id="fat-fecha" style="width:150px;font-size:12px">
+        <button class="btn btn-neon btn-sm" onclick="saveFatiga()">💾 Guardar</button>
+      </div>
+    </div>
+    <div class="grid-2" style="gap:14px">
+      <div class="card">
+        <div class="card-header"><h3>Índice de Hooper</h3><span style="font-size:10px;color:var(--text2);font-family:var(--mono)">1=Muy bueno · 7=Muy malo</span></div>
+        <div class="card-body" id="hooper-fields"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="card"><div class="card-header"><h3>HRV</h3></div><div class="card-body">
+          <div class="grid-2" style="gap:8px">
+            <div class="ig"><label class="il">HRV hoy (ms)</label><input class="inp inp-mono" type="number" id="fat-hrv" placeholder="65" oninput="calcFatiga()"></div>
+            <div class="ig"><label class="il">HRV basal (ms)</label><input class="inp inp-mono" type="number" id="fat-hrv-base" placeholder="70" oninput="calcFatiga()"></div>
+          </div>
+          <div id="hrv-result"></div>
+        </div></div>
+        <div class="card"><div class="card-header"><h3>Pérdida de velocidad</h3></div><div class="card-body">
+          <div class="grid-2" style="gap:8px">
+            <div class="ig"><label class="il">Vel. máx (m/s)</label><input class="inp inp-mono" type="number" step=".001" id="fat-vmax" placeholder="0.85" oninput="calcFatiga()"></div>
+            <div class="ig"><label class="il">Vel. final (m/s)</label><input class="inp inp-mono" type="number" step=".001" id="fat-vfin" placeholder="0.65" oninput="calcFatiga()"></div>
+          </div>
+          <div id="fat-vel-result"></div>
+        </div></div>
+        <div class="card card-glow"><div class="card-header"><h3>Score general de recuperación</h3></div><div class="card-body" style="text-align:center">
+          <div style="position:relative;display:inline-flex;align-items:center;justify-content:center;width:90px;height:90px;margin:0 auto 10px">
+            <svg width="90" height="90" viewBox="0 0 90 90" style="transform:rotate(-90deg)">
+              <circle cx="45" cy="45" r="38" fill="none" stroke="var(--bg5)" stroke-width="7"/>
+              <circle id="fat-ring-circle" cx="45" cy="45" r="38" fill="none" stroke="var(--neon)" stroke-width="7" stroke-dasharray="238.8" stroke-dashoffset="238.8" stroke-linecap="round" style="transition:stroke-dashoffset .8s,stroke .4s"/>
+            </svg>
+            <div style="position:absolute;font-family:var(--mono);font-size:20px;font-weight:800;color:var(--neon)" id="fat-score">—</div>
+          </div>
+          <div id="fat-label" style="font-size:13px;font-weight:700;margin-bottom:5px"></div>
+          <div id="fat-rec" style="font-size:11px;color:var(--text2);line-height:1.5"></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══ TAB: VIDEO SALTO ══ -->
+  <div id="ptab-video" class="hidden">
+    <div class="flex-b mb-16">
+      <div>
+        <div style="font-size:15px;font-weight:700">🎬 Salto Vertical por Video</div>
+        <div style="font-size:12px;color:var(--text2)">Marcá despegue y aterrizaje · Fórmula caída libre · h = g·t²/8</div>
+      </div>
+      <button class="btn btn-neon btn-sm" onclick="saveVideoSalto()">💾 Guardar resultado</button>
+    </div>
+
+    <div class="grid-2" style="gap:18px;align-items:start">
+
+      <!-- VIDEO PLAYER -->
+      <div class="card card-glow">
+        <div class="card-header"><h3>📹 Reproductor de Video</h3></div>
+        <div class="card-body" style="padding:12px">
+
+          <!-- Upload -->
+          <div id="video-upload-area" style="border:2px dashed rgba(57,255,122,.2);border-radius:10px;padding:32px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:12px" onclick="document.getElementById('video-file-inp').click()" ondragover="event.preventDefault();this.style.borderColor='var(--neon)'" ondrop="handleVideoDrop(event)">
+            <div style="font-size:28px;margin-bottom:8px">🎬</div>
+            <div style="font-size:13px;font-weight:700;color:var(--neon);margin-bottom:4px">Cargar video</div>
+            <div style="font-size:11px;color:var(--text2)">Hacé clic o arrastrá tu video aquí<br>MP4, MOV, AVI — grabado en cámara lenta recomendado</div>
+          </div>
+          <input type="file" id="video-file-inp" accept="video/*" class="hidden" onchange="loadVideo(this)">
+
+          <!-- Player -->
+          <div id="video-player-wrap" style="display:none">
+            <video id="video-player" style="width:100%;border-radius:8px;background:#000;display:block;max-height:260px" preload="metadata"></video>
+
+            <!-- Frame controls -->
+            <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px">
+              <button class="btn btn-ghost btn-sm" onclick="jumpFrames(-10)" title="-10 frames">⏮ -10</button>
+              <button class="btn btn-ghost btn-sm" onclick="jumpFrames(-1)" title="-1 frame">◀ -1</button>
+              <button class="btn btn-ghost" onclick="togglePlay()" id="play-btn" style="padding:8px 20px">▶</button>
+              <button class="btn btn-ghost btn-sm" onclick="jumpFrames(1)" title="+1 frame">+1 ▶</button>
+              <button class="btn btn-ghost btn-sm" onclick="jumpFrames(10)" title="+10 frames">+10 ⏭</button>
+            </div>
+
+            <!-- Timeline bar -->
+            <div style="margin-top:10px;position:relative">
+              <input type="range" id="video-scrubber" min="0" max="1000" value="0" style="width:100%;accent-color:var(--neon)" oninput="scrubVideo(this.value)">
+              <div id="video-markers-bar" style="position:relative;height:6px;background:var(--bg4);border-radius:3px;margin-top:4px;overflow:hidden">
+                <div id="bar-takeoff"  style="position:absolute;width:2px;height:100%;background:var(--neon);display:none"></div>
+                <div id="bar-landing" style="position:absolute;width:2px;height:100%;background:var(--red);display:none"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3);font-family:var(--mono);margin-top:3px">
+                <span id="vid-time-cur">0.000s</span>
+                <span id="vid-time-tot">0.000s</span>
+              </div>
+            </div>
+
+            <!-- Frame info -->
+            <div style="background:var(--bg4);border-radius:8px;padding:8px 12px;margin-top:8px;display:flex;justify-content:space-between;align-items:center">
+              <span style="font-family:var(--mono);font-size:10px;color:var(--text2)">FRAME</span>
+              <span id="vid-frame-num" style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--neon)">—</span>
+              <span style="font-family:var(--mono);font-size:10px;color:var(--text2)">/ <span id="vid-frame-tot">—</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTROLES + RESULTADO -->
+      <div style="display:flex;flex-direction:column;gap:12px">
+
+        <!-- FPS Config -->
+        <div class="card">
+          <div class="card-header"><h3>⚙️ Configuración de FPS</h3><span class="tag tag-g">Crítico para precisión</span></div>
+          <div class="card-body">
+            <div class="ig">
+              <label class="il">FPS de grabación de la cámara</label>
+              <select class="inp inp-mono" id="video-fps" onchange="onFpsChange()">
+                <option value="30">30 FPS — Cámara estándar</option>
+                <option value="60" selected>60 FPS — Cámara moderna / iPhone</option>
+                <option value="120">120 FPS — Cámara lenta (recomendado)</option>
+                <option value="240">240 FPS — Super slow motion</option>
+                <option value="480">480 FPS — High Speed Camera</option>
+                <option value="custom">Personalizado...</option>
+              </select>
+              <input type="number" id="video-fps-custom" class="inp inp-mono mt-4" placeholder="Ingresá los FPS exactos" style="display:none" oninput="onFpsChange()">
+            </div>
+            <div style="background:var(--bg4);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px">
+              <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:4px">DURACIÓN DE 1 FRAME</div>
+              <div id="frame-duration-display" style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--neon)">16.67 ms</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:2px">A más FPS = mayor precisión en el cálculo</div>
+            </div>
+            <div style="margin-top:8px;font-size:11px;color:var(--text2);line-height:1.6">
+              💡 <b>Recomendación:</b> Grabá en <b style="color:var(--neon)">120 FPS mínimo</b>. A 60 FPS el error puede ser ±3cm. A 120 FPS baja a ±1cm.
+            </div>
+          </div>
+        </div>
+
+        <!-- Marcadores -->
+        <div class="card">
+          <div class="card-header"><h3>📍 Marcadores de Vuelo</h3></div>
+          <div class="card-body">
+            <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6">
+              Navegá frame a frame y marcá el instante exacto de despegue y aterrizaje.
+            </p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+              <button class="btn btn-outline btn-full" onclick="markTakeoff()" id="btn-takeoff">
+                🟢 Marcar Despegue
+              </button>
+              <button class="btn btn-red btn-full" onclick="markLanding()" id="btn-landing" style="border-color:rgba(255,59,59,.3)">
+                🔴 Marcar Aterrizaje
+              </button>
+            </div>
+            <!-- Marker status -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div style="background:var(--bg4);border-radius:8px;padding:10px;text-align:center;border:1px solid var(--border)">
+                <div style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-bottom:4px">DESPEGUE</div>
+                <div id="takeoff-frame-display" style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--neon)">—</div>
+                <div id="takeoff-time-display" style="font-size:10px;color:var(--text3)">Frame —</div>
+              </div>
+              <div style="background:var(--bg4);border-radius:8px;padding:10px;text-align:center;border:1px solid var(--border)">
+                <div style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-bottom:4px">ATERRIZAJE</div>
+                <div id="landing-frame-display" style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--red)">—</div>
+                <div id="landing-time-display" style="font-size:10px;color:var(--text3)">Frame —</div>
+              </div>
+            </div>
+            <button class="btn btn-ghost btn-sm mt-8" onclick="clearMarkers()" style="width:100%">🗑️ Limpiar marcadores</button>
+          </div>
+        </div>
+
+        <!-- RESULTADO -->
+        <div class="card card-glow" id="video-result-card" style="display:none">
+          <div class="card-header"><h3>📊 Resultado del Salto</h3><span id="video-result-badge" class="tag"></span></div>
+          <div class="card-body">
+            <div style="text-align:center;padding:16px 0">
+              <div style="font-size:10px;color:var(--text3);font-family:var(--mono);letter-spacing:.1em;margin-bottom:6px">ALTURA DE SALTO</div>
+              <div id="video-height-display" style="font-family:var(--mono);font-size:56px;font-weight:800;color:var(--neon);line-height:1;text-shadow:0 0 30px rgba(57,255,122,.3)">—</div>
+              <div style="font-size:14px;color:var(--text2);margin-top:4px">centímetros</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px">
+              <div style="background:var(--bg4);border-radius:8px;padding:10px;text-align:center">
+                <div style="font-size:9px;color:var(--text3);font-family:var(--mono)">T. VUELO</div>
+                <div id="video-flight-ms" style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--blue)">—</div>
+                <div style="font-size:9px;color:var(--text3)">ms</div>
+              </div>
+              <div style="background:var(--bg4);border-radius:8px;padding:10px;text-align:center">
+                <div style="font-size:9px;color:var(--text3);font-family:var(--mono)">FRAMES</div>
+                <div id="video-flight-frames" style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--amber)">—</div>
+                <div style="font-size:9px;color:var(--text3)">frames</div>
+              </div>
+              <div style="background:var(--bg4);border-radius:8px;padding:10px;text-align:center">
+                <div style="font-size:9px;color:var(--text3);font-family:var(--mono)">FPS</div>
+                <div id="video-fps-used" style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--purple)">—</div>
+                <div style="font-size:9px;color:var(--text3)">fps</div>
+              </div>
+            </div>
+            <!-- Comparativa vs CMJ manual -->
+            <div id="video-vs-manual" style="margin-top:12px;padding:10px 12px;background:var(--bg4);border-radius:8px;font-size:12px;display:none">
+              <div style="color:var(--text2)">vs. CMJ manual registrado: <span id="video-vs-cmj" style="font-family:var(--mono);font-weight:700"></span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fórmula explicada -->
+        <div class="card">
+          <div class="card-header"><h3>📐 Fórmula utilizada</h3></div>
+          <div class="card-body">
+            <div style="background:var(--bg4);border-radius:8px;padding:12px;text-align:center;margin-bottom:10px">
+              <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--neon)">h = (g × t²) / 8</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:6px">Física de caída libre — Tiempo de vuelo al cuadrado</div>
+            </div>
+            <div style="font-size:11px;color:var(--text2);line-height:1.8">
+              <div><b style="color:var(--white)">h</b> = altura del salto (metros)</div>
+              <div><b style="color:var(--white)">g</b> = 9.81 m/s² (gravedad)</div>
+              <div><b style="color:var(--white)">t</b> = tiempo de vuelo (segundos)</div>
+              <div style="margin-top:6px;font-size:10px;color:var(--text3)">
+                El tiempo de vuelo se calcula como: frames × (1/FPS)<br>
+                La fórmula divide por 8 porque el tiempo total incluye subida + bajada (t/2 cada una).
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- TAB: VMP -- Velocidad Media Propulsiva por Video -->
+  <div id="ptab-vmp" class="hidden">
+    <div class="flex-b mb-16">
+      <div>
+        <div style="font-size:15px;font-weight:700">⚡ Encoder de Barra por Video</div>
+        <div style="font-size:12px;color:var(--text2)">Tracking semi-automatico · VMP · Integracion F-V · Perfil lateral</div>
+      </div>
+      <button class="btn btn-neon btn-sm" onclick="saveVMPResult()">💾 Guardar en F-V</button>
+    </div>
+
+    <div class="grid-2" style="gap:18px;align-items:start">
+
+      <!-- COLUMNA IZQUIERDA: Video + canvas tracking -->
+      <div style="display:flex;flex-direction:column;gap:12px">
+
+        <!-- Config ejercicio y carga -->
+        <div class="card">
+          <div class="card-header"><h3>⚙️ Configuracion del ejercicio</h3></div>
+          <div class="card-body">
+            <div class="grid-2" style="gap:10px">
+              <div class="ig">
+                <label class="il">Ejercicio</label>
+                <select class="inp" id="vmp-ejercicio" onchange="onVmpConfig()">
+                  <option value="sentadilla">Sentadilla</option>
+                  <option value="press-banca">Press Banca</option>
+                  <option value="peso-muerto">Peso Muerto</option>
+                  <option value="remo-invertido">Remo Invertido</option>
+                </select>
+              </div>
+              <div class="ig">
+                <label class="il">Carga total (kg)</label>
+                <input class="inp inp-mono" type="number" id="vmp-carga" placeholder="60" step="0.5" oninput="onVmpConfig()">
+              </div>
+              <div class="ig">
+                <label class="il">FPS del video</label>
+                <select class="inp" id="vmp-fps">
+                  <option value="30">30 FPS</option>
+                  <option value="60" selected>60 FPS</option>
+                  <option value="120">120 FPS (recomendado)</option>
+                  <option value="240">240 FPS</option>
+                </select>
+              </div>
+              <div class="ig">
+                <label class="il">Escala (cm / px referencia)</label>
+                <div class="flex" style="gap:6px">
+                  <input class="inp inp-mono" type="number" id="vmp-escala-cm" placeholder="100" step="1" style="flex:1">
+                  <button class="btn btn-ghost btn-sm" onclick="iniciarCalibracion()" style="flex-shrink:0;font-size:10px">📏 Calibrar</button>
+                </div>
+                <div style="font-size:9px;color:var(--text2);margin-top:3px;font-family:var(--mono)">Marcas 2 puntos de distancia conocida</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Video player con canvas overlay -->
+        <div class="card card-glow">
+          <div class="card-header"><h3>📹 Video + Tracking</h3><span id="vmp-tracking-status" class="tag tag-y">Sin video</span></div>
+          <div class="card-body" style="padding:10px">
+
+            <div id="vmp-upload-area" style="border:2px dashed rgba(57,255,122,.2);border-radius:10px;padding:28px;text-align:center;cursor:pointer;margin-bottom:10px" onclick="document.getElementById('vmp-file-inp').click()">
+              <div style="font-size:28px;margin-bottom:6px">🎬</div>
+              <div style="font-size:13px;font-weight:700;color:var(--neon)">Cargar video de perfil</div>
+              <div style="font-size:11px;color:var(--text2);margin-top:4px">Camara lateral -- barra visible todo el recorrido</div>
+            </div>
+            <input type="file" id="vmp-file-inp" accept="video/*" class="hidden" onchange="loadVMPVideo(this)">
+
+            <!-- Canvas overlay sobre video -->
+            <div id="vmp-player-wrap" style="display:none;position:relative">
+              <div style="position:relative;display:inline-block;width:100%">
+                <video id="vmp-video" style="width:100%;display:block;border-radius:8px;background:#000" preload="metadata"></video>
+                <canvas id="vmp-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;cursor:crosshair;border-radius:8px"></canvas>
+              </div>
+
+              <!-- Controles frame -->
+              <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;flex-wrap:wrap">
+                <button class="btn btn-ghost btn-sm" onclick="vmpJump(-10)">-10</button>
+                <button class="btn btn-ghost btn-sm" onclick="vmpJump(-1)">-1</button>
+                <button class="btn btn-ghost" onclick="vmpTogglePlay()" id="vmp-play-btn" style="padding:7px 18px">▶</button>
+                <button class="btn btn-ghost btn-sm" onclick="vmpJump(1)">+1</button>
+                <button class="btn btn-ghost btn-sm" onclick="vmpJump(10)">+10</button>
+              </div>
+
+              <!-- Info frame -->
+              <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--text2);margin-top:6px;padding:0 4px">
+                <span>Frame: <span id="vmp-frame-cur" style="color:var(--neon)">0</span> / <span id="vmp-frame-tot">0</span></span>
+                <span>Tiempo: <span id="vmp-time-cur" style="color:var(--neon)">0.000s</span></span>
+                <span>Puntos: <span id="vmp-points-count" style="color:var(--neon)">0</span></span>
+              </div>
+              <input type="range" id="vmp-scrubber" min="0" max="1000" value="0" style="width:100%;margin-top:6px;accent-color:var(--neon)" oninput="vmpScrub(this.value)">
+            </div>
+          </div>
+        </div>
+
+        <!-- Instrucciones modo -->
+        <div class="card" id="vmp-instructions-card">
+          <div class="card-header"><h3>📋 Instrucciones</h3><span id="vmp-mode-badge" class="tag tag-b">Esperando video</span></div>
+          <div class="card-body" id="vmp-instructions-body">
+            <div style="font-size:12px;color:var(--text2);line-height:1.7">
+              <b style="color:var(--white)">1.</b> Carga un video grabado de perfil<br>
+              <b style="color:var(--white)">2.</b> Configura ejercicio, carga y FPS<br>
+              <b style="color:var(--white)">3.</b> Calibra la escala marcando 2 puntos de distancia conocida<br>
+              <b style="color:var(--white)">4.</b> Navega al inicio del movimiento y hace clic en la barra<br>
+              <b style="color:var(--white)">5.</b> Avanza frame a frame -- el tracker sigue la barra automaticamente<br>
+              <b style="color:var(--white)">6.</b> Presiona STOP cuando termina la fase propulsiva<br>
+              <b style="color:var(--white)">7.</b> El sistema calcula VMP y velocidad pico automaticamente
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- COLUMNA DERECHA: Controles + Resultados -->
+      <div style="display:flex;flex-direction:column;gap:12px">
+
+        <!-- Controles de tracking -->
+        <div class="card">
+          <div class="card-header"><h3>🎯 Control de Tracking</h3></div>
+          <div class="card-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+              <button class="btn btn-neon btn-full" id="btn-vmp-start" onclick="startVMPTracking()" disabled>
+                🎯 Marcar barra
+              </button>
+              <button class="btn btn-red btn-full" id="btn-vmp-stop" onclick="stopVMPTracking()" disabled>
+                ⏹ Detener
+              </button>
+              <button class="btn btn-outline btn-full" onclick="clearVMPTracking()">
+                🗑️ Limpiar
+              </button>
+              <button class="btn btn-ghost btn-full" onclick="undoLastVMPPoint()">
+                ↩ Deshacer
+              </button>
+            </div>
+
+            <!-- Fase del movimiento -->
+            <div class="ig">
+              <label class="il">Fase a analizar</label>
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-sm" id="fase-btn-prop" onclick="setVMPFase('propulsiva')" style="flex:1;background:rgba(57,255,122,.1);border:1px solid rgba(57,255,122,.3);color:var(--neon);font-size:10px">Propulsiva</button>
+                <button class="btn btn-ghost btn-sm" id="fase-btn-exc" onclick="setVMPFase('excentrica')" style="flex:1;font-size:10px">Excentrica</button>
+                <button class="btn btn-ghost btn-sm" id="fase-btn-todo" onclick="setVMPFase('completo')" style="flex:1;font-size:10px">Completo</button>
+              </div>
+            </div>
+
+            <!-- Puntos registrados mini tabla -->
+            <div style="margin-top:10px">
+              <div style="font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Puntos registrados</div>
+              <div id="vmp-points-table" style="max-height:160px;overflow-y:auto;font-family:var(--mono);font-size:10px">
+                <div style="color:var(--text3);text-align:center;padding:12px">Sin puntos aun</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grafico de velocidad -->
+        <div class="card card-glow">
+          <div class="card-header"><h3>📈 Perfil de velocidad</h3></div>
+          <div class="card-body" style="padding:12px">
+            <canvas id="vmp-velocity-chart" height="160"></canvas>
+          </div>
+        </div>
+
+        <!-- Resultados -->
+        <div class="card" id="vmp-result-card" style="display:none">
+          <div class="card-header"><h3>🏆 Resultado</h3><span id="vmp-result-badge" class="tag"></span></div>
+          <div class="card-body">
+            <div style="text-align:center;padding:12px 0">
+              <div style="font-size:10px;color:var(--text2);font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">VMP</div>
+              <div id="vmp-result-vmp" style="font-family:var(--mono);font-size:52px;font-weight:800;color:var(--neon);line-height:1;text-shadow:0 0 30px rgba(57,255,122,.3)">0.00</div>
+              <div style="font-size:13px;color:var(--text2);margin-top:4px">m/s</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px">
+              <div style="background:var(--bg4);border-radius:8px;padding:10px;text-align:center">
+                <div style="font-size:9px;color:var(--text2);font-family:var(--mono)">V. PICO</div>
+                <div id="vmp-result-vpico" style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--blue)">0.00</div>
+                <div style="font-size:9px;color:var(--text3)">m/s</div>
+              </div>
+              <div style="background:var(--bg4);border-radius:8px;padding:10px;text-align:center">
+                <div style="font-size:9px;color:var(--text2);font-family:var(--mono)">ROM</div>
+                <div id="vmp-result-rom" style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--amber)">0</div>
+                <div style="font-size:9px;color:var(--text3)">cm</div>
+              </div>
+              <div style="background:var(--bg4);border-radius:8px;padding:10px;text-align:center">
+                <div style="font-size:9px;color:var(--text2);font-family:var(--mono)">TIEMPO</div>
+                <div id="vmp-result-tiempo" style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--purple,#a78bfa)">0</div>
+                <div style="font-size:9px;color:var(--text3)">ms</div>
+              </div>
+            </div>
+
+            <!-- Comparativa VMP referencia -->
+            <div id="vmp-ref-compare" style="margin-top:12px;padding:10px;background:var(--bg4);border-radius:8px;font-size:11px;line-height:1.7"></div>
+
+            <!-- Zona F-V -->
+            <div style="margin-top:10px;padding:10px;background:rgba(57,255,122,.04);border:1px solid rgba(57,255,122,.1);border-radius:8px">
+              <div style="font-size:10px;font-family:var(--mono);color:var(--text2);margin-bottom:4px">INTEGRACION F-V</div>
+              <div id="vmp-fv-preview" style="font-size:12px;color:var(--text)">Guarda el resultado para agregarlo al perfil F-V</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Referencia VMP por ejercicio -->
+        <div class="card">
+          <div class="card-header"><h3>📊 Referencias VMP</h3></div>
+          <div class="card-body">
+            <div id="vmp-ref-table" style="font-size:11px;line-height:2;color:var(--text2)"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB: HISTORIAL ══ -->
+  <div id="ptab-historial" class="hidden">
+    <div class="flex-b mb-16">
+      <div>
+        <div style="font-size:15px;font-weight:700">Historial — Timeline visual</div>
+        <div style="font-size:12px;color:var(--text2)">🔴 Déficit → 🟡 Límite → 🟢 Óptimo — Evolución del atleta</div>
+      </div>
+      <div class="flex" style="gap:8px">
+        <button class="btn btn-ai" onclick="openInformeIA()">🤖 Generar Informe IA</button>
+        <button class="btn btn-outline" onclick="exportAllData()">📤 Exportar JSON</button>
+      </div>
+    </div>
+    <div style="padding:12px 14px;background:linear-gradient(135deg,rgba(57,255,122,.04),rgba(77,158,255,.04));border:1px solid var(--border2);border-radius:var(--r2);margin-bottom:16px;font-size:12px;color:var(--text2)">
+      <b style="color:var(--neon)">📈 Evolución visual del atleta.</b> Los puntos de color muestran el estado en cada fecha registrada.
+    </div>
+    <div class="card">
+      <div class="card-body" id="historial-timeline" style="max-height:600px;overflow-y:auto"></div>
+    </div>
+  </div>
+
+</div><!-- /page-tests -->
+
+<!-- ────────────────────────────────────────
+     PAGE: AJUSTES (VMP + REFERENCIAS)
+──────────────────────────────────────────── -->
+<div class="page" id="page-ajustes">
+  <div class="page-header"><div><h2>Ajustes & Referencias técnicas</h2><p>Tablas VMP, normativos, configuración del sistema</p></div></div>
+  <div class="card mb-14">
+    <div class="card-header"><h3>VMP al 1RM — Referencia científica</h3></div>
+    <div class="card-body" style="overflow-x:auto">
+      <table class="data-table" style="min-width:600px">
+        <thead><tr><th>Ejercicio</th><th>VMP @ 1RM</th><th>Zona potencia</th><th>Fuente</th></tr></thead>
+        <tbody>
+          <tr><td>Back Squat</td><td class="mono-cell text-neon">0.32 m/s</td><td class="mono-cell">0.68–0.84</td><td style="font-size:10px;color:var(--text3)">González-Badillo & Sánchez-Medina (2010)</td></tr>
+          <tr><td>Press de Banca</td><td class="mono-cell text-neon">0.18 m/s</td><td class="mono-cell">0.47–0.62</td><td style="font-size:10px;color:var(--text3)">González-Badillo & Sánchez-Medina (2010)</td></tr>
+          <tr><td>Peso Muerto</td><td class="mono-cell text-neon">0.14 m/s</td><td class="mono-cell">0.37–0.46</td><td style="font-size:10px;color:var(--text3)">Helms et al. (2017)</td></tr>
+          <tr><td>Bench Pull / Remo</td><td class="mono-cell text-neon">0.53 m/s</td><td class="mono-cell">0.78–0.99</td><td style="font-size:10px;color:var(--text3)">Sánchez-Medina et al. (2014)</td></tr>
+          <tr><td>Hip Thrust</td><td class="mono-cell text-neon">0.24 m/s</td><td class="mono-cell">0.48–0.60</td><td style="font-size:10px;color:var(--text3)">Hoyo, Núñez et al. (2017)</td></tr>
+          <tr><td>Media Sentadilla</td><td class="mono-cell text-neon">0.33 m/s</td><td class="mono-cell">0.59–0.76</td><td style="font-size:10px;color:var(--text3)">Sánchez-Medina et al. (2014)</td></tr>
+          <tr><td>Military Press</td><td class="mono-cell text-neon">0.20 m/s</td><td class="mono-cell">0.41–0.55</td><td style="font-size:10px;color:var(--text3)">Muñoz et al. (2014)</td></tr>
+          <tr><td>Dominadas / Pull Up</td><td class="mono-cell text-neon">0.22 m/s</td><td class="mono-cell">0.39–0.57</td><td style="font-size:10px;color:var(--text3)">Sánchez-Moreno et al. (2017)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card mb-14">
+    <div class="card-header"><h3>Tabla completa % RM → VMP</h3><span style="font-size:10px;color:var(--text2)">Vitruve / González-Badillo lab</span></div>
+    <div class="card-body" style="overflow-x:auto">
+      <table class="data-table" style="min-width:700px">
+        <thead><tr><th>Ejercicio</th><th>40%</th><th>50%</th><th>60%</th><th>70%</th><th>80%</th><th>85%</th><th>90%</th><th>95%</th><th>100%</th></tr></thead>
+        <tbody>
+          <tr><td>Back Squat</td><td class="mono-cell">1.28</td><td class="mono-cell">1.07</td><td class="mono-cell">0.92</td><td class="mono-cell">0.76</td><td class="mono-cell">0.59</td><td class="mono-cell">0.51</td><td class="mono-cell">0.42</td><td class="mono-cell">0.36</td><td class="mono-cell text-neon">0.32</td></tr>
+          <tr><td>Press Banca</td><td class="mono-cell">1.13</td><td class="mono-cell">0.95</td><td class="mono-cell">0.70</td><td class="mono-cell">0.55</td><td class="mono-cell">0.39</td><td class="mono-cell">0.32</td><td class="mono-cell">0.25</td><td class="mono-cell">0.20</td><td class="mono-cell text-neon">0.18</td></tr>
+          <tr><td>Bench Pull</td><td class="mono-cell">1.36</td><td class="mono-cell">1.21</td><td class="mono-cell">0.99</td><td class="mono-cell">0.85</td><td class="mono-cell">0.72</td><td class="mono-cell">0.65</td><td class="mono-cell">0.59</td><td class="mono-cell">0.56</td><td class="mono-cell text-neon">0.53</td></tr>
+          <tr><td>Pull Up</td><td class="mono-cell">—</td><td class="mono-cell">1.09</td><td class="mono-cell">0.83</td><td class="mono-cell">0.65</td><td class="mono-cell">0.50</td><td class="mono-cell">0.43</td><td class="mono-cell">0.31</td><td class="mono-cell">0.25</td><td class="mono-cell text-neon">0.22</td></tr>
+          <tr><td>Deadlift</td><td class="mono-cell">—</td><td class="mono-cell">—</td><td class="mono-cell">—</td><td class="mono-cell">0.37</td><td class="mono-cell">0.29</td><td class="mono-cell">0.25</td><td class="mono-cell">0.21</td><td class="mono-cell">0.17</td><td class="mono-cell text-neon">0.14</td></tr>
+          <tr><td>Hip Thrust</td><td class="mono-cell">—</td><td class="mono-cell">—</td><td class="mono-cell">0.60</td><td class="mono-cell">0.48</td><td class="mono-cell">—</td><td class="mono-cell">0.36</td><td class="mono-cell">—</td><td class="mono-cell">—</td><td class="mono-cell text-neon">0.24</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card mb-14">
+    <div class="card-header"><h3>Fuerza relativa — Normativos</h3></div>
+    <div class="card-body">
+      <table class="data-table">
+        <thead><tr><th>Ejercicio</th><th>🔴 Déficit</th><th>🟡 Moderado</th><th>🟢 Elite</th><th>Referencia</th></tr></thead>
+        <tbody>
+          <tr><td>Sentadilla</td><td class="mono-cell text-red">&lt;1.0×PC</td><td class="mono-cell text-amber">1.0–1.5×PC</td><td class="mono-cell text-neon">&gt;1.5×PC</td><td style="font-size:10px;color:var(--text3)">Haff & Triplett (2016)</td></tr>
+          <tr><td>Press Banca</td><td class="mono-cell text-red">&lt;0.75×PC</td><td class="mono-cell text-amber">0.75–1.25×PC</td><td class="mono-cell text-neon">&gt;1.25×PC</td><td style="font-size:10px;color:var(--text3)">Haff & Triplett (2016)</td></tr>
+          <tr><td>Peso Muerto</td><td class="mono-cell text-red">&lt;1.25×PC</td><td class="mono-cell text-amber">1.25–2.0×PC</td><td class="mono-cell text-neon">&gt;2.0×PC</td><td style="font-size:10px;color:var(--text3)">Cronin & Sleivert (2005)</td></tr>
+          <tr><td>Hip Thrust</td><td class="mono-cell text-red">&lt;1.0×PC</td><td class="mono-cell text-amber">1.0–2.0×PC</td><td class="mono-cell text-neon">&gt;2.0×PC</td><td style="font-size:10px;color:var(--text3)">Contreras et al. (2017)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h3>Sistema & Datos</h3></div>
+    <div class="card-body" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-ghost btn-sm" onclick="exportAllData()">📤 Exportar JSON</button>
+      <button class="btn btn-red btn-sm" onclick="if(confirm('¿Eliminar TODOS los datos locales?')){localStorage.clear();location.reload()}">🗑️ Limpiar datos</button>
+      <span style="font-size:10px;color:var(--text3);font-family:var(--mono)">MoveMetrics v12 · Investor Edition · Lic. Lezcano</span>
+    </div>
+  </div>
+</div>
+
+</main>
+</div><!-- /app -->
+
+<!-- ════════ TOAST ════════ -->
+<div id="save-toast">✓ Guardado</div>
+
+<!-- ════════ MODALES ════════ -->
+
+<!-- Modal: Form Atleta -->
+<div class="modal" id="modal-atleta-form">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="form-title">Nuevo atleta</div>
+    <div class="modal-sub">Completá el perfil del atleta / paciente</div>
+    <input type="hidden" id="edit-id">
+
+    <!-- Foto -->
+    <div class="ig">
+      <label class="il">Foto de perfil (opcional)</label>
+      <div class="flex" style="gap:14px">
+        <div id="form-photo-prev" style="width:58px;height:58px;border-radius:12px;background:var(--bg4);border:1px dashed var(--border2);display:flex;align-items:center;justify-content:center;font-size:22px;overflow:hidden;flex-shrink:0">👤</div>
+        <div>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('photo-form-inp').click()">📷 Cargar foto</button>
+          <input type="file" id="photo-form-inp" accept="image/*" class="hidden" onchange="previewFormPhoto(this)">
+          <div style="font-size:10px;color:var(--text3);margin-top:4px">JPG/PNG · Se guarda en el perfil</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Servicio -->
+    <div class="ig">
+      <label class="il">Enfoque</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button id="svc-rend" class="btn btn-neon btn-full" onclick="setSvc('rendimiento')" style="font-size:12px">⚡ Rendimiento</button>
+        <button id="svc-kine" class="btn btn-ghost btn-full" onclick="setSvc('kinesio')" style="font-size:12px">🏥 Kinesiología</button>
+      </div>
+      <input type="hidden" id="s-servicio" value="rendimiento">
+    </div>
+
+    <div class="ig"><label class="il">Nombre completo</label><input class="inp" id="s-nombre" placeholder="Juan Pérez"></div>
+    <div class="grid-2" style="gap:12px">
+      <div class="ig"><label class="il">Edad</label><input class="inp inp-mono" id="s-edad" type="number" placeholder="25"></div>
+      <div class="ig"><label class="il">Sexo</label><select class="inp" id="s-sexo"><option value="M">Masculino</option><option value="F">Femenino</option><option value="X">Otro</option></select></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div class="ig"><label class="il">Peso (kg)</label><input class="inp inp-mono" id="s-peso" type="number" placeholder="75"></div>
+      <div class="ig"><label class="il">Talla (cm)</label><input class="inp inp-mono" id="s-talla" type="number" placeholder="178"></div>
+      <div class="ig"><label class="il">L.Pierna (cm)</label><input class="inp inp-mono" id="s-pierna" type="number" placeholder="92"></div>
+    </div>
+    <div class="ig"><label class="il">Deporte</label>
+      <select class="inp" id="s-deporte" onchange="checkRugby()">
+        <option value="">Seleccioná...</option>
+        <optgroup label="🏉 Deportes de Contacto / Equipo">
+          <option value="Rugby">🏉 Rugby</option>
+          <option value="Fútbol">⚽ Fútbol</option>
+          <option value="Básquet">🏀 Básquet</option>
+          <option value="Vóley">🏐 Vóley</option>
+          <option value="Hockey">🏑 Hockey sobre césped</option>
+          <option value="Hockey Patín">🏒 Hockey sobre patines</option>
+          <option value="Handball">🤾 Handball</option>
+          <option value="Waterpolo">🤽 Waterpolo</option>
+          <option value="Boxeo">🥊 Boxeo / MMA / Kickboxing</option>
+          <option value="Judo">🥋 Judo / Lucha</option>
+        </optgroup>
+        <optgroup label="🏃 Atletismo / Carrera">
+          <option value="Running">🏃 Running / Trail Running</option>
+          <option value="Maratón">🏅 Maratón / Media Maratón</option>
+          <option value="Atletismo">🏅 Atletismo (pista y campo)</option>
+          <option value="Marcha Atlética">🚶 Marcha Atlética</option>
+        </optgroup>
+        <optgroup label="🚴 Ciclismo">
+          <option value="Ciclismo">🚴 Ciclismo de Ruta</option>
+          <option value="MTB">🚵 MTB / Ciclismo de montaña</option>
+          <option value="Ciclismo Indoor">🚴 Ciclismo Indoor / Zwift</option>
+          <option value="BMX">🚲 BMX / Ciclismo urbano</option>
+          <option value="Gravel">🚴 Gravel / Cicloturismo</option>
+        </optgroup>
+        <optgroup label="🏊 Acuáticos">
+          <option value="Natación">🏊 Natación (piscina)</option>
+          <option value="Natación Aguas Abiertas">🌊 Natación en aguas abiertas</option>
+          <option value="Surf">🏄 Surf / Kitesurf / Windsurf</option>
+          <option value="Remo">🚣 Remo / Kayak / Canotaje</option>
+          <option value="Triatlón">🏊 Triatlón / Duatlón</option>
+        </optgroup>
+        <optgroup label="🎾 Raqueta / Precisión">
+          <option value="Tenis">🎾 Tenis</option>
+          <option value="Pádel">🏓 Pádel</option>
+          <option value="Squash">🎾 Squash / Racquetball</option>
+          <option value="Tenis de Mesa">🏓 Tenis de Mesa</option>
+          <option value="Golf">⛳ Golf</option>
+          <option value="Tiro">🎯 Tiro / Arco</option>
+        </optgroup>
+        <optgroup label="🏋️ Fuerza / Funcional">
+          <option value="CrossFit">🏋️ CrossFit / HYROX</option>
+          <option value="Powerlifting">🏋️ Powerlifting / Halterofilia</option>
+          <option value="Fuerza General">💪 Entrenamiento de fuerza general</option>
+          <option value="Calistenia">🤸 Calistenia / Street Workout</option>
+          <option value="Escalada">🧗 Escalada deportiva / Boulder</option>
+        </optgroup>
+        <optgroup label="🧘 Mente-Cuerpo / Flexibilidad">
+          <option value="Yoga">🧘 Yoga</option>
+          <option value="Pilates">🤸 Pilates</option>
+          <option value="Danza">💃 Danza / Baile deportivo</option>
+          <option value="Gimnasia Artística">🤸 Gimnasia Artística / Rítmica</option>
+        </optgroup>
+        <optgroup label="⛷️ Deportes de Nieve / Extremos">
+          <option value="Esquí Alpino">⛷️ Esquí Alpino / Snowboard</option>
+          <option value="Esquí Fondo">🎿 Esquí de Fondo / Travesía</option>
+          <option value="Paracaidismo">🪂 Paracaidismo / Deportes aéreos</option>
+        </optgroup>
+        <optgroup label="🏥 Salud / Poblaciones especiales">
+          <option value="Adulto Mayor">👴 Adulto Mayor (60+)</option>
+          <option value="Embarazo">🤱 Embarazo / Post-parto</option>
+          <option value="Rehabilitación">🏥 Rehabilitación / Readaptación</option>
+          <option value="Salud General">❤️ Salud general / Sedentario activo</option>
+          <option value="General">💪 Fitness / Acondicionamiento general</option>
+        </optgroup>
+      </select>
+    </div>
+    <div id="rugby-sec" class="hidden">
+      <div class="ig"><label class="il">🏉 Puesto en Rugby</label>
+        <select class="inp" id="s-puesto">
+          <option value="">—</option>
+          <option value="pilares">1/3 — Pilares (Forward)</option>
+          <option value="hooker">2 — Hooker (Forward)</option>
+          <option value="2da-linea">4/5 — 2da Línea (Forward)</option>
+          <option value="3ras-lineas">6/7/8 — 3ras Líneas (Forward)</option>
+          <option value="medio-scrum">9 — Medio Scrum (Back)</option>
+          <option value="apertura">10 — Apertura (Back)</option>
+          <option value="centros">12/13 — Centros (Back)</option>
+          <option value="wing-fb">11/14/15 — Wings / FB (Back)</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid-2" style="gap:12px">
+      <div class="ig"><label class="il">Nivel</label>
+        <select class="inp" id="s-nivel"><option value="recreativo">Recreativo</option><option value="amateur">Amateur</option><option value="federado">Federado</option><option value="semi-pro">Semi-pro</option><option value="elite">Elite</option></select>
+      </div>
+      <div class="ig"><label class="il">Objetivo</label>
+        <select class="inp" id="s-objetivo"><option value="rendimiento">Rendimiento</option><option value="fuerza">Fuerza máxima</option><option value="hipertrofia">Hipertrofia</option><option value="salud">Salud</option><option value="readaptacion">Readaptación</option></select>
+      </div>
+    </div>
+    <div class="ig"><label class="il">Lesión / Motivo de consulta</label><input class="inp" id="s-lesion" placeholder="LCA, hombro, lumbar..."></div>
+    <div class="ig"><label class="il">Email</label><input class="inp" id="s-email" type="email" placeholder="atleta@mail.com"></div>
+    <button class="btn btn-neon btn-full" onclick="saveAtleta()">Guardar atleta</button>
+    <button class="btn btn-ghost btn-full mt-8" onclick="closeModal('modal-atleta-form')">Cancelar</button>
+  </div>
+</div>
+
+<!-- Modal: Informe IA + PDF -->
+<div class="modal" id="modal-informe">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🤖 Informe Analítico con IA</div>
+    <div class="modal-sub" id="informe-sub">Generando análisis...</div>
+    <div id="informe-loading" class="hidden" style="display:flex;align-items:center;gap:8px;background:var(--bg4);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:16px">
+      <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <span style="font-size:12px;color:var(--neon)">Analizando datos completos del atleta...</span>
+    </div>
+    <div id="informe-editor-wrap" class="hidden">
+      <div style="font-size:10px;color:var(--text3);margin-bottom:8px;font-family:var(--mono)">Editá el texto antes de exportar</div>
+      <textarea class="pdf-editor" id="informe-text" rows="16"></textarea>
+      <div class="grid-2 mt-12" style="gap:12px">
+        <div class="ig"><label class="il">Profesional</label><input class="inp" id="prof-nombre" placeholder="Lic. Emanuel Lezcano"></div>
+        <div class="ig"><label class="il">Institución</label><input class="inp" id="prof-inst" placeholder="MOVE Centro de Evaluación"></div>
+      </div>
+      <div class="flex mt-12" style="gap:12px">
+        <button class="btn btn-pdf btn-full" onclick="exportarPDF()">📄 Descargar PDF</button>
+        <button class="btn btn-ai btn-full" onclick="regenerarInforme()">🔄 Regenerar</button>
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-full mt-12" onclick="closeModal('modal-informe')">Cerrar</button>
+  </div>
+</div>
+
+<!-- ════════ SCRIPT ════════ -->
+<script src="assets/script.js"></script>
+
+
+<!-- Modal Goniometro -->
+<div class="modal" id="modal-goniometro">
+  <div class="modal-sheet" style="max-width:400px">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="goniometro-title" style="font-size:15px;margin-bottom:4px">Goniometro</div>
+    <div id="goniometro-estado" style="font-size:11px;color:var(--text2);margin-bottom:16px;font-family:var(--mono)">Activando sensor...</div>
+
+    <!-- Canvas + flecha -->
+    <div style="position:relative;width:200px;height:200px;margin:0 auto 8px">
+      <canvas id="goniometro-canvas" width="200" height="200"></canvas>
+      <div id="goniometro-flecha" style="position:absolute;bottom:50%;left:50%;width:3px;height:76px;background:var(--neon);border-radius:2px;transform-origin:50% 100%;transform:translateX(-50%) rotate(0deg);box-shadow:0 0 8px rgba(57,255,122,.5)"></div>
+    </div>
+
+    <!-- Angulo grande -->
+    <div style="text-align:center;margin-bottom:16px">
+      <div id="goniometro-angulo" style="font-family:var(--mono);font-size:52px;font-weight:800;color:var(--neon);line-height:1;text-shadow:0 0 20px rgba(57,255,122,.3)">0.0</div>
+      <div style="font-size:11px;color:var(--text2);font-family:var(--mono)">grados</div>
+    </div>
+
+    <!-- Info card -->
+    <div style="background:var(--bg4);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:9px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;margin-bottom:2px">Lectura</div>
+        <div id="lectura-actual" style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--neon)">0.0deg</div>
+      </div>
+      <div style="text-align:right">
+        <div id="lectura-estado" style="font-size:11px;color:var(--text2)">En vivo</div>
+      </div>
+    </div>
+
+    <!-- Botones control -->
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button class="btn btn-outline btn-sm" id="btn-congelar-gonio" onclick="toggleCongelarGonio()" style="flex:2">Congelar</button>
+      <button class="btn btn-ghost btn-sm" onclick="reiniciarGoniometro()" style="flex:1">Reset</button>
+    </div>
+
+    <!-- Confirmar / Cancelar -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <button class="btn btn-ghost" onclick="detenerGoniometro();closeModal('modal-goniometro')">Cancelar</button>
+      <button class="btn btn-neon" onclick="confirmarGoniometro()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal Video Jump -- reutilizable para todos los saltos verticales -->
+<div class="modal" id="modal-vj">
+  <div class="modal-sheet" style="max-width:520px">
+    <div class="modal-handle"></div>
+    <div class="mb-12">
+      <div class="modal-title" id="vj-modal-title" style="font-size:16px;margin-bottom:10px">Video Salto</div>
+      <div>
+        <label style="font-family:var(--mono);font-size:8px;color:var(--text2);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px">FPS de grabacion del video</label>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px" id="vj-fps-btns">
+          <button class="btn btn-neon btn-sm" onclick="setVJFps('n30',this)" style="font-size:10px">30 fps</button>
+          <button class="btn btn-ghost btn-sm" onclick="setVJFps('n60',this)" style="font-size:10px">60 fps</button>
+          <button class="btn btn-ghost btn-sm" onclick="setVJFps('s120',this)" style="font-size:10px">Slow 120</button>
+          <button class="btn btn-ghost btn-sm" onclick="setVJFps('s240',this)" style="font-size:10px">Slow 240</button>
+          <button class="btn btn-ghost btn-sm" onclick="setVJFps('s480',this)" style="font-size:10px">Slow 480</button>
+          <button class="btn btn-ghost btn-sm" onclick="setVJFps('s960',this)" style="font-size:10px">Slow 960</button>
+        </div>
+        <div id="vj-fps-tip" style="font-family:var(--mono);font-size:9px;color:var(--neon);margin-top:6px;padding:5px 8px;background:rgba(57,255,122,.04);border-radius:6px">
+          Video normal -- mas preciso
+        </div>
+      </div>
+      <!-- Hidden inputs para compatibilidad con el calculo -->
+      <input type="hidden" id="vj-fps-grab" value="30">
+      <input type="hidden" id="vj-fps-repro" value="30">
+      <input type="hidden" id="vj-cal-altura" value="">
+      <input type="hidden" id="vj-cal-tvideo" value="">
+      <div id="vj-fps-info" style="display:none"></div>
+      <div id="vj-mode-auto" style="display:none"></div>
+      <div id="vj-mode-calibrar" style="display:none"></div>
+      <div id="vj-cal-result" style="display:none"></div>
+    </div>
+
+    <!-- Upload area -->
+    <div id="vj-upload-area" style="border:2px dashed rgba(57,255,122,.2);border-radius:10px;padding:24px;text-align:center;cursor:pointer;margin-bottom:12px" onclick="document.getElementById('vj-file-inp').click()">
+      <div style="font-size:24px;margin-bottom:6px">🎬</div>
+      <div style="font-size:13px;font-weight:700;color:var(--neon)">Cargar video del salto</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:4px">Grabado con camara lenta recomendado (120+ FPS)</div>
+    </div>
+    <input type="file" id="vj-file-inp" accept="video/*" class="hidden" onchange="loadVJVideo(this)">
+
+    <!-- Player -->
+    <div id="vj-player-wrap" style="display:none">
+      <video id="vj-video" style="width:100%;border-radius:8px;background:#000;display:block;max-height:220px"></video>
+
+      <!-- Frame controls -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="vjJump(-10)" style="font-size:10px">-10</button>
+        <button class="btn btn-ghost btn-sm" onclick="vjJump(-1)" style="font-size:10px">-1</button>
+        <button class="btn btn-ghost btn-sm" onclick="vjTogglePlay()" id="vj-play-btn" style="padding:6px 14px;font-size:11px">Play</button>
+        <button class="btn btn-ghost btn-sm" onclick="vjJump(1)" style="font-size:10px">+1</button>
+        <button class="btn btn-ghost btn-sm" onclick="vjJump(10)" style="font-size:10px">+10</button>
+      </div>
+      <input type="range" id="vj-scrubber" min="0" max="1000" value="0" style="width:100%;margin-top:6px;accent-color:var(--neon)" oninput="vjScrub(this.value)">
+      <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--text2);margin-top:3px;padding:0 2px">
+        <span>Frame <span id="vj-frame-cur">0</span> / <span id="vj-frame-tot">0</span></span>
+        <span id="vj-time-cur">0.000s</span>
+      </div>
+    </div>
+
+    <!-- Markers -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+      <button class="btn btn-outline btn-full" onclick="vjMarkTakeoff()" id="vj-btn-takeoff" style="font-size:12px">
+        Marcar Despegue
+      </button>
+      <button class="btn btn-red btn-full" onclick="vjMarkLanding()" id="vj-btn-landing" style="font-size:12px;border-color:rgba(255,59,59,.3)">
+        Marcar Aterrizaje
+      </button>
+    </div>
+
+    <!-- Status -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <div style="background:var(--dark4);border-radius:8px;padding:8px 10px">
+        <div style="font-family:var(--mono);font-size:8px;color:var(--text3);text-transform:uppercase;margin-bottom:3px">Despegue</div>
+        <div id="vj-takeoff-disp" style="font-family:var(--mono);font-size:11px;color:var(--neon)">--</div>
+      </div>
+      <div style="background:var(--dark4);border-radius:8px;padding:8px 10px">
+        <div style="font-family:var(--mono);font-size:8px;color:var(--text3);text-transform:uppercase;margin-bottom:3px">Aterrizaje</div>
+        <div id="vj-landing-disp" style="font-family:var(--mono);font-size:11px;color:var(--red)">--</div>
+      </div>
+    </div>
+
+    <!-- Result -->
+    <div id="vj-result-area"></div>
+
+    <!-- Actions -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px">
+      <button class="btn btn-ghost btn-sm" onclick="vjClearMarkers()" style="font-size:11px">Limpiar</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-vj')" style="font-size:11px">Cancelar</button>
+      <button class="btn btn-neon btn-sm" onclick="confirmarVJResult()" style="font-size:11px">Confirmar Rep</button>
+    </div>
+
+    <div style="font-size:10px;color:var(--text3);text-align:center;margin-top:8px;font-family:var(--mono)">
+      Formula: h = g*t²/8 · Fisica de caida libre
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════ -->
+<!--   SHEETS CLÍNICOS — se abren desde Body Chart  -->
+<!-- ══════════════════════════════════════════════ -->
+
+<!-- SHEET: HOMBRO -->
+<div class="modal" id="sheet-hombro">
+  <div class="modal-sheet" style="max-width:600px">
+    <div class="modal-handle"></div>
+    <div class="flex-b mb-12">
+      <div><div class="modal-title" style="font-size:18px">💪 Hombro</div>
+        <div style="font-size:12px;color:var(--text2)">RC Tendinopatía · CPG 2025 · Desmeules et al.</div></div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('sheet-hombro')">✕</button>
+    </div>
+
+    <!-- Tab strip -->
+    <div style="display:flex;gap:3px;background:var(--bg4);border-radius:8px;padding:3px;margin-bottom:16px;overflow-x:auto">
+      <button class="btn btn-neon btn-sm" id="htab-obs-btn" onclick="showHTab('obs',this)" style="white-space:nowrap;font-size:10px">Observación</button>
+      <button class="btn btn-ghost btn-sm" id="htab-rom-btn" onclick="showHTab('rom',this)" style="white-space:nowrap;font-size:10px">ROM</button>
+      <button class="btn btn-ghost btn-sm" id="htab-tests-btn" onclick="showHTab('tests',this)" style="white-space:nowrap;font-size:10px">Tests</button>
+      <button class="btn btn-ghost btn-sm" id="htab-fuerza-btn" onclick="showHTab('fuerza',this)" style="white-space:nowrap;font-size:10px">Fuerza</button>
+      <button class="btn btn-ghost btn-sm" id="htab-cuest-btn" onclick="showHTab('cuest',this)" style="white-space:nowrap;font-size:10px">Escalas</button>
+    </div>
+
+    <!-- TAB: OBSERVACIÓN -->
+    <div id="htab-obs">
+      <!-- Banderas rojas CPG 2025 -->
+      <div class="card card-danger mb-12">
+        <div class="card-header"><h3 style="color:var(--red)">🚨 Banderas rojas (CPG 2025 Rec.#3)</h3></div>
+        <div class="card-body">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <label style="display:flex;align-items:center;justify-content:space-between;font-size:12px">Deformidad sospechosa<input type="checkbox" class="hombro-redflag" style="accent-color:var(--red);width:18px;height:18px" onchange="checkHombroRedFlags()"></label>
+            <label style="display:flex;align-items:center;justify-content:space-between;font-size:12px">Fiebre / escalofríos<input type="checkbox" class="hombro-redflag" style="accent-color:var(--red);width:18px;height:18px" onchange="checkHombroRedFlags()"></label>
+            <label style="display:flex;align-items:center;justify-content:space-between;font-size:12px">Síntomas cardiovasculares / viscerales<input type="checkbox" class="hombro-redflag" style="accent-color:var(--red);width:18px;height:18px" onchange="checkHombroRedFlags()"></label>
+            <label style="display:flex;align-items:center;justify-content:space-between;font-size:12px">Antecedentes o sospecha de cáncer<input type="checkbox" class="hombro-redflag" style="accent-color:var(--red);width:18px;height:18px" onchange="checkHombroRedFlags()"></label>
+          </div>
+          <div id="hombro-redflag-alert" style="display:none;margin-top:10px;padding:10px;background:var(--red);border-radius:8px;color:#000;font-weight:700;font-size:12px">
+            ⚠️ BANDERA ROJA ACTIVA — Derivar a especialista médico
+          </div>
+        </div>
+      </div>
+      <!-- Factores pronósticos -->
+      <div class="card mb-12" style="border-color:rgba(255,176,32,.25)">
+        <div class="card-header"><h3 style="color:var(--amber)">⚠️ Factores pronósticos (CPG 2025 Rec.#4)</h3></div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
+          <label style="display:flex;align-items:center;justify-content:space-between;font-size:12px">Edad &gt;50 años (OR=3.8 cronicidad)<input type="checkbox" style="accent-color:var(--amber);width:18px;height:18px"></label>
+          <label style="display:flex;align-items:center;justify-content:space-between;font-size:12px">Duración prolongada de síntomas<input type="checkbox" style="accent-color:var(--amber);width:18px;height:18px"></label>
+          <label style="display:flex;align-items:center;justify-content:space-between;font-size:12px">Alta intensidad de dolor<input type="checkbox" style="accent-color:var(--amber);width:18px;height:18px"></label>
+          <label style="display:flex;align-items:center;justify-content:space-between;font-size:12px">Factores psicosociales (kinesiofobia)<input type="checkbox" style="accent-color:var(--amber);width:18px;height:18px"></label>
+          <label style="display:flex;align-items:center;justify-content:space-between;font-size:12px">Demandas laborales elevadas (&gt;90° repetitivo)<input type="checkbox" style="accent-color:var(--amber);width:18px;height:18px"></label>
+        </div>
+      </div>
+      <!-- Atrofia -->
+      <div class="card">
+        <div class="card-header"><h3>Atrofia muscular</h3></div>
+        <div class="card-body">
+          <div class="grid-2" style="gap:8px">
+            <div class="ig"><label class="il">Derecho</label>
+              <select class="inp" style="font-size:12px"><option>Sin atrofia</option><option>Leve</option><option>Moderada</option><option>Marcada</option></select></div>
+            <div class="ig"><label class="il">Izquierdo</label>
+              <select class="inp" style="font-size:12px"><option>Sin atrofia</option><option>Leve</option><option>Moderada</option><option>Marcada</option></select></div>
+          </div>
+          <div class="ig mt-8"><label class="il">Observaciones</label>
+            <textarea class="inp" rows="2" placeholder="Postura escapular, alineación, asimetría..."></textarea></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: ROM -->
+    <div id="htab-rom" style="display:none">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px;padding:8px;background:rgba(77,158,255,.08);border-radius:8px">
+        CPG 2025 Rec.#6 — MDC activo: 8–23° · MDC pasivo: 3–21°
+      </div>
+      <div id="hombro-rom-fields"></div>
+      <div class="card mt-12">
+        <div class="card-header"><h3>GIRD — Déficit rotación interna glenohumeral</h3></div>
+        <div class="card-body">
+          <div class="grid-2" style="gap:8px">
+            <div><div class="il mb-4">TROM D (RI+RE)</div><div id="hombro-trom-d" style="font-family:var(--mono);font-size:20px;color:var(--text2)">—</div></div>
+            <div><div class="il mb-4">TROM I (RI+RE)</div><div id="hombro-trom-i" style="font-family:var(--mono);font-size:20px;color:var(--text2)">—</div></div>
+          </div>
+          <div id="hombro-gird-result" style="font-size:12px;color:var(--text3);margin-top:8px">GIRD: completar RI y RE para calcular</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: TESTS PROVOCATIVOS -->
+    <div id="htab-tests" style="display:none">
+      <!-- Painful arc -->
+      <div class="card mb-10">
+        <div class="card-header"><h3>Arco doloroso (Painful arc)</h3><span class="tag tag-r">Confirmar RC · LR+ 3.44</span></div>
         <div class="card-body">
           <div class="grid-2" style="gap:10px">
-            <div class="ig"><label class="il">Altura media (cm)</label>
-              <input class="inp inp-mono" type="number" step=".1" id="ms15-r1" placeholder="27" oninput="calcMultiSalto15()">
+            <div><div class="il mb-4">D</div><div style="display:flex;gap:6px"><button class="ot-btn" onclick="toggleOT(this,'pos')">+ POS</button><button class="ot-btn" onclick="toggleOT(this,'neg')">– NEG</button></div>
+              <div class="ig mt-8"><label class="il">Rango dolor D (°)</label>
+                <div style="display:flex;gap:6px"><input class="inp inp-mono" type="number" placeholder="desde" style="flex:1"><span style="align-self:center;color:var(--text3)">–</span><input class="inp inp-mono" type="number" placeholder="hasta" style="flex:1"></div></div>
+              <div class="ig"><label class="il">EVA D</label><input type="range" class="eva-slider" min="0" max="10" value="0" oninput="this.nextElementSibling.textContent=this.value"><span class="il" style="text-align:center;display:block">0</span></div>
             </div>
-            <div class="ig"><label class="il">N reps en 15s</label>
-              <input class="inp inp-mono" type="number" id="ms15-reps" placeholder="20" oninput="calcMultiSalto15()">
-            </div>
-          </div>
-          <div style="background:var(--bg4);border-radius:10px;padding:12px;text-align:center;margin-top:8px">
-            <div style="font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;margin-bottom:4px">Potencia</div>
-            <div id="ms15-pot" style="font-family:var(--mono);font-size:22px;font-weight:800;color:var(--neon)">--</div>
-            <div style="font-size:9px;color:var(--text3);margin-top:2px">Formula Bosco et al. 1983</div>
-          </div>
-          <div style="display:none;font-family:var(--mono);font-size:9px" id="ms15-avg" data-val=""></div>
-          <div style="font-size:11px;color:var(--text2);margin-top:8px;line-height:1.6">
-            Ref. Bosco (2004): Varones ${BOSCO_NORMS.ms15.male.mean}±${BOSCO_NORMS.ms15.male.sd} · Mujeres ${BOSCO_NORMS.ms15.female.mean}±${BOSCO_NORMS.ms15.female.sd} kgm/s
-          </div>
-        </div>
-      </div>`;
-      return;
-    }
-
-    if (def.key === 'dj') {
-      html += `<div class="card">
-        <div class="card-header"><h3>Drop Jump</h3><span class="tag tag-r">Fuerza reflejo-elastico-explosiva</span></div>
-        <div class="card-body">
-          <div class="ig"><label class="il">Altura de caida (cm)</label>
-            <select class="inp" id="dj-altura">
-              <option value="20">20 cm</option><option value="40" selected>40 cm</option>
-              <option value="60">60 cm</option><option value="80">80 cm</option>
-            </select>
-          </div>
-          <div class="grid-2" style="gap:8px">
-            <div class="ig"><label class="il">Rep 1 (cm)</label><input class="inp inp-mono" type="number" step=".1" id="dj-r1" placeholder="0" oninput="calcSalto('dj','dj-r2')"></div>
-            <div class="ig"><label class="il">Rep 2 (cm)</label><input class="inp inp-mono" type="number" step=".1" id="dj-r2" placeholder="0" oninput="calcSalto('dj','dj-r2')"></div>
-          </div>
-          <div class="ig mt-8"><label class="il">Tiempo de contacto (ms)</label>
-            <input class="inp inp-mono" type="number" id="dj-tc" placeholder="200" oninput="calcBoscoIndices()">
-            <div style="font-size:9px;color:var(--text3);margin-top:2px">Ref: BDJ &lt;200ms · CDJ hasta 250ms</div>
-          </div>
-          <div style="background:var(--bg4);border-radius:10px;padding:12px;text-align:center;margin-top:8px">
-            <div style="display:flex;justify-content:space-around">
-              <div><div style="font-family:var(--mono);font-size:9px;color:var(--text2);margin-bottom:3px">ALTURA</div>
-                <div id="dj-avg" style="font-family:var(--mono);font-size:22px;font-weight:800;color:var(--neon)" data-val="">--</div></div>
-              <div><div style="font-family:var(--mono);font-size:9px;color:var(--text2);margin-bottom:3px">RSI mod.</div>
-                <div id="dj-rsi-display" style="font-family:var(--mono);font-size:22px;font-weight:800;color:var(--blue)">--</div></div>
+            <div><div class="il mb-4">I</div><div style="display:flex;gap:6px"><button class="ot-btn" onclick="toggleOT(this,'pos')">+ POS</button><button class="ot-btn" onclick="toggleOT(this,'neg')">– NEG</button></div>
+              <div class="ig mt-8"><label class="il">Rango dolor I (°)</label>
+                <div style="display:flex;gap:6px"><input class="inp inp-mono" type="number" placeholder="desde" style="flex:1"><span style="align-self:center;color:var(--text3)">–</span><input class="inp inp-mono" type="number" placeholder="hasta" style="flex:1"></div></div>
+              <div class="ig"><label class="il">EVA I</label><input type="range" class="eva-slider" min="0" max="10" value="0" oninput="this.nextElementSibling.textContent=this.value"><span class="il" style="text-align:center;display:block">0</span></div>
             </div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
-            <button class="btn btn-ghost btn-sm" onclick="abrirVideoJump('dj','dj-r1')" style="font-size:10px">🎬 Video Rep 1</button>
-            <button class="btn btn-ghost btn-sm" onclick="abrirVideoJump('dj','dj-r2')" style="font-size:10px">🎬 Video Rep 2</button>
-          </div>
-          <div id="dj-mejora" style="text-align:center;margin-top:6px"></div>
         </div>
-      </div>`;
-      return;
-    }
-
-    // SJ, CMJ, ABK
-    const unitLabel = def.unit;
-    const norm = BOSCO_NORMS[def.key];
-    const normLine = norm ? `Ref. Bosco (2004): V=${norm.male.mean}±${norm.male.sd} · M=${norm.female.mean}±${norm.female.sd} cm` : '';
-    html += `<div class="card">
-      <div class="card-header"><h3>${def.label}</h3><span class="tag tag-b" style="font-size:9px">${def.desc}</span></div>
-      <div class="card-body">
-        <div class="grid-2" style="gap:8px">
-          <div class="ig"><label class="il">Rep 1</label><input class="inp inp-mono" type="number" step=".1" id="${def.key}-r1" placeholder="0" oninput="calcSalto('${def.key}','${def.key}-r2')"></div>
-          <div class="ig"><label class="il">Rep 2</label><input class="inp inp-mono" type="number" step=".1" id="${def.key}-r2" placeholder="0" oninput="calcSalto('${def.key}','${def.key}-r2')"></div>
-        </div>
-        <div style="background:var(--bg4);border-radius:10px;padding:12px;text-align:center;margin-top:8px">
-          <div style="font-family:var(--mono);font-size:9px;color:var(--text2);margin-bottom:4px">PROMEDIO</div>
-          <div id="${def.key}-avg" style="font-family:var(--mono);font-size:32px;font-weight:800;color:var(--neon)" data-val="">--</div>
-          <div style="font-size:10px;color:var(--text3)">${unitLabel}</div>
-          <div id="${def.key}-badge" style="margin-top:6px"></div>
-        </div>
-        ${normLine ? `<div style="font-size:10px;color:var(--text3);margin-top:6px;font-family:var(--mono)">${normLine}</div>` : ''}
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
-          <button class="btn btn-ghost btn-sm" onclick="abrirVideoJump('${def.key}','${def.key}-r1')" style="font-size:10px">🎬 Video Rep 1</button>
-          <button class="btn btn-ghost btn-sm" onclick="abrirVideoJump('${def.key}','${def.key}-r2')" style="font-size:10px">🎬 Video Rep 2</button>
-        </div>
-        <div id="${def.key}-mejora" style="text-align:center;margin-top:6px"></div>
       </div>
-    </div>`;
-  });
-
-  // ── INDICES BOSCO ──
-  html += `<div style="grid-column:1/-1" id="bosco-indices"></div>`;
-
-  // ── SECCION HORIZONTALES ──
-  html += `<div style="grid-column:1/-1;margin-top:8px">
-    <div style="font-family:var(--mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--blue);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid rgba(77,158,255,.15)">
-      Saltos horizontales -- Hop Tests
-    </div>
-  </div>`;
-
-  horiz.forEach(def => {
-    if (def.type === 'bilateral') {
-      html += `<div class="card">
-        <div class="card-header"><h3>Broad Jump</h3><span class="tag tag-b">Salto horizontal bilateral</span></div>
+      <!-- Tests rápidos -->
+      <div id="hombro-tests-rapidos"></div>
+      <!-- Drop Catches / Ball Taps -->
+      <div class="card">
+        <div class="card-header"><h3>Tests de rendimiento hombro</h3><span class="tag tag-b">Funcional</span></div>
         <div class="card-body">
-          <div class="grid-2" style="gap:8px">
-            <div class="ig"><label class="il">Rep 1 (cm)</label><input class="inp inp-mono" type="number" step=".1" id="bj-r1" placeholder="0" oninput="calcSalto('bj','bj-r2')"></div>
-            <div class="ig"><label class="il">Rep 2 (cm)</label><input class="inp inp-mono" type="number" step=".1" id="bj-r2" placeholder="0" oninput="calcSalto('bj','bj-r2')"></div>
+          <div class="grid-2" style="gap:10px">
+            <div class="ig"><label class="il">Drop Catches D (capturas/intentos)</label>
+              <div style="display:flex;gap:6px"><input class="inp inp-mono" type="number" placeholder="cap." style="flex:1"><span style="align-self:center;color:var(--text3)">/</span><input class="inp inp-mono" type="number" placeholder="int." style="flex:1"></div></div>
+            <div class="ig"><label class="il">Drop Catches I</label>
+              <div style="display:flex;gap:6px"><input class="inp inp-mono" type="number" placeholder="cap." style="flex:1"><span style="align-self:center;color:var(--text3)">/</span><input class="inp inp-mono" type="number" placeholder="int." style="flex:1"></div></div>
+            <div class="ig"><label class="il">Ball Taps 30s D</label><input class="inp inp-mono" type="number" placeholder="golpes"></div>
+            <div class="ig"><label class="il">Ball Taps 30s I</label><input class="inp inp-mono" type="number" placeholder="golpes"></div>
           </div>
-          <div style="background:var(--bg4);border-radius:10px;padding:12px;text-align:center;margin-top:8px">
-            <div style="font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;margin-bottom:4px">Promedio</div>
-            <div id="bj-avg" style="font-family:var(--mono);font-size:32px;font-weight:800;color:var(--neon)" data-val="">--</div>
-            <div style="font-size:10px;color:var(--text3)">cm</div>
-          </div>
-          <div style="background:var(--bg4);border-radius:8px;padding:8px 12px;margin-top:8px;display:flex;justify-content:space-between;align-items:center">
-            <span style="font-size:10px;color:var(--text2)">Ratio vs altura (ref: &gt;1.3x altura)</span>
-            <span id="bj-ratio" style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--neon)">--</span>
-          </div>
-          <div style="font-size:10px;color:var(--text3);margin-top:6px;font-family:var(--mono)">
-            Ref: Elite &gt;200cm (V) / &gt;170cm (M) -- Activo &gt;165cm (V) / &gt;140cm (M)
-          </div>
-          <div id="bj-mejora" style="text-align:center;margin-top:6px"></div>
         </div>
-      </div>`;
-    } else if (def.key === 'sideh') {
-      const normM = SIDEHOP_NORMS.male.min;
-      const normF = SIDEHOP_NORMS.female.min;
-      html += `<div class="card">
-        <div class="card-header"><h3>Side Hop Test</h3><span class="tag tag-y">Gustavsson et al.</span></div>
-        <div class="card-body">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div>
-              <div style="font-size:10px;font-weight:700;color:var(--neon);margin-bottom:6px;font-family:var(--mono)">DERECHA</div>
-              <div class="ig"><label class="il">Reps 30s</label><input class="inp inp-mono" type="number" id="sideh-d-r1" placeholder="0" oninput="calcSideHop()"></div>
-              <div style="background:var(--bg4);border-radius:8px;padding:8px;text-align:center">
-                <div id="sideh-d-avg" style="font-family:var(--mono);font-size:20px;font-weight:800;color:var(--neon)" data-val="">--</div>
-                <div id="sideh-d-norm" style="font-size:10px;margin-top:2px"></div>
-              </div>
-            </div>
-            <div>
-              <div style="font-size:10px;font-weight:700;color:var(--blue);margin-bottom:6px;font-family:var(--mono)">IZQUIERDA</div>
-              <div class="ig"><label class="il">Reps 30s</label><input class="inp inp-mono" type="number" id="sideh-i-r1" placeholder="0" oninput="calcSideHop()"></div>
-              <div style="background:var(--bg4);border-radius:8px;padding:8px;text-align:center">
-                <div id="sideh-i-avg" style="font-family:var(--mono);font-size:20px;font-weight:800;color:var(--blue)" data-val="">--</div>
-                <div id="sideh-i-norm" style="font-size:10px;margin-top:2px"></div>
+      </div>
+    </div>
+
+    <!-- TAB: FUERZA -->
+    <div id="htab-fuerza" style="display:none">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px;padding:8px;background:rgba(77,158,255,.08);border-radius:8px">
+        CPG 2025 Rec.#7 — HHD Valkyria/PushPull. MDC: 15–20%. Medir en ángulo estandarizado.
+      </div>
+      <div id="hombro-fuerza-fields"></div>
+      <div id="hombro-asimetria-result" style="font-size:12px;color:var(--text3)">Completá valores para calcular asimetría</div>
+    </div>
+
+    <!-- TAB: ESCALAS -->
+    <div id="htab-cuest" style="display:none">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:12px;padding:8px;background:rgba(57,255,122,.05);border-radius:8px">
+        CPG 2025 Rec.#8 — Cuestionarios obligatorios. Usá MCID para interpretar cambio clínico.
+      </div>
+      <!-- ASES -->
+      <div class="card mb-10" style="border-color:rgba(167,139,250,.2)">
+        <div class="card-header" style="cursor:pointer" onclick="toggleSheetSection('ases-body')">
+          <h3>ASES Score</h3><span class="tag" style="background:rgba(167,139,250,.15);color:#A78BFA">0–100 · MCID 6.4–21.9</span>
+        </div>
+        <div id="ases-body" style="display:none">
+          <div class="card-body">
+            <div class="ig"><label class="il">Dolor (VAS 0–10)</label>
+              <input type="range" class="eva-slider" min="0" max="10" value="0" oninput="document.getElementById('ases-dolor-val').textContent=this.value;calcASES()">
+              <div id="ases-dolor-val" style="font-family:var(--mono);font-size:20px;text-align:center;color:var(--neon)">0</div></div>
+            <div class="il mb-8">Función — 10 actividades (0=Imposible · 3=Sin dificultad)</div>
+            <div id="ases-actividades-list"></div>
+            <div class="card mt-10" style="border-color:rgba(167,139,250,.3)">
+              <div class="card-body" style="display:flex;justify-content:space-between;align-items:center">
+                <div><div style="font-size:12px;font-weight:600">Score ASES total</div><div style="font-size:10px;color:var(--text2)">MCID: 6.4–21.9 pts</div></div>
+                <div id="ases-total" style="font-family:var(--mono);font-size:28px;font-weight:800;color:var(--neon)">—</div>
               </div>
             </div>
           </div>
-          <div style="background:var(--bg4);border-radius:8px;padding:10px;text-align:center;margin-top:8px">
-            <div id="sideh-sim" style="font-family:var(--mono);font-size:22px;font-weight:800">--</div>
-            <div id="sideh-sim-st" style="font-size:10px;color:var(--text3);margin-top:2px"></div>
-          </div>
-          <div style="font-size:10px;color:var(--text3);margin-top:6px;font-family:var(--mono)">
-            Norma Gustavsson et al.: Varones min ${normM} reps · Mujeres min ${normF} reps
+        </div>
+      </div>
+      <!-- WORC -->
+      <div class="card mb-10" style="border-color:rgba(167,139,250,.2)">
+        <div class="card-header" style="cursor:pointer" onclick="toggleSheetSection('worc-body')">
+          <h3>WORC Index</h3><span class="tag" style="background:rgba(167,139,250,.15);color:#A78BFA">0–2100 · MCID 245.3</span>
+        </div>
+        <div id="worc-body" style="display:none">
+          <div class="card-body">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Versión española validada — Arcuri et al. 2015 (Argentina). 0 = mejor.</div>
+            <div id="worc-fields-sheet"></div>
+            <div class="card mt-10" style="border-color:rgba(167,139,250,.3)">
+              <div class="card-body" style="display:flex;justify-content:space-between;align-items:center">
+                <div><div style="font-size:12px;font-weight:600">WORC total</div><div style="font-size:10px;color:var(--text2)">MCID: 245.3 pts · 0 = asintomático</div></div>
+                <div><div id="worc-total-sheet" style="font-family:var(--mono);font-size:28px;font-weight:800;color:var(--neon)">—</div>
+                <div id="worc-pct-sheet" style="font-size:10px;color:var(--text3);text-align:right"></div></div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>`;
-    } else {
-      const lowerLabel = def.lowerIsBetter ? 'Menor es mejor' : 'LSI';
-      html += `<div class="card">
-        <div class="card-header"><h3>${def.label}</h3><span class="tag tag-y">${def.desc}</span></div>
+      </div>
+      <!-- DASH -->
+      <div class="card mb-10" style="border-color:rgba(167,139,250,.2)">
+        <div class="card-header" style="cursor:pointer" onclick="toggleSheetSection('dash-body')">
+          <h3>DASH / QuickDASH</h3><span class="tag" style="background:rgba(167,139,250,.15);color:#A78BFA">0–100 · MCID 10.2</span>
+        </div>
+        <div id="dash-body" style="display:none">
+          <div class="card-body">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:10px">1=Sin dificultad · 2=Poca · 3=Moderada · 4=Mucha · 5=Imposible</div>
+            <div id="dash-fields-sheet"></div>
+            <div class="card mt-10" style="border-color:rgba(167,139,250,.3)">
+              <div class="card-body" style="display:flex;justify-content:space-between;align-items:center">
+                <div><div style="font-size:12px;font-weight:600">Score DASH</div><div style="font-size:10px;color:var(--text2)">MCID: 10.2 pts</div></div>
+                <div id="dash-total-sheet" style="font-family:var(--mono);font-size:28px;font-weight:800;color:var(--neon)">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- SPADI -->
+      <div class="card" style="border-color:rgba(167,139,250,.2)">
+        <div class="card-header" style="cursor:pointer" onclick="toggleSheetSection('spadi-body')">
+          <h3>SPADI</h3><span class="tag" style="background:rgba(167,139,250,.15);color:#A78BFA">0–100 · MCID 8</span>
+        </div>
+        <div id="spadi-body" style="display:none">
+          <div class="card-body">
+            <div class="ig"><label class="il">Dolor promedio 5 ítems (0–100)</label>
+              <input type="range" class="eva-slider" min="0" max="100" value="0" oninput="this.nextElementSibling.textContent=this.value;calcSPADI()">
+              <div style="font-family:var(--mono);font-size:18px;text-align:center;color:var(--amber)">0</div></div>
+            <div class="ig"><label class="il">Discapacidad promedio 8 ítems (0–100)</label>
+              <input type="range" class="eva-slider" min="0" max="100" value="0" oninput="this.nextElementSibling.textContent=this.value;calcSPADI()">
+              <div style="font-family:var(--mono);font-size:18px;text-align:center;color:var(--amber)">0</div></div>
+            <div class="card mt-10" style="border-color:rgba(167,139,250,.3)">
+              <div class="card-body" style="display:flex;justify-content:space-between;align-items:center">
+                <div><div style="font-size:12px;font-weight:600">SPADI total</div><div style="font-size:10px;color:var(--text2)">0 = mejor · MCID: 8 pts</div></div>
+                <div id="spadi-total" style="font-family:var(--mono);font-size:28px;font-weight:800;color:var(--neon)">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <button class="btn btn-neon btn-full" onclick="saveKlinicalSheet('hombro');closeModal('sheet-hombro')">💾 Guardar evaluación hombro</button>
+  </div>
+</div>
+
+<!-- SHEET: RODILLA -->
+<div class="modal" id="sheet-rodilla">
+  <div class="modal-sheet" style="max-width:600px">
+    <div class="modal-handle"></div>
+    <div class="flex-b mb-12">
+      <div><div class="modal-title" style="font-size:18px">🦵 Rodilla</div>
+        <div style="font-size:12px;color:var(--text2)">LCA · LLI · LLE · Menisco · SPF · RTP</div></div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('sheet-rodilla')">✕</button>
+    </div>
+    <!-- Tab strip -->
+    <div style="display:flex;gap:3px;background:var(--bg4);border-radius:8px;padding:3px;margin-bottom:16px;overflow-x:auto">
+      <button class="btn btn-neon btn-sm" id="rtab-spf-btn" onclick="showRTab('spf',this)" style="white-space:nowrap;font-size:10px">SPF</button>
+      <button class="btn btn-ghost btn-sm" id="rtab-lca-btn" onclick="showRTab('lca',this)" style="white-space:nowrap;font-size:10px">LCA</button>
+      <button class="btn btn-ghost btn-sm" id="rtab-lig-btn" onclick="showRTab('lig',this)" style="white-space:nowrap;font-size:10px">LLI/LLE</button>
+      <button class="btn btn-ghost btn-sm" id="rtab-men-btn" onclick="showRTab('men',this)" style="white-space:nowrap;font-size:10px">Menisco</button>
+      <button class="btn btn-ghost btn-sm" id="rtab-cuest-btn" onclick="showRTab('cuest',this)" style="white-space:nowrap;font-size:10px">Escalas</button>
+      <button class="btn btn-ghost btn-sm" id="rtab-rtp-btn" onclick="showRTab('rtp',this)" style="white-space:nowrap;font-size:10px">RTP</button>
+    </div>
+
+    <!-- SPF -->
+    <div id="rtab-spf">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px;padding:8px;background:rgba(77,158,255,.08);border-radius:8px">Powers et al. 2017 — Complementar con ROM tobillo, cadera, HHD, Drop navicular, Ratio I/Q</div>
+      <div id="rodilla-spf-fields"></div>
+      <!-- Drop Navicular -->
+      <div class="card mt-10">
+        <div class="card-header"><h3>Drop Navicular</h3><span class="tag tag-b">Pronación &gt;10mm = excesiva</span></div>
         <div class="card-body">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div>
-              <div style="font-size:10px;font-weight:700;color:var(--neon);margin-bottom:6px;font-family:var(--mono)">DERECHA</div>
-              <div class="ig"><label class="il">Rep 1</label><input class="inp inp-mono" type="number" step=".01" id="${def.key}-d-r1" placeholder="0" oninput="calcSimetriaHop('${def.key}')"></div>
-              <div class="ig"><label class="il">Rep 2</label><input class="inp inp-mono" type="number" step=".01" id="${def.key}-d-r2" placeholder="0" oninput="calcSimetriaHop('${def.key}')"></div>
-              <div style="background:var(--bg4);border-radius:8px;padding:8px;text-align:center"><div id="${def.key}-d-avg" style="font-family:var(--mono);font-size:20px;font-weight:800;color:var(--neon)" data-val="">--</div></div>
-            </div>
-            <div>
-              <div style="font-size:10px;font-weight:700;color:var(--blue);margin-bottom:6px;font-family:var(--mono)">IZQUIERDA</div>
-              <div class="ig"><label class="il">Rep 1</label><input class="inp inp-mono" type="number" step=".01" id="${def.key}-i-r1" placeholder="0" oninput="calcSimetriaHop('${def.key}')"></div>
-              <div class="ig"><label class="il">Rep 2</label><input class="inp inp-mono" type="number" step=".01" id="${def.key}-i-r2" placeholder="0" oninput="calcSimetriaHop('${def.key}')"></div>
-              <div style="background:var(--bg4);border-radius:8px;padding:8px;text-align:center"><div id="${def.key}-i-avg" style="font-family:var(--mono);font-size:20px;font-weight:800;color:var(--blue)" data-val="">--</div></div>
-            </div>
+          <div class="grid-2" style="gap:8px">
+            <div class="ig"><label class="il">Descarga D (mm)</label><input class="inp inp-mono" type="number" id="nav-desc-d" placeholder="0"></div>
+            <div class="ig"><label class="il">Carga D (mm)</label><input class="inp inp-mono" type="number" id="nav-carg-d" placeholder="0" oninput="calcDropNavicular('d')"></div>
           </div>
-          <div style="background:var(--bg4);border:1px solid rgba(57,255,122,.1);border-radius:8px;padding:10px;text-align:center;margin-top:8px">
-            <div style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-bottom:3px">LSI -- Simetria</div>
-            <div id="${def.key}-sim" style="font-family:var(--mono);font-size:24px;font-weight:800">--</div>
-            <div id="${def.key}-sim-st" style="font-size:10px;margin-top:3px"></div>
+          <div id="nav-result-d" style="font-size:11px;color:var(--text3);margin-bottom:8px">Drop D: —</div>
+          <div class="grid-2" style="gap:8px">
+            <div class="ig"><label class="il">Descarga I (mm)</label><input class="inp inp-mono" type="number" id="nav-desc-i" placeholder="0"></div>
+            <div class="ig"><label class="il">Carga I (mm)</label><input class="inp inp-mono" type="number" id="nav-carg-i" placeholder="0" oninput="calcDropNavicular('i')"></div>
           </div>
-          <div id="${def.key}-norm-badge" style="text-align:center;margin-top:6px"></div>
-          <div id="${def.key}-mejora" style="text-align:center;margin-top:4px"></div>
+          <div id="nav-result-i" style="font-size:11px;color:var(--text3)">Drop I: —</div>
         </div>
-      </div>`;
-    }
-  });
-
-  grid.innerHTML = html;
-}
-
-function calcSalto(key, r2id) {
-  const r1 = +document.getElementById(key + '-r1')?.value || 0;
-  const r2 = +document.getElementById(r2id)?.value || 0;
-  const avg = r1 && r2 ? (r1+r2)/2 : r1 || r2;
-  const el = document.getElementById(key + '-avg');
-  if (el) { el.textContent = avg ? avg.toFixed(1) : '--'; el.dataset.val = avg || ''; }
-  // RSI display for DJ
-  if (key === 'dj') {
-    const tc = +document.getElementById('dj-tc')?.value || 0;
-    const rsiEl = document.getElementById('dj-rsi-display');
-    if (rsiEl && avg && tc) {
-      const rsi = (avg / 100 / (tc / 1000)).toFixed(2);
-      rsiEl.textContent = rsi;
-      rsiEl.style.color = +rsi >= 2.5 ? 'var(--neon)' : +rsi >= 1.5 ? 'var(--amber)' : 'var(--red)';
-    }
-  }
-  // Bosco z-score badge
-  const sexo = cur?.sexo || 'M';
-  const badge = document.getElementById(key + '-badge');
-  if (badge && avg) badge.innerHTML = boscoBadge(key, avg, sexo);
-  // Update lastCMJ
-  if (key === 'cmj' && cur) { cur.lastCMJ = avg || null; atletas = atletas.map(a => a.id===cur.id?cur:a); saveData(); }
-  checkMejoraSalto(key, avg);
-  calcBoscoIndices();
-}
-
-function calcImpulso() {
-  const avg = parseFloat(document.getElementById('bj-avg')?.dataset.val) || 0;
-  const pc = +document.getElementById('bj-pc')?.value || 0;
-  const el = document.getElementById('bj-imp');
-  if (el && avg && pc) el.textContent = ((avg/100)*pc).toFixed(2);
-}
-
-function calcSimetriaHop(key) {
-  const dr1 = +document.getElementById(key+'-d-r1')?.value||0, dr2 = +document.getElementById(key+'-d-r2')?.value||0;
-  const ir1 = +document.getElementById(key+'-i-r1')?.value||0, ir2 = +document.getElementById(key+'-i-r2')?.value||0;
-  const avgD = dr1&&dr2?(dr1+dr2)/2:dr1||dr2, avgI = ir1&&ir2?(ir1+ir2)/2:ir1||ir2;
-  const elD = document.getElementById(key+'-d-avg'), elI = document.getElementById(key+'-i-avg');
-  const decimals = key === 't6h' ? 2 : 1;
-  if (elD) { elD.textContent = avgD?avgD.toFixed(decimals):'--'; elD.dataset.val = avgD||''; }
-  if (elI) { elI.textContent = avgI?avgI.toFixed(decimals):'--'; elI.dataset.val = avgI||''; }
-  if (avgD && avgI) {
-    const def = SALTOS_DEF.find(d => d.key === key);
-    const norm = HOP_NORMS[key];
-    const lowerIsBetter = def?.lowerIsBetter || false;
-    // LSI: para tests donde menor es mejor (tiempo), la pierna "mejor" es la mas rapida (menor valor)
-    let lsi;
-    if (lowerIsBetter) {
-      const mejor = Math.min(avgD, avgI);
-      const peor  = Math.max(avgD, avgI);
-      lsi = (mejor / peor * 100).toFixed(1); // LSI = mejor/peor (al reves)
-    } else {
-      const mayor = Math.max(avgD, avgI);
-      const menor = Math.min(avgD, avgI);
-      lsi = (menor / mayor * 100).toFixed(1);
-    }
-    const lsiNum = +lsi;
-    const lsi_rts = norm?.lsi_rts || 90;
-    const c = lsiNum >= lsi_rts ? 'var(--neon)' : lsiNum >= 85 ? 'var(--amber)' : 'var(--red)';
-    const el = document.getElementById(key+'-sim');
-    if (el) { el.textContent = lsi+'%'; el.style.color = c; }
-    const st = document.getElementById(key+'-sim-st');
-    if (st) {
-      const rtsOk = lsiNum >= lsi_rts;
-      st.innerHTML = rtsOk
-        ? '<span style="color:var(--neon)">LSI ≥' + lsi_rts + '% -- Apto retorno al deporte</span>'
-        : lsiNum >= 85
-          ? '<span style="color:var(--amber)">LSI ' + lsi + '% -- Deficit leve (RTS ≥' + lsi_rts + '%)</span>'
-          : '<span style="color:var(--red);font-weight:700">LSI ' + lsi + '% -- NO APTO RTS (requiere ≥' + lsi_rts + '%)</span>';
-    }
-    // Highlight card if below RTS threshold
-    const card = el?.closest('.card');
-    if (card) {
-      card.style.borderColor = !rtsOk ? 'rgba(255,59,59,.3)' : '';
-      card.style.boxShadow   = !rtsOk ? '0 0 20px rgba(255,59,59,.1)' : '';
-    }
-    // Norma absoluta
-    const sexo = cur?.sexo || 'M';
-    const n = norm ? (sexo === 'F' ? norm.female : norm.male) : null;
-    if (n) {
-      const val = (avgD + avgI) / 2;
-      const z = ((val - n.mean) / n.sd).toFixed(2);
-      const zLabel = +z >= 1 ? 'Elite' : +z >= 0 ? 'Promedio' : +z >= -1 ? 'Bajo' : 'Muy bajo';
-      const zC = +z >= 0.5 ? 'var(--neon)' : +z >= -0.5 ? 'var(--amber)' : 'var(--red)';
-      const normEl = document.getElementById(key+'-norm-badge');
-      if (normEl) normEl.innerHTML = '<span class="tag" style="background:' + zC + '22;color:' + zC + '">' + zLabel + ' (z=' + (z>0?'+':'') + z + ')</span>';
-    }
-  }
-  renderSimetriasTabla();
-}
-
-function checkMejoraSalto(key, curVal) {
-  if (!cur || !curVal) return;
-  const evalIdx = +document.getElementById('saltos-eval-num')?.value || 0;
-  const el = document.getElementById(key+'-mejora');
-  if (evalIdx === 0) { if (el) el.innerHTML = ''; return; }
-  const prev = cur.evals?.['saltos_'+(evalIdx-1)]?.avg?.[key];
-  if (!prev || !el) return;
-  const pct = ((curVal-prev)/prev*100).toFixed(1);
-  const color = +pct>=0?'var(--neon)':'var(--red)';
-  el.innerHTML = `<span class="tag" style="background:${color}22;color:${color}">${+pct>0?'+':''}${pct}% vs eval anterior</span>`;
-}
-
-function renderSimetriasTabla() {
-  const area = document.getElementById('simetrias-tabla'); if (!area) return;
-  const uniDef = SALTOS_DEF.filter(d => d.type === 'unilateral');
-  const rows = uniDef.map(def => {
-    const dAvg = parseFloat(document.getElementById(def.key+'-d-avg')?.dataset.val||'')||0;
-    const iAvg = parseFloat(document.getElementById(def.key+'-i-avg')?.dataset.val||'')||0;
-    if (!dAvg && !iAvg) return null;
-    const mayor = Math.max(dAvg,iAvg), menor = Math.min(dAvg,iAvg);
-    const lsi = mayor?(menor/mayor*100).toFixed(1):'--';
-    const asim = mayor?((mayor-menor)/mayor*100).toFixed(1):'--';
-    const c = +lsi>=90?'var(--neon)':+lsi>=85?'var(--amber)':'var(--red)';
-    const norm = HOP_NORMS[def.key];
-    const lsi_rts = norm?.lsi_rts || 90;
-    const rtsOk = +lsi >= lsi_rts;
-    const unit = def.unit || 'cm';
-    return '<tr>' +
-      '<td style="font-weight:600">' + def.label + '</td>' +
-      '<td class="mono-cell">' + (dAvg?dAvg.toFixed(def.lowerIsBetter?2:1):'--') + ' ' + unit + '</td>' +
-      '<td class="mono-cell">' + (iAvg?iAvg.toFixed(def.lowerIsBetter?2:1):'--') + ' ' + unit + '</td>' +
-      '<td class="mono-cell" style="color:' + c + ';font-weight:800">' + lsi + '%</td>' +
-      '<td class="mono-cell" style="font-size:9px;color:var(--text2)">&ge;' + lsi_rts + '%</td>' +
-      '<td><span class="tag" style="background:' + c + '22;color:' + c + '">' + (rtsOk ? 'APTO RTS' : +lsi>=85 ? 'Deficit leve' : 'NO APTO RTS') + '</span></td>' +
-      '</tr>';
-  }).filter(Boolean);
-  if (!rows.length) { area.innerHTML = '<p style="font-size:12px;color:var(--text3)">Completá datos bilaterales de saltos para ver la tabla.</p>'; return; }
-  area.innerHTML = `<table class="data-table"><thead><tr><th>Test</th><th>Derecha</th><th>Izquierda</th><th>LSI %</th><th>Asim. %</th><th>Estado</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
-}
-
-
-function calcSideHop() {
-  const vD = +document.getElementById('sideh-d-r1')?.value || 0;
-  const vI = +document.getElementById('sideh-i-r1')?.value || 0;
-  const sexo = cur?.sexo || 'M';
-  const norm = SIDEHOP_NORMS[sexo === 'F' ? 'female' : 'male'];
-  const dEl  = document.getElementById('sideh-d-avg');
-  const iEl  = document.getElementById('sideh-i-avg');
-  if (dEl) { dEl.textContent = vD || '--'; dEl.dataset.val = vD || ''; }
-  if (iEl) { iEl.textContent = vI || '--'; iEl.dataset.val = vI || ''; }
-  const evalNorm = (v, el) => {
-    if (!el || !v) return;
-    const pass = v >= norm.min;
-    const c = pass ? 'var(--neon)' : 'var(--red)';
-    el.innerHTML = `<span style="color:${c}">${pass ? 'APRUEBA' : 'NO APRUEBA'} (min ${norm.min})</span>`;
-  };
-  evalNorm(vD, document.getElementById('sideh-d-norm'));
-  evalNorm(vI, document.getElementById('sideh-i-norm'));
-  if (vD && vI) {
-    const mayor = Math.max(vD,vI), menor = Math.min(vD,vI);
-    const lsi = (menor/mayor*100).toFixed(1);
-    const c = +lsi>=90?'var(--neon)':+lsi>=85?'var(--amber)':'var(--red)';
-    const simEl = document.getElementById('sideh-sim');
-    const simSt = document.getElementById('sideh-sim-st');
-    if (simEl) { simEl.textContent = lsi + '%'; simEl.style.color = c; }
-    if (simSt) simSt.innerHTML = `<span style="color:${c}">${+lsi>=90?'Simetrico':+lsi>=85?'Asimetria leve':'ASIMETRIA CRITICA'}</span>`;
-  }
-  renderSimetriasTabla();
-}
-
-function saveSaltos() {
-  if (!cur) { alert('Seleccioná un atleta'); return; }
-  const evalIdx = document.getElementById('saltos-eval-num').value;
-  const avg = {};
-  SALTOS_DEF.forEach(def => {
-    if (def.type === 'bilateral') {
-      const v = parseFloat(document.getElementById(def.key+'-avg')?.dataset.val||'');
-      if (!isNaN(v) && v) avg[def.key] = v;
-    } else {
-      const d = parseFloat(document.getElementById(def.key+'-d-avg')?.dataset.val||'');
-      const i = parseFloat(document.getElementById(def.key+'-i-avg')?.dataset.val||'');
-      if (!isNaN(d) && d) avg[def.key+'D'] = d;
-      if (!isNaN(i) && i) avg[def.key+'I'] = i;
-    }
-  });
-  const fecha = document.getElementById('saltos-fecha').value || new Date().toISOString().split('T')[0];
-  if (!cur.evals) cur.evals = {};
-  cur.evals['saltos_'+evalIdx] = { avg, fecha };
-  if (!cur.evalsByDate) cur.evalsByDate = {};
-  if (!cur.evalsByDate[fecha]) cur.evalsByDate[fecha] = {};
-  cur.evalsByDate[fecha].saltos = avg;
-  if (avg.cmj) cur.lastCMJ = avg.cmj;
-  atletas = atletas.map(a => a.id===cur.id?cur:a);
-  saveData();
-  renderProfileHero();
-}
-
-// ══════════════════════════════════════════════════════
-//  MOVILIDAD
-// ══════════════════════════════════════════════════════
-
-function onMov() {
-  const ld=+document.getElementById('lunge-d')?.value||0, li=+document.getElementById('lunge-i')?.value||0;
-  const riD=+document.getElementById('cad-ri-d')?.value||0, reD=+document.getElementById('cad-re-d')?.value||0;
-  const riI=+document.getElementById('cad-ri-i')?.value||0, reI=+document.getElementById('cad-re-i')?.value||0;
-  const tromCadD=riD+reD, tromCadI=riI+reI;
-  const riHD=+document.getElementById('hom-ri-d')?.value||0, reHD=+document.getElementById('hom-re-d')?.value||0;
-  const riHI=+document.getElementById('hom-ri-i')?.value||0, reHI=+document.getElementById('hom-re-i')?.value||0;
-  const tromHomD=riHD+reHD, tromHomI=riHI+reHI;
-  const semL = v => !v?'':v<35?`<span style="color:var(--red)">🔴 ${v}° -- déficit</span>`:v<=40?`<span style="color:var(--amber)">🟡 ${v}° -- límite</span>`:`<span style="color:var(--neon)">🟢 ${v}° -- normal</span>`;
-  let lr = `<div class="flex mt-8" style="gap:12px;flex-wrap:wrap">${ld?semL(ld):''}${li?semL(li):''}</div>`;
-  if (ld&&li) { const d=Math.abs(ld-li); lr+=`<div style="font-size:11px;margin-top:6px;color:${d>5?'var(--amber)':'var(--neon)'}">Asimetría: ${d}°${d>5?' ⚠️ >5° significativo':' ✓'}</div>`; }
-  document.getElementById('lunge-result').innerHTML = lr;
-  const semC = v => v>90?`<span style="color:var(--neon)">🟢 ${v}°</span>`:v>=80?`<span style="color:var(--amber)">🟡 ${v}°</span>`:`<span style="color:var(--red)">🔴 ${v}°</span>`;
-  document.getElementById('cad-result').innerHTML = tromCadD||tromCadI?`<div class="flex mt-8" style="gap:12px">${tromCadD?`<div>D: ${semC(tromCadD)}</div>`:''}${tromCadI?`<div>I: ${semC(tromCadI)}</div>`:''}</div>`:'';
-  const semH = v => v>120?`<span style="color:var(--neon)">🟢 ${v}°</span>`:v>=100?`<span style="color:var(--amber)">🟡 ${v}°</span>`:`<span style="color:var(--red)">🔴 ${v}°</span>`;
-  const gird = tromHomD&&tromHomI?Math.abs(tromHomD-tromHomI):null;
-  document.getElementById('hom-result').innerHTML = (tromHomD||tromHomI)?`<div class="flex mt-8" style="gap:12px">${tromHomD?`<div>D: ${semH(tromHomD)}</div>`:''}${tromHomI?`<div>I: ${semH(tromHomI)}</div>`:''}</div>${gird!==null?`<div style="font-size:11px;margin-top:6px;color:${gird>=18?'var(--red)':'var(--neon)'}">GIRD: ${gird}°${gird>=18?' ⚠️ Significativo (≥18°)':' ✓ Normal'}</div>`:''}`:'';
-  drawGauge('g-ld',ld,0,60,'lunge'); drawGauge('g-li',li,0,60,'lunge');
-  drawGauge('g-tcd',tromCadD,0,120,'trom'); drawGauge('g-tci',tromCadI,0,120,'trom');
-  const colors = { ld:ld<35?'var(--red)':ld<=40?'var(--amber)':'var(--neon)', li:li<35?'var(--red)':li<=40?'var(--amber)':'var(--neon)',
-    tcd:tromCadD<80?'var(--red)':tromCadD<90?'var(--amber)':'var(--neon)', tci:tromCadI<80?'var(--red)':tromCadI<90?'var(--amber)':'var(--neon)' };
-  if (ld) { const e=document.getElementById('gv-ld'); if(e){e.textContent=ld;e.style.color=colors.ld;} }
-  if (li) { const e=document.getElementById('gv-li'); if(e){e.textContent=li;e.style.color=colors.li;} }
-  if (tromCadD) { const e=document.getElementById('gv-tcd'); if(e){e.textContent=tromCadD;e.style.color=colors.tcd;} }
-  if (tromCadI) { const e=document.getElementById('gv-tci'); if(e){e.textContent=tromCadI;e.style.color=colors.tci;} }
-  if (cur) { cur.lungeD=ld;cur.lungeI=li;cur.tromCadD=tromCadD;cur.tromCadI=tromCadI;cur.tromHomD=tromHomD;cur.tromHomI=tromHomI; }
-  renderMovSemaforos(ld,li,tromCadD,tromCadI,tromHomD,tromHomI);
-}
-
-function renderMovSemaforos(ld,li,tcd,tci,thd,thi) {
-  const area = document.getElementById('mov-semaforos'); if (!area) return;
-  const items = [
-    { lbl:'Lunge D',     val:ld,  t1:35, t2:40,  max:60,  unit:'°', c:'var(--neon)' },
-    { lbl:'Lunge I',     val:li,  t1:35, t2:40,  max:60,  unit:'°', c:'var(--blue)'  },
-    { lbl:'TROM Cad D',  val:tcd, t1:80, t2:90,  max:120, unit:'°', c:'var(--neon)' },
-    { lbl:'TROM Cad I',  val:tci, t1:80, t2:90,  max:120, unit:'°', c:'var(--blue)'  },
-    { lbl:'TROM Hom D',  val:thd, t1:100,t2:120, max:150, unit:'°', c:'var(--neon)' },
-    { lbl:'TROM Hom I',  val:thi, t1:100,t2:120, max:150, unit:'°', c:'var(--blue)'  }
-  ];
-  area.innerHTML = items.map(item => {
-    if (!item.val) return `<div class="card mb-8"><div class="card-body" style="padding:10px 14px"><div style="font-size:11px;font-weight:700;color:var(--text3)">${item.lbl}: --</div></div></div>`;
-    const c = item.val<item.t1?'var(--red)':item.val<item.t2?'var(--amber)':'var(--neon)';
-    const pct = Math.min(100, item.val/item.max*100);
-    const st = item.val<item.t1?'🔴 Déficit':item.val<item.t2?'🟡 Límite':'🟢 Normal';
-    return `<div class="card mb-8" style="border-color:${c}44">
-      <div class="card-body" style="padding:10px 14px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <span style="font-size:11px;font-weight:700">${item.lbl}</span>
-          <span style="font-family:var(--mono);font-size:18px;font-weight:800;color:${c}">${item.val}${item.unit}</span>
+      </div>
+      <!-- Cadencia corredores -->
+      <div class="card mt-10" style="border-color:rgba(77,158,255,.2)">
+        <div class="card-header"><h3 style="color:var(--blue)">🏃 Control de cadencia (corredores)</h3></div>
+        <div class="card-body">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Rango óptimo: 170–180 pasos/min. Modificación sugerida: +5% o +10%.</div>
+          <div class="ig"><label class="il">Cadencia actual (pasos/min)</label>
+            <input class="inp inp-mono" type="number" id="cadencia-actual" placeholder="160" oninput="calcCadencia()"></div>
+          <div id="cadencia-result" style="font-size:12px;color:var(--text3)">Completá para ver recomendación</div>
+          <div class="grid-2" style="gap:8px;margin-top:8px">
+            <div class="ig"><label class="il">Ritmo captura (min/km)</label><input class="inp inp-mono" type="text" placeholder="5:30"></div>
+            <div class="ig"><label class="il">Overstriding (cm)</label><input class="inp inp-mono" type="number" placeholder="15"></div>
+          </div>
         </div>
-        <div class="prog-wrap"><div class="prog-bar" style="width:${pct.toFixed(0)}%;background:${c}"></div></div>
-        <div style="font-size:10px;color:${c};margin-top:4px">${st}</div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function drawMovRadar(ld,li,tcd,tci,thd,thi) {
-  const scores=[Math.min(100,ld/60*100),Math.min(100,li/60*100),Math.min(100,tcd/120*100),Math.min(100,tci/120*100),Math.min(100,thd/150*100),Math.min(100,thi/150*100)];
-  const ideal=[67,67,75,75,80,80];
-  const ctx=document.getElementById('mov-radar'); if(!ctx)return;
-  if(movRadarChart)movRadarChart.destroy();
-  movRadarChart=new Chart(ctx,{type:'radar',
-    data:{labels:['Lunge D','Lunge I','TROM Cad D','TROM Cad I','TROM Hom D','TROM Hom I'],datasets:[
-      {label:'Óptimo',data:ideal,backgroundColor:'rgba(77,158,255,.06)',borderColor:'rgba(77,158,255,.3)',borderWidth:1.5,pointRadius:2},
-      {label:'Actual',data:scores,backgroundColor:'rgba(57,255,122,.1)',borderColor:'rgba(57,255,122,.7)',borderWidth:2,pointRadius:4,pointBackgroundColor:'#39FF7A'}
-    ]},
-    options:{responsive:true,plugins:{legend:{display:false}},
-      scales:{r:{beginAtZero:true,max:100,grid:{color:'rgba(255,255,255,.04)'},angleLines:{color:'rgba(255,255,255,.04)'},pointLabels:{color:'#555',font:{size:9}},ticks:{display:false}}}}
-  });
-}
-
-function drawGauge(id,value,min,max,type){
-  const c=document.getElementById(id); if(!c)return;
-  const ctx=c.getContext('2d'); const W=c.width,H=c.height;
-  ctx.clearRect(0,0,W,H); const cx=W/2,cy=H-6,r=Math.min(W*.44,H*.84);
-  const st=Math.PI,en=2*Math.PI;
-  let zones;
-  if(type==='lunge') zones=[{t:35/60,c:'rgba(255,68,68,.4)'},{t:40/60,c:'rgba(255,176,32,.4)'},{t:1,c:'rgba(57,255,122,.4)'}];
-  else zones=[{t:80/120,c:'rgba(255,68,68,.4)'},{t:90/120,c:'rgba(255,176,32,.4)'},{t:1,c:'rgba(57,255,122,.4)'}];
-  let prev=st;
-  zones.forEach(z=>{const ang=st+z.t*(en-st);ctx.beginPath();ctx.arc(cx,cy,r,prev,ang);ctx.lineWidth=10;ctx.strokeStyle=z.c;ctx.stroke();prev=ang;});
-  if(value>0){
-    const norm=Math.max(0,Math.min(1,(value-min)/(max-min)));const ang=st+norm*(en-st);
-    const nc=type==='lunge'?(value<35?'#FF4444':value<=40?'#FFB020':'#39FF7A'):(value<80?'#FF4444':value<90?'#FFB020':'#39FF7A');
-    ctx.beginPath();ctx.moveTo(cx-Math.cos(ang)*6,cy-Math.sin(ang)*6);ctx.lineTo(cx+Math.cos(ang)*(r*.82),cy+Math.sin(ang)*(r*.82));
-    ctx.lineWidth=2;ctx.strokeStyle=nc;ctx.lineCap='round';ctx.stroke();
-    ctx.beginPath();ctx.arc(cx,cy,4,0,Math.PI*2);ctx.fillStyle=nc;ctx.fill();
-  }
-}
-
-function redrawGauges(){
-  const ld=+document.getElementById('lunge-d')?.value||0,li=+document.getElementById('lunge-i')?.value||0;
-  const riD=+document.getElementById('cad-ri-d')?.value||0,reD=+document.getElementById('cad-re-d')?.value||0;
-  const riI=+document.getElementById('cad-ri-i')?.value||0,reI=+document.getElementById('cad-re-i')?.value||0;
-  drawGauge('g-ld',ld,0,60,'lunge'); drawGauge('g-li',li,0,60,'lunge');
-  drawGauge('g-tcd',riD+reD,0,120,'trom'); drawGauge('g-tci',riI+reI,0,120,'trom');
-}
-
-function saveMov(){
-  if(!cur)return;
-  const evalIdx=document.getElementById('mov-eval-num').value;
-  const ld=+document.getElementById('lunge-d')?.value||null,li=+document.getElementById('lunge-i')?.value||null;
-  const riD=+document.getElementById('cad-ri-d')?.value||0,reD=+document.getElementById('cad-re-d')?.value||0;
-  const riI=+document.getElementById('cad-ri-i')?.value||0,reI=+document.getElementById('cad-re-i')?.value||0;
-  const riHD=+document.getElementById('hom-ri-d')?.value||0,reHD=+document.getElementById('hom-re-d')?.value||0;
-  const riHI=+document.getElementById('hom-ri-i')?.value||0,reHI=+document.getElementById('hom-re-i')?.value||0;
-  const fecha=new Date().toISOString().split('T')[0];
-  const movData={lungeD:ld,lungeI:li,tromCadD:riD+reD||null,tromCadI:riI+reI||null,tromHomD:riHD+reHD||null,tromHomI:riHI+reHI||null,fecha};
-  if(!cur.evals)cur.evals={};
-  cur.evals['mov_'+evalIdx]=movData;
-  if(!cur.evalsByDate)cur.evalsByDate={};
-  if(!cur.evalsByDate[fecha])cur.evalsByDate[fecha]={};
-  cur.evalsByDate[fecha].movilidad=movData;
-  cur.lungeD=ld;cur.lungeI=li;cur.tromCadD=riD+reD;cur.tromCadI=riI+reI;cur.tromHomD=riHD+reHD;cur.tromHomI=riHI+reHI;
-  atletas=atletas.map(a=>a.id===cur.id?cur:a);saveData();
-}
-
-// ══════════════════════════════════════════════════════
-//  VELOCIDAD / SPRINT
-// ══════════════════════════════════════════════════════
-
-function calcSprintBench(){
-  const sp10=+document.getElementById('sp-10')?.value||0;
-  const sp30=+document.getElementById('sp-30')?.value||0;
-  const d505=+document.getElementById('sp-505d')?.value||0,i505=+document.getElementById('sp-505i')?.value||0;
-  if(d505&&i505){const a=Math.abs(d505-i505)/Math.max(d505,i505)*100;const c=a>10?'var(--red)':a>5?'var(--amber)':'var(--neon)';document.getElementById('sp-505-asim').innerHTML=`<div style="margin-top:8px;font-size:12px;color:${c}">Asimetría 505: ${a.toFixed(1)}% ${a>10?'🔴':a>5?'⚠️':'✓'}</div>`;}
-  const area=document.getElementById('sprint-bench-area'); if(!cur||!area)return;
-  const deporte=cur.deporte||'',puesto=cur.puesto||'';
-  const rd=RUGBY[puesto];
-  const norms=SPRINT_NORMS[deporte]?.[rd?.tipo||'general']||SPRINT_NORMS[deporte]?.general;
-  if(!norms){area.innerHTML='<div class="card"><div class="card-body" style="font-size:12px;color:var(--text3)">Sin benchmarks para este deporte. Disponibles: Rugby, Fútbol, Básquet.</div></div>';return;}
-  const cats=['Amateur','Competitivo','Elite'];
-  let html=`<div class="card"><div class="card-header"><h3>Benchmark -- ${deporte}${puesto?' · '+puesto:''}</h3></div><div class="card-body">`;
-  if(sp10&&norms.sp10){
-    html+=`<div class="mb-12"><div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px;font-family:var(--mono);text-transform:uppercase">10m Sprint · ${sp10}s</div>`;
-    norms.sp10.forEach((ref,i)=>{const delta=(sp10-ref).toFixed(2);const b=sp10<=ref;const c=b?'var(--neon)':i===2?'var(--red)':'var(--amber)';html+=`<div class="flex-b mb-4"><span style="font-size:11px;color:var(--text2)">${cats[i]}: ${ref}s</span><span style="font-family:var(--mono);color:${c};font-size:11px;font-weight:700">${b?'✓ ':'+'}${delta}s</span></div><div class="prog-wrap"><div class="prog-bar" style="width:${Math.min(100,ref/sp10*100).toFixed(0)}%;background:${c}"></div></div>`;});
-    const eliteRef=norms.sp10[2];
-    html+=`<div style="margin-top:8px;padding:10px;background:var(--bg4);border-radius:var(--r);border:1px solid var(--border)"><div style="font-size:11px;font-weight:700;margin-bottom:4px">${sp10<=eliteRef?'✅ Supera el estándar elite':'Distancia al nivel elite'}</div><div style="font-family:var(--mono);color:${sp10<=eliteRef?'var(--neon)':'var(--amber)'};font-size:20px;font-weight:800">${sp10<=eliteRef?'−':'+'} ${Math.abs(sp10-eliteRef).toFixed(2)}s</div></div></div>`;
-  }
-  html+='</div></div>';area.innerHTML=html;
-}
-
-function saveSprint(){
-  if(!cur)return;
-  const evalIdx=document.getElementById('sprint-eval-num').value;
-  const fecha=document.getElementById('sprint-fecha').value||new Date().toISOString().split('T')[0];
-  if(!cur.evals)cur.evals={};
-  cur.evals['sprint_'+evalIdx]={sp10:+document.getElementById('sp-10').value||null,sp20:+document.getElementById('sp-20').value||null,sp30:+document.getElementById('sp-30').value||null,vmax:+document.getElementById('sp-vmax').value||null,ttest:+document.getElementById('sp-ttest').value||null,d505:+document.getElementById('sp-505d').value||null,i505:+document.getElementById('sp-505i').value||null,fecha};
-  atletas=atletas.map(a=>a.id===cur.id?cur:a);saveData();
-}
-
-// ══════════════════════════════════════════════════════
-//  FMS -- CALIDAD DE MOVIMIENTO
-// ══════════════════════════════════════════════════════
-
-function loadSlot(input,slotId){
-  if(!input.files.length)return;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    const slot=document.getElementById(slotId); if(!slot)return;
-    let img=slot.querySelector('img');
-    if(!img){img=document.createElement('img');slot.appendChild(img);}
-    img.src=e.target.result;img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit';
-    slot.style.border='1px solid var(--neon)';
-    const txt=slot.querySelector('div');if(txt)txt.style.display='none';
-  };
-  reader.readAsDataURL(input.files[0]);
-}
-
-function setFMS(btn,type){
-  btn.parentElement.querySelectorAll('.fms-btn').forEach(b=>{b.classList.remove('yes','no');});
-  btn.classList.add(type);
-  ['ohs','sd'].forEach(id=>{
-    const container=document.getElementById(id+'-checks');if(!container)return;
-    const yesCount=container.querySelectorAll('.fms-btn.yes').length;
-    const total=container.querySelectorAll('.fms-check').length;
-    const scored=[...container.querySelectorAll('.fms-check')].filter(r=>r.querySelector('.fms-btn.yes')||r.querySelector('.fms-btn.no')).length;
-    const scoreEl=document.getElementById(id+'-score');
-    if(scoreEl&&scored>0){
-      const pct=(yesCount/total*100).toFixed(0);
-      const c=+pct>=80?'var(--neon)':+pct>=50?'var(--amber)':'var(--red)';
-      scoreEl.innerHTML=`<div style="display:flex;align-items:center;gap:10px;padding:10px;background:${c}11;border:1px solid ${c}33;border-radius:var(--r)"><div style="font-family:var(--mono);font-size:22px;font-weight:800;color:${c}">${yesCount}/${total}</div><div style="font-size:12px;color:${c};font-weight:700">${+pct>=80?'✅ Buena calidad':+pct>=50?'⚠️ Compensaciones':'🔴 Déficits significativos'}</div></div>`;
-    }
-  });
-}
-
-function calcValgo(){
-  const d=+document.getElementById('valgo-d')?.value||0,i=+document.getElementById('valgo-i')?.value||0;
-  const el=document.getElementById('valgo-result');if(!el)return;
-  const parts=[];
-  if(d)parts.push(`D: <b style="color:${d>10?'var(--red)':'var(--neon)'}">${d}°</b> ${d>10?'⚠️ >10°':''}`);
-  if(i)parts.push(`I: <b style="color:${i>10?'var(--red)':'var(--neon)'}">${i}°</b> ${i>10?'⚠️ >10°':''}`);
-  el.innerHTML=`<div style="font-size:12px;margin-top:8px">${parts.join(' · ')}</div>`;
-}
-
-function saveFMS(){
-  if(!cur)return;
-  const ohsCriterios=[...document.getElementById('ohs-checks')?.querySelectorAll('.fms-btn.yes,.fms-btn.no')||[]].map(b=>b.classList.contains('yes')?'si':'no');
-  const sdCriterios=[...document.getElementById('sd-checks')?.querySelectorAll('.fms-btn.yes,.fms-btn.no')||[]].map(b=>b.classList.contains('yes')?'si':'no');
-  const fecha=new Date().toISOString().split('T')[0];
-  if(!cur.evals)cur.evals={};
-  cur.evals['fms_'+fecha]={fecha,ohs:{criterios:ohsCriterios,obs:document.getElementById('ohs-obs')?.value},sd:{criterios:sdCriterios,valgoD:+document.getElementById('valgo-d')?.value||0,valgoI:+document.getElementById('valgo-i')?.value||0,obs:document.getElementById('sd-obs')?.value}};
-  atletas=atletas.map(a=>a.id===cur.id?cur:a);saveData();
-}
-
-// ══════════════════════════════════════════════════════
-//  FATIGA
-// ══════════════════════════════════════════════════════
-
-function buildHooperFields(){
-  const c=document.getElementById('hooper-fields');if(!c||c.innerHTML)return;
-  const items=[['fat-h-sueno','Calidad del sueño'],['fat-h-estres','Nivel de estrés'],['fat-h-fatiga','Fatiga general'],['fat-h-doms','Dolor muscular (DOMS)']];
-  items.forEach(([id,lbl])=>{
-    c.innerHTML+=`<div style="margin-bottom:16px">
-      <div class="flex-b" style="margin-bottom:6px"><span style="font-size:12px;font-weight:600">${lbl}</span><span id="${id}-val" style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--neon)">4</span></div>
-      <input class="hooper-slider" type="range" min="1" max="7" value="4" id="${id}" oninput="document.getElementById('${id}-val').textContent=this.value;calcFatiga()">
-      <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3);font-family:var(--mono)"><span>1 Muy bueno</span><span>7 Muy malo</span></div>
-    </div>`;
-  });
-  c.innerHTML+=`<div style="background:var(--bg4);border:1px solid var(--border);border-radius:var(--r);padding:12px;text-align:center;margin-top:4px">
-    <div class="il mb-4">Índice de Hooper</div>
-    <div id="hooper-total" style="font-family:var(--mono);font-size:28px;font-weight:800;color:var(--neon)">16</div>
-    <div id="hooper-status" style="font-size:11px;color:var(--text2);margin-top:4px">--</div>
-  </div>`;
-}
-
-function calcFatiga(){
-  const ids=['fat-h-sueno','fat-h-estres','fat-h-fatiga','fat-h-doms'];
-  const vals=ids.map(id=>+document.getElementById(id)?.value||4);
-  const total=vals.reduce((a,b)=>a+b,0);
-  const hc=total<=12?'var(--neon)':total<=19?'var(--amber)':'var(--red)';
-  const el=document.getElementById('hooper-total'),st=document.getElementById('hooper-status');
-  if(el){el.textContent=total;el.style.color=hc;}
-  if(st)st.textContent=total<=12?'✅ Estado óptimo':total<=16?'🟡 Fatiga moderada':total<=19?'🟠 Fatiga alta':'🔴 Sobrecarga severa';
-  const hrv=+document.getElementById('fat-hrv')?.value||0,base=+document.getElementById('fat-hrv-base')?.value||0;
-  const hrvEl=document.getElementById('hrv-result');
-  if(hrv&&base&&hrvEl){const pct=((hrv-base)/base*100).toFixed(1);const c=+pct>=-5?'var(--neon)':+pct>=-10?'var(--amber)':'var(--red)';hrvEl.innerHTML=`<div style="font-size:12px;color:${c};margin-top:6px;font-family:var(--mono)">${pct}% vs basal ${+pct>=-5?'✅ Recuperado':+pct>=-10?'⚠️ Reducido':'🔴 Suprimido'}</div>`;}
-  const vmax=+document.getElementById('fat-vmax')?.value||0,vfin=+document.getElementById('fat-vfin')?.value||0;
-  const velEl=document.getElementById('fat-vel-result');
-  if(vmax&&vfin&&velEl){const loss=((vmax-vfin)/vmax*100).toFixed(1);const c=+loss<=20?'var(--neon)':+loss<=30?'var(--amber)':'var(--red)';velEl.innerHTML=`<div style="font-size:12px;color:${c};margin-top:6px">Pérdida: <span style="font-family:var(--mono);font-weight:700">${loss}%</span> ${+loss<=20?'✅ ≤20%':+loss<=30?'⚠️ 20-30%':'🔴 >30%'}</div>`;}
-  let score=100;score-=(total-4)*3.5;
-  if(hrv&&base){const p=(hrv-base)/base*100;if(p<-10)score-=20;else if(p<-5)score-=10;}
-  if(vmax&&vfin){const l=(vmax-vfin)/vmax*100;if(l>30)score-=20;else if(l>20)score-=10;}
-  score=Math.max(0,Math.min(100,Math.round(score)));
-  const circ=document.getElementById('fat-ring-circle'),sc=document.getElementById('fat-score'),lb=document.getElementById('fat-label'),rc=document.getElementById('fat-rec');
-  const rc_=score>=80?'var(--neon)':score>=60?'var(--amber)':'var(--red)';
-  if(circ){circ.style.strokeDashoffset=238.8*(1-score/100);circ.style.stroke=rc_;}
-  if(sc){sc.textContent=score;sc.style.color=rc_;}
-  if(lb){lb.textContent=score>=80?'✅ Listo para entrenar':score>=60?'⚠️ Precaución':'🔴 Recuperación';lb.style.color=rc_;}
-  if(rc)rc.textContent=score>=80?'Podés realizar la sesión planificada.':score>=60?'Reducí volumen un 20-30%. Priorizá técnica.':'Descanso activo. No entrenamiento intenso hoy.';
-}
-
-function saveFatiga(){
-  if(!cur){alert('Seleccioná un atleta');return;}
-  const fecha=document.getElementById('fat-fecha').value||new Date().toISOString().split('T')[0];
-  const hooper=['fat-h-sueno','fat-h-estres','fat-h-fatiga','fat-h-doms'].map(id=>+document.getElementById(id)?.value||4);
-  if(!cur.evals)cur.evals={};
-  cur.evals['fatiga_'+fecha]={hooper,hrv:+document.getElementById('fat-hrv')?.value||null,hrvBase:+document.getElementById('fat-hrv-base')?.value||null,fecha};
-  atletas=atletas.map(a=>a.id===cur.id?cur:a);saveData();
-}
-
-// ══════════════════════════════════════════════════════
-//  KINESIO MODULE
-// ══════════════════════════════════════════════════════
-
-function initKinesio(){
-  if(!cur)return;
-  kineState=cur.kinesio?JSON.parse(JSON.stringify(cur.kinesio)):{bodyZones:{},tests:{},form:{}};
-  // Wire up all body zones
-  document.querySelectorAll('.body-zone').forEach(el=>{
-    el.onclick=null;
-    el.addEventListener('click',()=>onBodyZoneClick(el));
-    const zid=el.dataset.zone;
-    el.classList.remove('lesionada','recuperado');
-    if(kineState.bodyZones[zid]){
-      el.classList.add(kineState.bodyZones[zid].recuperado?'recuperado':'lesionada');
-    }
-  });
-  // Build test panels
-  buildOrthoPanels();
-  renderBodyZonesList();
-  restoreKineForm();
-  updateEVA();
-  setBodyView('front');
-  if(!document.getElementById('kine-fecha').value){document.getElementById('kine-fecha').value=new Date().toISOString().split('T')[0];}
-}
-
-function buildOrthoPanels(){
-  buildOrthoPanel('tp-subacro',           ORTHO_TESTS.subacro);
-  buildOrthoPanel('tp-manguito',          ORTHO_TESTS.manguito);
-  buildOrthoPanel('tp-biceps',            ORTHO_TESTS.biceps);
-  buildOrthoPanel('tp-ligamentos',        ORTHO_TESTS.ligamentos);
-  buildOrthoPanel('tp-meniscos',          ORTHO_TESTS.meniscos);
-  buildOrthoPanel('tp-funcionales',       ORTHO_TESTS.funcionales);
-  buildOrthoPanel('tp-tobillo',           ORTHO_TESTS.tobillo);
-  buildOrthoPanel('tp-lumbar',            ORTHO_TESTS.lumbar);
-  buildOrthoPanel('tp-cadera',            ORTHO_TESTS.cadera);
-  buildOrthoPanel('tp-doha-aductores',    ORTHO_TESTS.dohaAductores);
-  buildOrthoPanel('tp-doha-psoas',        ORTHO_TESTS.dohaPsoas);
-  buildOrthoPanel('tp-doha-inguinal',     ORTHO_TESTS.dohaInguinal);
-  buildOrthoPanel('tp-doha-complementarios', ORTHO_TESTS.dohaComplementarios);
-  buildOrthoPanel('tp-cervical-neural',   ORTHO_TESTS.cervicalNeural);
-  buildOrthoPanel('tp-cervical-articular',ORTHO_TESTS.cervicalArticular);
-  buildOrthoPanel('tp-cervical-muscular', ORTHO_TESTS.cervicalMuscular);
-  buildOrthoPanel('tp-codo-lateral',      ORTHO_TESTS.codoLateral);
-  buildOrthoPanel('tp-codo-medial',       ORTHO_TESTS.codoMedial);
-  buildOrthoPanel('tp-codo-ligamentos',   ORTHO_TESTS.codoLigamentos);
-  buildOrthoPanel('tp-patelo',            ORTHO_TESTS.patelo);
-  buildOrthoPanel('tp-tendones-rodilla',  ORTHO_TESTS.tendonesRodilla);
-  buildOrthoPanel('tp-pie',               ORTHO_TESTS.pie);
-  buildOrthoPanel('tp-muneca',            ORTHO_TESTS.muneca);
-  // ROM panels
-  buildROMPanel('tp-rom-hombro',  [['Flexión','flex-hb'],['Extensión','ext-hb'],['Abducción','abd-hb'],['RI','ri-hb'],['RE','re-hb'],['Aducción H.','aducc-hb']]);
-  buildROMPanel('tp-rom-rodilla', [['Flexión','flex-rod'],['Extensión','ext-rod']],true);
-  buildROMPanel('tp-rom-tobillo', [['Dorsiflexión','df-tob'],['Flex. plantar','fp-tob'],['Inversión','inv-tob'],['Eversión','ev-tob']]);
-  buildROMPanel('tp-rom-cadera',  [['Flexión','flex-cad'],['Extensión','ext-cad'],['RI','ri-cad'],['RE','re-cad'],['Abducción','abd-cad'],['Aducción','aduc-cad']]);
-  buildROMColPanel();
-}
-
-function buildOrthoPanel(containerId,tests){
-  const el=document.getElementById(containerId); if(!el||el.innerHTML)return;
-  el.innerHTML=tests.map(t=>`
-    <div class="ortho-test" id="ortho-row-${t.id}">
-      <div style="flex:1">
-        <div class="ortho-name">${t.name}</div>
-        <div class="ortho-sub">${t.sub}</div>
-        <div class="ortho-ref">${t.ref}</div>
-      </div>
-      <div class="ortho-btns">
-        <button class="ot-btn" id="otb-pos-${t.id}" onclick="setOrthoTest('${t.id}','pos')">+ POS</button>
-        <button class="ot-btn" id="otb-neg-${t.id}" onclick="setOrthoTest('${t.id}','neg')">- NEG</button>
       </div>
     </div>
-    <div class="ortho-obs-row" id="ortho-obs-${t.id}">
-      <input class="inp" placeholder="Observaciones (lado, grado, dolor...)" style="font-size:11px;padding:5px 8px" id="ortho-obs-inp-${t.id}" oninput="if(kineState.tests['${t.id}'])kineState.tests['${t.id}'].obs=this.value">
-    </div>`).join('');
-  // Restore saved states
-  tests.forEach(t=>{
-    if(kineState.tests[t.id]?.result){
-      const r=kineState.tests[t.id].result;
-      document.getElementById('otb-'+r+'-'+t.id)?.classList.add(r);
-      const obs=document.getElementById('ortho-obs-'+t.id);if(obs)obs.classList.add('visible');
-      const obsInp=document.getElementById('ortho-obs-inp-'+t.id);if(obsInp&&kineState.tests[t.id].obs)obsInp.value=kineState.tests[t.id].obs;
-    }
-  });
-}
 
-function buildROMPanel(containerId,fields,hasValgo=false){
-  const el=document.getElementById(containerId);if(!el||el.innerHTML)return;
-  el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-    ${fields.map(([label,id])=>`
-    <div>
-      <div class="il mb-4" style="margin-bottom:3px">${label}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
-        <input class="inp inp-mono" type="number" id="rom-act-${id}" placeholder="Act°" style="font-size:11px;padding:5px">
-        <input class="inp inp-mono" type="number" id="rom-pas-${id}" placeholder="Pas°" style="font-size:11px;padding:5px">
+    <!-- LCA -->
+    <div id="rtab-lca" style="display:none">
+      <div id="rodilla-lca-fields"></div>
+      <!-- Ratio I/Q -->
+      <div class="card mt-10">
+        <div class="card-header"><h3>Ratio Isquiotibiales / Cuádriceps</h3><span class="tag tag-b">&gt;0.60 = funcional</span></div>
+        <div class="card-body">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:8px">HHD Valkyria — extensión 60° y flexión 20°</div>
+          <div class="grid-2" style="gap:8px">
+            <div class="ig"><label class="il">Cuádriceps D (N)</label><input class="inp inp-mono" type="number" id="cuad-d" placeholder="0" oninput="calcRatioIQ('d')"></div>
+            <div class="ig"><label class="il">Isquiotib. D (N)</label><input class="inp inp-mono" type="number" id="isq-d" placeholder="0" oninput="calcRatioIQ('d')"></div>
+          </div>
+          <div id="ratio-iq-d" style="font-size:12px;color:var(--text3);margin-bottom:8px">Ratio D: —</div>
+          <div class="grid-2" style="gap:8px">
+            <div class="ig"><label class="il">Cuádriceps I (N)</label><input class="inp inp-mono" type="number" id="cuad-i" placeholder="0" oninput="calcRatioIQ('i')"></div>
+            <div class="ig"><label class="il">Isquiotib. I (N)</label><input class="inp inp-mono" type="number" id="isq-i" placeholder="0" oninput="calcRatioIQ('i')"></div>
+          </div>
+          <div id="ratio-iq-i" style="font-size:12px;color:var(--text3)">Ratio I: —</div>
+        </div>
       </div>
-    </div>`).join('')}
-  </div>
-  <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3);font-family:var(--mono);margin-top:6px;padding:4px 6px;background:var(--bg4);border-radius:4px">
-    <span>Activo (Act)</span><span>Pasivo (Pas)</span>
-  </div>
-  ${hasValgo?`<div class="ig mt-8"><label class="il">Valgo dinámico Step-Down D/I</label>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-      <input class="inp inp-mono" type="number" id="valgo-rod-d" placeholder="D (°)" oninput="checkValgoRod()">
-      <input class="inp inp-mono" type="number" id="valgo-rod-i" placeholder="I (°)" oninput="checkValgoRod()">
     </div>
-    <div id="valgo-rod-result" style="font-size:11px;margin-top:4px"></div>
-  </div>`:''}`;
-}
 
-function buildROMColPanel(){
-  const el=document.getElementById('tp-rom-columna');if(!el||el.innerHTML)return;
-  const fields=[['Flexión (Schober)','flex-col'],['Extensión','ext-col'],['Flex. lat. D','flatd-col'],['Flex. lat. I','flati-col'],['Rotación D','rotd-col'],['Rotación I','roti-col']];
-  el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-    ${fields.map(([label,id])=>`
-    <div>
-      <div class="il mb-4" style="margin-bottom:3px">${label}</div>
-      <input class="inp inp-mono" type="number" id="rom-act-${id}" placeholder="°" style="font-size:11px;padding:5px;width:100%">
-    </div>`).join('')}
-  </div>`;
-}
-
-function checkValgoRod(){
-  const d=+document.getElementById('valgo-rod-d')?.value||0,i=+document.getElementById('valgo-rod-i')?.value||0;
-  const el=document.getElementById('valgo-rod-result');if(!el)return;
-  const parts=[];
-  if(d)parts.push(`D: <b style="color:${d>10?'var(--red)':'var(--neon)'}">${d}°</b>${d>10?' ⚠️>10°':''}`);
-  if(i)parts.push(`I: <b style="color:${i>10?'var(--red)':'var(--neon)'}">${i}°</b>${i>10?' ⚠️>10°':''}`);
-  el.innerHTML=parts.join(' · ');
-}
-
-function setOrthoTest(id,result){
-  if(!kineState.tests[id])kineState.tests[id]={};
-  if(kineState.tests[id].result===result){
-    kineState.tests[id].result=null;
-    document.getElementById('otb-pos-'+id)?.classList.remove('pos');
-    document.getElementById('otb-neg-'+id)?.classList.remove('neg');
-    document.getElementById('ortho-obs-'+id)?.classList.remove('visible');
-    const row=document.getElementById('ortho-row-'+id);if(row)row.style.background='';
-  }else{
-    kineState.tests[id].result=result;
-    document.getElementById('otb-pos-'+id)?.classList.toggle('pos',result==='pos');
-    document.getElementById('otb-neg-'+id)?.classList.toggle('neg',result==='neg');
-    document.getElementById('ortho-obs-'+id)?.classList.add('visible');
-    const row=document.getElementById('ortho-row-'+id);
-    if(row)row.style.background=result==='pos'?'rgba(255,68,68,.06)':'rgba(57,255,122,.04)';
-  }
-  updateKinePositivos();
-}
-
-function updateKinePositivos(){
-  const allTests=[...ORTHO_TESTS.subacro,...ORTHO_TESTS.manguito,...ORTHO_TESTS.biceps,...ORTHO_TESTS.ligamentos,...ORTHO_TESTS.meniscos,...ORTHO_TESTS.funcionales,...ORTHO_TESTS.tobillo,...ORTHO_TESTS.lumbar,...ORTHO_TESTS.cadera,...ORTHO_TESTS.dohaAductores,...ORTHO_TESTS.dohaPsoas,...ORTHO_TESTS.dohaInguinal,...ORTHO_TESTS.dohaComplementarios,...ORTHO_TESTS.cervicalNeural,...ORTHO_TESTS.cervicalArticular,...ORTHO_TESTS.cervicalMuscular,...ORTHO_TESTS.codoLateral,...ORTHO_TESTS.codoMedial,...ORTHO_TESTS.codoLigamentos,...ORTHO_TESTS.patelo,...ORTHO_TESTS.tendonesRodilla,...ORTHO_TESTS.pie,...ORTHO_TESTS.muneca];
-  const positivos=Object.entries(kineState.tests).filter(([,v])=>v.result==='pos').map(([id,v])=>{
-    const t=allTests.find(x=>x.id===id);return t?{name:t.name,sub:t.sub,obs:v.obs}:null;
-  }).filter(Boolean);
-  const card=document.getElementById('kine-positivos-card'),list=document.getElementById('kine-positivos-list');
-  if(!card||!list)return;
-  if(positivos.length){
-    card.style.display='block';
-    list.innerHTML=positivos.map(p=>`
-      <div style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-        <div><span style="font-size:12px;font-weight:700;color:var(--red)">+ ${p.name}</span><span style="font-size:11px;color:var(--text2);margin-left:8px">${p.sub}</span>${p.obs?`<div style="font-size:10px;color:var(--text3);margin-top:2px">${p.obs}</div>`:''}</div>
-        <span class="tag tag-r">POSITIVO</span>
-      </div>`).join('');
-  }else card.style.display='none';
-}
-
-function onBodyZoneClick(el){
-  const zid=el.dataset.zone,zlabel=el.dataset.label,panel=el.dataset.panel;
-  if(kineState.bodyZones[zid]&&!kineState.bodyZones[zid].recuperado){
-    kineState.bodyZones[zid].recuperado=true;
-    el.classList.remove('lesionada');el.classList.add('recuperado');
-  }else if(kineState.bodyZones[zid]?.recuperado){
-    delete kineState.bodyZones[zid];
-    el.classList.remove('lesionada','recuperado');
-  }else{
-    kineState.bodyZones[zid]={label:zlabel,eva:0,recuperado:false};
-    el.classList.add('lesionada');
-    if(panel)showKinePanel(panel,zlabel);
-  }
-  renderBodyZonesList();
-  updateEVA();
-}
-
-function showKinePanel(panel,label){
-  document.querySelectorAll('.kine-panel').forEach(p=>p.classList.add('hidden'));
-  const el=document.getElementById('tests-panel-'+panel);
-  if(el){el.classList.remove('hidden');document.getElementById('kine-zona-label').textContent=label+' -- Tests activos';el.scrollIntoView({behavior:'smooth',block:'start'});}
-}
-
-function renderBodyZonesList(){
-  const el=document.getElementById('body-zones-list');if(!el)return;
-  const zones=Object.entries(kineState.bodyZones);
-  if(!zones.length){el.innerHTML='<div style="font-size:9px;color:var(--text3);font-family:var(--mono);text-align:center">Sin zonas marcadas</div>';return;}
-  el.innerHTML='<div style="display:flex;flex-wrap:wrap;justify-content:center">'+
-    zones.map(([zid,z])=>`<span class="zone-chip ${z.recuperado?'recup':'lesion'}" onclick="onBodyZoneClick(document.getElementById('z-${zid}'))">
-      ${z.recuperado?'✓':'🔴'} ${z.label}
-      ${!z.recuperado?`<span style="font-size:8px;text-decoration:underline;cursor:pointer" onclick="event.stopPropagation();showKinePanel('${document.getElementById('z-'+zid)?.dataset?.panel||''}','${z.label}')">TESTS</span>`:'<span style="font-size:8px">RECUPERADO</span>'}
-    </span>`).join('')+'</div>';
-}
-
-function setBodyView(view){
-  document.getElementById('body-front').style.display=view==='front'?'flex':'none';
-  document.getElementById('body-back').style.display=view==='back'?'flex':'none';
-  document.getElementById('btn-front').className='btn btn-sm '+(view==='front'?'btn-neon':'btn-ghost');
-  document.getElementById('btn-back').className='btn btn-sm '+(view==='back'?'btn-neon':'btn-ghost');
-}
-
-function updateEVA(){
-  const val=+document.getElementById('kine-eva')?.value||0;
-  const el=document.getElementById('eva-val');const lbl=document.getElementById('eva-label');
-  const labels=['Sin dolor','Muy leve','Leve','Molesto','Moderado','Significativo','Intenso','Muy intenso','Severo','Muy severo','Insoportable'];
-  if(el){el.textContent=val;el.className='eva-display '+(val<=3?'eva-0-3':val<=6?'eva-4-6':'eva-7-10');}
-  if(lbl)lbl.textContent=labels[val]||'';
-  // Update last zone EVA
-  const lastZone=Object.keys(kineState.bodyZones).slice(-1)[0];
-  if(lastZone&&kineState.bodyZones[lastZone])kineState.bodyZones[lastZone].eva=val;
-}
-
-function setKineTrat(val){
-  document.getElementById('kine-trat-si').classList.toggle('yes',val==='si');
-  document.getElementById('kine-trat-no').classList.toggle('yes',val==='no');
-  if(!kineState.form)kineState.form={};
-  kineState.form.tratPrevio=val;
-}
-
-function toggleEstudio(e){
-  const btn=document.getElementById('est-'+e);if(!btn)return;
-  btn.classList.toggle('yes');
-  if(!kineState.form)kineState.form={};
-  if(!kineState.form.estudios)kineState.form.estudios=[];
-  const idx=kineState.form.estudios.indexOf(e);
-  if(idx===-1)kineState.form.estudios.push(e);
-  else kineState.form.estudios.splice(idx,1);
-}
-
-function restoreKineForm(){
-  const f=kineState.form||{};
-  const fields={'kine-motivo':'motivo','kine-mecanismo':'mecanismo','kine-medico':'medico','kine-dx':'dx','kine-trat-cual':'trat_cual','kine-deporte-prev':'deporte_prev','kine-act-actual':'act_actual','kine-frec':'frec','kine-horas':'horas','kine-obj-det':'obj_det','kine-antec-obs':'antec_obs','kine-dolor-mov':'dolor_mov'};
-  Object.entries(fields).forEach(([id,key])=>{const el=document.getElementById(id);if(el&&f[key])el.value=f[key];});
-  if(f.eva!==undefined){const e=document.getElementById('kine-eva');if(e){e.value=f.eva;updateEVA();}}
-  if(f.estudios)f.estudios.forEach(e=>{const btn=document.getElementById('est-'+e);if(btn)btn.classList.add('yes');});
-  if(f.tratPrevio)setKineTrat(f.tratPrevio);
-  if(f.antecedentes)f.antecedentes.forEach(a=>{const cb=document.querySelector(`.kine-antec[value="${a}"]`);if(cb)cb.checked=true;});
-  if(f.objetivos)f.objetivos.forEach(o=>{const cb=document.querySelector(`.kine-objetivo[value="${o}"]`);if(cb)cb.checked=true;});
-}
-
-function saveKinesio(){
-  if(!cur){alert('Seleccioná un atleta');return;}
-  const form=kineState.form||{};
-  const textFields={'kine-motivo':'motivo','kine-mecanismo':'mecanismo','kine-medico':'medico','kine-dx':'dx','kine-trat-cual':'trat_cual','kine-deporte-prev':'deporte_prev','kine-act-actual':'act_actual','kine-frec':'frec','kine-horas':'horas','kine-obj-det':'obj_det','kine-antec-obs':'antec_obs','kine-dolor-mov':'dolor_mov'};
-  Object.entries(textFields).forEach(([id,key])=>{const el=document.getElementById(id);if(el)form[key]=el.value;});
-  form.eva=+document.getElementById('kine-eva')?.value||0;
-  form.antecedentes=[...document.querySelectorAll('.kine-antec:checked')].map(cb=>cb.value);
-  form.objetivos=[...document.querySelectorAll('.kine-objetivo:checked')].map(cb=>cb.value);
-  form.fecha=document.getElementById('kine-fecha')?.value;
-  kineState.form=form;
-  cur.kinesio=JSON.parse(JSON.stringify(kineState));
-  const allTests=[...ORTHO_TESTS.subacro,...ORTHO_TESTS.manguito,...ORTHO_TESTS.biceps,...ORTHO_TESTS.ligamentos,...ORTHO_TESTS.meniscos,...ORTHO_TESTS.funcionales,...ORTHO_TESTS.tobillo,...ORTHO_TESTS.lumbar,...ORTHO_TESTS.cadera,...ORTHO_TESTS.dohaAductores,...ORTHO_TESTS.dohaPsoas,...ORTHO_TESTS.dohaInguinal,...ORTHO_TESTS.dohaComplementarios,...ORTHO_TESTS.cervicalNeural,...ORTHO_TESTS.cervicalArticular,...ORTHO_TESTS.cervicalMuscular,...ORTHO_TESTS.codoLateral,...ORTHO_TESTS.codoMedial,...ORTHO_TESTS.codoLigamentos,...ORTHO_TESTS.patelo,...ORTHO_TESTS.tendonesRodilla,...ORTHO_TESTS.pie,...ORTHO_TESTS.muneca];
-  if(!cur.evals)cur.evals={};
-  cur.evals['kinesio_'+(form.fecha||Date.now())]={fecha:form.fecha,motivo:form.motivo,eva:form.eva,zonas:Object.fromEntries(Object.entries(kineState.bodyZones).filter(([,v])=>!v.recuperado)),testsPositivos:Object.entries(kineState.tests).filter(([,v])=>v.result==='pos').map(([id])=>{const t=allTests.find(x=>x.id===id);return t?t.name:id;}),dx:form.dx};
-  cur.lesionesActivas=Object.entries(kineState.bodyZones).filter(([,v])=>!v.recuperado).map(([,v])=>v.label);
-  if(cur.lesionesActivas.length)cur.lesion=cur.lesionesActivas.join(', ');
-  atletas=atletas.map(a=>a.id===cur.id?cur:a);
-  saveData();
-  renderProfileHero();
-}
-
-// ══════════════════════════════════════════════════════
-//  INFORME IA + PDF
-// ══════════════════════════════════════════════════════
-
-function openInformeIA(){
-  if(!cur){alert('Seleccioná un atleta');return;}
-  openModal('modal-informe');
-  regenerarInforme();
-}
-
-async function regenerarInforme(){
-  const s=cur;if(!s)return;
-  document.getElementById('informe-sub').textContent=`Analizando datos de ${s.nombre}...`;
-  document.getElementById('informe-loading').classList.remove('hidden');
-  document.getElementById('informe-editor-wrap').classList.add('hidden');
-
-  // ── Datos esenciales compactos ──
-  const sal=getLastEval('saltos');
-  const sp=getLastEval('sprint');
-  const fv=s.lastFV?{ej:s.lastFV.ejercicio,oneRM:s.lastFV.oneRM?.toFixed(1),V0:s.lastFV.V0?.toFixed(3),Pmax:s.lastFV.Pmax?.toFixed(0),r2:s.lastFV.r2?.toFixed(4)}:null;
-  const ftRel=s.lastFV?.oneRM&&s.peso?(s.lastFV.oneRM/+s.peso).toFixed(2):null;
-  const normKey=fv?Object.keys(STR_NORMS).find(k=>fv.ej?.toLowerCase().includes(STR_NORMS[k].name.toLowerCase().split(' ')[0].toLowerCase())):null;
-  const norm=normKey?STR_NORMS[normKey]:null;
-  const frSt=ftRel&&norm?(+ftRel>=norm.amber?'🟢 ELITE':+ftRel>=norm.red?'🟡 MODERADO':'🔴 DÉFICIT'):'--';
-  // LSI Simple Hop
-  const lsi=sal?.avg?.shD&&sal?.avg?.shI?((Math.min(sal.avg.shD,sal.avg.shI)/Math.max(sal.avg.shD,sal.avg.shI))*100).toFixed(1):null;
-  // Kinesio compacto
-  const kine=s.kinesio?{
-    zonas:Object.values(s.kinesio.bodyZones||{}).filter(z=>!z.recuperado).map(z=>`${z.label}(EVA${z.eva||0})`).join(', ')||'--',
-    positivos:Object.entries(s.kinesio.tests||{}).filter(([,v])=>v.result==='pos').map(([id])=>{const allT=[...ORTHO_TESTS.subacro,...ORTHO_TESTS.manguito,...ORTHO_TESTS.biceps,...ORTHO_TESTS.ligamentos,...ORTHO_TESTS.meniscos,...ORTHO_TESTS.funcionales,...ORTHO_TESTS.tobillo,...ORTHO_TESTS.lumbar,...ORTHO_TESTS.cadera,...ORTHO_TESTS.dohaAductores,...ORTHO_TESTS.dohaPsoas,...ORTHO_TESTS.dohaInguinal,...ORTHO_TESTS.dohaComplementarios,...ORTHO_TESTS.cervicalNeural,...ORTHO_TESTS.cervicalArticular,...ORTHO_TESTS.cervicalMuscular,...ORTHO_TESTS.codoLateral,...ORTHO_TESTS.codoMedial,...ORTHO_TESTS.codoLigamentos,...ORTHO_TESTS.patelo,...ORTHO_TESTS.tendonesRodilla,...ORTHO_TESTS.pie,...ORTHO_TESTS.muneca];return allT.find(x=>x.id===id)?.name||id;}).join(', ')||'--',
-    dx:s.kinesio.form?.dx||'--',
-    eva:s.kinesio.form?.eva??'--'
-  }:null;
-
-  const prompt=`Kinesiólogo/preparador físico experto. Informe clínico deportivo conciso en español rioplatense.
-
-ATLETA: ${s.nombre}, ${s.edad||'?'}a, ${s.peso||'?'}kg, ${s.talla||'?'}cm
-DEPORTE: ${s.deporte||'--'}${s.puesto?' ('+s.puesto+')':''} | Nivel: ${s.nivel||'--'} | Enfoque: ${s.servicio==='kinesio'?'Kinesio':'Rendimiento'}
-${s.lesion?'LESIÓN: '+s.lesion:''}
-
-DATOS CLAVE:
-• F-V: ${fv?`${fv.ej} | 1RM: ${fv.oneRM}kg | V0: ${fv.V0}m/s | Pmax: ${fv.Pmax}W | R²: ${fv.r2}`:'Sin datos'}
-• Fuerza relativa: ${ftRel||'--'}×PC ${frSt}${norm?` (ref: <${norm.red} déf, >${norm.amber} elite)`:''}
-• Saltos: CMJ ${sal?.avg?.cmj?.toFixed(1)||'--'}cm | BJ ${sal?.avg?.bj?.toFixed(1)||'--'}cm | LSI Hop: ${lsi||'--'}%${lsi&&+lsi<90?' ⚠️':''}
-• Movilidad: Lunge D/I ${s.lungeD||'--'}°/${s.lungeI||'--'}° | TROM Cad D/I ${s.tromCadD||'--'}°/${s.tromCadI||'--'}°
-• Sprint: 10m ${sp?.sp10||'--'}s | 30m ${sp?.sp30||'--'}s | T-Test ${sp?.ttest||'--'}s
-${kine?`• Kinesio: Zonas ${kine.zonas} | Tests+ ${kine.positivos} | Dx ${kine.dx} | EVA ${kine.eva}/10`:''}
-
-Generá el informe con ESTE FORMATO EXACTO (usá los emojis como encabezados, sin texto introductorio):
-
-📋 RESUMEN EJECUTIVO
-[3 líneas: estado actual con valores, diagnóstico funcional]
-
-📊 TABLA COMPARATIVA
-[Tabla texto con columnas: VARIABLE | VALOR | REFERENCIA | ESTADO
-Incluir: 1RM/PC, CMJ, LSI, Lunge, TROM. Usá | para separar columnas]
-
-💪 FORTALEZAS
-[2-3 puntos con valores concretos]
-
-⚠️ ÁREAS DE MEJORA
-[2-3 déficits con valores y umbral de referencia]
-
-📅 PLAN DE ACCIÓN
-[3 prescripciones específicas con parámetros: ejercicio, series×reps, intensidad]
-
-🔁 RE-EVALUACIÓN
-[Plazo y criterio de alta o progresión]`;
-
-  try{
-    const API_KEY = getApiKey();
-    if (!API_KEY) {
-      document.getElementById('informe-loading').classList.add('hidden');
-      document.getElementById('informe-sub').textContent = 'Necesitás configurar tu API Key primero';
-      showApiKeyModal();
-      return;
-    }
-    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_KEY},
-      body:JSON.stringify({model:'llama-3.1-8b-instant',max_tokens:800,messages:[{role:'system',content:'Sos un kinesiólogo deportivo argentino. Respondé en español rioplatense, técnico y conciso.'},{role:'user',content:prompt}]})
-    });
-    const data=await res.json();
-    if(data.error){throw new Error(data.error.message);}
-    const txt=data.choices?.[0]?.message?.content||data.error?.message||'Error al generar el informe.';
-    document.getElementById('informe-text').value=txt;
-    document.getElementById('informe-loading').classList.add('hidden');
-    document.getElementById('informe-editor-wrap').classList.remove('hidden');
-    document.getElementById('informe-sub').textContent='Editá y exportá el informe';
-  }catch(e){
-    document.getElementById('informe-loading').classList.add('hidden');
-    document.getElementById('informe-sub').textContent='Error: '+e.message;
-    console.error('IA error:',e);
-  }
-}
-
-function exportarPDF(){
-  const{jsPDF}=window.jspdf;if(!jsPDF){alert('Error al cargar jsPDF');return;}
-  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-  const s=cur;if(!s){alert('Sin atleta');return;}
-  const prof=document.getElementById('prof-nombre')?.value||'Lic. Emanuel Lezcano';
-  const inst=document.getElementById('prof-inst')?.value||'MOVE Centro de Evaluación';
-  const texto=document.getElementById('informe-text')?.value||'Sin informe';
-  const fecha=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'});
-  // Fondo negro
-  doc.setFillColor(0,0,0);doc.rect(0,0,210,297,'F');
-  // Header
-  doc.setFillColor(8,8,8);doc.rect(0,0,210,44,'F');
-  doc.setDrawColor(57,255,122);doc.setLineWidth(0.4);doc.line(0,44,210,44);
-  doc.setTextColor(57,255,122);doc.setFontSize(18);doc.setFont('courier','bold');doc.text('MOVEMETRICS',14,20);
-  doc.setTextColor(50,50,50);doc.setFontSize(7);doc.setFont('courier','normal');doc.text('PLATAFORMA DEPORTIVO-CLÍNICA v12',14,27);doc.text('INFORME ANALÍTICO PROFESIONAL',14,33);
-  doc.setTextColor(120,120,120);doc.setFontSize(8);doc.text(prof,196,18,{align:'right'});doc.text(inst,196,24,{align:'right'});doc.text(fecha,196,30,{align:'right'});
-  // Atleta box
-  doc.setFillColor(12,12,12);doc.roundedRect(14,50,182,36,2,2,'F');
-  doc.setDrawColor(57,255,122);doc.setLineWidth(0.3);doc.roundedRect(14,50,182,36,2,2,'S');
-  doc.setTextColor(57,255,122);doc.setFontSize(15);doc.setFont('courier','bold');doc.text(s.nombre,20,61);
-  doc.setTextColor(160,160,160);doc.setFontSize(8.5);doc.setFont('courier','normal');
-  doc.text(`${s.deporte||'--'}${s.puesto?' · '+s.puesto:''} · ${s.edad||'?'} años · ${s.peso||'?'}kg · ${s.talla||'?'}cm`,20,68);
-  doc.text(`Objetivo: ${s.objetivo||'--'} · Nivel: ${s.nivel||'--'} · ${s.servicio==='kinesio'?'Kinesiología':'Rendimiento'}`,20,74);
-  if(s.lesion){doc.setTextColor(255,176,32);doc.text(`Lesión: ${s.lesion}`,20,80);}
-  // KPIs
-  const kpis=[['CMJ',s.lastCMJ?s.lastCMJ.toFixed(1)+'cm':'--'],['1RM',s.lastFV?.oneRM?s.lastFV.oneRM.toFixed(0)+'kg':'--'],['Fza.Rel.',s.lastFV&&s.peso?(s.lastFV.oneRM/+s.peso).toFixed(2)+'×PC':'--'],['R²',s.lastFV?.r2?.toFixed(4)||'--']];
-  kpis.forEach(([lbl,val],i)=>{const x=14+i*46;doc.setFillColor(15,15,15);doc.roundedRect(x,92,42,20,1.5,1.5,'F');doc.setTextColor(50,50,50);doc.setFontSize(7);doc.setFont('courier','normal');doc.text(lbl.toUpperCase(),x+3,99);doc.setTextColor(57,255,122);doc.setFontSize(10);doc.setFont('courier','bold');doc.text(val,x+3,108);});
-  // Charts
-  const radarCanvas=document.getElementById('radar-chart');if(radarCanvas){try{const img=radarCanvas.toDataURL('image/png');doc.addImage(img,'PNG',14,118,86,70);}catch(e){}}
-  const fvCanvas=document.getElementById('fv-chart')||document.getElementById('dash-fv-chart');if(fvCanvas){try{const img=fvCanvas.toDataURL('image/png');doc.addImage(img,'PNG',106,118,90,70);}catch(e){}}
-  // Contenido
-  doc.setTextColor(210,210,210);const lines=doc.splitTextToSize(texto,182);
-  let y=198;
-  lines.forEach(line=>{
-    if(y>275){doc.addPage();doc.setFillColor(0,0,0);doc.rect(0,0,210,297,'F');y=20;}
-    const isSec=line.startsWith('📋')||line.startsWith('💪')||line.startsWith('⚠️')||line.startsWith('🎯')||line.startsWith('📅')||line.startsWith('🔁');
-    if(isSec){doc.setFont('courier','bold');doc.setFontSize(10);doc.setTextColor(57,255,122);y+=2;}
-    else{doc.setFont('courier','normal');doc.setFontSize(8.5);doc.setTextColor(200,200,200);}
-    doc.text(line,14,y);y+=isSec?6:5;
-  });
-  // Página Kinesio
-  if(s.kinesio&&(Object.keys(s.kinesio.bodyZones||{}).length||Object.values(s.kinesio.tests||{}).some(t=>t.result==='pos'))){
-    doc.addPage();doc.setFillColor(0,0,0);doc.rect(0,0,210,297,'F');
-    doc.setFillColor(8,8,8);doc.rect(0,0,210,34,'F');doc.setDrawColor(57,255,122);doc.setLineWidth(0.4);doc.line(0,34,210,34);
-    doc.setTextColor(57,255,122);doc.setFontSize(14);doc.setFont('courier','bold');doc.text('EVALUACIÓN KINESIOLÓGICA',14,18);
-    doc.setTextColor(100,100,100);doc.setFontSize(8);doc.setFont('courier','normal');doc.text(`${s.nombre} · ${new Date().toLocaleDateString('es-AR')}`,14,26);
-    let ky=44;
-    const zonas=Object.entries(s.kinesio.bodyZones||{}).filter(([,v])=>!v.recuperado);
-    if(zonas.length){doc.setFillColor(20,5,5);doc.roundedRect(14,ky,182,8+zonas.length*7,2,2,'F');doc.setDrawColor(255,68,68);doc.setLineWidth(0.3);doc.roundedRect(14,ky,182,8+zonas.length*7,2,2,'S');doc.setTextColor(255,68,68);doc.setFontSize(9);doc.setFont('courier','bold');doc.text('ZONAS LESIONADAS',18,ky+7);doc.setFont('courier','normal');doc.setFontSize(8.5);doc.setTextColor(200,150,150);zonas.forEach(([,z],i)=>{doc.text(`• ${z.label}  EVA: ${z.eva||'--'}/10`,22,ky+7+7*(i+1));});ky+=14+zonas.length*7;}
-    const posTests=Object.entries(s.kinesio.tests||{}).filter(([,v])=>v.result==='pos');
-    const allTests=[...ORTHO_TESTS.subacro,...ORTHO_TESTS.manguito,...ORTHO_TESTS.biceps,...ORTHO_TESTS.ligamentos,...ORTHO_TESTS.meniscos,...ORTHO_TESTS.funcionales,...ORTHO_TESTS.tobillo,...ORTHO_TESTS.lumbar,...ORTHO_TESTS.cadera,...ORTHO_TESTS.dohaAductores,...ORTHO_TESTS.dohaPsoas,...ORTHO_TESTS.dohaInguinal,...ORTHO_TESTS.dohaComplementarios,...ORTHO_TESTS.cervicalNeural,...ORTHO_TESTS.cervicalArticular,...ORTHO_TESTS.cervicalMuscular,...ORTHO_TESTS.codoLateral,...ORTHO_TESTS.codoMedial,...ORTHO_TESTS.codoLigamentos,...ORTHO_TESTS.patelo,...ORTHO_TESTS.tendonesRodilla,...ORTHO_TESTS.pie,...ORTHO_TESTS.muneca];
-    if(posTests.length){ky+=6;doc.setFillColor(20,5,5);doc.roundedRect(14,ky,182,10+posTests.length*9,2,2,'F');doc.setDrawColor(255,68,68);doc.setLineWidth(0.3);doc.roundedRect(14,ky,182,10+posTests.length*9,2,2,'S');doc.setTextColor(255,68,68);doc.setFontSize(9);doc.setFont('courier','bold');doc.text('TESTS ORTOPÉDICOS POSITIVOS',18,ky+8);ky+=12;posTests.forEach(([id,v])=>{const t=allTests.find(x=>x.id===id);if(!t)return;doc.setFont('courier','bold');doc.setFontSize(8.5);doc.setTextColor(255,100,100);doc.text(`+ ${t.name}`,18,ky);doc.setFont('courier','normal');doc.setTextColor(150,150,150);const subt=` -- ${t.sub}${v.obs?' -- '+v.obs:''}`;doc.text(subt,18+doc.getTextWidth(`+ ${t.name}`),ky);ky+=7;});}
-  }
-  // Footer
-  const total=doc.getNumberOfPages();
-  for(let i=1;i<=total;i++){doc.setPage(i);doc.setFillColor(6,6,6);doc.rect(0,286,210,11,'F');doc.setDrawColor(57,255,122);doc.setLineWidth(0.2);doc.line(0,286,210,286);doc.setTextColor(50,50,50);doc.setFontSize(7);doc.setFont('courier','normal');doc.text(`MOVEMETRICS v12 · ${prof} · ${inst}`,14,292);doc.text(`${i} / ${total}`,196,292,{align:'right'});}
-  doc.save(`MoveMetrics_${s.nombre.replace(/\s/g,'_')}_${new Date().toISOString().split('T')[0]}.pdf`);
-}
-
-function exportAllData(){
-  const blob=new Blob([JSON.stringify(atletas,null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob);const a=document.createElement('a');
-  a.href=url;a.download='movemetrics_data_'+new Date().toISOString().split('T')[0]+'.json';a.click();URL.revokeObjectURL(url);
-}
-
-
-// ══════════════════════════════════════════════════════
-//  VIDEO SALTO -- Módulo de salto vertical por video
-// ══════════════════════════════════════════════════════
-
-let videoState = {
-  takeoffTime: null,
-  landingTime: null,
-  fps: 60,
-  duration: 0
-};
-
-function getFps() {
-  const sel = document.getElementById('video-fps');
-  if (!sel) return 60;
-  if (sel.value === 'custom') {
-    return parseFloat(document.getElementById('video-fps-custom').value) || 60;
-  }
-  return parseFloat(sel.value) || 60;
-}
-
-function onFpsChange() {
-  const sel = document.getElementById('video-fps');
-  const customInp = document.getElementById('video-fps-custom');
-  if (sel.value === 'custom') {
-    customInp.style.display = 'block';
-  } else {
-    customInp.style.display = 'none';
-  }
-  const fps = getFps();
-  videoState.fps = fps;
-  const ms = (1000 / fps).toFixed(2);
-  const el = document.getElementById('frame-duration-display');
-  if (el) el.textContent = ms + ' ms';
-  // Recalculate if markers already set
-  if (videoState.takeoffTime !== null && videoState.landingTime !== null) {
-    calcVideoJump();
-  }
-}
-
-function loadVideo(input) {
-  if (!input.files.length) return;
-  const file = input.files[0];
-  const url = URL.createObjectURL(file);
-  const video = document.getElementById('video-player');
-  const wrap = document.getElementById('video-player-wrap');
-  const uploadArea = document.getElementById('video-upload-area');
-  video.src = url;
-  video.load();
-  wrap.style.display = 'block';
-  uploadArea.style.display = 'none';
-  video.addEventListener('loadedmetadata', () => {
-    videoState.duration = video.duration;
-    document.getElementById('vid-time-tot').textContent = video.duration.toFixed(3) + 's';
-    const totalFrames = Math.floor(video.duration * getFps());
-    document.getElementById('vid-frame-tot').textContent = totalFrames;
-    updateVideoUI();
-  });
-  video.addEventListener('timeupdate', updateVideoUI);
-}
-
-function handleVideoDrop(e) {
-  e.preventDefault();
-  const file = e.dataTransfer.files[0];
-  if (!file || !file.type.startsWith('video/')) return;
-  const input = document.getElementById('video-file-inp');
-  const dt = new DataTransfer();
-  dt.items.add(file);
-  input.files = dt.files;
-  loadVideo(input);
-}
-
-function updateVideoUI() {
-  const video = document.getElementById('video-player');
-  if (!video) return;
-  const fps = getFps();
-  const currentFrame = Math.round(video.currentTime * fps);
-  const totalFrames = Math.floor(video.duration * fps);
-  document.getElementById('vid-frame-num').textContent = currentFrame;
-  document.getElementById('vid-time-cur').textContent = video.currentTime.toFixed(3) + 's';
-  const scrubber = document.getElementById('video-scrubber');
-  if (scrubber && video.duration) {
-    scrubber.value = Math.round((video.currentTime / video.duration) * 1000);
-  }
-  // Update marker bars
-  if (videoState.takeoffTime !== null && video.duration) {
-    const pct = (videoState.takeoffTime / video.duration * 100).toFixed(2);
-    const bar = document.getElementById('bar-takeoff');
-    if (bar) { bar.style.left = pct + '%'; bar.style.display = 'block'; }
-  }
-  if (videoState.landingTime !== null && video.duration) {
-    const pct = (videoState.landingTime / video.duration * 100).toFixed(2);
-    const bar = document.getElementById('bar-landing');
-    if (bar) { bar.style.left = pct + '%'; bar.style.display = 'block'; }
-  }
-}
-
-function jumpFrames(n) {
-  const video = document.getElementById('video-player');
-  if (!video) return;
-  video.pause();
-  document.getElementById('play-btn').textContent = '▶';
-  const fps = getFps();
-  const frameDuration = 1 / fps;
-  let newTime = video.currentTime + n * frameDuration;
-  newTime = Math.max(0, Math.min(video.duration, newTime));
-  video.currentTime = newTime;
-  setTimeout(updateVideoUI, 50);
-}
-
-function scrubVideo(val) {
-  const video = document.getElementById('video-player');
-  if (!video || !video.duration) return;
-  video.currentTime = (val / 1000) * video.duration;
-}
-
-function togglePlay() {
-  const video = document.getElementById('video-player');
-  const btn = document.getElementById('play-btn');
-  if (!video) return;
-  if (video.paused) { video.play(); btn.textContent = '⏸'; }
-  else { video.pause(); btn.textContent = '▶'; }
-}
-
-function markTakeoff() {
-  const video = document.getElementById('video-player');
-  if (!video || !video.src) { alert('Cargá un video primero'); return; }
-  video.pause();
-  document.getElementById('play-btn').textContent = '▶';
-  videoState.takeoffTime = video.currentTime;
-  const fps = getFps();
-  const frame = Math.round(video.currentTime * fps);
-  document.getElementById('takeoff-frame-display').textContent = video.currentTime.toFixed(3) + 's';
-  document.getElementById('takeoff-time-display').textContent = 'Frame ' + frame;
-  document.getElementById('btn-takeoff').style.background = 'rgba(57,255,122,.15)';
-  document.getElementById('btn-takeoff').style.borderColor = 'rgba(57,255,122,.4)';
-  updateVideoUI();
-  if (videoState.landingTime !== null) calcVideoJump();
-}
-
-function markLanding() {
-  const video = document.getElementById('video-player');
-  if (!video || !video.src) { alert('Cargá un video primero'); return; }
-  if (videoState.takeoffTime === null) { alert('Marcá primero el Despegue'); return; }
-  if (video.currentTime <= videoState.takeoffTime) { alert('El aterrizaje debe ser DESPUÉS del despegue'); return; }
-  video.pause();
-  document.getElementById('play-btn').textContent = '▶';
-  videoState.landingTime = video.currentTime;
-  const fps = getFps();
-  const frame = Math.round(video.currentTime * fps);
-  document.getElementById('landing-frame-display').textContent = video.currentTime.toFixed(3) + 's';
-  document.getElementById('landing-time-display').textContent = 'Frame ' + frame;
-  document.getElementById('btn-landing').style.background = 'rgba(255,59,59,.15)';
-  document.getElementById('btn-landing').style.borderColor = 'rgba(255,59,59,.4)';
-  updateVideoUI();
-  calcVideoJump();
-}
-
-function calcVideoJump() {
-  if (videoState.takeoffTime === null || videoState.landingTime === null) return;
-  const fps = getFps();
-  const t = videoState.landingTime - videoState.takeoffTime; // seconds
-  const tMs = Math.round(t * 1000);
-  const frames = Math.round(t * fps);
-  // h = g * t^2 / 8  (caída libre con tiempo de vuelo completo)
-  const g = 9.81;
-  const hMeters = (g * t * t) / 8;
-  const hCm = hMeters * 100;
-
-  // Status
-  const c = hCm >= 40 ? 'var(--neon)' : hCm >= 30 ? 'var(--amber)' : 'var(--red)';
-  const label = hCm >= 40 ? '🟢 Excelente' : hCm >= 30 ? '🟡 Moderado' : '🔴 Bajo';
-
-  document.getElementById('video-result-card').style.display = 'block';
-  document.getElementById('video-height-display').textContent = hCm.toFixed(1);
-  document.getElementById('video-height-display').style.color = c;
-  document.getElementById('video-height-display').style.textShadow = `0 0 30px ${c}`;
-  document.getElementById('video-flight-ms').textContent = tMs;
-  document.getElementById('video-flight-frames').textContent = frames;
-  document.getElementById('video-fps-used').textContent = fps;
-  const badge = document.getElementById('video-result-badge');
-  badge.textContent = label;
-  badge.className = 'tag ' + (hCm >= 40 ? 'tag-g' : hCm >= 30 ? 'tag-y' : 'tag-r');
-
-  // Compare with manual CMJ if exists
-  if (cur && cur.lastCMJ) {
-    const diff = (hCm - cur.lastCMJ).toFixed(1);
-    const sign = diff >= 0 ? '+' : '';
-    document.getElementById('video-vs-manual').style.display = 'block';
-    document.getElementById('video-vs-cmj').textContent = cur.lastCMJ.toFixed(1) + 'cm (' + sign + diff + 'cm)';
-    document.getElementById('video-vs-cmj').style.color = diff >= 0 ? 'var(--neon)' : 'var(--red)';
-  }
-
-  // Store result for saving
-  videoState.result = { hCm: +hCm.toFixed(1), tMs, frames, fps, takeoff: videoState.takeoffTime, landing: videoState.landingTime };
-}
-
-function clearMarkers() {
-  videoState.takeoffTime = null;
-  videoState.landingTime = null;
-  videoState.result = null;
-  ['takeoff-frame-display','takeoff-time-display'].forEach(id => { const e=document.getElementById(id); if(e) e.textContent='--'; });
-  ['landing-frame-display','landing-time-display'].forEach(id => { const e=document.getElementById(id); if(e) e.textContent='--'; });
-  document.getElementById('btn-takeoff').style.cssText = '';
-  document.getElementById('btn-landing').style.cssText = '';
-  document.getElementById('video-result-card').style.display = 'none';
-  document.getElementById('video-vs-manual').style.display = 'none';
-  ['bar-takeoff','bar-landing'].forEach(id => { const e=document.getElementById(id); if(e) e.style.display='none'; });
-}
-
-function saveVideoSalto() {
-  if (!cur) { alert('Seleccioná un atleta'); return; }
-  if (!videoState.result) { alert('Calculá un salto primero'); return; }
-  const fecha = new Date().toISOString().split('T')[0];
-  if (!cur.evals) cur.evals = {};
-  cur.evals['video_' + fecha + '_' + Date.now()] = {
-    ...videoState.result,
-    fecha,
-    tipo: 'video-salto'
-  };
-  // Also update lastCMJ if higher or not set
-  if (!cur.lastCMJ || videoState.result.hCm > cur.lastCMJ) {
-    cur.lastCMJ = videoState.result.hCm;
-  }
-  atletas = atletas.map(a => a.id === cur.id ? cur : a);
-  saveData();
-  renderProfileHero();
-  showSaveToast();
-}
-
-
-function saveFuncTests() {
-  if (!cur) return;
-  const sts  = +document.getElementById('sts-reps')?.value||null;
-  const uni  = +document.getElementById('unipodal-seg')?.value||null;
-  const tug  = +document.getElementById('tug-seg')?.value||null;
-  const d6m  = +document.getElementById('dist6min-m')?.value||null;
-  if (sts)  cur.sitToStand = sts;
-  if (uni)  cur.unipodal   = uni;
-  if (tug)  cur.tug        = tug;
-  if (d6m)  cur.dist6min   = d6m;
-  atletas = atletas.map(a => a.id === cur.id ? cur : a);
-  saveData();
-  renderRadar();
-}
-
-
-// ========================================================
-//  GONIOMETRO INTERACTIVO
-// ========================================================
-
-let goniometroActivo = false, goniometroCongelado = false;
-let anguloActual = 0, anguloCongelado = 0, goniometroCtx = null;
-let testEnCurso = null, anguloMax = 60, anguloOffset = 0, calibrado = false;
-
-function iniciarGoniometro(testId, testNombre, maxAngulo) {
-  if (!cur) { alert('Selecciona un atleta'); return; }
-  testEnCurso = testId; anguloMax = maxAngulo;
-  document.getElementById('goniometro-title').textContent = 'Goniometro -- ' + testNombre;
-  goniometroActivo = true; goniometroCongelado = false;
-  anguloActual = 0; calibrado = false; anguloOffset = 0;
-  document.getElementById('lectura-actual').textContent = '0.0deg';
-  document.getElementById('lectura-estado').textContent = 'En vivo';
-  document.getElementById('goniometro-angulo').textContent = '0.0';
-  document.getElementById('btn-congelar-gonio').textContent = 'Congelar';
-  document.getElementById('btn-congelar-gonio').className = 'btn btn-outline btn-sm';
-  const canvas = document.getElementById('goniometro-canvas');
-  if (canvas) { goniometroCtx = canvas.getContext('2d'); dibujarGoniometro(0); }
-  actualizarFlecha(0);
-  if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-    document.getElementById('goniometro-estado').textContent = 'Toca para activar sensor';
-    const sheet = document.querySelector('#modal-goniometro .modal-sheet');
-    const handler = () => {
-      DeviceOrientationEvent.requestPermission().then(state => {
-        if (state === 'granted') { window.addEventListener('deviceorientation', manejarOrientacion); document.getElementById('goniometro-estado').textContent = 'Sensor activo'; }
-      }).catch(console.error);
-      sheet.removeEventListener('click', handler);
-    };
-    sheet.addEventListener('click', handler);
-  } else {
-    window.addEventListener('deviceorientation', manejarOrientacion);
-    document.getElementById('goniometro-estado').textContent = 'Sensor activo';
-  }
-  openModal('modal-goniometro');
-}
-
-function manejarOrientacion(event) {
-  if (!goniometroActivo || goniometroCongelado) return;
-  let angulo = event.beta || 0;
-  if (!calibrado) { anguloOffset = angulo; calibrado = true; }
-  angulo = Math.round((angulo - anguloOffset) * 10) / 10;
-  angulo = Math.max(-10, Math.min(anguloMax + 10, angulo));
-  anguloActual = angulo;
-  document.getElementById('goniometro-angulo').textContent = angulo.toFixed(1);
-  document.getElementById('lectura-actual').textContent = angulo.toFixed(1) + 'deg';
-  dibujarGoniometro(angulo);
-  actualizarFlecha(angulo);
-}
-
-function dibujarGoniometro(angulo) {
-  if (!goniometroCtx) return;
-  const canvas = document.getElementById('goniometro-canvas');
-  const ctx = goniometroCtx;
-  const w = canvas.width, h = canvas.height, cx = w/2, cy = h/2, radio = w * 0.38;
-  ctx.clearRect(0, 0, w, h);
-  ctx.beginPath(); ctx.arc(cx, cy, radio, 0, 2 * Math.PI);
-  ctx.strokeStyle = 'rgba(57,255,122,.15)'; ctx.lineWidth = 1; ctx.stroke();
-  if (Math.abs(angulo) > 0) {
-    ctx.beginPath();
-    const startA = -Math.PI / 2;
-    const endA = startA + (angulo * Math.PI / 180);
-    ctx.arc(cx, cy, radio * 0.6, startA, endA);
-    ctx.strokeStyle = '#39FF7A'; ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.stroke();
-  }
-  for (let i = 0; i <= anguloMax; i += 15) {
-    const rad = (i - 90) * Math.PI / 180;
-    const x1 = cx + (radio - 6) * Math.cos(rad), y1 = cy + (radio - 6) * Math.sin(rad);
-    const x2 = cx + radio * Math.cos(rad), y2 = cy + radio * Math.sin(rad);
-    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
-    ctx.strokeStyle = 'rgba(57,255,122,.35)'; ctx.lineWidth = 1; ctx.stroke();
-    if (i % 30 === 0) {
-      ctx.font = '9px monospace'; ctx.fillStyle = 'rgba(57,255,122,.6)'; ctx.textAlign = 'center';
-      ctx.fillText(i + 'deg', cx + (radio + 14) * Math.cos(rad), cy + (radio + 14) * Math.sin(rad) + 3);
-    }
-  }
-  ctx.beginPath(); ctx.arc(cx, cy, 4, 0, 2 * Math.PI); ctx.fillStyle = '#39FF7A'; ctx.fill();
-}
-
-function actualizarFlecha(angulo) {
-  const f = document.getElementById('goniometro-flecha');
-  if (f) f.style.transform = 'translateX(-50%) rotate(' + angulo + 'deg)';
-}
-
-function toggleCongelarGonio() {
-  const btn = document.getElementById('btn-congelar-gonio');
-  if (goniometroCongelado) {
-    goniometroCongelado = false;
-    btn.textContent = 'Congelar'; btn.className = 'btn btn-outline btn-sm';
-    document.getElementById('lectura-estado').textContent = 'En vivo';
-  } else {
-    goniometroCongelado = true; anguloCongelado = anguloActual;
-    btn.textContent = 'Descongelar'; btn.className = 'btn btn-neon btn-sm';
-    document.getElementById('lectura-estado').textContent = 'Congelado ' + anguloCongelado.toFixed(1) + 'deg';
-  }
-}
-
-function reiniciarGoniometro() {
-  goniometroCongelado = false; anguloActual = 0; calibrado = false; anguloOffset = 0;
-  document.getElementById('btn-congelar-gonio').textContent = 'Congelar';
-  document.getElementById('btn-congelar-gonio').className = 'btn btn-outline btn-sm';
-  document.getElementById('lectura-estado').textContent = 'En vivo';
-  document.getElementById('goniometro-angulo').textContent = '0.0';
-  document.getElementById('lectura-actual').textContent = '0.0deg';
-  dibujarGoniometro(0); actualizarFlecha(0);
-}
-
-function confirmarGoniometro() {
-  if (!cur || !testEnCurso) return;
-  const val = Math.abs(goniometroCongelado ? anguloCongelado : anguloActual);
-  const inputMap = {
-    'tobillo-d':'lunge-d','tobillo-i':'lunge-i',
-    'cadera-ri-d':'cad-ri-d','cadera-re-d':'cad-re-d',
-    'cadera-ri-i':'cad-ri-i','cadera-re-i':'cad-re-i',
-    'hombro-ri-d':'hom-ri-d','hombro-re-d':'hom-re-d',
-    'hombro-ri-i':'hom-ri-i','hombro-re-i':'hom-re-i',
-  };
-  const inputId = inputMap[testEnCurso];
-  if (inputId) {
-    const inp = document.getElementById(inputId);
-    if (inp) { inp.value = val.toFixed(1); inp.dispatchEvent(new Event('input')); }
-  }
-  atletas = atletas.map(a => a.id === cur.id ? cur : a);
-  saveData(); detenerGoniometro(); closeModal('modal-goniometro');
-}
-
-function detenerGoniometro() {
-  goniometroActivo = false;
-  window.removeEventListener('deviceorientation', manejarOrientacion);
-}
-
-
-// ========================================================
-//  VMP -- ENCODER DE BARRA POR VIDEO
-//  Tracking semi-automatico de barra desde video lateral
-// ========================================================
-
-const VMP_REFS = {
-  'sentadilla':     { z1: 1.00, z2: 0.75, z3: 0.50, z4: 0.35, label: 'Squat', unit: 'm/s' },
-  'press-banca':    { z1: 0.80, z2: 0.60, z3: 0.40, z4: 0.25, label: 'Press Banca', unit: 'm/s' },
-  'peso-muerto':    { z1: 0.70, z2: 0.50, z3: 0.35, z4: 0.20, label: 'Peso Muerto', unit: 'm/s' },
-  'remo-invertido': { z1: 0.75, z2: 0.55, z3: 0.38, z4: 0.22, label: 'Remo Invertido', unit: 'm/s' }
-};
-
-let vmpState = {
-  tracking: false,
-  calibrating: false,
-  points: [],
-  calPoints: [],
-  scalePxPerCm: null,
-  fps: 60,
-  fase: 'propulsiva',
-  ejercicio: 'sentadilla',
-  carga: null,
-  velocityChart: null,
-  isDragging: false,
-  lastMarker: null,
-  result: null
-};
-
-function loadVMPVideo(input) {
-  if (!input.files.length) return;
-  const url = URL.createObjectURL(input.files[0]);
-  const video = document.getElementById('vmp-video');
-  const wrap  = document.getElementById('vmp-player-wrap');
-  const area  = document.getElementById('vmp-upload-area');
-  video.src = url; video.load();
-  wrap.style.display = 'block'; area.style.display = 'none';
-  video.addEventListener('loadedmetadata', () => {
-    const fps = getVMPFps();
-    const tot = Math.floor(video.duration * fps);
-    document.getElementById('vmp-frame-tot').textContent = tot;
-    document.getElementById('vmp-time-cur').textContent = '0.000s';
-    resizeVMPCanvas();
-    document.getElementById('btn-vmp-start').disabled = false;
-    document.getElementById('vmp-tracking-status').textContent = 'Listo';
-    document.getElementById('vmp-tracking-status').className = 'tag tag-g';
-    updateVMPRefTable();
-  });
-  video.addEventListener('timeupdate', updateVMPFrameInfo);
-}
-
-function resizeVMPCanvas() {
-  const video  = document.getElementById('vmp-video');
-  const canvas = document.getElementById('vmp-canvas');
-  canvas.width  = video.videoWidth  || video.offsetWidth;
-  canvas.height = video.videoHeight || video.offsetHeight;
-  redrawVMPCanvas();
-}
-
-function getVMPFps() {
-  return parseFloat(document.getElementById('vmp-fps')?.value || 60);
-}
-
-function updateVMPFrameInfo() {
-  const video = document.getElementById('vmp-video');
-  const fps   = getVMPFps();
-  const frame = Math.round(video.currentTime * fps);
-  const tot   = Math.floor(video.duration * fps);
-  document.getElementById('vmp-frame-cur').textContent  = frame;
-  document.getElementById('vmp-frame-tot').textContent  = tot;
-  document.getElementById('vmp-time-cur').textContent   = video.currentTime.toFixed(3) + 's';
-  document.getElementById('vmp-points-count').textContent = vmpState.points.length;
-  const scrub = document.getElementById('vmp-scrubber');
-  if (scrub && video.duration) scrub.value = Math.round((video.currentTime / video.duration) * 1000);
-  redrawVMPCanvas();
-}
-
-function vmpJump(n) {
-  const video = document.getElementById('vmp-video');
-  if (!video || !video.src) return;
-  video.pause(); document.getElementById('vmp-play-btn').textContent = '▶';
-  const fps = getVMPFps();
-  video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + n / fps));
-  setTimeout(updateVMPFrameInfo, 50);
-}
-
-function vmpTogglePlay() {
-  const video = document.getElementById('vmp-video');
-  const btn   = document.getElementById('vmp-play-btn');
-  if (!video) return;
-  if (video.paused) { video.play(); btn.textContent = '⏸'; }
-  else { video.pause(); btn.textContent = '▶'; }
-}
-
-function vmpScrub(val) {
-  const video = document.getElementById('vmp-video');
-  if (!video || !video.duration) return;
-  video.currentTime = (val / 1000) * video.duration;
-}
-
-function onVmpConfig() {
-  vmpState.ejercicio = document.getElementById('vmp-ejercicio')?.value || 'sentadilla';
-  vmpState.carga     = parseFloat(document.getElementById('vmp-carga')?.value) || null;
-  updateVMPRefTable();
-}
-
-function setVMPFase(fase) {
-  vmpState.fase = fase;
-  ['prop','exc','todo'].forEach(f => {
-    const btn = document.getElementById('fase-btn-' + f);
-    if (btn) {
-      btn.className = 'btn btn-ghost btn-sm';
-      btn.style.cssText = 'flex:1;font-size:10px';
-    }
-  });
-  const map = { propulsiva:'prop', excentrica:'exc', completo:'todo' };
-  const active = document.getElementById('fase-btn-' + map[fase]);
-  if (active) {
-    active.style.background = 'rgba(57,255,122,.1)';
-    active.style.borderColor = 'rgba(57,255,122,.3)';
-    active.style.color = 'var(--neon)';
-  }
-}
-
-// ── CALIBRACION ──
-function iniciarCalibracion() {
-  const video = document.getElementById('vmp-video');
-  if (!video || !video.src) { alert('Carga un video primero'); return; }
-  vmpState.calibrating = true;
-  vmpState.calPoints = [];
-  const canvas = document.getElementById('vmp-canvas');
-  document.getElementById('vmp-mode-badge').textContent = 'Calibrando -- marca 2 puntos';
-  document.getElementById('vmp-mode-badge').className = 'tag tag-y';
-  document.getElementById('vmp-instructions-body').innerHTML =
-    '<div style="font-size:12px;color:var(--amber);line-height:1.8">' +
-    '<b>Calibracion:</b><br>' +
-    '1. Hace clic en el punto A (ej: placa inferior de la barra)<br>' +
-    '2. Hace clic en el punto B (ej: placa superior, 5cm arriba)<br>' +
-    '3. Ingresa la distancia real entre esos 2 puntos en cm<br>' +
-    '<b style="color:var(--neon)">Tip:</b> Usa las placas del disco como referencia (ej: 45cm de diametro)</div>';
-  canvas.onclick = handleVMPCalibrationClick;
-}
-
-function handleVMPCalibrationClick(e) {
-  const canvas = document.getElementById('vmp-canvas');
-  const video  = document.getElementById('vmp-video');
-  const rect   = canvas.getBoundingClientRect();
-  const scaleX = canvas.width  / rect.width;
-  const scaleY = canvas.height / rect.height;
-  const x = (e.clientX - rect.left) * scaleX;
-  const y = (e.clientY - rect.top)  * scaleY;
-  vmpState.calPoints.push({ x, y });
-  redrawVMPCanvas();
-  if (vmpState.calPoints.length === 2) {
-    const distPx = Math.hypot(
-      vmpState.calPoints[1].x - vmpState.calPoints[0].x,
-      vmpState.calPoints[1].y - vmpState.calPoints[0].y
-    );
-    const cmInput = document.getElementById('vmp-escala-cm');
-    const cm = parseFloat(cmInput?.value) || parseFloat(prompt('Distancia real entre los 2 puntos (cm):', '45') || '0');
-    if (cm > 0) {
-      vmpState.scalePxPerCm = distPx / cm;
-      vmpState.calibrating = false;
-      canvas.onclick = null;
-      document.getElementById('vmp-mode-badge').textContent = 'Calibrado: ' + (distPx/cm).toFixed(1) + ' px/cm';
-      document.getElementById('vmp-mode-badge').className = 'tag tag-g';
-      if (cmInput) cmInput.value = cm;
-      document.getElementById('vmp-instructions-body').innerHTML =
-        '<div style="font-size:12px;color:var(--neon);line-height:1.8">Calibracion lista!<br>' +
-        'Escala: <b>' + vmpState.scalePxPerCm.toFixed(2) + ' px/cm</b><br>' +
-        'Ahora marca el inicio de la fase propulsiva y hace clic en la barra.</div>';
-    } else {
-      vmpState.calPoints = [];
-    }
-  }
-}
-
-// ── TRACKING ──
-function startVMPTracking() {
-  const video = document.getElementById('vmp-video');
-  if (!video || !video.src) { alert('Carga un video primero'); return; }
-  if (!vmpState.scalePxPerCm) {
-    if (!confirm('Sin calibracion la escala sera estimada (menos preciso). Continuar?')) return;
-    vmpState.scalePxPerCm = 5; // fallback: 5px por cm
-  }
-  vmpState.tracking = true;
-  vmpState.points   = [];
-  document.getElementById('btn-vmp-start').disabled = true;
-  document.getElementById('btn-vmp-stop').disabled  = false;
-  document.getElementById('vmp-tracking-status').textContent = 'Tracking activo';
-  document.getElementById('vmp-tracking-status').className   = 'tag tag-r';
-  document.getElementById('vmp-mode-badge').textContent      = 'Hace clic en la barra en cada frame';
-  document.getElementById('vmp-mode-badge').className        = 'tag tag-r';
-  video.pause();
-  const canvas = document.getElementById('vmp-canvas');
-  canvas.onclick     = handleVMPTrackingClick;
-  canvas.onmousedown = handleVMPMouseDown;
-  canvas.onmousemove = handleVMPMouseMove;
-  canvas.onmouseup   = handleVMPMouseUp;
-  // Touch support
-  canvas.ontouchstart = handleVMPTouchStart;
-  canvas.ontouchmove  = handleVMPTouchMove;
-  canvas.ontouchend   = handleVMPTouchEnd;
-}
-
-function stopVMPTracking() {
-  vmpState.tracking = false;
-  const canvas = document.getElementById('vmp-canvas');
-  canvas.onclick = canvas.onmousedown = canvas.onmousemove =
-  canvas.onmouseup = canvas.ontouchstart = canvas.ontouchmove = canvas.ontouchend = null;
-  document.getElementById('btn-vmp-start').disabled = false;
-  document.getElementById('btn-vmp-stop').disabled  = true;
-  document.getElementById('vmp-tracking-status').textContent = 'Procesando...';
-  calcVMPResult();
-}
-
-function getCanvasPoint(e, canvas) {
-  const rect   = canvas.getBoundingClientRect();
-  const scaleX = canvas.width  / rect.width;
-  const scaleY = canvas.height / rect.height;
-  const src = e.touches ? e.touches[0] : e;
-  return {
-    x: (src.clientX - rect.left) * scaleX,
-    y: (src.clientY - rect.top)  * scaleY
-  };
-}
-
-function handleVMPTrackingClick(e) {
-  if (!vmpState.tracking) return;
-  const canvas = document.getElementById('vmp-canvas');
-  const video  = document.getElementById('vmp-video');
-  const pt = getCanvasPoint(e, canvas);
-  const fps = getVMPFps();
-  vmpState.points.push({ x: pt.x, y: pt.y, t: video.currentTime, frame: Math.round(video.currentTime * fps) });
-  vmpState.lastMarker = { x: pt.x, y: pt.y };
-  updateVMPPointsTable();
-  redrawVMPCanvas();
-  // Auto-advance 1 frame
-  vmpJump(1);
-}
-
-function handleVMPMouseDown(e) {
-  if (!vmpState.tracking || !vmpState.lastMarker) return;
-  vmpState.isDragging = true;
-}
-function handleVMPMouseMove(e) {
-  if (!vmpState.isDragging) return;
-  const canvas = document.getElementById('vmp-canvas');
-  const pt = getCanvasPoint(e, canvas);
-  vmpState.lastMarker = { x: pt.x, y: pt.y };
-  redrawVMPCanvas();
-}
-function handleVMPMouseUp(e) {
-  if (!vmpState.isDragging) return;
-  vmpState.isDragging = false;
-  handleVMPTrackingClick(e);
-}
-function handleVMPTouchStart(e) { e.preventDefault(); handleVMPMouseDown(e); }
-function handleVMPTouchMove(e)  { e.preventDefault(); handleVMPMouseMove(e); }
-function handleVMPTouchEnd(e)   { e.preventDefault(); handleVMPMouseUp(e);   }
-
-function undoLastVMPPoint() {
-  if (vmpState.points.length) vmpState.points.pop();
-  updateVMPPointsTable();
-  redrawVMPCanvas();
-}
-
-function clearVMPTracking() {
-  vmpState.points = []; vmpState.calPoints = [];
-  vmpState.tracking = false; vmpState.calibrating = false;
-  vmpState.scalePxPerCm = null; vmpState.lastMarker = null;
-  vmpState.result = null;
-  document.getElementById('vmp-result-card').style.display = 'none';
-  document.getElementById('btn-vmp-start').disabled = false;
-  document.getElementById('btn-vmp-stop').disabled  = true;
-  document.getElementById('vmp-tracking-status').textContent = 'Limpiado';
-  document.getElementById('vmp-tracking-status').className   = 'tag tag-y';
-  updateVMPPointsTable();
-  redrawVMPCanvas();
-  if (vmpState.velocityChart) { vmpState.velocityChart.destroy(); vmpState.velocityChart = null; }
-}
-
-// ── DIBUJO CANVAS ──
-function redrawVMPCanvas() {
-  const canvas = document.getElementById('vmp-canvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Calibration points
-  vmpState.calPoints.forEach((pt, i) => {
-    ctx.beginPath(); ctx.arc(pt.x, pt.y, 8, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255,176,32,.8)'; ctx.fill();
-    ctx.fillStyle = '#fff'; ctx.font = 'bold 10px monospace';
-    ctx.textAlign = 'center'; ctx.fillText(String.fromCharCode(65+i), pt.x, pt.y + 4);
-  });
-  if (vmpState.calPoints.length === 2) {
-    ctx.beginPath();
-    ctx.moveTo(vmpState.calPoints[0].x, vmpState.calPoints[0].y);
-    ctx.lineTo(vmpState.calPoints[1].x, vmpState.calPoints[1].y);
-    ctx.strokeStyle = 'rgba(255,176,32,.6)'; ctx.lineWidth = 1.5;
-    ctx.setLineDash([4,4]); ctx.stroke(); ctx.setLineDash([]);
-  }
-
-  // Tracking path
-  if (vmpState.points.length > 0) {
-    ctx.beginPath();
-    ctx.moveTo(vmpState.points[0].x, vmpState.points[0].y);
-    vmpState.points.forEach(pt => ctx.lineTo(pt.x, pt.y));
-    ctx.strokeStyle = 'rgba(57,255,122,.5)'; ctx.lineWidth = 2;
-    ctx.setLineDash([]); ctx.stroke();
-    // Dots
-    vmpState.points.forEach((pt, i) => {
-      ctx.beginPath(); ctx.arc(pt.x, pt.y, i === 0 ? 6 : 4, 0, Math.PI * 2);
-      ctx.fillStyle = i === 0 ? '#39FF7A' : 'rgba(57,255,122,.6)'; ctx.fill();
-    });
-    // Last marker highlight
-    if (vmpState.lastMarker) {
-      ctx.beginPath(); ctx.arc(vmpState.lastMarker.x, vmpState.lastMarker.y, 10, 0, Math.PI * 2);
-      ctx.strokeStyle = '#39FF7A'; ctx.lineWidth = 2; ctx.stroke();
-    }
-  }
-}
-
-// ── TABLA DE PUNTOS ──
-function updateVMPPointsTable() {
-  const el = document.getElementById('vmp-points-table');
-  if (!el) return;
-  document.getElementById('vmp-points-count').textContent = vmpState.points.length;
-  if (!vmpState.points.length) {
-    el.innerHTML = '<div style="color:var(--text3);text-align:center;padding:12px">Sin puntos aun</div>';
-    return;
-  }
-  el.innerHTML = '<table style="width:100%;border-collapse:collapse">' +
-    '<tr style="color:var(--text2);border-bottom:1px solid rgba(255,255,255,.05)">' +
-    '<th style="text-align:left;padding:3px 6px">#</th><th>Frame</th><th>Y(px)</th><th>T(s)</th></tr>' +
-    vmpState.points.slice(-8).map((pt, i, arr) => {
-      const idx = vmpState.points.length - arr.length + i;
-      return '<tr style="border-bottom:1px solid rgba(255,255,255,.03)">' +
-        '<td style="padding:3px 6px;color:var(--text2)">' + (idx+1) + '</td>' +
-        '<td style="text-align:center;color:var(--neon)">' + pt.frame + '</td>' +
-        '<td style="text-align:center;color:var(--amber)">' + Math.round(pt.y) + '</td>' +
-        '<td style="text-align:center;color:var(--text2)">' + pt.t.toFixed(3) + '</td></tr>';
-    }).join('') + '</table>';
-}
-
-// ── CALCULO VMP ──
-function calcVMPResult() {
-  const pts = vmpState.points;
-  if (pts.length < 2) {
-    alert('Necesitas al menos 2 puntos para calcular la VMP');
-    document.getElementById('vmp-tracking-status').textContent = 'Pocos puntos';
-    document.getElementById('vmp-tracking-status').className = 'tag tag-r';
-    return;
-  }
-
-  const scale = vmpState.scalePxPerCm || 5; // px/cm
-  const velocities = [];
-  const times = [];
-
-  for (let i = 1; i < pts.length; i++) {
-    const dy  = (pts[i-1].y - pts[i].y) / scale; // cm -- invertido (Y crece hacia abajo)
-    const dt  = pts[i].t - pts[i-1].t;            // segundos
-    if (dt > 0) {
-      const v = (dy / 100) / dt; // m/s (convertir cm a m)
-      velocities.push(v);
-      times.push(pts[i].t);
-    }
-  }
-
-  // Filtrar solo velocidades positivas (fase propulsiva) si corresponde
-  let filteredVel = velocities;
-  if (vmpState.fase === 'propulsiva') {
-    filteredVel = velocities.filter(v => v > 0.05);
-  }
-  if (!filteredVel.length) filteredVel = velocities;
-
-  const vmp   = filteredVel.reduce((a,b) => a+b, 0) / filteredVel.length;
-  const vpico = Math.max(...velocities);
-  const romPx = Math.abs(pts[pts.length-1].y - pts[0].y);
-  const romCm = romPx / scale;
-  const tMs   = Math.round((pts[pts.length-1].t - pts[0].t) * 1000);
-
-  vmpState.result = {
-    vmp:   +vmp.toFixed(3),
-    vpico: +vpico.toFixed(3),
-    romCm: +romCm.toFixed(1),
-    tMs,
-    ejercicio: vmpState.ejercicio,
-    carga: vmpState.carga,
-    velocities,
-    times,
-    fecha: new Date().toISOString().split('T')[0]
-  };
-
-  // Mostrar resultados
-  const ref  = VMP_REFS[vmpState.ejercicio] || VMP_REFS['sentadilla'];
-  const zona = vmp >= ref.z1 ? { label:'Alta velocidad (> 1RM estimado)', c:'var(--neon)' }
-             : vmp >= ref.z2 ? { label:'Potencia-velocidad', c:'var(--blue)' }
-             : vmp >= ref.z3 ? { label:'Potencia-fuerza', c:'var(--amber)' }
-             : vmp >= ref.z4 ? { label:'Fuerza-velocidad', c:'var(--red)' }
-             : { label:'Zona de fuerza maxima', c:'var(--red)' };
-
-  document.getElementById('vmp-result-card').style.display = 'block';
-  document.getElementById('vmp-result-vmp').textContent    = vmp.toFixed(2);
-  document.getElementById('vmp-result-vmp').style.color    = zona.c;
-  document.getElementById('vmp-result-vpico').textContent  = vpico.toFixed(2);
-  document.getElementById('vmp-result-rom').textContent    = romCm.toFixed(0);
-  document.getElementById('vmp-result-tiempo').textContent = tMs;
-  document.getElementById('vmp-result-badge').textContent  = zona.label;
-  document.getElementById('vmp-result-badge').style.background = zona.c + '22';
-  document.getElementById('vmp-result-badge').style.color      = zona.c;
-
-  document.getElementById('vmp-tracking-status').textContent = 'Calculado!';
-  document.getElementById('vmp-tracking-status').className   = 'tag tag-g';
-
-  // Preview F-V integration
-  if (vmpState.carga) {
-    document.getElementById('vmp-fv-preview').innerHTML =
-      '<b style="color:var(--neon)">' + vmpState.carga + ' kg</b> @ ' +
-      '<b style="color:var(--neon)">' + vmp.toFixed(2) + ' m/s</b>' +
-      ' -- Punto F-V listo para agregar al perfil';
-  }
-
-  // Ref compare
-  document.getElementById('vmp-ref-compare').innerHTML =
-    '<div style="font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;margin-bottom:4px">' +
-    'Zonas de entrenamiento -- ' + ref.label + '</div>' +
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:10px">' +
-    '<span style="color:var(--neon)">Alta vel: > ' + ref.z1 + ' m/s</span>' +
-    '<span style="color:var(--blue)">Pot-vel: > ' + ref.z2 + ' m/s</span>' +
-    '<span style="color:var(--amber)">Pot-fza: > ' + ref.z3 + ' m/s</span>' +
-    '<span style="color:var(--red)">Fza-vel: > ' + ref.z4 + ' m/s</span>' +
-    '</div>';
-
-  renderVMPVelocityChart(times, velocities);
-}
-
-// ── GRAFICO VELOCIDAD ──
-function renderVMPVelocityChart(times, velocities) {
-  const ctx = document.getElementById('vmp-velocity-chart');
-  if (!ctx) return;
-  if (vmpState.velocityChart) vmpState.velocityChart.destroy();
-  vmpState.velocityChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: times.map(t => t.toFixed(2) + 's'),
-      datasets: [{
-        label: 'Velocidad (m/s)',
-        data: velocities,
-        borderColor: '#39FF7A',
-        backgroundColor: 'rgba(57,255,122,.08)',
-        borderWidth: 2,
-        pointRadius: 4,
-        pointBackgroundColor: '#39FF7A',
-        fill: true,
-        tension: 0.3
-      }]
-    },
-    options: {
-      responsive: true,
-      animation: { duration: 400 },
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#555', font: { size: 9 } } },
-        y: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#555', font: { size: 9 } },
-             beginAtZero: false }
-      }
-    }
-  });
-}
-
-// ── TABLA DE REFERENCIAS ──
-function updateVMPRefTable() {
-  const el  = document.getElementById('vmp-ref-table');
-  if (!el) return;
-  const ej  = document.getElementById('vmp-ejercicio')?.value || 'sentadilla';
-  const ref = VMP_REFS[ej] || VMP_REFS['sentadilla'];
-  el.innerHTML =
-    '<div style="font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;margin-bottom:8px">' + ref.label + '</div>' +
-    '<table style="width:100%;font-size:11px;border-collapse:collapse">' +
-    '<tr><td style="color:var(--neon);padding:3px 0">Alta velocidad</td><td style="text-align:right;font-family:var(--mono)">> ' + ref.z1 + ' m/s</td><td style="padding-left:8px;font-size:9px;color:var(--text2)">~10-30% 1RM</td></tr>' +
-    '<tr><td style="color:var(--blue);padding:3px 0">Potencia-vel</td><td style="text-align:right;font-family:var(--mono)">' + ref.z2 + '-' + ref.z1 + ' m/s</td><td style="padding-left:8px;font-size:9px;color:var(--text2)">~30-50% 1RM</td></tr>' +
-    '<tr><td style="color:var(--amber);padding:3px 0">Potencia-fza</td><td style="text-align:right;font-family:var(--mono)">' + ref.z3 + '-' + ref.z2 + ' m/s</td><td style="padding-left:8px;font-size:9px;color:var(--text2)">~50-70% 1RM</td></tr>' +
-    '<tr><td style="color:var(--red);padding:3px 0">Fuerza-vel</td><td style="text-align:right;font-family:var(--mono)">' + ref.z4 + '-' + ref.z3 + ' m/s</td><td style="padding-left:8px;font-size:9px;color:var(--text2)">~70-85% 1RM</td></tr>' +
-    '<tr><td style="color:#cc4444;padding:3px 0">Fuerza max</td><td style="text-align:right;font-family:var(--mono)">< ' + ref.z4 + ' m/s</td><td style="padding-left:8px;font-size:9px;color:var(--text2)">>85% 1RM</td></tr>' +
-    '</table>';
-}
-
-// ── GUARDAR EN F-V ──
-function saveVMPResult() {
-  if (!cur) { alert('Selecciona un atleta'); return; }
-  if (!vmpState.result) { alert('Calcula la VMP primero'); return; }
-  const r  = vmpState.result;
-  const ej = r.ejercicio || 'sentadilla';
-  const fecha = r.fecha || new Date().toISOString().split('T')[0];
-  if (!cur.evals) cur.evals = {};
-  const key = 'vmp_' + ej + '_' + Date.now();
-  cur.evals[key] = {
-    tipo: 'vmp-video',
-    ejercicio: ej,
-    carga: r.carga,
-    vmp: r.vmp,
-    vpico: r.vpico,
-    romCm: r.romCm,
-    tMs: r.tMs,
-    fecha
-  };
-  // Tambien actualizar lastFV si hay carga para integrar al perfil
-  if (r.carga && r.vmp) {
-    if (!cur.lastFV) cur.lastFV = {};
-    if (!cur.lastFV.vmpPoints) cur.lastFV.vmpPoints = [];
-    cur.lastFV.vmpPoints.push({ carga: r.carga, vmp: r.vmp, ej });
-    cur.lastFV.ultimoVMP = r.vmp;
-  }
-  atletas = atletas.map(a => a.id === cur.id ? cur : a);
-  saveData();
-  showSaveToast();
-  document.getElementById('vmp-fv-preview').innerHTML =
-    '<span style="color:var(--neon)">Guardado en el perfil del atleta!</span>';
-}
-
-
-// ========================================================
-//  VIDEO JUMP MODAL -- Reutilizable para cualquier test
-//  Se invoca con: abrirVideoJump('cmj') -> escribe en cmj-r1
-// ========================================================
-
-let vjState = {
-  targetKey: null,
-  calMode: 'auto',
-  calFactor: null,
-  fpsPreset: null,   // key del test destino (sj, cmj, abk, dj, djb)
-  targetField: null, // id del input destino
-  takeoff: null,
-  landing: null,
-  fps: 60
-};
-
-function abrirVideoJump(key, field) {
-  vjState.targetKey  = key;
-  vjState.targetField = field || (key + '-r1');
-  vjState.takeoff = null;
-  vjState.landing = null;
-  // Reset UI
-  const ids = ['vj-takeoff-disp','vj-landing-disp','vj-result-area'];
-  ids.forEach(id => { const e = document.getElementById(id); if(e) e.innerHTML = ''; });
-  const v = document.getElementById('vj-video');
-  if (v) { v.src = ''; v.load(); }
-  document.getElementById('vj-player-wrap').style.display = 'none';
-  document.getElementById('vj-upload-area').style.display = 'block';
-  document.getElementById('vj-btn-takeoff').style.background = '';
-  document.getElementById('vj-btn-landing').style.background = '';
-  document.getElementById('vj-modal-title').textContent = 'Video Salto -- ' + key.toUpperCase();
-  openModal('modal-vj');
-}
-
-function loadVJVideo(input) {
-  if (!input.files.length) return;
-  const url = URL.createObjectURL(input.files[0]);
-  const v   = document.getElementById('vj-video');
-  v.src = url; v.load();
-  document.getElementById('vj-player-wrap').style.display = 'block';
-  document.getElementById('vj-upload-area').style.display = 'none';
-  v.addEventListener('loadedmetadata', () => {
-    const fps = getVJFps();
-    document.getElementById('vj-frame-tot').textContent = Math.floor(v.duration * fps);
-    updateVJFrameInfo();
-  });
-  v.addEventListener('timeupdate', updateVJFrameInfo);
-}
-
-function getVJFps() {
-  // FPS de grabacion (real)
-  return parseFloat(document.getElementById('vj-fps-grab')?.value || 240);
-}
-
-function getVJFpsRepro() {
-  // FPS de reproduccion del video (normalmente 30)
-  return parseFloat(document.getElementById('vj-fps-repro')?.value || 30);
-}
-
-
-function setVJMode(mode) {
-  document.getElementById('vj-mode-auto').style.display     = mode === 'auto'     ? 'block' : 'none';
-  document.getElementById('vj-mode-calibrar').style.display = mode === 'calibrar' ? 'block' : 'none';
-  document.getElementById('vj-mode-btn-auto').style.background = mode === 'auto' ? 'rgba(57,255,122,.15)' : '';
-  document.getElementById('vj-mode-btn-auto').style.borderColor = mode === 'auto' ? 'rgba(57,255,122,.3)' : '';
-  document.getElementById('vj-mode-btn-auto').style.color = mode === 'auto' ? 'var(--neon)' : '';
-  document.getElementById('vj-mode-btn-cal').style.background = mode === 'calibrar' ? 'rgba(255,176,32,.15)' : '';
-  document.getElementById('vj-mode-btn-cal').style.borderColor = mode === 'calibrar' ? 'rgba(255,176,32,.3)' : '';
-  document.getElementById('vj-mode-btn-cal').style.color = mode === 'calibrar' ? 'var(--amber)' : '';
-  vjState.calMode = mode;
-}
-
-function vjCalibrar() {
-  const hReal  = parseFloat(document.getElementById('vj-cal-altura')?.value) || 0;
-  const tVideo = parseFloat(document.getElementById('vj-cal-tvideo')?.value) || 0;
-  const el     = document.getElementById('vj-cal-result');
-  if (!el) return;
-  if (!hReal || !tVideo) { el.textContent = 'Ingresa los valores para calibrar'; el.style.color = 'var(--text2)'; return; }
-  // From h = g*t²/8 -> t_real = sqrt(8*h/g)
-  const tReal  = Math.sqrt(8 * (hReal/100) / 9.81);
-  const factor = tReal / (tVideo/1000);
-  vjState.calFactor = factor;
-  el.textContent = 'Factor calibrado: ' + factor.toFixed(4) + ' -- t_real = t_video x ' + factor.toFixed(4);
-  el.style.color = 'var(--neon)';
-}
-
-// Presets: { grab, repro, factor, label, tip }
-const VJ_PRESETS = [
-  { id:'n30',  grab:30,  repro:30,  factor:1.0,   label:'30 fps',        tip:'Video normal -- mas preciso' },
-  { id:'n60',  grab:60,  repro:60,  factor:1.0,   label:'60 fps',        tip:'Video normal 60fps' },
-  { id:'s120', grab:120, repro:30,  factor:0.25,  label:'Slow 120fps',   tip:'Slow mo 120fps -- reproduce a 30fps' },
-  { id:'s240', grab:240, repro:30,  factor:0.125, label:'Slow 240fps',   tip:'iPhone Slo-Mo 240fps -- reproduce a 30fps' },
-  { id:'s480', grab:480, repro:30,  factor:0.0625,label:'Slow 480fps',   tip:'Super slow mo 480fps' },
-  { id:'s960', grab:960, repro:30,  factor:0.03125,label:'Slow 960fps',  tip:'Ultra slow mo 960fps' },
-];
-
-function setVJFps(presetId, btn) {
-  const preset = VJ_PRESETS.find(p => p.id === presetId);
-  if (!preset) return;
-  vjState.fpsPreset = preset;
-  document.querySelectorAll('#vj-fps-btns button').forEach(b => {
-    b.className = 'btn btn-ghost btn-sm';
-    b.style.fontSize = '10px';
-  });
-  if (btn) { btn.className = 'btn btn-neon btn-sm'; btn.style.fontSize = '10px'; }
-  const tipEl = document.getElementById('vj-fps-tip');
-  if (tipEl) {
-    tipEl.textContent = preset.tip;
-    tipEl.style.color = preset.factor === 1.0 ? 'var(--neon)' : 'var(--amber)';
-  }
-}
-
-function getVJFps() {
-  return vjState.fpsPreset ? vjState.fpsPreset.grab : 30;
-}
-
-function getVJFpsRepro() {
-  return vjState.fpsPreset ? vjState.fpsPreset.repro : 30;
-}
-
-function getVJSlowFactor() {
-  return vjState.fpsPreset ? vjState.fpsPreset.factor : 1.0;
-}
-
-function vjUpdateFpsInfo() {}
-
-function updateVJFrameInfo() {
-  const v   = document.getElementById('vj-video');
-  if (!v || !v.duration) return;
-  const fps = getVJFps();
-  document.getElementById('vj-frame-cur').textContent = Math.round(v.currentTime * fps);
-  document.getElementById('vj-time-cur').textContent  = v.currentTime.toFixed(3) + 's';
-  const s = document.getElementById('vj-scrubber');
-  if (s) s.value = Math.round((v.currentTime / v.duration) * 1000);
-}
-
-function vjJump(n) {
-  const v = document.getElementById('vj-video');
-  if (!v || !v.src) return;
-  v.pause(); document.getElementById('vj-play-btn').textContent = 'Play';
-  v.currentTime = Math.max(0, Math.min(v.duration, v.currentTime + n / getVJFps()));
-  setTimeout(updateVJFrameInfo, 40);
-}
-
-function vjTogglePlay() {
-  const v   = document.getElementById('vj-video');
-  const btn = document.getElementById('vj-play-btn');
-  if (!v) return;
-  if (v.paused) { v.play(); btn.textContent = 'Pausa'; }
-  else          { v.pause(); btn.textContent = 'Play'; }
-}
-
-function vjScrub(val) {
-  const v = document.getElementById('vj-video');
-  if (!v || !v.duration) return;
-  v.currentTime = (val / 1000) * v.duration;
-}
-
-function vjMarkTakeoff() {
-  const v = document.getElementById('vj-video');
-  if (!v || !v.src) { alert('Carga un video primero'); return; }
-  v.pause(); document.getElementById('vj-play-btn').textContent = 'Play';
-  vjState.takeoff = v.currentTime;
-  const fpsR = getVJFpsRepro();
-  document.getElementById('vj-takeoff-disp').textContent =
-    v.currentTime.toFixed(3) + 's  (frame ' + Math.round(v.currentTime * fpsR) + ')';
-  document.getElementById('vj-btn-takeoff').style.background = 'rgba(57,255,122,.2)';
-  if (vjState.landing !== null) calcVJJump();
-}
-
-function vjMarkLanding() {
-  const v = document.getElementById('vj-video');
-  if (!v || !v.src) { alert('Carga un video primero'); return; }
-  if (vjState.takeoff === null) { alert('Marca primero el Despegue'); return; }
-  if (v.currentTime <= vjState.takeoff) { alert('El aterrizaje debe ser despues del despegue'); return; }
-  v.pause(); document.getElementById('vj-play-btn').textContent = 'Play';
-  vjState.landing = v.currentTime;
-  const fpsR = getVJFpsRepro();
-  document.getElementById('vj-landing-disp').textContent =
-    v.currentTime.toFixed(3) + 's  (frame ' + Math.round(v.currentTime * fpsR) + ')';
-  document.getElementById('vj-btn-landing').style.background = 'rgba(255,59,59,.2)';
-  calcVJJump();
-}
-
-function calcVJJump() {
-  if (vjState.takeoff === null || vjState.landing === null) return;
-  const tVideo  = vjState.landing - vjState.takeoff;
-  const factor  = getVJSlowFactor();
-  const tReal   = tVideo * factor;
-  const fps     = getVJFps();
-  const fpsRep  = getVJFpsRepro();
-  const tMs     = Math.round(tReal * 1000);
-  const hCm     = ((9.81 * tReal * tReal) / 8) * 100;
-  const frames  = Math.round(tVideo * fpsRep);
-  const c = hCm >= 40 ? 'var(--neon)' : hCm >= 30 ? 'var(--amber)' : 'var(--red)';
-  document.getElementById('vj-result-area').innerHTML =
-    '<div style="background:var(--dark4);border-radius:10px;padding:16px;text-align:center;margin-top:12px">' +
-    '<div style="font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;margin-bottom:6px">Altura calculada</div>' +
-    '<div style="font-family:var(--mono);font-size:52px;font-weight:800;color:' + c + ';line-height:1;text-shadow:0 0 20px ' + c + '33">' + hCm.toFixed(1) + '</div>' +
-    '<div style="font-size:13px;color:var(--text2);margin-top:4px">cm</div>' +
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">' +
-    '<div style="background:rgba(57,255,122,.05);border-radius:6px;padding:8px;text-align:center">' +
-    '<div style="font-family:var(--mono);font-size:8px;color:var(--text3);text-transform:uppercase;margin-bottom:2px">Tiempo de vuelo</div>' +
-    '<div style="font-family:var(--mono);font-size:18px;font-weight:800;color:' + c + '">' + tMs + ' ms</div></div>' +
-    '<div style="background:rgba(77,158,255,.05);border-radius:6px;padding:8px;text-align:center">' +
-    '<div style="font-family:var(--mono);font-size:8px;color:var(--text3);text-transform:uppercase;margin-bottom:2px">Frames de vuelo</div>' +
-    '<div style="font-family:var(--mono);font-size:18px;font-weight:800;color:var(--blue)">' + frames + ' @ ' + fps + 'fps</div></div>' +
-    '</div></div>';
-  vjState.resultCm = hCm;
-}
-
-function confirmarVJResult() {
-  if (!vjState.resultCm) { alert('Calcula el salto primero'); return; }
-  const h = +vjState.resultCm.toFixed(1);
-  // Write to the correct input (rep1 or specified field)
-  const inp = document.getElementById(vjState.targetField);
-  if (inp) {
-    inp.value = h;
-    inp.dispatchEvent(new Event('input'));
-  }
-  // Also trigger calcSalto
-  const key = vjState.targetKey;
-  if (key) {
-    // find r2id
-    const r2inp = document.getElementById(key + '-r2');
-    calcSalto(key, key + '-r2');
-  }
-  closeModal('modal-vj');
-  showSaveToast();
-}
-
-function vjClearMarkers() {
-  vjState.takeoff = null; vjState.landing = null; vjState.resultCm = null;
-  document.getElementById('vj-takeoff-disp').textContent = '';
-  document.getElementById('vj-landing-disp').textContent = '';
-  document.getElementById('vj-result-area').innerHTML   = '';
-  document.getElementById('vj-btn-takeoff').style.background = '';
-  document.getElementById('vj-btn-landing').style.background = '';
-}
-
-
-// ========================================================
-//  VALGO DE RODILLA -- Analizador de angulo sobre video
-//  Dos lineas sobre frame congelado -> angulo automatico
-// ========================================================
-
-let valgoState = {
-  fps: 30,
-  color: '#39FF7A',
-  mode: 'linea1',     // 'linea1' | 'linea2'
-  linea1: [],         // max 2 puntos
-  linea2: [],         // max 2 puntos
-  ctx: null,
-  angle: null
-};
-
-function loadValgoVideo(input) {
-  if (!input.files.length) return;
-  const url = URL.createObjectURL(input.files[0]);
-  const v   = document.getElementById('valgo-video');
-  v.src = url; v.load();
-  document.getElementById('valgo-player-wrap').style.display = 'block';
-  document.getElementById('valgo-upload-area').style.display = 'none';
-  v.addEventListener('loadedmetadata', () => {
-    const fps = valgoState.fps;
-    document.getElementById('valgo-frame-tot').textContent = Math.floor(v.duration * fps);
-    updateValgoFrameInfo();
-    initValgoCanvas();
-  });
-  v.addEventListener('timeupdate', updateValgoFrameInfo);
-}
-
-function initValgoCanvas() {
-  const v = document.getElementById('valgo-video');
-  const c = document.getElementById('valgo-canvas');
-  if (!c || !v) return;
-  c.width  = v.videoWidth  || 640;
-  c.height = v.videoHeight || 360;
-  valgoState.ctx = c.getContext('2d');
-  c.onclick     = handleValgoClick;
-  c.ontouchstart = (e) => { e.preventDefault(); handleValgoClick(e.touches[0], c); };
-  redrawValgoCanvas();
-}
-
-function updateValgoFrameInfo() {
-  const v = document.getElementById('valgo-video');
-  if (!v || !v.duration) return;
-  const fps = valgoState.fps;
-  document.getElementById('valgo-frame-cur').textContent = Math.round(v.currentTime * fps);
-  document.getElementById('valgo-time-cur').textContent  = v.currentTime.toFixed(3) + 's';
-  const s = document.getElementById('valgo-scrubber');
-  if (s) s.value = Math.round((v.currentTime / v.duration) * 1000);
-}
-
-function setValgoFps(fps, btn) {
-  valgoState.fps = fps;
-  document.querySelectorAll('#valgo-fps-btns button').forEach(b => b.className = 'btn btn-ghost btn-sm');
-  if (btn) btn.className = 'btn btn-neon btn-sm';
-  document.getElementById('valgo-fps').value = fps;
-}
-
-function valgoJump(n) {
-  const v = document.getElementById('valgo-video');
-  if (!v || !v.src) return;
-  v.pause(); document.getElementById('valgo-play-btn').textContent = 'Play';
-  v.currentTime = Math.max(0, Math.min(v.duration, v.currentTime + n / valgoState.fps));
-  setTimeout(() => { updateValgoFrameInfo(); redrawValgoCanvas(); }, 40);
-}
-
-function valgoTogglePlay() {
-  const v = document.getElementById('valgo-video');
-  const btn = document.getElementById('valgo-play-btn');
-  if (!v) return;
-  if (v.paused) { v.play(); btn.textContent = 'Pausa'; }
-  else          { v.pause(); btn.textContent = 'Play'; redrawValgoCanvas(); }
-}
-
-function valgoScrub(val) {
-  const v = document.getElementById('valgo-video');
-  if (!v || !v.duration) return;
-  v.currentTime = (val / 1000) * v.duration;
-}
-
-function setValgoMode(mode) {
-  valgoState.mode = mode;
-  const b1 = document.getElementById('valgo-btn-linea1');
-  const b2 = document.getElementById('valgo-btn-linea2');
-  if (b1) { b1.className = mode === 'linea1' ? 'btn btn-neon btn-full btn-sm' : 'btn btn-ghost btn-full btn-sm'; b1.style.fontSize = '11px'; }
-  if (b2) { b2.className = mode === 'linea2' ? 'btn btn-neon btn-full btn-sm' : 'btn btn-ghost btn-full btn-sm'; b2.style.fontSize = '11px'; }
-  const info = document.getElementById('valgo-mode-info');
-  if (info) {
-    if (mode === 'linea1') info.textContent = 'Linea 1 activa -- traza el eje del FEMUR. Clic en punto proximal y luego en punto distal (centro de rodilla).';
-    else info.textContent = 'Linea 2 activa -- traza el eje de la TIBIA. Clic en centro de rodilla y luego en punto distal (tobillo).';
-  }
-}
-
-function setValgoColor(color, el) {
-  valgoState.color = color;
-  document.querySelectorAll('[id^="vc-"]').forEach(e => e.style.border = '2px solid transparent');
-  if (el) el.style.border = '2px solid #fff';
-  redrawValgoCanvas();
-}
-
-function handleValgoClick(e) {
-  const canvas = document.getElementById('valgo-canvas');
-  const video  = document.getElementById('valgo-video');
-  if (!canvas || !video) return;
-  // Pause video when user clicks to draw
-  video.pause();
-  document.getElementById('valgo-play-btn').textContent = 'Play';
-  const rect   = canvas.getBoundingClientRect();
-  const scaleX = canvas.width  / rect.width;
-  const scaleY = canvas.height / rect.height;
-  const src = e.touches ? e.touches[0] : e;
-  const x = (src.clientX - rect.left)  * scaleX;
-  const y = (src.clientY - rect.top)   * scaleY;
-  const line = valgoState.mode === 'linea1' ? valgoState.linea1 : valgoState.linea2;
-  if (line.length >= 2) {
-    // Replace the line
-    line.length = 0;
-  }
-  line.push({ x, y });
-  redrawValgoCanvas();
-  if (valgoState.linea1.length === 2 && valgoState.linea2.length === 2) {
-    calcValgoAngle();
-    // Auto-switch mode
-    if (valgoState.mode === 'linea1') setValgoMode('linea2');
-  } else if (valgoState.linea1.length === 1 && valgoState.mode === 'linea1') {
-    // keep mode
-  } else if (valgoState.linea1.length === 2 && valgoState.mode === 'linea1') {
-    setValgoMode('linea2');
-  }
-}
-
-function undoValgoPoint() {
-  if (valgoState.mode === 'linea2' && valgoState.linea2.length > 0) {
-    valgoState.linea2.pop();
-  } else if (valgoState.linea1.length > 0) {
-    valgoState.linea1.pop();
-    setValgoMode('linea1');
-  }
-  redrawValgoCanvas();
-  if (valgoState.linea1.length < 2 || valgoState.linea2.length < 2) {
-    document.getElementById('valgo-result-card').style.display = 'none';
-  }
-}
-
-function clearValgoLines() {
-  valgoState.linea1 = []; valgoState.linea2 = []; valgoState.angle = null;
-  setValgoMode('linea1');
-  redrawValgoCanvas();
-  document.getElementById('valgo-result-card').style.display = 'none';
-}
-
-function redrawValgoCanvas() {
-  const canvas = document.getElementById('valgo-canvas');
-  const video  = document.getElementById('valgo-video');
-  if (!canvas || !video) return;
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  // Draw video frame
-  if (!video.paused || video.currentTime > 0) {
-    try { ctx.drawImage(video, 0, 0, canvas.width, canvas.height); } catch(e) {}
-  }
-  const color = valgoState.color;
-  const lw    = parseInt(document.getElementById('valgo-line-width')?.value || 2);
-
-  // Draw linea1 (Femur) -- solid
-  drawValgoLine(ctx, valgoState.linea1, color, lw, 'FEMUR', [10, 0]);
-
-  // Draw linea2 (Tibia) -- dashed
-  drawValgoLine(ctx, valgoState.linea2, '#4D9EFF', lw, 'TIBIA', [6, 4]);
-
-  // Draw angle arc if both lines complete
-  if (valgoState.linea1.length === 2 && valgoState.linea2.length === 2 && valgoState.angle !== null) {
-    drawValgoAngleArc(ctx);
-  }
-}
-
-function drawValgoLine(ctx, pts, color, lw, label, dash) {
-  if (pts.length === 0) return;
-  ctx.strokeStyle = color;
-  ctx.fillStyle   = color;
-  ctx.lineWidth   = lw;
-  ctx.setLineDash(dash);
-  ctx.lineCap     = 'round';
-  // Draw points
-  pts.forEach((p, i) => {
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, 5 + lw, 0, Math.PI * 2);
-    ctx.fill();
-    // Point label
-    ctx.font = 'bold ' + (10 + lw) + 'px monospace';
-    ctx.fillText(label + (i+1), p.x + 8, p.y - 6);
-  });
-  // Draw line if 2 points
-  if (pts.length === 2) {
-    // Extend line visually
-    const dx = pts[1].x - pts[0].x;
-    const dy = pts[1].y - pts[0].y;
-    const len = Math.sqrt(dx*dx + dy*dy);
-    const ext = 30;
-    const ux = dx/len, uy = dy/len;
-    ctx.beginPath();
-    ctx.moveTo(pts[0].x - ux*ext, pts[0].y - uy*ext);
-    ctx.lineTo(pts[1].x + ux*ext, pts[1].y + uy*ext);
-    ctx.stroke();
-  }
-  ctx.setLineDash([]);
-}
-
-function drawValgoAngleArc(ctx) {
-  // Find intersection point (use linea1[1] = linea2[0] if they share knee point)
-  // Otherwise use midpoint
-  const l1 = valgoState.linea1;
-  const l2 = valgoState.linea2;
-  const kneeX = (l1[1].x + l2[0].x) / 2;
-  const kneeY = (l1[1].y + l2[0].y) / 2;
-  const angle = valgoState.angle;
-  const r = 40;
-  // Draw arc
-  const ang1 = Math.atan2(l1[0].y - kneeY, l1[0].x - kneeX);
-  const ang2 = Math.atan2(l2[1].y - kneeY, l2[1].x - kneeX);
-  const c = angle < 5 ? '#39FF7A' : angle < 10 ? '#FFB020' : '#FF4444';
-  ctx.strokeStyle = c;
-  ctx.lineWidth   = 2;
-  ctx.setLineDash([]);
-  ctx.beginPath();
-  ctx.arc(kneeX, kneeY, r, ang1, ang2);
-  ctx.stroke();
-  // Angle label
-  ctx.fillStyle = c;
-  ctx.font = 'bold 18px monospace';
-  ctx.fillText(angle.toFixed(1) + 'deg', kneeX + r + 6, kneeY + 6);
-}
-
-function calcValgoAngle() {
-  const l1 = valgoState.linea1;
-  const l2 = valgoState.linea2;
-  if (l1.length < 2 || l2.length < 2) return;
-  // Vector of each line
-  const v1x = l1[1].x - l1[0].x, v1y = l1[1].y - l1[0].y;
-  const v2x = l2[1].x - l2[0].x, v2y = l2[1].y - l2[0].y;
-  const dot  = v1x*v2x + v1y*v2y;
-  const mag1 = Math.sqrt(v1x*v1x + v1y*v1y);
-  const mag2 = Math.sqrt(v2x*v2x + v2y*v2y);
-  const cosA = Math.max(-1, Math.min(1, dot / (mag1 * mag2)));
-  const angleDeg = Math.acos(cosA) * (180 / Math.PI);
-  // Valgo angle = deviation from 180 (straight leg)
-  const valgoAngle = Math.abs(180 - angleDeg);
-  valgoState.angle = valgoAngle;
-  // Show result
-  const c = valgoAngle < 5 ? 'var(--neon)' : valgoAngle < 10 ? 'var(--amber)' : 'var(--red)';
-  const label = valgoAngle < 5 ? 'Normal' : valgoAngle < 10 ? 'Valgo leve' : 'Valgo critico';
-  document.getElementById('valgo-result-card').style.display = 'block';
-  document.getElementById('valgo-angle-display').textContent = valgoAngle.toFixed(1);
-  document.getElementById('valgo-angle-display').style.color = c;
-  const badge = document.getElementById('valgo-result-badge');
-  badge.textContent = label;
-  badge.style.background = c.replace('var(', '').replace(')', '') + '22';
-  badge.style.color = c;
-  const interp = document.getElementById('valgo-interp');
-  if (interp) {
-    const test = document.getElementById('valgo-test-type')?.value || 'test';
-    interp.innerHTML =
-      '<div style="font-family:var(--mono);font-size:10px;color:var(--text2);margin-bottom:4px">' + test + '</div>' +
-      (valgoAngle < 5 ? '<span style="color:var(--neon)">Sin valgo dinamico significativo. Patron de movimiento correcto.</span>'
-      : valgoAngle < 10 ? '<span style="color:var(--amber)">Valgo leve detectado. Monitorear y trabajar activacion de gluteo medio.</span>'
-      : '<span style="color:var(--red);font-weight:700">Valgo critico > 10deg. Riesgo aumentado de lesion LCA. Intervenir con ejercicios correctivos.</span>');
-  }
-  redrawValgoCanvas();
-}
-
-function saveValgoResult() {
-  if (!cur || !valgoState.angle) return;
-  const test  = document.getElementById('valgo-test-type')?.value || 'test';
-  const fecha = new Date().toISOString().split('T')[0];
-  if (!cur.evals) cur.evals = {};
-  cur.evals['valgo_' + Date.now()] = {
-    tipo: 'valgo', test, angulo: +valgoState.angle.toFixed(1), fecha
-  };
-  atletas = atletas.map(a => a.id === cur.id ? cur : a);
-  saveData();
-  showSaveToast();
-}
-
-function captureValgoImage() {
-  const canvas = document.getElementById('valgo-canvas');
-  if (!canvas) return;
-  redrawValgoCanvas();
-  const link = document.createElement('a');
-  link.download = 'valgo_' + (cur?.nombre || 'atleta') + '_' + new Date().toISOString().split('T')[0] + '.png';
-  link.href = canvas.toDataURL('image/png');
-  link.click();
-}
-
-
-// ══════════════════════════════════════════════════════
-//  SEGUIMIENTO DE LESION
-// ══════════════════════════════════════════════════════
-
-function setLesEstado(estado) {
-  ['agudo','subagudo','cronico','readap'].forEach(e => {
-    const btn = document.getElementById('les-est-' + e);
-    if (btn) btn.classList.remove('yes');
-  });
-  const btn = document.getElementById('les-est-' + estado);
-  if (btn) btn.classList.add('yes');
-  if (!cur) return;
-  if (!cur.lesionSeguimiento) cur.lesionSeguimiento = {};
-  cur.lesionSeguimiento.estado = estado;
-}
-
-function updateRTSPercent() {
-  const cbs = document.querySelectorAll('.les-rts-cb');
-  const total = cbs.length;
-  const checked = [...cbs].filter(c => c.checked).length;
-  const pct = Math.round(checked / total * 100);
-  const c = pct >= 80 ? 'var(--neon)' : pct >= 50 ? 'var(--amber)' : 'var(--red)';
-  const tag1 = document.getElementById('les-rts-pct');
-  const tag2 = document.getElementById('les-rts-pct2');
-  const bar  = document.getElementById('les-rts-bar');
-  if (tag1) { tag1.textContent = pct + '%'; tag1.style.background = c + '22'; tag1.style.color = c; }
-  if (tag2) tag2.textContent = checked + ' / ' + total;
-  if (bar)  { bar.style.width = pct + '%'; bar.style.background = c; }
-}
-
-function updateLesDias() {
-  const dias    = +document.getElementById('les-dias')?.value    || 0;
-  const diasRTS = +document.getElementById('les-dias-rts')?.value || 0;
-  const display = document.getElementById('les-timeline-display');
-  const bar     = document.getElementById('les-prog-bar');
-  const dot     = document.getElementById('les-prog-dot');
-  const mid     = document.getElementById('les-dias-mid');
-  const rtsLbl  = document.getElementById('les-rts-label');
-  if (!display) return;
-  if (dias > 0 || diasRTS > 0) {
-    display.style.display = 'block';
-    const maxDays = diasRTS || 90;
-    const pct = diasRTS ? Math.min(100, (dias / diasRTS) * 100) : 0;
-    const c = pct >= 80 ? 'var(--neon)' : pct >= 40 ? 'var(--amber)' : 'var(--red)';
-    if (bar) bar.style.width = pct + '%';
-    if (dot) { dot.style.left = 'calc(' + pct + '% - 8px)'; dot.style.background = c; dot.style.boxShadow = '0 0 10px ' + c; }
-    if (mid) mid.textContent = 'Día ' + Math.round(maxDays / 2);
-    if (rtsLbl) rtsLbl.textContent = 'RTS día ' + diasRTS;
-  } else {
-    display.style.display = 'none';
-  }
-}
-
-function saveLesionSeguimiento() {
-  if (!cur) return;
-  const data = {
-    tipo:      document.getElementById('les-tipo')?.value       || '',
-    estructura:document.getElementById('les-estructura')?.value || '',
-    etapa:     document.getElementById('les-etapa')?.value      || '',
-    dias:      +document.getElementById('les-dias')?.value      || 0,
-    diasRTS:   +document.getElementById('les-dias-rts')?.value  || 0,
-    obs:       document.getElementById('les-obs')?.value        || '',
-    rtsChecks: [...document.querySelectorAll('.les-rts-cb')].map(c => c.checked),
-    fecha:     new Date().toISOString().split('T')[0]
-  };
-  // Preserve estado from state
-  const estadoBtn = ['agudo','subagudo','cronico','readap'].find(e =>
-    document.getElementById('les-est-' + e)?.classList.contains('yes')
-  );
-  data.estado = estadoBtn || '';
-  if (!cur.lesionSeguimiento) cur.lesionSeguimiento = {};
-  Object.assign(cur.lesionSeguimiento, data);
-  // Update main lesion field
-  if (data.tipo && data.estructura) cur.lesion = data.tipo + ' — ' + data.estructura;
-}
-
-function restoreLesionSeguimiento() {
-  const d = cur?.lesionSeguimiento;
-  if (!d) return;
-  const fields = ['les-tipo','les-estructura','les-etapa','les-dias','les-dias-rts','les-obs'];
-  const keys   = ['tipo','estructura','etapa','dias','diasRTS','obs'];
-  fields.forEach((id, i) => {
-    const el = document.getElementById(id);
-    if (el && d[keys[i]] !== undefined) el.value = d[keys[i]];
-  });
-  if (d.estado) setLesEstado(d.estado);
-  if (d.rtsChecks) {
-    const cbs = [...document.querySelectorAll('.les-rts-cb')];
-    d.rtsChecks.forEach((v, i) => { if (cbs[i]) cbs[i].checked = v; });
-  }
-  updateRTSPercent();
-  updateLesDias();
-}
-
-// ══════════════════════════════════════════════════════
-//  INIT
-// ══════════════════════════════════════════════════════
-
-document.addEventListener('DOMContentLoaded', () => {
-  renderAtletas();
-  buildSaltosGrid();
-  buildHooperFields();
-  for (let i = 0; i < 5; i++) addFVRow();
-  _lastFvEj = document.getElementById('fv-ej')?.value || null;
-  const today = new Date().toISOString().split('T')[0];
-  ['fv-fecha','saltos-fecha','sprint-fecha','fat-fecha','kine-fecha'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.value = today;
-  });
-  ['g-ld','g-li','g-tcd','g-tci'].forEach(id => drawGauge(id, 0, 0, 100, 'lunge'));
-  // Ctrl+S
-  document.addEventListener('keydown', e => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); if (cur) saveData(); }
-  });
-});
+    <!-- LLI/LLE -->
+    <div id="rtab-lig" style="display:none">
+      <div class="card mb-10">
+        <div class="card-header"><h3>Stress en valgo — LLI</h3><span class="tag tag-r">Estabilidad</span></div>
+        <div class="card-body">
+          <div class="grid-2" style="gap:8px">
+            <div><div class="il mb-4">D (0°)</div><div style="display:flex;gap:6px"><button class="ot-btn" onclick="toggleOT(this,'pos')">+ POS</button><button class="ot-btn" onclick="toggleOT(this,'neg')">– NEG</button></div></div>
+            <div><div class="il mb-4">D (30°)</div><div style="display:flex;gap:6px"><button class="ot-btn" onclick="toggleOT(this,'pos')">+ POS</button><button class="ot-btn" onclick="toggleOT(this,'neg')">– NEG</button></div></div>
+            <div><div class="il mb-4">I (0°)</div><div style="display:flex;gap:6px"><button class="ot-btn" onclick="toggleOT(this,'pos')">+ POS</button><button class="ot-btn" onclick="toggleOT(this,'neg')">– NEG</button></div></div>
+            <div><div class="il mb-4">I (30°)</div><div style="display:flex;gap:6px"><button class="ot-btn" onclick="toggleOT(this,'pos')">+ POS</button><button class="ot-btn" onclick="toggleOT(this,'neg')">– NEG</button></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>Stress en varo — LLE</h3><span class="tag tag-r">Estabilidad</span></div>
+        <div class="card-body">
+          <div class="grid-2" style="gap:8px">
+            <div><div class="il mb-4">D (0°)</div><div style="display:flex;gap:6px"><button class="ot-btn" onclick="toggleOT(this,'pos')">+ POS</button><button class="ot-btn" onclick="toggleOT(this,'neg')">– NEG</button></div></div>
+            <div><div class="il mb-4">D (30°)</div><div style="display:flex;gap:6px"><button class="ot-btn" onclick="toggleOT(this,'pos')">+ POS</button><button class="ot-btn" onclick="toggleOT(this,'neg')">– NEG</button></div></div>
+            <div><div class="il mb-4">I (0°)</div><div style="display:flex;gap:6px"><button class="ot-btn" onclick="toggleOT(this,'pos')">+ POS</button><button class="ot-btn" onclick="toggleOT(this,'neg')">– NEG</button></div></div>
+            <div><div class="il mb-4">I (30°)</div><div style="display:flex;gap:6px"><button class="ot-btn" onclick="toggleOT(this,'pos')">+ POS</button><button class="ot-btn" onclick="toggleOT(this,'neg')">– NEG</button></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Menisco -->
+    <div id="rtab-men" style="display:none">
+      <div id="rodilla-menisco-fields"></div>
+    </div>
+
+    <!-- Escalas rodilla -->
+    <div id="rtab-cuest" style="display:none">
+      <!-- KUJALA -->
+      <div class="card mb-10" style="border-color:rgba(167,139,250,.2)">
+        <div class="card-header" style="cursor:pointer" onclick="toggleSheetSection('kujala-body')">
+          <h3>Kujala AKP Score</h3><span class="tag" style="background:rgba(167,139,250,.15);color:#A78BFA">0–100 · MCID 8–10</span>
+        </div>
+        <div id="kujala-body" style="display:none">
+          <div class="card-body">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:8px">13 ítems · &lt;82 = sintomático</div>
+            <div class="ig"><label class="il">Puntaje total (0–100)</label>
+              <input class="inp inp-mono" type="number" min="0" max="100" placeholder="0" id="kujala-input"
+                oninput="const v=+this.value;const c=v>=82?'var(--neon)':v>=60?'var(--amber)':'var(--red)';document.getElementById('kujala-total-val').textContent=v;document.getElementById('kujala-total-val').style.color=c">
+              <div style="font-size:10px;color:var(--text3);margin-top:3px">&lt;82 = sintomático · MCID: 8–10 pts</div>
+            </div>
+            <div class="card mt-10" style="border-color:rgba(167,139,250,.3)">
+              <div class="card-body" style="display:flex;justify-content:space-between;align-items:center">
+                <div style="font-size:12px;font-weight:600">Kujala total</div>
+                <div id="kujala-total-val" style="font-family:var(--mono);font-size:28px;font-weight:800;color:var(--neon)">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- VISA-P -->
+      <div class="card mb-10" style="border-color:rgba(167,139,250,.2)">
+        <div class="card-header" style="cursor:pointer" onclick="toggleSheetSection('visap-body')">
+          <h3>VISA-P (tendinopatía rotuliana)</h3><span class="tag" style="background:rgba(167,139,250,.15);color:#A78BFA">0–100 · MCID 13</span>
+        </div>
+        <div id="visap-body" style="display:none">
+          <div class="card-body">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Victorian Institute of Sport Assessment — Patella. 8 ítems. &lt;80 = sintomático. Validado en español.</div>
+            <div id="visap-fields"></div>
+            <div class="card mt-10" style="border-color:rgba(167,139,250,.3)">
+              <div class="card-body" style="display:flex;justify-content:space-between;align-items:center">
+                <div><div style="font-size:12px;font-weight:600">VISA-P total</div><div style="font-size:10px;color:var(--text2)">0 = peor · 100 = asintomático · MCID: 13</div></div>
+                <div id="visap-total" style="font-family:var(--mono);font-size:28px;font-weight:800;color:var(--neon)">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RTP -->
+    <div id="rtab-rtp" style="display:none">
+      <div class="card mb-10" style="border-color:rgba(57,255,122,.2);background:rgba(57,255,122,.03)">
+        <div class="card-header"><h3 style="color:var(--neon)">✅ Return to Play — Criterios</h3></div>
+        <div class="card-body">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Hop Tests LSI: criterio RTP &gt;90% en todos</div>
+          <div id="hop-tests-rtp"></div>
+          <div class="grid-2" style="gap:8px;margin-top:10px">
+            <div class="ig"><label class="il">IKDC (0–100)</label><input class="inp inp-mono" type="number" placeholder="Score"></div>
+            <div class="ig"><label class="il">ACL-RSI (0–100)</label><input class="inp inp-mono" type="number" placeholder="Psico-readiness"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <button class="btn btn-neon btn-full" onclick="saveKlinicalSheet('rodilla');closeModal('sheet-rodilla')">💾 Guardar evaluación rodilla</button>
+  </div>
+</div>
+
+<!-- SHEET: TOBILLO -->
+<div class="modal" id="sheet-tobillo">
+  <div class="modal-sheet" style="max-width:600px">
+    <div class="modal-handle"></div>
+    <div class="flex-b mb-12">
+      <div><div class="modal-title" style="font-size:18px">🦶 Tobillo</div>
+        <div style="font-size:12px;color:var(--text2)">IAC · Lunge · SEBT · CAIT · FAAM · VISA-A</div></div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('sheet-tobillo')">✕</button>
+    </div>
+    <div style="display:flex;gap:3px;background:var(--bg4);border-radius:8px;padding:3px;margin-bottom:16px;overflow-x:auto">
+      <button class="btn btn-neon btn-sm" id="ttab-lig-btn" onclick="showTTab('lig',this)" style="white-space:nowrap;font-size:10px">Ligamentos</button>
+      <button class="btn btn-ghost btn-sm" id="ttab-func-btn" onclick="showTTab('func',this)" style="white-space:nowrap;font-size:10px">Funcional</button>
+      <button class="btn btn-ghost btn-sm" id="ttab-cuest-btn" onclick="showTTab('tcuest',this)" style="white-space:nowrap;font-size:10px">CAIT / FAAM</button>
+      <button class="btn btn-ghost btn-sm" id="ttab-visa-btn" onclick="showTTab('tvisa',this)" style="white-space:nowrap;font-size:10px">VISA-A</button>
+    </div>
+    <!-- Ligamentos -->
+    <div id="ttab-lig">
+      <!-- Lunge -->
+      <div class="card mb-10">
+        <div class="card-header"><h3>Lunge Test — Dorsiflexión</h3><span class="tag tag-b">ROM · &gt;40° verde · 35–40° amarillo · &lt;35° rojo</span></div>
+        <div class="card-body">
+          <div class="grid-2" style="gap:8px">
+            <div class="ig"><label class="il">Derecho (°)</label>
+              <input class="inp inp-mono" type="number" id="tob-lunge-d" placeholder="0" oninput="calcLungeTob()">
+              <div id="tob-lunge-d-sema" style="margin-top:4px;font-size:11px"></div></div>
+            <div class="ig"><label class="il">Izquierdo (°)</label>
+              <input class="inp inp-mono" type="number" id="tob-lunge-i" placeholder="0" oninput="calcLungeTob()">
+              <div id="tob-lunge-i-sema" style="margin-top:4px;font-size:11px"></div></div>
+          </div>
+          <div id="tob-lunge-asim" style="font-size:12px;color:var(--text3);margin-top:6px">Asimetría: completá ambos lados</div>
+        </div>
+      </div>
+      <!-- Tests ligamentarios -->
+      <div id="tobillo-lig-fields"></div>
+      <!-- Drop navicular tobillo -->
+      <div class="card mt-10">
+        <div class="card-header"><h3>Drop Navicular</h3><span class="tag tag-b">&gt;10mm = pronación excesiva</span></div>
+        <div class="card-body">
+          <div class="grid-2" style="gap:8px">
+            <div class="ig"><label class="il">Drop D (mm)</label><input class="inp inp-mono" type="number" placeholder="0"></div>
+            <div class="ig"><label class="il">Drop I (mm)</label><input class="inp inp-mono" type="number" placeholder="0"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Funcional -->
+    <div id="ttab-func" style="display:none">
+      <!-- SEBT -->
+      <div class="card mb-10">
+        <div class="card-header"><h3>SEBT — Star Excursion Balance Test</h3><span class="tag tag-b">Funcional</span></div>
+        <div class="card-body">
+          <div class="ig"><label class="il">Largo miembro inferior (cm)</label><input class="inp inp-mono" type="number" id="sebt-llm" placeholder="90"></div>
+          <div id="sebt-sheet-fields"></div>
+        </div>
+      </div>
+      <!-- Balance monopodal -->
+      <div class="card">
+        <div class="card-header"><h3>Balance monopodal</h3></div>
+        <div class="card-body">
+          <div class="grid-2" style="gap:8px">
+            <div class="ig"><label class="il">D ojos abiertos (s)</label><input class="inp inp-mono" type="number" step="0.1" placeholder="0.0"></div>
+            <div class="ig"><label class="il">D ojos cerrados (s)</label><input class="inp inp-mono" type="number" step="0.1" placeholder="0.0"></div>
+            <div class="ig"><label class="il">I ojos abiertos (s)</label><input class="inp inp-mono" type="number" step="0.1" placeholder="0.0"></div>
+            <div class="ig"><label class="il">I ojos cerrados (s)</label><input class="inp inp-mono" type="number" step="0.1" placeholder="0.0"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- CAIT / FAAM -->
+    <div id="ttab-tcuest" style="display:none">
+      <div class="card mb-10" style="border-color:rgba(45,212,191,.2)">
+        <div class="card-header" style="cursor:pointer" onclick="toggleSheetSection('cait-body')">
+          <h3>CAIT</h3><span class="tag" style="background:rgba(45,212,191,.15);color:var(--teal)">0–30 · IAC ≤27</span>
+        </div>
+        <div id="cait-body" style="display:none">
+          <div class="card-body">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Cumberland Ankle Instability Tool · 9 ítems. Versión española SECOT.</div>
+            <div id="cait-sheet-fields"></div>
+            <div class="card mt-10" style="border-color:rgba(45,212,191,.3)">
+              <div class="card-body" style="display:flex;justify-content:space-between;align-items:center">
+                <div><div style="font-size:12px;font-weight:600">CAIT total</div><div style="font-size:10px;color:var(--text2)">IAC: ≤27 pts</div></div>
+                <div><div id="cait-sheet-total" style="font-family:var(--mono);font-size:28px;font-weight:800;color:var(--neon)">—</div>
+                <div id="cait-sheet-interp" style="font-size:10px;text-align:right"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="border-color:rgba(45,212,191,.2)">
+        <div class="card-header" style="cursor:pointer" onclick="toggleSheetSection('faam-body')">
+          <h3>FAAM</h3><span class="tag" style="background:rgba(45,212,191,.15);color:var(--teal)">% función</span>
+        </div>
+        <div id="faam-body" style="display:none">
+          <div class="card-body">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Foot and Ankle Ability Measure · AVD (21 ítems) + Deportiva (8 ítems)</div>
+            <div style="display:flex;gap:4px;background:var(--bg4);border-radius:8px;padding:3px;margin-bottom:12px">
+              <button class="btn btn-neon btn-sm" id="faam-avd-btn" onclick="setFAAMTab2('avd',this)" style="flex:1;font-size:10px">AVD (21)</button>
+              <button class="btn btn-ghost btn-sm" id="faam-dep-btn" onclick="setFAAMTab2('dep',this)" style="flex:1;font-size:10px">Deportiva (8)</button>
+            </div>
+            <div id="faam-avd-sheet"></div>
+            <div id="faam-dep-sheet" style="display:none"></div>
+            <div class="grid-2" style="gap:8px;margin-top:10px">
+              <div class="card" style="border-color:rgba(45,212,191,.3)">
+                <div class="card-body" style="display:flex;justify-content:space-between;align-items:center">
+                  <div><div style="font-size:11px;font-weight:600">FAAM AVD</div><div style="font-size:9px;color:var(--text2)">84 pts máx</div></div>
+                  <div id="faam-avd-sheet-total" style="font-family:var(--mono);font-size:20px;font-weight:800;color:var(--neon)">—</div>
+                </div>
+              </div>
+              <div class="card" style="border-color:rgba(45,212,191,.3)">
+                <div class="card-body" style="display:flex;justify-content:space-between;align-items:center">
+                  <div><div style="font-size:11px;font-weight:600">FAAM Dep.</div><div style="font-size:9px;color:var(--text2)">32 pts máx</div></div>
+                  <div id="faam-dep-sheet-total" style="font-family:var(--mono);font-size:20px;font-weight:800;color:var(--neon)">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- VISA-A -->
+    <div id="ttab-tvisa" style="display:none">
+      <div class="card" style="border-color:rgba(45,212,191,.2)">
+        <div class="card-header"><h3>VISA-A (tendinopatía Aquiles)</h3><span class="tag" style="background:rgba(45,212,191,.15);color:var(--teal)">0–100 · MCID 8</span></div>
+        <div class="card-body">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Victorian Institute of Sport Assessment — Achilles. 8 ítems. 100 = asintomático. &lt;75 = sintomático.</div>
+          <div id="visaa-fields"></div>
+          <div class="card mt-10" style="border-color:rgba(45,212,191,.3)">
+            <div class="card-body" style="display:flex;justify-content:space-between;align-items:center">
+              <div><div style="font-size:12px;font-weight:600">VISA-A total</div><div style="font-size:10px;color:var(--text2)">MCID: 8 pts · &lt;75 = sintomático</div></div>
+              <div id="visaa-total" style="font-family:var(--mono);font-size:28px;font-weight:800;color:var(--neon)">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <button class="btn btn-neon btn-full" onclick="saveKlinicalSheet('tobillo');closeModal('sheet-tobillo')">💾 Guardar evaluación tobillo</button>
+  </div>
+</div>
+
+<!-- SHEET: LUMBAR / LBP -->
+<div class="modal" id="sheet-lbp">
+  <div class="modal-sheet" style="max-width:600px">
+    <div class="modal-handle"></div>
+    <div class="flex-b mb-12">
+      <div><div class="modal-title" style="font-size:18px">🔶 Columna lumbar</div>
+        <div style="font-size:12px;color:var(--text2)">O'Sullivan 2018 · STarT Back · ODI · Tests provocativos</div></div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('sheet-lbp')">✕</button>
+    </div>
+    <div class="card mb-10">
+      <div class="card-header"><h3>Tests provocativos</h3></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
+          <div><div style="font-size:12px;font-weight:600">SLR (Lasègue)</div><div style="font-size:10px;color:var(--text2)">L4-S1 · Positivo &lt;60° · Sn 0.91</div></div>
+          <div style="display:flex;gap:6px"><button class="ot-btn" onclick="toggleOT(this,'pos')">+ POS</button><button class="ot-btn" onclick="toggleOT(this,'neg')">– NEG</button></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
+          <div><div style="font-size:12px;font-weight:600">SLUMP test</div><div style="font-size:10px;color:var(--text2)">Tensión dural / radiculopatía · Sn 0.84</div></div>
+          <div style="display:flex;gap:6px"><button class="ot-btn" onclick="toggleOT(this,'pos')">+ POS</button><button class="ot-btn" onclick="toggleOT(this,'neg')">– NEG</button></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0">
+          <div><div style="font-size:12px;font-weight:600">ASLR</div><div style="font-size:10px;color:var(--text2)">Estabilidad lumbopélvica</div></div>
+          <div style="display:flex;gap:6px"><button class="ot-btn" onclick="toggleOT(this,'pos')">+ POS</button><button class="ot-btn" onclick="toggleOT(this,'neg')">– NEG</button></div>
+        </div>
+      </div>
+    </div>
+    <!-- STarT Back -->
+    <div class="card mb-10" style="border-color:rgba(255,176,32,.2)">
+      <div class="card-header" style="cursor:pointer" onclick="toggleSheetSection('startback-body')">
+        <h3>STarT Back Tool</h3><span class="tag tag-y">Estratificación riesgo</span>
+      </div>
+      <div id="startback-body" style="display:none">
+        <div class="card-body">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:10px">9 ítems — bajo / medio / alto riesgo. Guía intensidad de tratamiento.</div>
+          <div id="startback-sheet-fields"></div>
+          <div class="card mt-10" style="border-color:rgba(255,176,32,.3)">
+            <div class="card-body" style="display:flex;justify-content:space-between;align-items:center">
+              <div style="font-size:12px;font-weight:600">Grupo de riesgo</div>
+              <div id="startback-sheet-result" style="font-family:var(--mono);font-size:16px;font-weight:800;color:var(--amber)">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- ODI -->
+    <div class="card" style="border-color:rgba(167,139,250,.2)">
+      <div class="card-header" style="cursor:pointer" onclick="toggleSheetSection('odi-body')">
+        <h3>Oswestry Disability Index (ODI)</h3><span class="tag" style="background:rgba(167,139,250,.15);color:#A78BFA">0–100% · MCID 10</span>
+      </div>
+      <div id="odi-body" style="display:none">
+        <div class="card-body">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:8px">0–20% mínima · 20–40% moderada · 40–60% grave · &gt;60% muy grave</div>
+          <div class="ig"><label class="il">Score ODI directo (%)</label>
+            <input class="inp inp-mono" type="number" min="0" max="100" placeholder="0–100"
+              oninput="const v=+this.value;const el=document.getElementById('odi-sheet-total');el.textContent=v+'%';el.style.color=v<=20?'var(--neon)':v<=40?'var(--amber)':'var(--red)'">
+            <div style="font-size:10px;color:var(--text3);margin-top:3px">MCID: 10 puntos</div>
+          </div>
+          <div class="card mt-10" style="border-color:rgba(167,139,250,.3)">
+            <div class="card-body" style="display:flex;justify-content:space-between;align-items:center">
+              <div style="font-size:12px;font-weight:600">ODI %</div>
+              <div id="odi-sheet-total" style="font-family:var(--mono);font-size:28px;font-weight:800;color:var(--neon)">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <button class="btn btn-neon btn-full" onclick="saveKlinicalSheet('lbp');closeModal('sheet-lbp')">💾 Guardar evaluación lumbar</button>
+  </div>
+</div>
+
+<!-- SHEET: GROIN PAIN (Doha) -->
+<div class="modal" id="sheet-groin">
+  <div class="modal-sheet" style="max-width:600px">
+    <div class="modal-handle"></div>
+    <div class="flex-b mb-12">
+      <div><div class="modal-title" style="font-size:18px">🔵 Groin Pain</div>
+        <div style="font-size:12px;color:var(--text2)">Consenso Doha 2015 · 5 entidades · Ranking clínico</div></div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('sheet-groin')">✕</button>
+    </div>
+    <div class="card mb-10" style="border-color:rgba(77,158,255,.2);background:rgba(77,158,255,.05)">
+      <div class="card-body" style="font-size:11px;color:var(--text2);line-height:1.7">
+        <strong style="color:var(--blue)">Clasificación Doha:</strong> Clasificar cada entidad como <strong>1° (primaria)</strong> · <strong>2° (secundaria)</strong> · <strong>Ausente</strong>.
+        Confiabilidad perfecta (100%) cuando existe una sola entidad unilateral.
+      </div>
+    </div>
+    <div id="doha-entidades-sheet"></div>
+    <!-- HAGOS -->
+    <div class="card mt-12" style="border-color:rgba(167,139,250,.2)">
+      <div class="card-header" style="cursor:pointer" onclick="toggleSheetSection('hagos-body')">
+        <h3>HAGOS — Copenhagen Hip and Groin Outcome Score</h3><span class="tag" style="background:rgba(167,139,250,.15);color:#A78BFA">6 dominios</span>
+      </div>
+      <div id="hagos-body" style="display:none">
+        <div class="card-body">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:8px">0–100 por dominio · 0 = máximos síntomas</div>
+          <div id="hagos-sheet-fields"></div>
+        </div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <button class="btn btn-neon btn-full" onclick="saveKlinicalSheet('groin');closeModal('sheet-groin')">💾 Guardar evaluación</button>
+  </div>
+</div>
+
+</body>
+</html>
