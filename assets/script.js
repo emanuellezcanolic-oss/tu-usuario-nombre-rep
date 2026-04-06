@@ -5156,16 +5156,7 @@ async function generarInformePersonalizado() {
   }
   
   const contenido = construirInformeTexto(datosPrevios);
-  function obtenerDatosPorFecha(fecha) {
-  if (!cur || !cur.evalsByDate || !cur.evalsByDate[fecha]) return null;
-  const data = cur.evalsByDate[fecha];
-  return {
-    fecha,
-    saltos: data.saltos || null,
-    movilidad: data.movilidad || null,
-    fuerza: Object.values(cur.evals || {}).find(e => e.fecha === fecha && (e.ejercicio || e.oneRM)) || null
-  };
-}
+  
   // Crear un modal simple para mostrar el resultado
   const modal = document.createElement('div');
   modal.id = 'modal-informe-resultado';
@@ -5203,7 +5194,8 @@ async function generarInformePersonalizado() {
   });
   
   document.getElementById('exportar-pdf-resultado')?.addEventListener('click', () => {
-    exportarPDFPersonalizado(contenido);
+    const texto = document.getElementById('informe-resultado-text')?.value;
+    exportarPDFPersonalizado(texto);
   });
   
   modal.addEventListener('click', (e) => {
@@ -5735,7 +5727,91 @@ function exportarPDFAvanzado() {
   
   doc.save(`MoveMetrics_${s?.nombre?.replace(/\s/g, '_') || 'informe'}_${new Date().toISOString().split('T')[0]}.pdf`);
 }
-
+function exportarPDFPersonalizado(texto) {
+  const { jsPDF } = window.jspdf;
+  if (!jsPDF) { alert('Error al cargar jsPDF'); return; }
+  
+  const s = cur;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  
+  doc.setFillColor(0, 0, 0);
+  doc.rect(0, 0, 210, 297, 'F');
+  
+  doc.setFillColor(8, 8, 8);
+  doc.rect(0, 0, 210, 44, 'F');
+  doc.setDrawColor(57, 255, 122);
+  doc.setLineWidth(0.4);
+  doc.line(0, 44, 210, 44);
+  
+  doc.setTextColor(57, 255, 122);
+  doc.setFontSize(18);
+  doc.setFont('courier', 'bold');
+  doc.text('MOVEMETRICS', 14, 20);
+  
+  doc.setTextColor(100, 100, 100);
+  doc.setFontSize(7);
+  doc.setFont('courier', 'normal');
+  doc.text('INFORME PERSONALIZADO', 14, 27);
+  doc.text(`Audiencia: ${informeConfig.audiencia === 'paciente' ? 'Deportista' : informeConfig.audiencia === 'medico' ? 'Médico' : 'Entrenador'}`, 14, 33);
+  
+  doc.setTextColor(120, 120, 120);
+  doc.setFontSize(8);
+  doc.text(s?.nombre || 'Atleta', 196, 18, { align: 'right' });
+  doc.text(new Date().toLocaleDateString('es-AR'), 196, 24, { align: 'right' });
+  
+  const lines = doc.splitTextToSize(texto, 182);
+  let y = 58;
+  
+  for (const line of lines) {
+    if (y > 275) {
+      doc.addPage();
+      doc.setFillColor(0, 0, 0);
+      doc.rect(0, 0, 210, 297, 'F');
+      y = 20;
+    }
+    
+    if (line.startsWith('# ')) {
+      doc.setFont('courier', 'bold');
+      doc.setFontSize(14);
+      doc.setTextColor(57, 255, 122);
+      y += 4;
+    } else if (line.startsWith('## ')) {
+      doc.setFont('courier', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(77, 158, 255);
+      y += 3;
+    } else if (line.startsWith('### ')) {
+      doc.setFont('courier', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(255, 176, 32);
+      y += 2;
+    } else {
+      doc.setFont('courier', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(200, 200, 200);
+    }
+    
+    doc.text(line, 14, y);
+    y += (line.startsWith('#') ? 7 : line.startsWith('##') ? 6 : line.startsWith('###') ? 5 : 4.5);
+  }
+  
+  const total = doc.getNumberOfPages();
+  for (let i = 1; i <= total; i++) {
+    doc.setPage(i);
+    doc.setFillColor(6, 6, 6);
+    doc.rect(0, 286, 210, 11, 'F');
+    doc.setDrawColor(57, 255, 122);
+    doc.setLineWidth(0.2);
+    doc.line(0, 286, 210, 286);
+    doc.setTextColor(50, 50, 50);
+    doc.setFontSize(7);
+    doc.setFont('courier', 'normal');
+    doc.text('MOVEMETRICS v12 · INFORME PERSONALIZADO', 14, 292);
+    doc.text(`${i} / ${total}`, 196, 292, { align: 'right' });
+  }
+  
+  doc.save(`MoveMetrics_${s?.nombre?.replace(/\s/g, '_') || 'informe'}_${new Date().toISOString().split('T')[0]}.pdf`);
+}
 // ========================================================
 // INTEGRACIÓN CON EL SISTEMA EXISTENTE
 // ========================================================
