@@ -1,0 +1,155 @@
+/* MoveMetrics — dashboard.css */
+
+/* ─── KPI ─── */
+.kpi {
+  background: #1a1a1a; border: none;
+  border-radius: 14px; padding: 16px 18px;
+  box-shadow: var(--nm-raised);
+  transition: box-shadow .3s;
+}
+.kpi:hover { box-shadow: var(--nm-raised-lg); }
+.kpi-label {
+  font-family: var(--mono); font-size: 9px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .14em;
+  color: var(--white20); margin-bottom: 8px;
+}
+.kpi-val {
+  font-family: var(--display); font-size: 36px; font-weight: 400;
+  color: var(--neon); line-height: 1; letter-spacing: .02em;
+}
+.kpi-sub { font-size: 10px; color: var(--white20); margin-top: 5px; font-family: var(--mono); }
+.kpi-green { border-color: var(--neon15); }
+.kpi-red   { border-color: rgba(255,59,59,.25); }
+.kpi-amber { border-color: rgba(255,176,32,.25); }
+
+/* ─── INPUTS ─── */
+.ig { margin-bottom: 14px; }
+.il {
+  font-family: var(--mono); font-size: 9px; font-weight: 700;
+  color: var(--white20); text-transform: uppercase;
+  letter-spacing: .12em; margin-bottom: 6px; display: block;
+}
+.inp {
+  width: 100%; background: #1a1a1a;
+
+/* ─── PROFILE HERO ─── */
+.profile-hero {
+  background: #1c1c1c;
+  border: none;
+  border-radius: 20px; padding: 24px;
+  margin-bottom: 22px; position: relative; overflow: hidden;
+  box-shadow: var(--nm-raised-lg);
+}
+.profile-hero::before {
+  content: '';
+  position: absolute; top: -60px; right: -60px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, var(--neon15) 0%, transparent 70%);
+  pointer-events: none;
+}
+.profile-av {
+  width: 56px; height: 56px; border-radius: 14px;
+  background: var(--neon08); border: 1px solid var(--neon15);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--display); font-size: 22px; color: var(--neon);
+  flex-shrink: 0; overflow: hidden; cursor: pointer; position: relative;
+}
+.profile-av img { width: 100%; height: 100%; object-fit: cover; border-radius: 14px; }
+.profile-av-edit {
+  position: absolute; bottom: 0; right: 0;
+  width: 18px; height: 18px; background: var(--neon); color: var(--black);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 9px; cursor: pointer;
+}
+
+/* ─── PROFILE TABS ─── */
+.profile-tabs {
+  display: flex; gap: 2px;
+  background: #1a1a1a; border-radius: 12px;
+  padding: 4px; margin-bottom: 22px;
+  border: none;
+  box-shadow: var(--nm-inset);
+  overflow-x: auto; scrollbar-width: none;
+}
+.profile-tabs::-webkit-scrollbar { display: none; }
+.ptab {
+  flex-shrink: 0; padding: 8px 12px; border-radius: 6px;
+  font-size: 10px; font-weight: 700; cursor: pointer;
+  color: var(--white20); transition: all .2s;
+  border: none; background: none;
+  letter-spacing: .06em; text-transform: uppercase;
+  white-space: nowrap; font-family: var(--mono);
+}
+.ptab.active {
+  background: #1c1c1c; color: var(--white);
+  border: none;
+  box-shadow: var(--nm-raised);
+}
+.ptab:hover:not(.active) { color: var(--white50); }
+.ptab.kine-active { color: var(--red) !important; }
+
+/* ─── TIMELINE ─── */
+.tl-wrap { padding-left: 18px; }
+.tl-item {
+  position: relative; padding-left: 22px;
+  padding-bottom: 24px; border-left: 1px solid var(--white05);
+}
+.tl-item:last-child { border-left: 1px solid transparent; padding-bottom: 0; }
+.tl-dot {
+  position: absolute; left: -5px; top: 4px;
+  width: 8px; height: 8px; border-radius: 50%;
+}
+.dot-g { background: var(--neon);   box-shadow: 0 0 10px var(--neon); }
+.dot-r { background: var(--red);    box-shadow: 0 0 10px var(--red); }
+.dot-y { background: var(--amber);  box-shadow: 0 0 10px var(--amber); }
+.dot-b { background: var(--blue);   box-shadow: 0 0 10px var(--blue); }
+.tl-date  { font-family: var(--mono); font-size: 9px; color: var(--white20); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 3px; }
+.tl-title { font-size: 13px; font-weight: 600; margin-bottom: 3px; color: var(--white); }
+.tl-body  { font-size: 11px; color: var(--white50); line-height: 1.6; }
+.tl-status {
+  display: inline-block; margin-top: 5px;
+  font-family: var(--mono); font-size: 9px; font-weight: 700;
+  padding: 2px 9px; border-radius: 20px; letter-spacing: .06em;
+}
+.tl-s-g { background: var(--neon08); color: var(--neon); }
+.tl-s-r { background: rgba(255,59,59,.1); color: var(--red); }
+.tl-s-y { background: rgba(255,176,32,.1); color: var(--amber); }
+
+/* ─── SEMAFOROS / PROGRESS ─── */
+.sem-bar-wrap { height: 4px; background: #2a2a2a; border-radius: 2px; overflow: hidden; margin: 5px 0; }
+.sem-bar { height: 100%; border-radius: 2px; transition: width .8s cubic-bezier(.4,0,.2,1); }
+.prog-wrap { background: #2a2a2a; border-radius: 2px; height: 4px; overflow: hidden; margin: 4px 0; }
+.prog-bar  { height: 100%; border-radius: 2px; transition: width .8s cubic-bezier(.4,0,.2,1); }
+
+/* ─── IMG SLOTS ─── */
+
+/* ─── FMS CHECKS ─── */
+.fms-check {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 10px 0; border-bottom: 1px solid var(--white05);
+}
+.fms-check:last-child { border-bottom: none; }
+.fms-btns { display: flex; gap: 6px; }
+.fms-btn {
+  padding: 4px 16px; border-radius: 6px;
+  border: 1px solid var(--white10); background: #242424;
+  color: var(--white20); font-size: 11px; font-weight: 700;
+  cursor: pointer; font-family: var(--mono); transition: all .15s;
+  text-transform: uppercase; letter-spacing: .06em;
+}
+.fms-btn.yes { background: var(--neon08); color: var(--neon); border-color: var(--neon40); }
+.fms-btn.no  { background: rgba(255,59,59,.1); color: var(--red); border-color: rgba(255,59,59,.3); }
+
+/* ─── DATA TABLE ─── */
+.data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.data-table th {
+  text-align: left; padding: 8px 12px;
+  font-family: var(--mono); font-size: 9px;
+  text-transform: uppercase; letter-spacing: .12em;
+  color: var(--white20); border-bottom: 1px solid var(--white05);
+}
+.data-table td { padding: 10px 12px; border-bottom: 1px solid var(--white05); }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: #1a1a1a; }
+.mono-cell { font-family: var(--mono); font-weight: 600; }
