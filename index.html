@@ -1648,8 +1648,8 @@
     </div>
   </div>
 
-  <!-- ══ TAB: HISTORIAL ══ -->
-  <div id="ptab-historial" class="hidden">
+ <!-- ══ TAB: HISTORIAL ══ -->
+<div id="ptab-historial" class="hidden">
   <div class="flex-b mb-16">
     <div>
       <div style="font-size:15px;font-weight:700">Historial — Timeline visual</div>
@@ -1657,19 +1657,17 @@
     </div>
     <div class="flex" style="gap:8px">
       <button class="btn btn-neon" onclick="mostrarConfiguracionInforme()">📄 Informe Personalizado</button>
+      <button class="btn btn-neon" onclick="generarInformeProfesional()" style="background: #39FF7A; color:#000">📄 Informe Profesional (con gráficos)</button>
       <button class="btn btn-outline" onclick="exportAllData()">📤 Exportar JSON</button>
     </div>
   </div>
-    <div style="padding:12px 14px;background:linear-gradient(135deg,rgba(57,255,122,.04),rgba(77,158,255,.04));border:1px solid var(--border2);border-radius:var(--r2);margin-bottom:16px;font-size:12px;color:var(--text2)">
-      <b style="color:var(--neon)">📈 Evolución visual del atleta.</b> Los puntos de color muestran el estado en cada fecha registrada.
-    </div>
-    <div class="card">
-      <div class="card-body" id="historial-timeline" style="max-height:600px;overflow-y:auto"></div>
-    </div>
+  <div style="padding:12px 14px;background:linear-gradient(135deg,rgba(57,255,122,.04),rgba(77,158,255,.04));border:1px solid var(--border2);border-radius:var(--r2);margin-bottom:16px;font-size:12px;color:var(--text2)">
+    <b style="color:var(--neon)">📈 Evolución visual del atleta.</b> Los puntos de color muestran el estado en cada fecha registrada.
   </div>
-
-</div><!-- /page-tests -->
-
+  <div class="card">
+    <div class="card-body" id="historial-timeline" style="max-height:600px;overflow-y:auto"></div>
+  </div>
+</div>
 <!-- ────────────────────────────────────────
      PAGE: AJUSTES (VMP + REFERENCIAS)
 ──────────────────────────────────────────── -->
