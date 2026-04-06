@@ -16,10 +16,8 @@ async function generarInformeProfesional() {
   document.body.appendChild(loadingDiv);
 
   try {
-    // Construir el HTML del informe
     const htmlContent = construirHTMLInforme();
     
-    // Crear un iframe oculto para renderizar el HTML
     const iframe = document.createElement('iframe');
     iframe.style.position = 'absolute';
     iframe.style.left = '-9999px';
@@ -132,14 +130,6 @@ async function generarInformeProfesional() {
             font-weight: bold;
             color: #39FF7A;
           }
-          .chart-container {
-            margin: 20px 0;
-            text-align: center;
-          }
-          img {
-            max-width: 100%;
-            height: auto;
-          }
         </style>
       </head>
       <body>
@@ -149,10 +139,8 @@ async function generarInformeProfesional() {
     `);
     iframeDoc.close();
     
-    // Esperar a que cargue todo
     await new Promise(r => setTimeout(r, 500));
     
-    // Capturar el iframe como canvas
     const canvas = await html2canvas(iframe.contentDocument.body, {
       scale: 2,
       backgroundColor: '#0a0a0a',
@@ -160,14 +148,9 @@ async function generarInformeProfesional() {
       useCORS: true
     });
     
-    // Crear PDF
     const { jsPDF } = window.jspdf;
     const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4'
-    });
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const imgWidth = 210;
     const pageHeight = 297;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
@@ -186,7 +169,6 @@ async function generarInformeProfesional() {
     
     pdf.save(`MoveMetrics_${cur.nombre.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
     
-    // Limpiar
     iframe.remove();
     loadingDiv.remove();
     
@@ -201,10 +183,7 @@ function construirHTMLInforme() {
   const s = cur;
   const saltoData = getLastEval('saltos');
   const fvData = s.lastFV;
-  const spData = getLastEval('sprint');
-  const fmsData = getLastEval('fms');
   
-  // Calcular fuerza relativa
   let fuerzaRelativa = '--';
   let nivelFuerza = '';
   if (fvData?.oneRM && s.peso) {
@@ -215,7 +194,6 @@ function construirHTMLInforme() {
     else nivelFuerza = '<span class="badge badge-red">BAJO (Déficit)</span>';
   }
   
-  // Calcular LSI
   let lsi = '--';
   let lsiClass = '';
   if (saltoData?.avg?.shD && saltoData?.avg?.shI) {
@@ -224,7 +202,7 @@ function construirHTMLInforme() {
     lsiClass = lsiVal >= 90 ? 'badge-green' : (lsiVal >= 80 ? 'badge-yellow' : 'badge-red');
   }
   
-  // Obtener puntaje OHS
+  const fmsData = getLastEval('fms');
   const ohsCriterios = fmsData?.ohs?.criterios || [];
   const ohsScore = ohsCriterios.filter(c => c === 'si').length;
   
@@ -236,25 +214,14 @@ function construirHTMLInforme() {
         <p style="font-size:10px">${new Date().toLocaleDateString('es-AR')} · ${s.nombre}</p>
       </div>
       
-      <!-- DATOS DEL ATLETA -->
       <div style="background:#1a1a1a; border-radius:12px; padding:15px; margin-bottom:20px">
         <table style="border:none">
-          <tr style="border:none">
-            <td style="border:none; width:50%"><strong>Nombre:</strong> ${s.nombre}</td>
-            <td style="border:none"><strong>Deporte:</strong> ${s.deporte || '--'}</td>
-          </tr>
-          <tr style="border:none">
-            <td style="border:none"><strong>Edad:</strong> ${s.edad || '--'} años</td>
-            <td style="border:none"><strong>Peso:</strong> ${s.peso || '--'} kg</td>
-          </tr>
-          <tr style="border:none">
-            <td style="border:none"><strong>Nivel:</strong> ${s.nivel || '--'}</td>
-            <td style="border:none"><strong>Objetivo:</strong> ${s.objetivo || '--'}</td>
-          </tr>
+          <tr><td style="border:none"><strong>Nombre:</strong> ${s.nombre}</td><td style="border:none"><strong>Deporte:</strong> ${s.deporte || '--'}</td></tr>
+          <tr><td style="border:none"><strong>Edad:</strong> ${s.edad || '--'} años</td><td style="border:none"><strong>Peso:</strong> ${s.peso || '--'} kg</td></tr>
+          <tr><td style="border:none"><strong>Nivel:</strong> ${s.nivel || '--'}</td><td style="border:none"><strong>Objetivo:</strong> ${s.objetivo || '--'}</td></tr>
         </table>
       </div>
       
-      <!-- KPIs -->
       <div class="kpi-grid">
         <div class="kpi-card">
           <div style="font-size:10px; color:#888">FUERZA RELATIVA</div>
@@ -277,11 +244,9 @@ function construirHTMLInforme() {
         </div>
       </div>
       
-      <!-- CALIDAD DE MOVIMIENTO -->
       <div class="section-title">🎯 CALIDAD DE MOVIMIENTO</div>
       <div style="background:#141414; border-radius:12px; padding:15px">
-        <div style="font-weight:bold; margin-bottom:10px">Sentadilla Overhead (OHS)</div>
-        <div>Puntuación: <strong>${ohsScore}/4 (${(ohsScore/4*100).toFixed(0)}%)</strong></div>
+        <div><strong>Sentadilla Overhead (OHS)</strong> - Puntuación: ${ohsScore}/4 (${(ohsScore/4*100).toFixed(0)}%)</div>
         <table style="margin-top:10px">
           <tr><th>Criterio</th><th>Estado</th></tr>
           <tr><td>Rodillas alineadas con los pies</td><td>${ohsCriterios[0] === 'si' ? '✅ CUMPLE' : '❌ NO CUMPLE'}</td></tr>
@@ -291,27 +256,15 @@ function construirHTMLInforme() {
         </table>
       </div>
       
-      <!-- MOVILIDAD ARTICULAR -->
       <div class="section-title">📐 MOVILIDAD ARTICULAR</div>
       <div style="background:#141414; border-radius:12px; padding:15px">
         <table>
           <tr><th>Prueba</th><th>Derecho</th><th>Izquierdo</th><th>Estado</th></tr>
-          <tr>
-            <td>Lunge Test (tobillo)</td>
-            <td>${s.lungeD || '--'}°</td>
-            <td>${s.lungeI || '--'}°</td>
-            <td>${s.lungeI >= 40 ? '🟢 Óptimo' : (s.lungeI >= 35 ? '🟡 Límite' : '🔴 Déficit')}</td>
-          </tr>
-          <tr>
-            <td>TROM Cadera</td>
-            <td>${s.tromCadD || '--'}°</td>
-            <td>${s.tromCadI || '--'}°</td>
-            <td>${s.tromCadD >= 85 ? '🟢 Óptimo' : (s.tromCadD >= 70 ? '🟡 Límite' : '🔴 Déficit')}</td>
-          </tr>
+          <tr><td>Lunge Test (tobillo)</td><td>${s.lungeD || '--'}°</td><td>${s.lungeI || '--'}°</td><td>${s.lungeI >= 40 ? '🟢 Óptimo' : (s.lungeI >= 35 ? '🟡 Límite' : '🔴 Déficit')}</td></tr>
+          <tr><td>TROM Cadera</td><td>${s.tromCadD || '--'}°</td><td>${s.tromCadI || '--'}°</td><td>${s.tromCadD >= 85 ? '🟢 Óptimo' : (s.tromCadD >= 70 ? '🟡 Límite' : '🔴 Déficit')}</td></tr>
         </table>
       </div>
       
-      <!-- SALTABILIDAD -->
       <div class="section-title">🦘 SALTABILIDAD</div>
       <div style="background:#141414; border-radius:12px; padding:15px">
         <table>
@@ -322,7 +275,6 @@ function construirHTMLInforme() {
         ${saltoData?.avg?.bj && s.peso ? `<div style="margin-top:10px; font-size:11px; color:#888">Unidades de salto (AU): ${((saltoData.avg.bj / 100) * s.peso).toFixed(1)} kg·m</div>` : ''}
       </div>
       
-      <!-- PERFIL DE FUERZA -->
       <div class="section-title">💪 PERFIL DE FUERZA RELATIVA</div>
       <div style="background:#141414; border-radius:12px; padding:15px">
         <div><strong>Ejercicio:</strong> ${fvData?.ejercicio || '--'}</div>
@@ -331,18 +283,16 @@ function construirHTMLInforme() {
         <div style="margin-top:10px">${nivelFuerza}</div>
       </div>
       
-      <!-- PLAN DE ACCIÓN -->
       <div class="section-title">📋 PLAN DE ACCIÓN</div>
       <div style="background:#141414; border-radius:12px; padding:15px">
         <ul style="margin-left:20px; line-height:1.8">
-          ${s.lungeI < 40 ? '<li>🔴 <strong>Movilidad de tobillo:</strong> Realizar dorsiflexiones con banda elástica (diario, 3x30\")</li>' : ''}
+          ${s.lungeI < 40 ? '<li>🔴 <strong>Movilidad de tobillo:</strong> Realizar dorsiflexiones con banda elástica (diario, 3x30")</li>' : ''}
           ${lsiClass === 'badge-red' ? '<li>🔴 <strong>Asimetría funcional:</strong> Trabajo unilateral específico para pierna izquierda (sentadillas búlgaras, split squats)</li>' : ''}
           ${fuerzaRelativa.includes('BAJO') ? '<li>🔴 <strong>Fuerza máxima:</strong> Trabajo de sentadilla con sobrecarga progresiva (3-5 rep al 80-85% 1RM)</li>' : ''}
           ${(s.lungeI >= 40 && lsiClass !== 'badge-red' && !fuerzaRelativa.includes('BAJO')) ? '<li>🟢 Mantener plan actual, enfocarse en técnica y prevención</li>' : ''}
         </ul>
       </div>
       
-      <!-- FOOTER -->
       <div class="footer">
         <p>Informe generado por MoveMetrics v12 · THE MOVE CLUB</p>
         <p>Av. los Arrayanes, Lago Puelo, Chubut, Argentina · @the.move.club</p>
