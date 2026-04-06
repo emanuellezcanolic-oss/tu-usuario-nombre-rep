@@ -5210,67 +5210,126 @@ function exportarPDFPersonalizado(texto) {
   const s = cur;
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   
+  // Fondo negro
   doc.setFillColor(0, 0, 0);
   doc.rect(0, 0, 210, 297, 'F');
   
+  // HEADER con diseño mejorado
   doc.setFillColor(8, 8, 8);
-  doc.rect(0, 0, 210, 44, 'F');
+  doc.rect(0, 0, 210, 48, 'F');
   doc.setDrawColor(57, 255, 122);
-  doc.setLineWidth(0.4);
-  doc.line(0, 44, 210, 44);
+  doc.setLineWidth(0.5);
+  doc.line(0, 48, 210, 48);
   
+  // Logo / Título
   doc.setTextColor(57, 255, 122);
-  doc.setFontSize(18);
-  doc.setFont('courier', 'bold');
-  doc.text('MOVEMETRICS', 14, 20);
+  doc.setFontSize(20);
+  doc.setFont('helvetica', 'bold');
+  doc.text('MOVEMETRICS', 14, 22);
   
   doc.setTextColor(100, 100, 100);
-  doc.setFontSize(7);
-  doc.setFont('courier', 'normal');
-  doc.text('INFORME PERSONALIZADO', 14, 27);
-  doc.text(`Audiencia: ${informeConfig.audiencia === 'paciente' ? 'Deportista' : informeConfig.audiencia === 'medico' ? 'Médico' : 'Entrenador'}`, 14, 33);
-  
-  doc.setTextColor(120, 120, 120);
   doc.setFontSize(8);
-  doc.text(s?.nombre || 'Atleta', 196, 18, { align: 'right' });
-  doc.text(new Date().toLocaleDateString('es-AR'), 196, 24, { align: 'right' });
+  doc.setFont('helvetica', 'normal');
+  doc.text('INFORME DE EVALUACIÓN FUNCIONAL', 14, 32);
+  doc.text(`Audiencia: ${informeConfig.audiencia === 'paciente' ? 'Deportista' : informeConfig.audiencia === 'medico' ? 'Médico' : 'Entrenador'}`, 14, 40);
   
-  const lines = doc.splitTextToSize(texto, 182);
-  let y = 58;
+  // Datos del atleta
+  doc.setTextColor(150, 150, 150);
+  doc.setFontSize(9);
+  doc.text(`${s?.nombre || 'Atleta'} · ${s?.deporte || '--'} · ${s?.edad || '?'} años · ${s?.peso || '?'} kg`, 196, 22, { align: 'right' });
+  doc.text(new Date().toLocaleDateString('es-AR'), 196, 32, { align: 'right' });
+  
+  // ==================== GRÁFICOS ====================
+  let yPos = 60;
+  
+  // Radar Chart
+  const radarCanvas = document.getElementById('radar-chart');
+  if (radarCanvas) {
+    try {
+      const imgData = radarCanvas.toDataURL('image/png');
+      doc.addImage(imgData, 'PNG', 14, yPos, 86, 70);
+      doc.setDrawColor(57, 255, 122);
+      doc.setLineWidth(0.3);
+      doc.rect(14, yPos, 86, 70);
+    } catch(e) { console.log("Error radar:", e); }
+  }
+  
+  // Curva F-V
+  const fvCanvas = document.getElementById('fv-chart') || document.getElementById('dash-fv-chart');
+  if (fvCanvas) {
+    try {
+      const imgData = fvCanvas.toDataURL('image/png');
+      doc.addImage(imgData, 'PNG', 110, yPos, 86, 70);
+      doc.setDrawColor(57, 255, 122);
+      doc.setLineWidth(0.3);
+      doc.rect(110, yPos, 86, 70);
+    } catch(e) { console.log("Error FV:", e); }
+  }
+  
+  yPos += 80;
+  
+  // ==================== CONTENIDO ====================
+  // Limpiar el texto de markdown para que se vea mejor
+  let textoLimpio = texto;
+  // Reemplazar emojis por texto
+  textoLimpio = textoLimpio.replace(/📋/g, '📋 ');
+  textoLimpio = textoLimpio.replace(/🎯/g, '🎯 ');
+  textoLimpio = textoLimpio.replace(/📐/g, '📐 ');
+  textoLimpio = textoLimpio.replace(/🦘/g, '🦘 ');
+  textoLimpio = textoLimpio.replace(/⚖️/g, '⚖️ ');
+  textoLimpio = textoLimpio.replace(/💪/g, '💪 ');
+  textoLimpio = textoLimpio.replace(/📋/g, '📋 ');
+  textoLimpio = textoLimpio.replace(/🔁/g, '🔁 ');
+  
+  // Dividir el texto en líneas
+  const lines = doc.splitTextToSize(textoLimpio, 182);
   
   for (const line of lines) {
-    if (y > 275) {
+    if (yPos > 270) {
       doc.addPage();
       doc.setFillColor(0, 0, 0);
       doc.rect(0, 0, 210, 297, 'F');
-      y = 20;
+      yPos = 20;
     }
     
+    // Estilos según el tipo de línea
     if (line.startsWith('# ')) {
-      doc.setFont('courier', 'bold');
+      doc.setFont('helvetica', 'bold');
       doc.setFontSize(14);
       doc.setTextColor(57, 255, 122);
-      y += 4;
+      yPos += 4;
     } else if (line.startsWith('## ')) {
-      doc.setFont('courier', 'bold');
-      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
       doc.setTextColor(77, 158, 255);
-      y += 3;
+      yPos += 3;
     } else if (line.startsWith('### ')) {
-      doc.setFont('courier', 'bold');
-      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
       doc.setTextColor(255, 176, 32);
-      y += 2;
-    } else {
+      yPos += 2;
+    } else if (line.includes('|') && line.includes('---')) {
+      // Separador de tabla - ignorar
+      continue;
+    } else if (line.includes('|')) {
+      // Línea de tabla - dar formato especial
       doc.setFont('courier', 'normal');
-      doc.setFontSize(8);
+      doc.setFontSize(7.5);
+      doc.setTextColor(180, 180, 180);
+    } else {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
       doc.setTextColor(200, 200, 200);
     }
     
-    doc.text(line, 14, y);
-    y += (line.startsWith('#') ? 7 : line.startsWith('##') ? 6 : line.startsWith('###') ? 5 : 4.5);
+    // Saltar líneas vacías de tablas
+    if (line.trim() === '' || line === '|------|--------|') continue;
+    
+    doc.text(line, 14, yPos);
+    yPos += (line.startsWith('#') ? 7 : line.startsWith('##') ? 6 : line.startsWith('###') ? 5 : 4.5);
   }
   
+  // ==================== FOOTER ====================
   const total = doc.getNumberOfPages();
   for (let i = 1; i <= total; i++) {
     doc.setPage(i);
@@ -5279,16 +5338,15 @@ function exportarPDFPersonalizado(texto) {
     doc.setDrawColor(57, 255, 122);
     doc.setLineWidth(0.2);
     doc.line(0, 286, 210, 286);
-    doc.setTextColor(50, 50, 50);
+    doc.setTextColor(60, 60, 60);
     doc.setFontSize(7);
-    doc.setFont('courier', 'normal');
-    doc.text('MOVEMETRICS v12 · INFORME PERSONALIZADO', 14, 292);
+    doc.setFont('helvetica', 'normal');
+    doc.text('MOVEMETRICS v12 · INFORME PERSONALIZADO · THE MOVE CLUB', 14, 292);
     doc.text(`${i} / ${total}`, 196, 292, { align: 'right' });
   }
   
   doc.save(`MoveMetrics_${s?.nombre?.replace(/\s/g, '_') || 'informe'}_${new Date().toISOString().split('T')[0]}.pdf`);
 }
-
 // ========================================================
 // CONSTRUIR TEXTO DEL INFORME
 // ========================================================
