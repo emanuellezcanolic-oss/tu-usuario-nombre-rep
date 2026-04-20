@@ -840,6 +840,103 @@
     </div>
   </div>
 
+
+    <!-- CMJ CON VELOCIDAD DE DESPEGUE -->
+    <div class="card mb-14">
+      <div class="card-header">
+        <h3>🦘 CMJ con Velocidad de Despegue — Perfil F-V</h3>
+        <span class="tag tag-b">Samozino · Carga óptima · Pendiente · Pmax</span>
+      </div>
+      <div class="card-body">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:12px;padding:8px;background:rgba(77,158,255,.05);border-radius:8px">
+          Ingresá la masa corporal y la velocidad de despegue (VD) para cada condición de carga adicional (chaleco, mancuernas).
+          El sistema calcula el perfil F-V balístico y la carga óptima al umbral de 2 m/s.
+        </div>
+        <div class="grid-2" style="gap:10px;margin-bottom:12px">
+          <div class="ig">
+            <label class="il">Masa corporal (kg)</label>
+            <input class="inp inp-mono" type="number" step=".1" id="cmjvd-mc" placeholder="80" oninput="calcCMJVD()">
+          </div>
+          <div class="ig">
+            <label class="il">Momento de inercia (kg·m/s) <span style="color:var(--text3);font-size:9px">opcional</span></label>
+            <input class="inp inp-mono" type="number" step="1" id="cmjvd-mom" placeholder="250" oninput="calcCMJVD()">
+          </div>
+        </div>
+
+        <!-- Tabla de cargas -->
+        <div style="overflow-x:auto;margin-bottom:10px">
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead>
+              <tr style="border-bottom:1px solid var(--border)">
+                <th style="text-align:left;padding:6px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3)">Carga extra (kg)</th>
+                <th style="text-align:left;padding:6px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--neon)">VD (m/s)</th>
+                <th style="text-align:left;padding:6px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--blue)">Altura (cm)</th>
+                <th style="text-align:left;padding:6px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--amber)">Mom (kg·m/s)</th>
+              </tr>
+            </thead>
+            <tbody id="cmjvd-rows"></tbody>
+          </table>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="addCMJVDRow()" style="margin-bottom:12px">+ Agregar carga</button>
+
+        <!-- Resultados -->
+        <div id="cmjvd-results" style="display:none">
+          <div style="font-family:var(--mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--neon);margin-bottom:8px">
+            Perfil F-V balístico
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:12px" id="cmjvd-kpis"></div>
+          <div style="font-family:var(--mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--text2);margin-bottom:6px">
+            Tabla % RM → Carga → VD estimada
+          </div>
+          <div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:11px;width:100%" id="cmjvd-pct-table"></table></div>
+          <div style="font-size:10px;color:var(--text3);margin-top:8px;font-family:var(--mono)">
+            Pendiente: <span id="cmjvd-pendiente" style="color:var(--text2)">—</span> ·
+            Intersección: <span id="cmjvd-interseccion" style="color:var(--text2)">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARGA LANZAMIENTOS PRESS BANCA -->
+    <div class="card mb-14">
+      <div class="card-header">
+        <h3>🏀 Carga Lanzamientos Press Banca — Equipo</h3>
+        <span class="tag tag-y">% RM · Kg por jugador</span>
+      </div>
+      <div class="card-body">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:12px;padding:8px;background:rgba(255,179,71,.05);border-radius:8px">
+          Ingresá el RM de press banca de cada jugador y el % de trabajo. El sistema calcula la carga de lanzamiento individual.
+        </div>
+        <div class="grid-2" style="gap:10px;margin-bottom:12px">
+          <div class="ig">
+            <label class="il">% RM para lanzamientos</label>
+            <input class="inp inp-mono" type="number" id="pb-pct" value="40" min="10" max="80" oninput="calcLanzamientosPB()">
+          </div>
+          <div>
+            <button class="btn btn-ghost btn-sm" onclick="addJugadorPB()" style="margin-top:20px">+ Agregar jugador</button>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead>
+              <tr style="border-bottom:1px solid var(--border)">
+                <th style="text-align:left;padding:6px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3)">Jugador N°</th>
+                <th style="text-align:left;padding:6px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3)">RM PB (kg)</th>
+                <th style="text-align:left;padding:6px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--amber)">% etto</th>
+                <th style="text-align:left;padding:6px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--neon)">Carga (kg)</th>
+              </tr>
+            </thead>
+            <tbody id="pb-rows"></tbody>
+          </table>
+        </div>
+        <div id="pb-summary" style="margin-top:12px;display:none">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;margin-bottom:6px">Resumen del equipo</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px" id="pb-kpis"></div>
+        </div>
+      </div>
+    </div>
+
   <!-- ══ TAB: SALTOS ══ -->
   <div id="ptab-saltos" class="hidden">
     <div class="flex-b mb-16">
