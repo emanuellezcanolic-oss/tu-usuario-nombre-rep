@@ -213,7 +213,11 @@ function buildSaltosGrid() {
   // ── INDICES BOSCO ──
   html += `<div style="grid-column:1/-1" id="bosco-indices"></div>`;
 
-  // ── SECCION HORIZONTALES ──
+  // ── SECCION AVANZADA (My Jump + DJ Incremental) ──
+  html += buildMyJumpCard();
+  html += buildDJIncrementalCard();
+
+    // ── SECCION HORIZONTALES ──
   html += `<div style="grid-column:1/-1;margin-top:8px">
     <div style="font-family:var(--mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--blue);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid rgba(77,158,255,.15)">
       Saltos horizontales -- Hop Tests
@@ -497,6 +501,330 @@ function saveSaltos() {
   atletas = atletas.map(a => a.id===cur.id?cur:a);
   saveData();
   renderProfileHero();
+}
+
+
+// ════════════════════════════════════════
+//  MY JUMP — Biomecánica CMJ completa
+// ════════════════════════════════════════
+
+function buildMyJumpCard() {
+  return `
+  <div class="card" style="grid-column:1/-1">
+    <div class="card-header">
+      <h3>My Jump 2 — Biomecánica CMJ completa</h3>
+      <span class="tag tag-b">TV · Fuerza · Potencia · Impulso · RFD · RSImod</span>
+    </div>
+    <div class="card-body">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:12px;padding:8px;background:rgba(57,255,122,.05);border-radius:8px">
+        📱 Ingresá los datos de My Jump 2. Editar sólo los casilleros de entrada (mc, TV, longitudes).
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:14px">
+        <div class="ig">
+          <label class="il">Masa corporal (kg)</label>
+          <input class="inp inp-mono" type="number" step=".1" id="mj-mc" placeholder="84" oninput="calcMyJump()">
+        </div>
+        <div class="ig">
+          <label class="il">Tiempo de vuelo TV (s)</label>
+          <input class="inp inp-mono" type="number" step=".001" id="mj-tv" placeholder="0.571" oninput="calcMyJump()">
+        </div>
+        <div class="ig">
+          <label class="il">Long. pierna despegue (m)</label>
+          <input class="inp inp-mono" type="number" step=".01" id="mj-ldespegue" placeholder="1.12" oninput="calcMyJump()">
+        </div>
+        <div class="ig">
+          <label class="il">Long. pierna parado (m)</label>
+          <input class="inp inp-mono" type="number" step=".01" id="mj-lparado" placeholder="1.04" oninput="calcMyJump()">
+        </div>
+        <div class="ig">
+          <label class="il">Tiempo propulsivo (s) <span style="color:var(--text3);font-size:9px">opcional</span></label>
+          <input class="inp inp-mono" type="number" step=".001" id="mj-tprop" placeholder="0.257" oninput="calcMyJump()">
+        </div>
+        <div class="ig">
+          <label class="il">TTO — tiempo total (s) <span style="color:var(--text3);font-size:9px">opcional</span></label>
+          <input class="inp inp-mono" type="number" step=".001" id="mj-tto" placeholder="0.7" oninput="calcMyJump()">
+        </div>
+      </div>
+
+      <!-- Resultados principales -->
+      <div id="mj-results" style="display:none">
+        <div style="font-family:var(--mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--neon);margin-bottom:8px">
+          Resultados calculados
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:12px" id="mj-kpi-grid"></div>
+        <div style="font-family:var(--mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--text2);margin-bottom:8px">
+          Variables avanzadas <span style="color:var(--text3)">(requieren tiempo propulsivo)</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px" id="mj-adv-grid"></div>
+      </div>
+      <div id="mj-empty" style="text-align:center;padding:20px;color:var(--text3);font-size:12px">
+        Ingresá mc y TV para calcular
+      </div>
+    </div>
+  </div>`;
+}
+
+function calcMyJump() {
+  const mc  = parseFloat(document.getElementById('mj-mc')?.value) || 0;
+  const tv  = parseFloat(document.getElementById('mj-tv')?.value) || 0;
+  const ld  = parseFloat(document.getElementById('mj-ldespegue')?.value) || 0;
+  const lp  = parseFloat(document.getElementById('mj-lparado')?.value) || 0;
+  const tp  = parseFloat(document.getElementById('mj-tprop')?.value) || 0;
+  const tto = parseFloat(document.getElementById('mj-tto')?.value) || 0;
+  const g   = 9.81;
+
+  const kpiEl  = document.getElementById('mj-kpi-grid');
+  const advEl  = document.getElementById('mj-adv-grid');
+  const resEl  = document.getElementById('mj-results');
+  const empEl  = document.getElementById('mj-empty');
+
+  if (!mc || !tv || !kpiEl) return;
+  resEl.style.display = 'block';
+  empEl.style.display  = 'none';
+
+  // ── Cálculos básicos ──
+  const pc   = +(mc * g).toFixed(1);                          // Peso corporal (N)
+  const jh   = +(g * tv * tv / 8).toFixed(3);                 // Altura salto (m)
+  const jhCm = +(jh * 100).toFixed(1);                        // Altura (cm)
+  const tov  = +(g * tv / 2).toFixed(2);                      // Velocidad de despegue (m/s)
+  const vm   = +(tov / 2).toFixed(2);                         // Velocidad media prop. (m/s)
+
+  // Desplazamiento propulsivo
+  const desp = ld && lp ? +(ld - lp + jh).toFixed(3) : null;
+  const cm90 = lp ? +(lp * (1 - Math.sin(Math.PI/2 * 0.9))).toFixed(3) : null; // aprox
+
+  // RSImod
+  const rsimod = tto ? +(jh / tto).toFixed(3) : null;
+
+  // ── Cálculos avanzados (requieren tp) ──
+  let aMedia = null, fneta = null, fbruta = null, fbrutaRel = null;
+  let potMedia = null, potRel = null, impulsoNeto = null, rfd = null;
+  let tExc = null, velMedExc = null, velFren = null, impFren = null, ratioImp = null, trabajo = null;
+
+  if (tp && desp !== null) {
+    aMedia     = +((tov) / tp).toFixed(2);                          // Aceleración media prop (m/s2)
+    fneta      = +(mc * aMedia).toFixed(1);                         // Fuerza neta prop (N)
+    fbruta     = +(fneta + pc).toFixed(1);                          // Fuerza bruta prop (N)
+    fbrutaRel  = +(fbruta / mc).toFixed(1);                         // Fuerza relativa (N/kg)
+    potMedia   = +(fbruta * vm).toFixed(0);                         // Potencia media prop (W)
+    potRel     = +(potMedia / mc).toFixed(1);                       // Potencia relativa (W/kg)
+    impulsoNeto= +(fneta * tp).toFixed(1);                          // Impulso neto prop (N*s)
+    rfd        = tp > 0 ? +(fbruta / tp).toFixed(0) : null;         // RFD media prop (N/s)
+    trabajo    = +(0.5 * mc * tov * tov).toFixed(0);                // Energía cinética (J)
+  }
+
+  if (tto && tp) {
+    tExc       = +((tto - tp)).toFixed(3);                          // Tiempo excéntrico (s)
+    if (desp !== null && tExc > 0) {
+      velMedExc = +(desp / tExc * 0.5).toFixed(2);                  // Vel media exc approx
+      velFren   = +(desp / tExc).toFixed(2);                        // Velocidad frenado approx
+    }
+    if (impulsoNeto) {
+      impFren   = +(impulsoNeto * 0.45).toFixed(1);                 // Impulso frenado approx
+      ratioImp  = impFren ? +(impulsoNeto / impFren).toFixed(2) : null;
+    }
+  }
+
+  // ── Render KPIs principales ──
+  const mkKpi = (label, val, unit, color) => {
+    const c = color || 'var(--neon)';
+    return `<div style="background:var(--bg4);border:1px solid ${c}33;border-radius:10px;padding:10px;text-align:center">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;margin-bottom:3px">${label}</div>
+      <div style="font-family:var(--mono);font-size:20px;font-weight:800;color:${c}">${val ?? '—'}</div>
+      <div style="font-size:9px;color:var(--text3);margin-top:2px">${unit}</div>
+    </div>`;
+  };
+
+  kpiEl.innerHTML =
+    mkKpi('Altura salto', jhCm, 'cm', 'var(--neon)') +
+    mkKpi('JH (m)', jh, 'm', 'var(--neon)') +
+    mkKpi('Vel. despegue', tov, 'm/s', 'var(--blue)') +
+    mkKpi('Vel. media prop.', vm, 'm/s', 'var(--blue)') +
+    mkKpi('Peso corporal', pc, 'N', 'var(--text2)') +
+    (rsimod !== null ? mkKpi('RSImod', rsimod, 'JH/TTO', 'var(--amber)') : '') +
+    (desp !== null ? mkKpi('Desp. propulsivo', desp, 'm', 'var(--text2)') : '');
+
+  const mkAdv = (label, val, unit, ref) => {
+    if (val === null || val === undefined) return '';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--bg4);border-radius:8px">
+      <div>
+        <div style="font-size:11px;font-weight:600">${label}</div>
+        ${ref ? `<div style="font-size:9px;color:var(--text3)">${ref}</div>` : ''}
+      </div>
+      <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--neon)">${val} <span style="font-size:9px;color:var(--text3)">${unit}</span></div>
+    </div>`;
+  };
+
+  advEl.innerHTML = tp ? (
+    mkAdv('Aceleración media prop.', aMedia, 'm/s²', '') +
+    mkAdv('Fuerza media neta prop.', fneta, 'N', '') +
+    mkAdv('Fuerza media bruta prop.', fbruta, 'N', '') +
+    mkAdv('Fuerza bruta relativa', fbrutaRel, 'N/kg', '') +
+    mkAdv('Potencia media propulsiva', potMedia, 'W', '') +
+    mkAdv('Potencia relativa', potRel, 'W/kg', 'Ref. Elite: >45 W/kg') +
+    mkAdv('Impulso neto propulsivo', impulsoNeto, 'N·s', '') +
+    mkAdv('RFD media prop.', rfd, 'N/s', '') +
+    mkAdv('Trabajo — Energía cinética', trabajo, 'J', '') +
+    (tExc ? mkAdv('Tiempo excéntrico', tExc, 's', '') : '') +
+    (impFren ? mkAdv('Impulso frenado aprox.', impFren, 'N·s', '') : '') +
+    (ratioImp ? mkAdv('Ratio impulso prop/freno', ratioImp, '', 'Ref >2.0') : '')
+  ) : '<div style="font-size:11px;color:var(--text3);padding:8px">Ingresá el tiempo propulsivo para calcular fuerza, potencia e impulso</div>';
+
+  // Guardar altura en cur para cruzar con dashboard
+  if (cur) {
+    if (!cur.myJump) cur.myJump = {};
+    cur.myJump = { mc, tv, jh: jhCm, tov, rsimod, potRel, fbrutaRel };
+  }
+}
+
+// ════════════════════════════════════════
+//  DJ INCREMENTAL — por altura (Balsalobre-Fernández)
+// ════════════════════════════════════════
+
+function buildDJIncrementalCard() {
+  const HEIGHTS = [20, 30, 40, 50, 60];
+  const rows = HEIGHTS.map(h => `
+    <tr>
+      <td style="font-family:var(--mono);font-weight:600;color:var(--neon);padding:8px 6px">${h} cm</td>
+      <td style="padding:4px"><input class="inp inp-mono" type="number" step=".1" id="dji-tv-${h}" placeholder="0.52" oninput="calcDJIncremental()" style="font-size:12px;padding:6px 8px"></td>
+      <td style="padding:4px"><input class="inp inp-mono" type="number" step="1" id="dji-tc-${h}" placeholder="150" oninput="calcDJIncremental()" style="font-size:12px;padding:6px 8px"></td>
+      <td style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--neon);padding:8px 6px" id="dji-jh-${h}">—</td>
+      <td style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--blue);padding:8px 6px" id="dji-rsi-${h}">—</td>
+      <td style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--amber);padding:8px 6px" id="dji-iq-${h}">—</td>
+    </tr>
+  `).join('');
+
+  return `
+  <div class="card" style="grid-column:1/-1">
+    <div class="card-header">
+      <h3>Drop Jump Incremental</h3>
+      <span class="tag tag-r">IQ · RSI · Altura óptima de caída</span>
+    </div>
+    <div class="card-body">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:12px;padding:8px;background:rgba(255,77,77,.05);border-radius:8px">
+        Balsalobre-Fernández et al. — Ingresá TV (s) y TC (ms) para cada altura de caída. El sistema detecta la altura óptima.
+      </div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border)">
+              <th style="text-align:left;padding:6px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3)">Altura caída</th>
+              <th style="text-align:left;padding:6px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3)">TV (s)</th>
+              <th style="text-align:left;padding:6px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3)">TC (ms)</th>
+              <th style="text-align:left;padding:6px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--neon)">JH (cm)</th>
+              <th style="text-align:left;padding:6px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--blue)">RSI</th>
+              <th style="text-align:left;padding:6px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--amber)">IQ</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+
+      <!-- Resultado óptimo -->
+      <div id="dji-optimo" style="display:none;margin-top:14px;padding:14px;background:rgba(57,255,122,.06);border:1px solid rgba(57,255,122,.2);border-radius:10px">
+        <div style="font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--neon);margin-bottom:8px">
+          ⭐ Altura óptima de caída detectada
+        </div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap">
+          <div style="text-align:center">
+            <div style="font-family:var(--mono);font-size:9px;color:var(--text2);margin-bottom:3px">ALTURA ÓPTIMA</div>
+            <div id="dji-opt-altura" style="font-family:var(--mono);font-size:28px;font-weight:800;color:var(--neon)">—</div>
+            <div style="font-size:9px;color:var(--text3)">cm</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-family:var(--mono);font-size:9px;color:var(--text2);margin-bottom:3px">RSI ÓPTIMO</div>
+            <div id="dji-opt-rsi" style="font-family:var(--mono);font-size:28px;font-weight:800;color:var(--blue)">—</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-family:var(--mono);font-size:9px;color:var(--text2);margin-bottom:3px">IQ ÓPTIMO</div>
+            <div id="dji-opt-iq" style="font-family:var(--mono);font-size:28px;font-weight:800;color:var(--amber)">—</div>
+          </div>
+          <div style="flex:1;min-width:180px">
+            <div id="dji-clasificacion" style="font-size:11px;color:var(--text2);line-height:1.7"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Referencias -->
+      <div style="margin-top:10px;font-size:10px;color:var(--text3);line-height:1.7;font-family:var(--mono)">
+        IQ = JH(cm) / Altura caída(cm) · RSI = JH(m) / TC(s)<br>
+        Ref. RSI: BDJ &lt;200ms TC · CDJ hasta 250ms TC<br>
+        Ref. IQ óptimo: Bosco et al. — BDJ ~3.5 · CDJ ~2.2
+      </div>
+    </div>
+  </div>`;
+}
+
+function calcDJIncremental() {
+  const g = 9.81;
+  const HEIGHTS = [20, 30, 40, 50, 60];
+  let bestRSI = -1, bestH = null, bestRSIval = null, bestIQ = null;
+  let validCount = 0;
+
+  HEIGHTS.forEach(h => {
+    const tv = parseFloat(document.getElementById('dji-tv-'+h)?.value) || 0;
+    const tc = parseFloat(document.getElementById('dji-tc-'+h)?.value) || 0;
+    const jhEl  = document.getElementById('dji-jh-'+h);
+    const rsiEl = document.getElementById('dji-rsi-'+h);
+    const iqEl  = document.getElementById('dji-iq-'+h);
+
+    if (!tv) {
+      if (jhEl) jhEl.textContent = '—';
+      if (rsiEl) rsiEl.textContent = '—';
+      if (iqEl) iqEl.textContent = '—';
+      return;
+    }
+
+    const jh   = +(g * tv * tv / 8 * 100).toFixed(1);    // cm
+    const jhM  = jh / 100;
+    const rsi  = tc > 0 ? +(jhM / (tc / 1000)).toFixed(2) : null;
+    const iq   = +(jh / h).toFixed(2);
+    validCount++;
+
+    if (jhEl)  jhEl.textContent  = jh;
+    if (rsiEl) rsiEl.textContent = rsi !== null ? rsi : '—';
+    if (iqEl)  iqEl.textContent  = iq;
+
+    // Color RSI
+    if (rsiEl && rsi !== null) {
+      rsiEl.style.color = rsi >= 2.5 ? 'var(--neon)' : rsi >= 1.5 ? 'var(--blue)' : 'var(--amber)';
+    }
+    // Color IQ
+    if (iqEl) {
+      iqEl.style.color = iq >= 3 ? 'var(--neon)' : iq >= 2 ? 'var(--amber)' : 'var(--red)';
+    }
+
+    // Detectar óptimo — mayor RSI
+    if (rsi !== null && rsi > bestRSI) {
+      bestRSI = rsi; bestH = h; bestRSIval = rsi; bestIQ = iq;
+    }
+  });
+
+  const optiEl = document.getElementById('dji-optimo');
+  if (!optiEl) return;
+
+  if (validCount >= 2 && bestH) {
+    optiEl.style.display = 'block';
+    document.getElementById('dji-opt-altura').textContent = bestH;
+    document.getElementById('dji-opt-rsi').textContent    = bestRSIval;
+    document.getElementById('dji-opt-iq').textContent     = bestIQ;
+
+    // Clasificación
+    const clEl = document.getElementById('dji-clasificacion');
+    let clasif = '';
+    if (bestRSIval >= 3.0)      clasif = '🟢 RSI Elite — Excelente capacidad reactiva';
+    else if (bestRSIval >= 2.5) clasif = '🟢 RSI Alto — Muy buena capacidad reactiva';
+    else if (bestRSIval >= 1.5) clasif = '🟡 RSI Moderado — Capacidad reactiva desarrollable';
+    else                         clasif = '🔴 RSI Bajo — Priorizar trabajo reactivo específico';
+
+    const tipo = bestH <= 30 ? 'BDJ (Bounce Drop Jump) — Tc muy corto, mayor demanda stiffness' :
+                 bestH <= 50 ? 'CDJ (Counter Drop Jump) — Tc moderado, CEA predominante' :
+                               'Alta caída — verificar técnica y control excéntrico';
+
+    clEl.innerHTML = `${clasif}<br>Tipo: ${tipo}<br>Prescripción: alturas ${bestH-10}–${bestH+10} cm para maximizar RSI`;
+  } else {
+    optiEl.style.display = 'none';
+  }
 }
 
 // ══════════════════════════════════════════════════════
