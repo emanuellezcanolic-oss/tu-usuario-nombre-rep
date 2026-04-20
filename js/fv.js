@@ -118,6 +118,211 @@ function renderFVHist() {
     }).join('') + '</tbody></table>';
 }
 
+
+// ════════════════════════════════════════
+//  CMJ CON VELOCIDAD DE DESPEGUE — Perfil F-V balístico
+// ════════════════════════════════════════
+
+let _cmjvdCount = 0;
+
+function addCMJVDRow() {
+  const tbody = document.getElementById('cmjvd-rows');
+  if (!tbody) return;
+  const i = _cmjvdCount++;
+  const cargas  = [0, 15, 30, 45];
+  const defaults = [3.12, 2.9, 2.6, 2.33];
+  const tr = document.createElement('tr');
+  tr.id = 'cmjvd-row-' + i;
+  tr.style.borderBottom = '1px solid var(--border)';
+  tr.innerHTML = `
+    <td style="padding:4px">
+      <input class="inp inp-mono" type="number" step="1" id="cmjvd-kg-${i}"
+        placeholder="${cargas[i] ?? i*15}" value="${i < 4 ? cargas[i] : ''}"
+        style="font-size:12px;padding:6px 8px" oninput="calcCMJVD()">
+    </td>
+    <td style="padding:4px">
+      <input class="inp inp-mono" type="number" step=".01" id="cmjvd-vd-${i}"
+        placeholder="${defaults[i] ?? '0.00'}"
+        style="font-size:12px;padding:6px 8px" oninput="calcCMJVD()">
+    </td>
+    <td style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--blue);padding:8px 6px" id="cmjvd-jh-${i}">—</td>
+    <td style="font-family:var(--mono);font-size:13px;color:var(--amber);padding:8px 6px" id="cmjvd-mom-r-${i}">—</td>
+  `;
+  tbody.appendChild(tr);
+  calcCMJVD();
+}
+
+function calcCMJVD() {
+  const mc  = parseFloat(document.getElementById('cmjvd-mc')?.value) || 0;
+  const resEl = document.getElementById('cmjvd-results');
+  if (!mc || !resEl) return;
+
+  const g = 9.81;
+  let data = [];
+
+  for (let i = 0; i < _cmjvdCount; i++) {
+    const kg = parseFloat(document.getElementById('cmjvd-kg-' + i)?.value);
+    const vd = parseFloat(document.getElementById('cmjvd-vd-' + i)?.value);
+    const jhEl  = document.getElementById('cmjvd-jh-' + i);
+    const momEl = document.getElementById('cmjvd-mom-r-' + i);
+
+    if (!isNaN(kg) && !isNaN(vd) && vd > 0) {
+      const jh  = +(vd * vd / (2 * g) * 100).toFixed(1);  // cm
+      const totalMc = mc + kg;
+      const mom = +(totalMc * vd).toFixed(1);              // kg·m/s
+      if (jhEl)  jhEl.textContent  = jh;
+      if (momEl) momEl.textContent = mom;
+      data.push({ kg, vd, jh, mom, totalMc });
+    } else {
+      if (jhEl)  jhEl.textContent  = '—';
+      if (momEl) momEl.textContent = '—';
+    }
+  }
+
+  if (data.length < 2) { resEl.style.display = 'none'; return; }
+
+  // Regresión lineal: VD ~ carga extra (kg)
+  const n    = data.length;
+  const sumX = data.reduce((a, d) => a + d.kg,    0);
+  const sumY = data.reduce((a, d) => a + d.vd,    0);
+  const sumXY= data.reduce((a, d) => a + d.kg * d.vd, 0);
+  const sumX2= data.reduce((a, d) => a + d.kg * d.kg, 0);
+  const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+  const inter = (sumY - slope * sumX) / n;
+
+  // V0 = VD sin carga extra = inter
+  // Carga en V=0: kg donde vd = 0 → kg = -inter/slope
+  const kgAt0  = +(-inter / slope).toFixed(1);
+  // Carga óptima al 2 m/s (umbral potencia balística)
+  const kgAt2  = slope !== 0 ? +((2 - inter) / slope).toFixed(1) : null;
+  // R²
+  const meanY  = sumY / n;
+  const ssTot  = data.reduce((a, d) => a + Math.pow(d.vd - meanY, 2), 0);
+  const ssRes  = data.reduce((a, d) => a + Math.pow(d.vd - (inter + slope * d.kg), 2), 0);
+  const r2     = +(1 - ssRes / ssTot).toFixed(4);
+
+  resEl.style.display = 'block';
+
+  const mkK = (label, val, unit, c) =>
+    `<div style="background:var(--bg4);border:1px solid ${c||'var(--neon)'}33;border-radius:10px;padding:10px;text-align:center">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;margin-bottom:3px">${label}</div>
+      <div style="font-family:var(--mono);font-size:20px;font-weight:800;color:${c||'var(--neon)'}"> ${val ?? '—'}</div>
+      <div style="font-size:9px;color:var(--text3);margin-top:2px">${unit}</div>
+    </div>`;
+
+  document.getElementById('cmjvd-kpis').innerHTML =
+    mkK('V0 (sin carga)',       inter.toFixed(2),          'm/s', 'var(--neon)') +
+    mkK('Carga en V=0',         kgAt0 > 0 ? kgAt0 : '—', 'kg', 'var(--red)') +
+    (kgAt2 !== null && kgAt2 > 0 ? mkK('Carga óptima 2m/s', kgAt2, 'kg extra', 'var(--amber)') : '') +
+    mkK('R²', r2, r2 >= 0.95 ? '✓ Excelente ajuste' : r2 >= 0.90 ? 'Buen ajuste' : 'Revisar datos', r2 >= 0.95 ? 'var(--neon)' : r2 >= 0.90 ? 'var(--amber)' : 'var(--red)');
+
+  document.getElementById('cmjvd-pendiente').textContent    = slope.toFixed(4);
+  document.getElementById('cmjvd-interseccion').textContent = inter.toFixed(4);
+
+  // Tabla % → carga → VD estimada
+  const pcts = [40, 50, 60, 70, 80, 90, 100];
+  const maxKg = kgAt0 > 0 ? kgAt0 : 100;
+  let thtml = `<thead><tr style="border-bottom:1px solid var(--border)">
+    <th style="text-align:left;padding:5px;font-size:9px;color:var(--text3)">% carga máx</th>
+    <th style="text-align:left;padding:5px;font-size:9px;color:var(--text3)">Carga extra (kg)</th>
+    <th style="text-align:left;padding:5px;font-size:9px;color:var(--neon)">VD estimada (m/s)</th>
+    <th style="text-align:left;padding:5px;font-size:9px;color:var(--blue)">Altura estimada (cm)</th>
+  </tr></thead><tbody>`;
+
+  pcts.forEach(pct => {
+    const kg  = +(maxKg * pct / 100).toFixed(1);
+    const vdE = +(inter + slope * kg).toFixed(2);
+    const jhE = vdE > 0 ? +(vdE * vdE / (2 * 9.81) * 100).toFixed(1) : 0;
+    const col = vdE >= 2 ? 'var(--neon)' : vdE >= 1.5 ? 'var(--amber)' : 'var(--red)';
+    thtml += `<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:5px;font-family:var(--mono);font-weight:600;color:var(--text2)">${pct}%</td>
+      <td style="padding:5px;font-family:var(--mono)">${kg}</td>
+      <td style="padding:5px;font-family:var(--mono);font-weight:700;color:${col}">${vdE > 0 ? vdE : '—'}</td>
+      <td style="padding:5px;font-family:var(--mono);color:var(--blue)">${jhE > 0 ? jhE : '—'}</td>
+    </tr>`;
+  });
+  thtml += '</tbody>';
+  document.getElementById('cmjvd-pct-table').innerHTML = thtml;
+}
+
+// ════════════════════════════════════════
+//  CARGA LANZAMIENTOS PRESS BANCA
+// ════════════════════════════════════════
+
+let _pbCount = 0;
+
+function addJugadorPB() {
+  const tbody = document.getElementById('pb-rows');
+  if (!tbody) return;
+  const i = _pbCount++;
+  const pct = +document.getElementById('pb-pct')?.value || 40;
+  const tr = document.createElement('tr');
+  tr.id = 'pb-row-' + i;
+  tr.style.borderBottom = '1px solid var(--border)';
+  tr.innerHTML = `
+    <td style="padding:6px;font-family:var(--mono);font-weight:600;color:var(--text2)">${i + 1}</td>
+    <td style="padding:4px">
+      <input class="inp inp-mono" type="number" step=".5" id="pb-rm-${i}"
+        placeholder="90" style="font-size:12px;padding:6px 8px" oninput="calcLanzamientosPB()">
+    </td>
+    <td style="font-family:var(--mono);font-size:13px;color:var(--amber);padding:8px 6px" id="pb-pct-r-${i}">—</td>
+    <td style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--neon);padding:8px 6px" id="pb-carga-${i}">—</td>
+  `;
+  tbody.appendChild(tr);
+}
+
+function calcLanzamientosPB() {
+  const pct = +document.getElementById('pb-pct')?.value || 40;
+  let rms = [], cargas = [];
+
+  for (let i = 0; i < _pbCount; i++) {
+    const rm = parseFloat(document.getElementById('pb-rm-' + i)?.value);
+    const pctEl   = document.getElementById('pb-pct-r-' + i);
+    const cargaEl = document.getElementById('pb-carga-' + i);
+    if (!isNaN(rm) && rm > 0) {
+      const carga = Math.round(rm * pct / 100);
+      if (pctEl)   pctEl.textContent   = pct + '%';
+      if (cargaEl) { cargaEl.textContent = carga; cargaEl.style.color = 'var(--neon)'; }
+      rms.push(rm); cargas.push(carga);
+    } else {
+      if (pctEl)   pctEl.textContent   = '—';
+      if (cargaEl) cargaEl.textContent = '—';
+    }
+  }
+
+  const sumEl = document.getElementById('pb-summary');
+  const kpiEl = document.getElementById('pb-kpis');
+  if (!sumEl || !kpiEl || rms.length === 0) { if(sumEl) sumEl.style.display='none'; return; }
+
+  sumEl.style.display = 'block';
+  const rmMax  = Math.max(...rms).toFixed(1);
+  const rmMin  = Math.min(...rms).toFixed(1);
+  const rmProm = (rms.reduce((a,b)=>a+b,0) / rms.length).toFixed(1);
+  const cMax   = Math.max(...cargas);
+  const cMin   = Math.min(...cargas);
+  const cProm  = Math.round(cargas.reduce((a,b)=>a+b,0) / cargas.length);
+
+  const mkK = (label, val, unit, c) =>
+    `<div style="background:var(--bg4);border:1px solid ${c||'var(--neon)'}33;border-radius:10px;padding:10px;text-align:center">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;margin-bottom:3px">${label}</div>
+      <div style="font-family:var(--mono);font-size:18px;font-weight:800;color:${c||'var(--neon)'}"> ${val}</div>
+      <div style="font-size:9px;color:var(--text3);margin-top:2px">${unit}</div>
+    </div>`;
+
+  kpiEl.innerHTML =
+    mkK('Jugadores', rms.length, 'con RM cargado', 'var(--text2)') +
+    mkK('RM promedio', rmProm, 'kg', 'var(--blue)') +
+    mkK('RM máx / mín', rmMax + ' / ' + rmMin, 'kg', 'var(--text2)') +
+    mkK('Carga ' + pct + '% promedio', cProm, 'kg', 'var(--neon)') +
+    mkK('Rango cargas', cMin + '–' + cMax, 'kg', 'var(--amber)');
+}
+
+// Init: arrancar con filas vacías al abrir la tab
+function initFVTools() {
+  if (_cmjvdCount === 0) { for (let i = 0; i < 4; i++) addCMJVDRow(); }
+  if (_pbCount === 0)    { for (let i = 0; i < 5; i++) addJugadorPB(); }
+}
+
 // ══════════════════════════════════════════════════════
 //  SALTOS
 // ══════════════════════════════════════════════════════
