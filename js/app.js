@@ -340,6 +340,7 @@ function showProfileTab(tab, btn) {
   if (tab === 'kinesio')    initKinesio();
   if (tab === 'fuerza')     renderFVHist();
   if (tab === 'saltos')     { renderSimetriasTabla(); }
+  if (tab === 'fuerza')     { initFVTools(); }
   if (tab === 'velocidad')  { initTrineo(); }
   if (tab === 'fatiga')     { buildIFTRefTable(); }
   if (tab === 'movilidad') {
