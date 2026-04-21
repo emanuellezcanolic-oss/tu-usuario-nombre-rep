@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>MoveMetrics — Prof Platform</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/dashboard.css">
   <link rel="stylesheet" href="css/kine.css">
   <link rel="stylesheet" href="css/saltos.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
@@ -838,8 +838,6 @@
         <div class="card-body" id="fv-fuerza-rel"></div>
       </div>
     </div>
-  </div>
-
 
     <!-- CMJ CON VELOCIDAD DE DESPEGUE -->
     <div class="card mb-14">
@@ -936,6 +934,114 @@
         </div>
       </div>
     </div>
+
+    <!-- ENCODER SMITH — Multi-ejercicio -->
+    <div class="card mb-14">
+      <div class="card-header">
+        <h3>🏋️ Encoder Smith — Multi-ejercicio</h3>
+        <span class="tag tag-b">Squat · Press Banca · Remo · 1RM estimado</span>
+      </div>
+      <div class="card-body">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:12px;padding:8px;background:rgba(77,158,255,.05);border-radius:8px">
+          Ingresá el kg y VMP de un par carga/velocidad por ejercicio. El sistema estima el 1RM y la fuerza relativa usando las constantes de la planilla Tecni.
+        </div>
+        <div style="overflow-x:auto;margin-bottom:12px">
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead>
+              <tr style="border-bottom:1px solid var(--border)">
+                <th style="text-align:left;padding:6px 4px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3)">Ejercicio</th>
+                <th style="text-align:left;padding:6px 4px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3)">Carga (kg)</th>
+                <th style="text-align:left;padding:6px 4px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--neon)">VMP (m/s)</th>
+                <th style="text-align:left;padding:6px 4px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--amber)">1RM est.</th>
+                <th style="text-align:left;padding:6px 4px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--neon)">Fza. Relativa</th>
+              </tr>
+            </thead>
+            <tbody id="smith-rows"></tbody>
+          </table>
+        </div>
+        <div id="smith-pct-section" style="margin-top:12px">
+          <div style="font-family:var(--mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--text2);margin-bottom:8px">
+            Tabla % RM → Carga → VMP estimada
+          </div>
+          <div style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;font-size:11px">
+              <thead>
+                <tr style="border-bottom:1px solid var(--border)">
+                  <th style="text-align:left;padding:5px;font-size:9px;color:var(--text3)">% RM</th>
+                  <th style="text-align:left;padding:5px;font-size:9px;color:var(--text3)">Squat kg</th>
+                  <th style="text-align:left;padding:5px;font-size:9px;color:var(--neon)">VMP m/s</th>
+                  <th style="text-align:left;padding:5px;font-size:9px;color:var(--text3)">Press kg</th>
+                  <th style="text-align:left;padding:5px;font-size:9px;color:var(--neon)">VMP m/s</th>
+                  <th style="text-align:left;padding:5px;font-size:9px;color:var(--text3)">Remo kg</th>
+                  <th style="text-align:left;padding:5px;font-size:9px;color:var(--neon)">VMP m/s</th>
+                </tr>
+              </thead>
+              <tbody id="smith-pct-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPARATIVA PRE / POST F-V -->
+    <div class="card mb-14">
+      <div class="card-header">
+        <h3>📈 Comparativa Pre / Post — Perfil F-V</h3>
+        <span class="tag tag-g">Δ% VMP · Δ% 1RM · Δ% V₀</span>
+      </div>
+      <div class="card-body">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:12px;padding:8px;background:rgba(57,255,122,.05);border-radius:8px">
+          Compará dos evaluaciones F-V guardadas del mismo ejercicio. Requiere calcular y guardar al menos 2 perfiles del atleta seleccionado.
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+          <div class="ig" style="flex:1;min-width:140px">
+            <label class="il">Ejercicio</label>
+            <select class="inp inp-mono" id="prepost-ej" style="font-size:11px" onchange="updatePrePostSelects()">
+              <option value="sentadilla">Sentadilla</option>
+              <option value="press-banca">Press de Banca</option>
+              <option value="peso-muerto">Peso Muerto</option>
+              <option value="bench-pull">Bench Pull / Remo</option>
+              <option value="hip-thrust">Hip Thrust</option>
+              <option value="media-sent">Media Sentadilla</option>
+              <option value="military-press">Military Press</option>
+              <option value="dominadas">Dominadas</option>
+            </select>
+          </div>
+          <div class="ig" style="flex:1;min-width:120px">
+            <label class="il">Eval PRE</label>
+            <select class="inp inp-mono" id="prepost-pre" style="font-size:11px"></select>
+          </div>
+          <div class="ig" style="flex:1;min-width:120px">
+            <label class="il">Eval POST</label>
+            <select class="inp inp-mono" id="prepost-post" style="font-size:11px"></select>
+          </div>
+          <div style="display:flex;align-items:flex-end">
+            <button class="btn btn-neon btn-sm" onclick="updatePrePostSelects();calcFVPrePost()">Comparar</button>
+          </div>
+        </div>
+        <div id="prepost-msg" style="font-size:12px;color:var(--text3);margin-bottom:8px"></div>
+        <div id="prepost-output" style="display:none">
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin-bottom:14px" id="prepost-kpis"></div>
+          <div style="overflow-x:auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>% RM</th>
+                  <th>PRE kg</th>
+                  <th>PRE VMP</th>
+                  <th>POST kg</th>
+                  <th>POST VMP</th>
+                  <th>Δ VMP%</th>
+                </tr>
+              </thead>
+              <tbody id="prepost-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
 
   <!-- ══ TAB: SALTOS ══ -->
   <div id="ptab-saltos" class="hidden">
@@ -1080,6 +1186,144 @@
                 </div>
                 <div style="margin-top:8px;font-size:9px;color:var(--text3);font-family:var(--mono)">Ref: Sigward &amp; Powers 2006 · Hewett et al. 2005</div>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DJ INCREMENTAL — IQ y RSI -->
+    <div class="card mt-16 mb-14">
+      <div class="card-header">
+        <h3>📉 Drop Jump Incremental — IQ y RSI</h3>
+        <span class="tag tag-y">Altura óptima · Índice Reactivo · RSI</span>
+      </div>
+      <div class="card-body">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:12px;padding:8px;background:rgba(255,179,71,.05);border-radius:8px">
+          Ingresá tiempo de vuelo (TV) y tiempo de contacto (TC) para cada altura de caída. El sistema calcula IQ = TV/TC y RSI = JH/TC, e identifica la altura óptima.
+        </div>
+        <div style="overflow-x:auto;margin-bottom:10px">
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead>
+              <tr style="border-bottom:1px solid var(--border)">
+                <th style="text-align:left;padding:6px 4px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3)">Drop (m)</th>
+                <th style="text-align:left;padding:6px 4px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--blue)">TV (s)</th>
+                <th style="text-align:left;padding:6px 4px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--amber)">TC (s)</th>
+                <th style="text-align:left;padding:6px 4px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--amber)">IQ (TV/TC)</th>
+                <th style="text-align:left;padding:6px 4px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--neon)">RSI (JH/TC)</th>
+                <th style="text-align:left;padding:6px 4px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--blue)">JH (cm)</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="dj-rows"></tbody>
+          </table>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="addDJRow()" style="margin-bottom:12px">+ Agregar altura</button>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px" id="dj-kpis"></div>
+        <div style="font-size:10px;color:var(--text3);margin-top:10px;font-family:var(--mono)">
+          🟢 Altura óptima = mayor RSI · IQ &gt; 3 = excelente reactividad · RSI &gt; 2.0 = élite
+        </div>
+      </div>
+    </div>
+
+    <!-- CMJ CON TIEMPO DE VUELO + CARGA -->
+    <div class="card mb-14">
+      <div class="card-header">
+        <h3>⏱️ CMJ con Tiempo de Vuelo — Perfil F-V polinómico</h3>
+        <span class="tag tag-b">TV → JH · Carga óptima · Pendiente</span>
+      </div>
+      <div class="card-body">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:12px;padding:8px;background:rgba(77,158,255,.05);border-radius:8px">
+          Ingresá el tiempo de vuelo para cada condición de carga adicional (0 kg = sin carga, 20 kg, 40 kg...). JH se calcula automáticamente. Basado en planilla evaluaciones — método TV.
+        </div>
+        <div class="ig" style="max-width:200px;margin-bottom:12px">
+          <label class="il">Masa corporal (kg)</label>
+          <input class="inp inp-mono" type="number" step=".5" id="cmjtv-mc" placeholder="80" oninput="calcCMJTV()">
+        </div>
+        <div style="overflow-x:auto;margin-bottom:10px">
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead>
+              <tr style="border-bottom:1px solid var(--border)">
+                <th style="text-align:left;padding:6px 4px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3)">Carga extra (kg)</th>
+                <th style="text-align:left;padding:6px 4px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--blue)">TV (s)</th>
+                <th style="text-align:left;padding:6px 4px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--neon)">JH (cm)</th>
+                <th style="text-align:left;padding:6px 4px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--amber)">VD (m/s)</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="cmjtv-rows"></tbody>
+          </table>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="addCMJTVRow()" style="margin-bottom:12px">+ Agregar carga</button>
+        <div id="cmjtv-results" style="display:none">
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:12px" id="cmjtv-kpis"></div>
+          <div style="font-family:var(--mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--text2);margin-bottom:6px">
+            Tabla % carga → JH estimado
+          </div>
+          <div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:11px;width:100%" id="cmjtv-pct-table"></table></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ASIMETRÍAS DE EQUIPO -->
+    <div class="card mb-14">
+      <div class="card-header">
+        <h3>⚖️ Asimetrías de Equipo — LSI por jugador</h3>
+        <span class="tag tag-r">Hop Simple · Hop Triple · CMJ · LSI%</span>
+      </div>
+      <div class="card-body">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:12px;padding:8px;background:rgba(255,68,68,.05);border-radius:8px">
+          Ingresá los valores Der/Izq de cada test por jugador. LSI = min(D,I) / max(D,I) × 100. 🔴 &lt;85% · 🟡 85–89% · 🟢 ≥90%
+        </div>
+        <div style="overflow-x:auto;margin-bottom:10px">
+          <table style="width:100%;border-collapse:collapse;font-size:11px">
+            <thead>
+              <tr style="border-bottom:2px solid var(--border)">
+                <th style="text-align:left;padding:5px 4px;font-size:9px;color:var(--text3);width:40px">#</th>
+                <th colspan="3" style="text-align:center;padding:5px 4px;font-size:9px;color:var(--blue);border-left:1px solid var(--border)">Hop Simple (cm)</th>
+                <th colspan="3" style="text-align:center;padding:5px 4px;font-size:9px;color:var(--amber);border-left:1px solid var(--border)">Hop Triple (cm)</th>
+                <th colspan="3" style="text-align:center;padding:5px 4px;font-size:9px;color:var(--neon);border-left:1px solid var(--border)">CMJ (cm)</th>
+                <th style="width:24px"></th>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border)">
+                <th></th>
+                <th style="padding:4px;font-size:9px;color:var(--text3);border-left:1px solid var(--border)">Der</th>
+                <th style="padding:4px;font-size:9px;color:var(--text3)">Izq</th>
+                <th style="padding:4px;font-size:9px;color:var(--blue)">LSI%</th>
+                <th style="padding:4px;font-size:9px;color:var(--text3);border-left:1px solid var(--border)">Der</th>
+                <th style="padding:4px;font-size:9px;color:var(--text3)">Izq</th>
+                <th style="padding:4px;font-size:9px;color:var(--amber)">LSI%</th>
+                <th style="padding:4px;font-size:9px;color:var(--text3);border-left:1px solid var(--border)">Der</th>
+                <th style="padding:4px;font-size:9px;color:var(--text3)">Izq</th>
+                <th style="padding:4px;font-size:9px;color:var(--neon)">LSI%</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="asi-rows"></tbody>
+          </table>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="addAsiRow()" style="margin-bottom:12px">+ Agregar jugador</button>
+        <!-- Resumen del equipo -->
+        <div id="asi-resumen">
+          <div style="font-family:var(--mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--text2);margin-bottom:8px">Resumen del equipo</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px">
+            <div style="background:var(--bg4);border:1px solid var(--blue)33;border-radius:10px;padding:10px">
+              <div style="font-family:var(--mono);font-size:9px;color:var(--blue);text-transform:uppercase;margin-bottom:4px">Hop Simple</div>
+              <div style="font-family:var(--mono);font-size:16px;font-weight:800" id="asi-avg-hop1">—</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:2px" id="asi-min-hop1">—</div>
+              <div style="font-size:10px;margin-top:2px" id="asi-pct-hop1">—</div>
+            </div>
+            <div style="background:var(--bg4);border:1px solid var(--amber)33;border-radius:10px;padding:10px">
+              <div style="font-family:var(--mono);font-size:9px;color:var(--amber);text-transform:uppercase;margin-bottom:4px">Hop Triple</div>
+              <div style="font-family:var(--mono);font-size:16px;font-weight:800" id="asi-avg-hop3">—</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:2px" id="asi-min-hop3">—</div>
+              <div style="font-size:10px;margin-top:2px" id="asi-pct-hop3">—</div>
+            </div>
+            <div style="background:var(--bg4);border:1px solid var(--neon)33;border-radius:10px;padding:10px">
+              <div style="font-family:var(--mono);font-size:9px;color:var(--neon);text-transform:uppercase;margin-bottom:4px">CMJ</div>
+              <div style="font-family:var(--mono);font-size:16px;font-weight:800" id="asi-avg-cmj">—</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:2px" id="asi-min-cmj">—</div>
+              <div style="font-size:10px;margin-top:2px" id="asi-pct-cmj">—</div>
             </div>
           </div>
         </div>
@@ -2142,6 +2386,7 @@
   <script src="js/valgo.js"></script>
   <script src="js/lesion.js"></script>
   <script src="js/klinical.js"></script>
+  <script src="js/planillas.js"></script>
 
 
 <!-- Modal Goniometro -->
