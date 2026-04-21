@@ -52,8 +52,7 @@ Generá el informe con ESTE FORMATO EXACTO (usá los emojis como encabezados, si
 [3 líneas: estado actual con valores, diagnóstico funcional]
 
 📊 TABLA COMPARATIVA
-[Tabla texto con columnas: VARIABLE | VALOR | REFERENCIA | ESTADO
-Incluir: 1RM/PC, CMJ, LSI, Lunge, TROM. Usá | para separar columnas]
+[Tabla con columnas: VARIABLE | VALOR | REFERENCIA | ESTADO — usá exactamente este formato de pipes para cada fila, incluyendo fila separadora con guiones]
 
 💪 FORTALEZAS
 [2-3 puntos con valores concretos]
@@ -94,6 +93,45 @@ Incluir: 1RM/PC, CMJ, LSI, Lunge, TROM. Usá | para separar columnas]
   }
 }
 
+// ── Helper: render a markdown pipe-table as a real visual table ──────────────
+function _pdfRenderTable(doc,lines,x,y,w,colors){
+  const {BG,SURF,SURF2,GREEN,WHITE,LGRAY,MGRAY,DGRAY}=colors;
+  const COL_H=7, ROW_H=6.5;
+  // parse rows — skip separator lines (only dashes/pipes)
+  const rows=lines
+    .map(l=>l.split('|').map(c=>c.trim()).filter((_,i,a)=>i>0&&i<a.length-1))
+    .filter(r=>r.length>0 && !r.every(c=>/^-+$/.test(c)));
+  if(!rows.length)return y;
+  const nCols=rows[0].length;
+  const cw=w/nCols;
+  // header row
+  rows.forEach((row,ri)=>{
+    const isHeader=ri===0;
+    const bg=isHeader?[30,30,30]:(ri%2===0?SURF:[20,20,20]);
+    doc.setFillColor(...bg);
+    doc.rect(x,y,w,isHeader?COL_H:ROW_H,'F');
+    if(isHeader){doc.setFillColor(...GREEN);doc.rect(x,y,w,0.6,'F');}
+    row.forEach((cell,ci)=>{
+      doc.setFont('helvetica',isHeader?'bold':'normal');
+      doc.setFontSize(isHeader?7.5:7);
+      doc.setTextColor(...(isHeader?WHITE:LGRAY));
+      // status coloring
+      if(!isHeader){
+        const up=cell.toUpperCase();
+        if(up.includes('ELITE')||up.includes('ÓPTIMO')||up.includes('NORMAL'))doc.setTextColor(...GREEN);
+        else if(up.includes('MODERADO')||up.includes('LEVE'))doc.setTextColor(...[255,176,32]);
+        else if(up.includes('DÉFICIT')||up.includes('BAJO')||up.includes('RIESGO'))doc.setTextColor(...[255,60,60]);
+      }
+      doc.text(cell,x+ci*cw+2,y+(isHeader?COL_H:ROW_H)-2,{maxWidth:cw-3});
+    });
+    y+=isHeader?COL_H:ROW_H;
+  });
+  // bottom border
+  doc.setDrawColor(...GREEN);doc.setLineWidth(0.3);
+  doc.line(x,y,x+w,y);
+  return y+3;
+}
+
 function exportarPDF(){
   const{jsPDF}=window.jspdf;if(!jsPDF){alert('Error al cargar jsPDF');return;}
   const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
@@ -112,336 +150,225 @@ function exportarPDF(){
   const GREEN =[57,255,122];
   const WHITE =[255,255,255];
   const LGRAY =[200,200,200];
-  const MGRAY =[110,110,110];
-  const DGRAY =[40,40,40];
+  const MGRAY =[100,100,100];
+  const DGRAY =[38,38,38];
   const RED   =[255,60,60];
   const AMBER =[255,176,32];
   const W=210, ML=14, CW=182;
+  const PAL   ={BG,DARK,SURF,SURF2,GREEN,WHITE,LGRAY,MGRAY,DGRAY,RED,AMBER};
 
-  // ── Primitives ───────────────────────────────────────────
   const fill =(c)=>doc.setFillColor(...c);
   const draw =(c)=>doc.setDrawColor(...c);
   const txt  =(c)=>doc.setTextColor(...c);
-  const F    =(x,y,w,h)=>{ doc.rect(x,y,w,h,'F'); };
-  const R    =(x,y,w,h,r=2)=>{ doc.roundedRect(x,y,w,h,r,r,'F'); };
-  const RS   =(x,y,w,h,r=2)=>{ doc.roundedRect(x,y,w,h,r,r,'S'); };
+  const F    =(x,y,w,h)=>doc.rect(x,y,w,h,'F');
+  const R    =(x,y,w,h,r=2)=>doc.roundedRect(x,y,w,h,r,r,'F');
   const lw   =(n)=>doc.setLineWidth(n);
+  const bgPage=()=>{fill(BG);F(0,0,W,297);};
 
-  const bgPage=()=>{ fill(BG); F(0,0,W,297); };
-
-  // Full-width section band — matches "EVALUACIONES REALIZADAS" style
-  const sectionBand=(title,y,h=20)=>{
+  // SECTION BAND — like "CALIDAD DE MOVIMIENTO" in the target
+  const sectionBand=(title,y,h=25)=>{
     fill(DARK); F(0,y,W,h);
-    fill(GREEN); F(0,y,4,h);                          // left accent bar
-    fill(SURF2); F(4,y,W-4,0.4);                      // top hairline
+    fill(GREEN); F(0,y,10,h);                   // 10mm green bar — thick like original
+    fill(SURF2); F(10,y,W-10,0.5);              // hairline top
     doc.setFont('helvetica','bolditalic');
-    doc.setFontSize(22);
+    doc.setFontSize(26);
     txt(WHITE);
-    doc.text(title.toUpperCase(),ML+4,y+h-5);
+    doc.text(title.toUpperCase(),ML+8,y+h-6);
     return y+h;
   };
 
-  // Numbered green badge (01, 02 …)
-  const badge=(n,x,y,size=11)=>{
-    fill(GREEN); R(x,y,size,size,1.5);
+  // BADGE — green square with number
+  const badge=(n,x,y,size=14)=>{
+    fill(GREEN); R(x,y,size,size,2);
     doc.setFont('helvetica','bold');
-    doc.setFontSize(7);
+    doc.setFontSize(8.5);
     txt(BG);
-    doc.text(String(n).padStart(2,'0'),x+size/2,y+size/2+2.2,{align:'center'});
+    doc.text(String(n).padStart(2,'0'),x+size/2,y+size/2+3,{align:'center'});
   };
 
-  // Thin progress bar with fill %
-  const progressBar=(x,y,w,h,pct,color)=>{
-    fill(DGRAY); F(x,y,w,h);
-    if(pct>0){ fill(color); F(x,y,Math.min(w,w*pct/100),h); }
+  // PROGRESS BAR
+  const bar=(x,y,w,h,pct,color)=>{
+    fill(DGRAY);F(x,y,w,h);
+    if(pct>0){fill(color);F(x,y,w*Math.min(pct,100)/100,h);}
   };
 
-  // Traffic-light trio
-  const trafficLight=(x,y,state)=>{
-    const r=2.5;
-    const cols=['red','amber','green'];
-    const on ={red:RED, amber:AMBER, green:GREEN};
-    const off={red:[50,20,20], amber:[50,40,10], green:[10,40,20]};
-    cols.forEach((c,i)=>{
-      fill(state===c?on[c]:off[c]);
-      doc.circle(x+i*8,y,r,'F');
-    });
+  // TRAFFIC LIGHT
+  const tlight=(x,y,state)=>{
+    [{k:'red',c:RED,off:[60,18,18]},{k:'amber',c:AMBER,off:[55,42,10]},{k:'green',c:GREEN,off:[12,45,22]}]
+      .forEach(({k,c,off},i)=>{fill(state===k?c:off);doc.circle(x+i*8,y,3,'F');});
   };
 
   // ── PAGE 1 ───────────────────────────────────────────────
   bgPage();
 
-  // ---- HEADER BAND ----------------------------------------
-  fill(DARK); F(0,0,W,50);
-  fill(GREEN); F(0,48,W,0.6);
-
-  // Brand
-  doc.setFont('helvetica','bolditalic');
-  doc.setFontSize(30);
-  txt(WHITE);
-  doc.text('MOVEMETRICS',ML,26);
-
-  // Green square accent before brand
-  fill(GREEN); F(ML-5,18,3,3);
-
-  // Sub-brand
-  doc.setFont('helvetica','normal');
-  doc.setFontSize(6.5);
-  txt(MGRAY);
-  doc.text('PLATAFORMA DEPORTIVO-CLÍNICA  ·  INFORME ANALÍTICO PROFESIONAL',ML,33);
-
-  // Pro info right
+  // HEADER
+  fill(DARK);F(0,0,W,52);
+  fill(GREEN);F(0,50,W,0.7);
+  fill(GREEN);F(ML-6,15,4,4);         // small green square accent
+  doc.setFont('helvetica','bolditalic');doc.setFontSize(32);txt(WHITE);
+  doc.text('MOVEMETRICS',ML,30);
+  doc.setFont('helvetica','normal');doc.setFontSize(6.5);txt(MGRAY);
+  doc.text('PLATAFORMA DEPORTIVO-CLÍNICA  ·  INFORME ANALÍTICO PROFESIONAL',ML,38);
   doc.setFontSize(7.5);
-  txt(MGRAY);
   doc.text(prof ,W-ML,20,{align:'right'});
   doc.text(inst ,W-ML,27,{align:'right'});
   doc.text(fecha,W-ML,34,{align:'right'});
 
-  let y=56;
+  let y=58;
 
-  // ---- ATHLETE BLOCK --------------------------------------
-  fill(SURF); R(ML,y,CW,32,2);
-  draw(GREEN); lw(0.3); RS(ML,y,CW,32,2);
+  // ATHLETE BLOCK
+  fill(SURF);R(ML,y,CW,30,2);
+  draw(GREEN);lw(0.3);doc.roundedRect(ML,y,CW,30,2,2,'S');
+  fill(GREEN);F(ML,y,4,30);
+  doc.setFont('helvetica','bold');doc.setFontSize(17);txt(WHITE);
+  doc.text(s.nombre,ML+9,y+10);
+  doc.setFont('helvetica','normal');doc.setFontSize(8);txt(LGRAY);
+  doc.text(`${s.deporte||'--'}${s.puesto?' · '+s.puesto:''} · ${s.edad||'?'} años · ${s.peso||'?'} kg · ${s.talla||'?'} cm`,ML+9,y+18);
+  doc.text(`Objetivo: ${s.objetivo||'--'}  ·  Nivel: ${s.nivel||'--'}  ·  ${s.servicio==='kinesio'?'Kinesiología':'Rendimiento'}`,ML+9,y+25);
+  if(s.lesion){doc.setFont('helvetica','bold');doc.setFontSize(7.5);txt(AMBER);doc.text(`⚠ LESION: ${s.lesion}`,W-ML-3,y+18,{align:'right'});}
+  y+=36;
 
-  // Green left accent strip inside box
-  fill(GREEN); F(ML,y,3,32);
-
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(17);
-  txt(WHITE);
-  doc.text(s.nombre,ML+8,y+11);
-
-  doc.setFont('helvetica','normal');
-  doc.setFontSize(8);
-  txt(LGRAY);
-  doc.text(`${s.deporte||'--'}${s.puesto?' · '+s.puesto:''} · ${s.edad||'?'} años · ${s.peso||'?'} kg · ${s.talla||'?'} cm`,ML+8,y+19);
-  doc.text(`Objetivo: ${s.objetivo||'--'}  ·  Nivel: ${s.nivel||'--'}  ·  ${s.servicio==='kinesio'?'Kinesiología':'Rendimiento'}`,ML+8,y+26);
-
-  if(s.lesion){
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(7.5);
-    txt(AMBER);
-    doc.text(`⚠  LESIÓN: ${s.lesion}`,W-ML-4,y+19,{align:'right'});
-  }
-  y+=38;
-
-  // ---- KPI STRIP ------------------------------------------
-  const cmjVal  = s.lastCMJ||0;
-  const oneRM   = s.lastFV?.oneRM||0;
-  const fzaRel  = (oneRM&&s.peso)?(oneRM/+s.peso):0;
-  const r2Val   = s.lastFV?.r2||0;
-
+  // KPI STRIP
+  const cmjV =s.lastCMJ||0, rmV=s.lastFV?.oneRM||0;
+  const frV  =(rmV&&s.peso)?rmV/+s.peso:0, r2V=s.lastFV?.r2||0;
   const kpiDefs=[
-    { lbl:'CMJ',     val: cmjVal?cmjVal.toFixed(1)+' cm':'--',  pct: Math.min(cmjVal/50*100,100),
-      st: cmjVal>=35?'green':cmjVal>=28?'amber':cmjVal?'red':'off' },
-    { lbl:'1RM',     val: oneRM?oneRM.toFixed(0)+' kg':'--',     pct: Math.min(oneRM/200*100,100),
-      st: oneRM?'green':'off' },
-    { lbl:'FZA REL', val: fzaRel?fzaRel.toFixed(2)+'×PC':'--', pct: Math.min(fzaRel/2*100,100),
-      st: fzaRel>=1.5?'green':fzaRel>=1.0?'amber':fzaRel?'red':'off' },
-    { lbl:'R²',      val: r2Val?r2Val.toFixed(4):'--',           pct: r2Val*100,
-      st: r2Val>=0.98?'green':r2Val>=0.95?'amber':r2Val?'red':'off' },
+    {lbl:'CMJ',     val:cmjV?cmjV.toFixed(1)+' cm':'--', pct:Math.min(cmjV/50*100,100), st:cmjV>=35?'green':cmjV>=28?'amber':cmjV?'red':'off'},
+    {lbl:'1RM',     val:rmV ?rmV.toFixed(0)+' kg' :'--', pct:Math.min(rmV/200*100,100),  st:rmV?'green':'off'},
+    {lbl:'FZA REL', val:frV ?frV.toFixed(2)+'xPC' :'--', pct:Math.min(frV/2*100,100),    st:frV>=1.5?'green':frV>=1?'amber':frV?'red':'off'},
+    {lbl:'R²',      val:r2V ?r2V.toFixed(4)        :'--', pct:r2V*100,                    st:r2V>=0.98?'green':r2V>=0.95?'amber':r2V?'red':'off'},
   ];
-
-  const stColor={green:GREEN, amber:AMBER, red:RED, off:DGRAY};
-  const kW=43, kH=26, kGap=4;
-
+  const stC={green:GREEN,amber:AMBER,red:RED,off:DGRAY};
+  const kW=43,kH=28,kGap=4;
   kpiDefs.forEach(({lbl,val,pct,st},i)=>{
-    const kx=ML+i*(kW+kGap);
-    const sc=stColor[st];
-
-    fill(SURF); R(kx,y,kW,kH,2);
-    // status top border
-    fill(sc); F(kx,y,kW,1.8);
-
-    doc.setFont('helvetica','normal');
-    doc.setFontSize(6.5);
-    txt(MGRAY);
-    doc.text(lbl,kx+4,y+7);
-
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(12);
-    txt(sc===DGRAY?MGRAY:sc);
-    doc.text(val,kx+4,y+16);
-
-    progressBar(kx+4,y+20,kW-8,1.8,pct,sc);
-
-    // Traffic light
-    if(st!=='off') trafficLight(kx+kW-13,y+8,st);
+    const kx=ML+i*(kW+kGap), sc=stC[st];
+    fill(SURF);R(kx,y,kW,kH,2);
+    fill(sc);F(kx,y,kW,2);
+    doc.setFont('helvetica','normal');doc.setFontSize(6.5);txt(MGRAY);doc.text(lbl,kx+4,y+8);
+    doc.setFont('helvetica','bold');doc.setFontSize(13);txt(sc===DGRAY?MGRAY:sc);doc.text(val,kx+4,y+18);
+    bar(kx+4,y+22,kW-8,2,pct,sc);
+    if(st!=='off')tlight(kx+kW-14,y+9,st);
   });
-  y+=kH+8;
+  y+=kH+6;
 
-  // ---- CHARTS STRIP ---------------------------------------
-  const radarC = document.getElementById('radar-chart');
-  const fvC    = document.getElementById('fv-chart')||document.getElementById('dash-fv-chart');
-  if(radarC||fvC){
+  // CHARTS
+  const rC=document.getElementById('radar-chart');
+  const fC=document.getElementById('fv-chart')||document.getElementById('dash-fv-chart');
+  if(rC||fC){
     try{
-      if(radarC&&fvC){
-        doc.addImage(radarC.toDataURL('image/png'),'PNG',ML,y,88,68);
-        doc.addImage(fvC.toDataURL('image/png'),'PNG',ML+92,y,90,68);
-      } else if(radarC){
-        doc.addImage(radarC.toDataURL('image/png'),'PNG',ML,y,CW,68);
-      } else {
-        doc.addImage(fvC.toDataURL('image/png'),'PNG',ML,y,CW,68);
-      }
-      y+=74;
+      if(rC&&fC){doc.addImage(rC.toDataURL('image/png'),'PNG',ML,y,88,66);doc.addImage(fC.toDataURL('image/png'),'PNG',ML+92,y,90,66);}
+      else if(rC){doc.addImage(rC.toDataURL('image/png'),'PNG',ML,y,CW,66);}
+      else{doc.addImage(fC.toDataURL('image/png'),'PNG',ML,y,CW,66);}
+      y+=72;
     }catch(e){}
   }
 
-  // ── AI TEXT PAGES ────────────────────────────────────────
+  // ── AI PAGES ─────────────────────────────────────────────
   if(texto.trim()){
-    doc.addPage(); bgPage();
+    doc.addPage();bgPage();
+    // Page mini-header
+    fill(DARK);F(0,0,W,26);fill(GREEN);F(0,24,W,0.5);
+    doc.setFont('helvetica','bolditalic');doc.setFontSize(18);txt(WHITE);doc.text('INFORME ANALÍTICO',ML,17);
+    doc.setFont('helvetica','normal');doc.setFontSize(7);txt(MGRAY);doc.text(`${s.nombre}  ·  ${fecha}`,W-ML,17,{align:'right'});
 
-    // Page header
-    fill(DARK); F(0,0,W,30);
-    fill(GREEN); F(0,28,W,0.5);
-    doc.setFont('helvetica','bolditalic');
-    doc.setFontSize(20);
-    txt(WHITE);
-    doc.text('INFORME ANALÍTICO',ML,20);
-    doc.setFont('helvetica','normal');
-    doc.setFontSize(7.5);
-    txt(MGRAY);
-    doc.text(`${s.nombre}  ·  ${fecha}`,W-ML,20,{align:'right'});
-
-    // Parse emoji-headed sections
-    const SMAP={
-      '📋':'RESUMEN EJECUTIVO',
-      '📊':'ANÁLISIS COMPARATIVO',
-      '💪':'FORTALEZAS',
-      '⚠️':'ÁREAS DE MEJORA',
-      '📅':'PLAN DE ACCIÓN',
-      '🔁':'RE-EVALUACIÓN',
-      '🎯':'OBJETIVOS',
-    };
-    const sections=[];
-    let cur_sec=null, cur_lines=[];
+    const SMAP={'📋':'RESUMEN EJECUTIVO','📊':'ANÁLISIS COMPARATIVO','💪':'FORTALEZAS','⚠️':'ÁREAS DE MEJORA','📅':'PLAN DE ACCIÓN','🔁':'RE-EVALUACIÓN','🎯':'OBJETIVOS'};
+    const sections=[];let cs=null,cl=[];
     texto.split('\n').forEach(line=>{
-      const key=Object.keys(SMAP).find(e=>line.trimStart().startsWith(e));
-      if(key){
-        if(cur_sec) sections.push({title:cur_sec,body:cur_lines.join('\n').trim()});
-        cur_sec=SMAP[key]; cur_lines=[];
-      } else {
-        cur_lines.push(line);
-      }
+      const k=Object.keys(SMAP).find(e=>line.trimStart().startsWith(e));
+      if(k){if(cs)sections.push({title:cs,lines:cl});cs=SMAP[k];cl=[];}
+      else if(line.trim())cl.push(line);
     });
-    if(cur_sec) sections.push({title:cur_sec,body:cur_lines.join('\n').trim()});
+    if(cs)sections.push({title:cs,lines:cl});
 
-    let ay=36;
+    let ay=32;
+    const need=(n)=>{if(ay+n>276){doc.addPage();bgPage();ay=14;}};
 
-    const ensureSpace=(need)=>{
-      if(ay+need>278){ doc.addPage(); bgPage(); ay=14; }
-    };
+    (sections.length?sections:[{title:'ANÁLISIS',lines:texto.split('\n').filter(l=>l.trim())}])
+    .forEach((sec,idx)=>{
+      // detect if body is a markdown table
+      const isTable=sec.lines.some(l=>l.includes('|'));
 
-    if(sections.length===0){
-      // plain text fallback
-      doc.setFont('helvetica','normal'); doc.setFontSize(8.5); txt(LGRAY);
-      doc.splitTextToSize(texto,CW).forEach(ln=>{
-        ensureSpace(6);
-        doc.text(ln,ML,ay); ay+=5.5;
-      });
-    } else {
-      sections.forEach((sec,idx)=>{
-        const bodyLines=doc.splitTextToSize(sec.body,CW-16);
-        const secH=22+bodyLines.length*5.4+10;
-        ensureSpace(secH);
+      // section band (shorter for content pages)
+      need(20);
+      fill(DARK);F(0,ay,W,20);
+      fill(GREEN);F(0,ay,10,20);
+      badge(idx+1,ML+2,ay+3);
+      doc.setFont('helvetica','bolditalic');doc.setFontSize(14);txt(WHITE);
+      doc.text(sec.title.toUpperCase(),ML+20,ay+13);
+      ay+=20;
 
-        // Section band
-        fill(DARK); F(0,ay,W,20);
-        fill(GREEN); F(0,ay,4,20);
-        badge(idx+1,ML+2,ay+4.5);
-        doc.setFont('helvetica','bolditalic');
-        doc.setFontSize(15);
-        txt(WHITE);
-        doc.text(sec.title.toUpperCase(),ML+16,ay+13);
-        ay+=20;
-
-        // Body box
-        const bH=bodyLines.length*5.4+8;
-        fill(SURF); R(ML,ay,CW,bH,2);
-        // left accent
-        fill(GREEN); F(ML,ay,2,bH);
-
-        doc.setFont('helvetica','normal');
-        doc.setFontSize(8.5);
+      if(isTable){
+        // render as visual table
+        const tableLines=sec.lines.filter(l=>l.includes('|'));
+        need(tableLines.length*7+8);
+        ay=_pdfRenderTable(doc,tableLines,ML,ay,CW,PAL);
+      } else {
+        // text body box
+        const bodyText=sec.lines.join('\n');
+        const wrapped=doc.splitTextToSize(bodyText,CW-12);
+        const bH=wrapped.length*5.4+8;
+        need(bH+4);
+        fill(SURF);R(ML,ay,CW,bH,2);
+        fill(GREEN);F(ML,ay,3,bH);
+        doc.setFont('helvetica','normal');doc.setFontSize(8.5);
         let ty=ay+7;
-        bodyLines.forEach(ln=>{
-          const isBullet=ln.trim().startsWith('•')||ln.trim().startsWith('-')||ln.trim().match(/^\d+\./);
+        wrapped.forEach(ln=>{
+          const isBullet=/^\s*[•\-\*]/.test(ln)||/^\s*\d+[\.\)]/.test(ln);
           txt(isBullet?WHITE:LGRAY);
           doc.text(ln,ML+6,ty);
           ty+=5.4;
         });
-        ay+=bH+6;
-      });
-    }
+        ay+=bH+4;
+      }
+      ay+=3; // section gap
+    });
   }
 
   // ── KINESIO PAGE ─────────────────────────────────────────
-  const hasKinesio=s.kinesio&&(
-    Object.keys(s.kinesio.bodyZones||{}).length||
-    Object.values(s.kinesio.tests||{}).some(t=>t.result==='pos')
-  );
-  if(hasKinesio){
-    doc.addPage(); bgPage();
-    let ky=0;
-    ky=sectionBand('EVALUACIÓN KINESIOLÓGICA',ky,28);
-    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); txt(MGRAY);
-    doc.text(`${s.nombre}  ·  ${new Date().toLocaleDateString('es-AR')}`,ML,ky+6);
-    ky+=14;
+  if(s.kinesio&&(Object.keys(s.kinesio.bodyZones||{}).length||Object.values(s.kinesio.tests||{}).some(t=>t.result==='pos'))){
+    doc.addPage();bgPage();
+    let ky=sectionBand('EVALUACIÓN KINESIOLÓGICA',0,28);
+    doc.setFont('helvetica','normal');doc.setFontSize(7.5);txt(MGRAY);
+    doc.text(`${s.nombre}  ·  ${new Date().toLocaleDateString('es-AR')}`,ML,ky+7);
+    ky+=16;
 
     const zonas=Object.entries(s.kinesio.bodyZones||{}).filter(([,v])=>!v.recuperado);
     if(zonas.length){
-      ky=sectionBand('ZONAS COMPROMETIDAS',ky,18);
-      ky+=4;
+      ky=sectionBand('ZONAS COMPROMETIDAS',ky,20);ky+=4;
       zonas.forEach(([,z])=>{
-        fill(SURF); R(ML,ky,CW,12,1.5);
-        fill(RED); F(ML,ky,3,12);
-        doc.setFont('helvetica','bold'); doc.setFontSize(9); txt(WHITE);
-        doc.text(z.label,ML+7,ky+8);
-        const evaVal=z.eva||0;
-        const evaColor=evaVal>=7?RED:evaVal>=4?AMBER:GREEN;
-        txt(evaColor);
-        doc.text(`EVA ${evaVal}/10`,W-ML-4,ky+8,{align:'right'});
-        progressBar(ML+7,ky+10,CW-14,1.5,evaVal*10,evaColor);
-        ky+=16;
-      });
-      ky+=4;
+        fill(SURF);R(ML,ky,CW,13,1.5);fill(RED);F(ML,ky,3,13);
+        doc.setFont('helvetica','bold');doc.setFontSize(9);txt(WHITE);doc.text(z.label,ML+7,ky+9);
+        const ev=z.eva||0,ec=ev>=7?RED:ev>=4?AMBER:GREEN;
+        txt(ec);doc.text(`EVA ${ev}/10`,W-ML-4,ky+9,{align:'right'});
+        bar(ML+7,ky+11,CW-14,1.5,ev*10,ec);
+        ky+=17;
+      });ky+=4;
     }
 
     const allTests=[...ORTHO_TESTS.subacro,...ORTHO_TESTS.manguito,...ORTHO_TESTS.biceps,...ORTHO_TESTS.ligamentos,...ORTHO_TESTS.meniscos,...ORTHO_TESTS.funcionales,...ORTHO_TESTS.tobillo,...ORTHO_TESTS.lumbar,...ORTHO_TESTS.cadera,...ORTHO_TESTS.dohaAductores,...ORTHO_TESTS.dohaPsoas,...ORTHO_TESTS.dohaInguinal,...ORTHO_TESTS.dohaComplementarios,...ORTHO_TESTS.cervicalNeural,...ORTHO_TESTS.cervicalArticular,...ORTHO_TESTS.cervicalMuscular,...ORTHO_TESTS.codoLateral,...ORTHO_TESTS.codoMedial,...ORTHO_TESTS.codoLigamentos,...ORTHO_TESTS.patelo,...ORTHO_TESTS.tendonesRodilla,...ORTHO_TESTS.pie,...ORTHO_TESTS.muneca];
     const posTests=Object.entries(s.kinesio.tests||{}).filter(([,v])=>v.result==='pos');
     if(posTests.length){
-      ky=sectionBand('TESTS ORTOPÉDICOS POSITIVOS',ky,18);
-      ky+=4;
+      ky=sectionBand('TESTS POSITIVOS',ky,20);ky+=4;
       posTests.forEach(([id,v],pi)=>{
-        const t=allTests.find(x=>x.id===id); if(!t)return;
-        if(ky>270){doc.addPage();bgPage();ky=14;}
-        fill(SURF); R(ML,ky,CW,14,1.5);
-        fill(RED); F(ML,ky,3,14);
-        badge(pi+1,ML+5,ky+1.5,11);
-        doc.setFont('helvetica','bold'); doc.setFontSize(8.5); txt(RED);
-        doc.text(`+ ${t.name}`,ML+20,ky+7);
-        if(t.sub||v.obs){
-          doc.setFont('helvetica','normal'); doc.setFontSize(7.5); txt(MGRAY);
-          const sub=`${t.sub||''}${v.obs?' — '+v.obs:''}`;
-          doc.text(sub,ML+20,ky+12);
-        }
+        const t=allTests.find(x=>x.id===id);if(!t)return;
+        if(ky>268){doc.addPage();bgPage();ky=14;}
+        fill(SURF);R(ML,ky,CW,15,1.5);fill(RED);F(ML,ky,3,15);
+        badge(pi+1,ML+5,ky+0.5,13);
+        doc.setFont('helvetica','bold');doc.setFontSize(8.5);txt(RED);doc.text(`+ ${t.name}`,ML+22,ky+7);
+        if(t.sub||v.obs){doc.setFont('helvetica','normal');doc.setFontSize(7);txt(MGRAY);doc.text(`${t.sub||''}${v.obs?' — '+v.obs:''}`,ML+22,ky+12);}
         ky+=18;
       });
     }
   }
 
-  // ── FOOTER ALL PAGES ─────────────────────────────────────
+  // ── FOOTER ───────────────────────────────────────────────
   const total=doc.getNumberOfPages();
   for(let i=1;i<=total;i++){
     doc.setPage(i);
-    fill(DARK); F(0,285,W,12);
-    fill(GREEN); F(0,285,W,0.4);
-    // Green dot before page num
-    fill(GREEN); doc.circle(W-ML-5,291,1.2,'F');
-    doc.setFont('helvetica','normal'); doc.setFontSize(6.5); txt(DGRAY);
+    fill(DARK);F(0,284,W,13);fill(GREEN);F(0,284,W,0.5);
+    fill(GREEN);doc.circle(W-ML-5,291,1.4,'F');
+    doc.setFont('helvetica','normal');doc.setFontSize(6.5);txt(DGRAY);
     doc.text(`MOVEMETRICS  ·  ${prof}  ·  ${inst}`,ML,291);
-    txt(GREEN);
-    doc.text(`${i} / ${total}`,W-ML,291,{align:'right'});
+    txt(GREEN);doc.text(`${i} / ${total}`,W-ML,291,{align:'right'});
   }
 
   doc.save(`MoveMetrics_${s.nombre.replace(/\s/g,'_')}_${new Date().toISOString().split('T')[0]}.pdf`);
