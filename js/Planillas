@@ -184,257 +184,154 @@ function renderSmithPctTable() {
 
 // ════════════════════════════════════════
 //  COMPARATIVA PRE / POST F-V
-//  Fuente: "comparativa Fermín" de Tecni_2026
-//  Tabla: %RM → Kg → VMP  (pendiente + intersección de regresión lineal)
 // ════════════════════════════════════════
 
-let _preData = null, _postData = null;
-
-// Tabla %RM → VMP calculada como VMP = a + b * (RM * pct/100)
-// exactamente como la planilla Tecni: usa la pendiente e intersección de la regresión
 const PP_PCTS = [100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30];
 
-function setPPTab(mode) {
-  document.getElementById('pp-mode-manual').style.display = mode === 'manual' ? '' : 'none';
-  document.getElementById('pp-mode-hist').style.display   = mode === 'hist'   ? '' : 'none';
-  document.getElementById('pp-tab-manual-btn').className  = 'btn btn-sm ' + (mode === 'manual' ? 'btn-neon' : 'btn-ghost');
-  document.getElementById('pp-tab-hist-btn').className    = 'btn btn-sm ' + (mode === 'hist'   ? 'btn-neon' : 'btn-ghost');
-  document.getElementById('prepost-output').style.display = 'none';
-}
-
-// ── MODO MANUAL ──────────────────────────────────────────────
-
-function addPPRow(side) {
+function ppAddRow(side) {
   const wrap = document.getElementById('pp-' + side + '-rows');
   if (!wrap) return;
-  const div = document.createElement('div');
-  div.style.cssText = 'display:flex;gap:6px;margin-bottom:5px;align-items:center';
-  div.innerHTML = `
-    <input class="inp inp-mono" type="number" step=".5" placeholder="kg"
-      style="flex:1;font-size:12px;padding:5px 7px" oninput="calcPPManual()">
-    <input class="inp inp-mono" type="number" step=".001" placeholder="0.650"
-      style="flex:1;font-size:12px;padding:5px 7px" oninput="calcPPManual()">
-    <button onclick="this.parentElement.remove();calcPPManual()"
-      style="background:none;border:none;color:var(--text3);font-size:15px;cursor:pointer;padding:2px 4px;line-height:1">×</button>
-  `;
-  wrap.appendChild(div);
+  const row = document.createElement('div');
+  row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 20px;gap:4px;margin-bottom:4px';
+  row.innerHTML =
+    '<input class="inp inp-mono" type="number" step=".5" placeholder="kg" style="font-size:12px;padding:5px 7px">' +
+    '<input class="inp inp-mono" type="number" step=".001" placeholder="0.650" style="font-size:12px;padding:5px 7px">' +
+    '<button onclick="this.closest(\'div\').remove()" style="background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;padding:0">×</button>';
+  wrap.appendChild(row);
 }
 
-function _ppGetPairs(side) {
+function ppGetPairs(side) {
   const wrap = document.getElementById('pp-' + side + '-rows');
   if (!wrap) return [];
-  return [...wrap.children].map(div => {
-    const inputs = div.querySelectorAll('input');
-    if (inputs.length < 2) return null;
+  const result = [];
+  wrap.querySelectorAll('div').forEach(row => {
+    const inputs = row.querySelectorAll('input');
+    if (inputs.length < 2) return;
     const kg  = parseFloat(inputs[0].value);
     const vmp = parseFloat(inputs[1].value);
-    return { kg, vmp };
-  }).filter(p => p && !isNaN(p.kg) && !isNaN(p.vmp) && p.kg > 0 && p.vmp > 0);
+    if (!isNaN(kg) && !isNaN(vmp) && kg > 0 && vmp > 0) result.push({ kg, vmp });
+  });
+  return result;
 }
 
-function _linReg(pairs) {
+function ppLinReg(pairs) {
   const n = pairs.length;
   if (n < 2) return null;
-  const sumX  = pairs.reduce((s, p) => s + p.kg,  0);
-  const sumY  = pairs.reduce((s, p) => s + p.vmp, 0);
-  const sumXY = pairs.reduce((s, p) => s + p.kg * p.vmp, 0);
-  const sumX2 = pairs.reduce((s, p) => s + p.kg * p.kg,  0);
-  const denom = n * sumX2 - sumX * sumX;
-  if (Math.abs(denom) < 1e-12) return null;
-  const b = (n * sumXY - sumX * sumY) / denom;
-  const a = sumY / n - b * sumX / n;
-  const meanY = sumY / n;
-  const ssTot = pairs.reduce((s, p) => s + (p.vmp - meanY) ** 2, 0);
-  const ssRes = pairs.reduce((s, p) => s + (p.vmp - (a + b * p.kg)) ** 2, 0);
-  const r2 = ssTot > 0 ? +(1 - ssRes / ssTot).toFixed(4) : 1;
+  const sX  = pairs.reduce((s, p) => s + p.kg, 0);
+  const sY  = pairs.reduce((s, p) => s + p.vmp, 0);
+  const sXY = pairs.reduce((s, p) => s + p.kg * p.vmp, 0);
+  const sX2 = pairs.reduce((s, p) => s + p.kg * p.kg, 0);
+  const den = n * sX2 - sX * sX;
+  if (Math.abs(den) < 1e-12) return null;
+  const b = (n * sXY - sX * sY) / den;
+  const a = sY / n - b * sX / n;
+  const mY = sY / n;
+  const ss = pairs.reduce((s, p) => s + (p.vmp - mY) ** 2, 0);
+  const sr = pairs.reduce((s, p) => s + (p.vmp - (a + b * p.kg)) ** 2, 0);
+  const r2 = ss > 0 ? +(1 - sr / ss).toFixed(4) : 1;
   return { a, b, r2 };
 }
 
-function calcPPManual() {
-  try {
-    const ejId   = document.getElementById('pp-ej-manual')?.value || 'sentadilla';
-    const vmpRef = (typeof VMP_REF !== 'undefined' ? VMP_REF[ejId] : null) || 0.32;
+function ppCalcular() {
+  const msgEl = document.getElementById('pp-msg');
+  const outEl = document.getElementById('prepost-output');
 
-    const prePairs  = _ppGetPairs('pre');
-    const postPairs = _ppGetPairs('post');
+  const ejId  = document.getElementById('pp-ej-manual')?.value || 'sentadilla';
+  const vRef  = (typeof VMP_REF !== 'undefined' && VMP_REF[ejId]) ? VMP_REF[ejId] : 0.32;
 
-    const preRmEl  = document.getElementById('pp-pre-rm');
-    const postRmEl = document.getElementById('pp-post-rm');
-    const preR2El  = document.getElementById('pp-pre-r2');
-    const postR2El = document.getElementById('pp-post-r2');
+  const pre  = ppGetPairs('pre');
+  const post = ppGetPairs('post');
 
-    // Feedback inmediato de cuántos pares válidos hay
-    if (preRmEl)  preRmEl.textContent  = prePairs.length  + ' par(es) válidos' + (prePairs.length  < 3 ? ' — mín 3' : '');
-    if (postRmEl) postRmEl.textContent = postPairs.length + ' par(es) válidos' + (postPairs.length < 3 ? ' — mín 3' : '');
+  // Siempre mostrar conteo
+  const preRmEl  = document.getElementById('pp-pre-rm');
+  const postRmEl = document.getElementById('pp-post-rm');
+  const preR2El  = document.getElementById('pp-pre-r2');
+  const postR2El = document.getElementById('pp-post-r2');
 
-    if (prePairs.length < 2 || postPairs.length < 2) {
-      document.getElementById('prepost-output').style.display = 'none';
-      return;
-    }
+  if (preRmEl)  preRmEl.textContent  = pre.length  + ' par(es)';
+  if (postRmEl) postRmEl.textContent = post.length + ' par(es)';
 
-    // Regresión
-    const preReg  = _linReg(prePairs);
-    const postReg = _linReg(postPairs);
-
-    const preRM  = preReg  && preReg.b  < 0 ? +((vmpRef - preReg.a)  / preReg.b).toFixed(1)  : null;
-    const postRM = postReg && postReg.b < 0 ? +((vmpRef - postReg.a) / postReg.b).toFixed(1) : null;
-
-    if (preRmEl)  preRmEl.textContent  = preRM  ? preRM  + ' kg' : '— (pendiente positiva?)';
-    if (postRmEl) postRmEl.textContent = postRM ? postRM + ' kg' : '— (pendiente positiva?)';
-    if (preR2El)  preR2El.textContent  = preReg  ? preReg.r2  : '—';
-    if (postR2El) postR2El.textContent = postReg ? postReg.r2 : '—';
-
-    if (!preReg || !postReg || !preRM || !postRM) {
-      document.getElementById('prepost-output').style.display = 'none';
-      return;
-    }
-
-    _preData  = { ...preReg,  oneRM: preRM,  cargas: prePairs.map(p=>p.kg),  vmps: prePairs.map(p=>p.vmp) };
-    _postData = { ...postReg, oneRM: postRM, cargas: postPairs.map(p=>p.kg), vmps: postPairs.map(p=>p.vmp) };
-
-    // Tabla raw de datos medidos
-    const rawSection = document.getElementById('prepost-raw-section');
-    const rawTbody   = document.getElementById('prepost-raw-tbody');
-    if (rawSection && rawTbody) {
-      rawSection.style.display = '';
-      const maxLen = Math.max(prePairs.length, postPairs.length);
-      rawTbody.innerHTML = Array.from({ length: maxLen }, (_, i) => {
-        const pre  = prePairs[i];
-        const post = postPairs[i];
-        return `<tr>
-          <td class="mono-cell" style="color:#4D9EFF">${pre  ? pre.kg  : '—'}</td>
-          <td class="mono-cell" style="color:#4D9EFF">${pre  ? pre.vmp : '—'}</td>
-          <td class="mono-cell" style="color:#39FF7A">${post ? post.kg  : '—'}</td>
-          <td class="mono-cell" style="color:#39FF7A">${post ? post.vmp : '—'}</td>
-        </tr>`;
-      }).join('');
-    }
-
-    _renderPrePostOutput(_preData, _postData);
-
-  } catch(e) {
-    console.error('calcPPManual error:', e);
+  if (pre.length < 3 || post.length < 3) {
+    if (msgEl) { msgEl.textContent = '⚠️ Necesitás al menos 3 pares válidos por lado (kg > 0 y VMP > 0).'; msgEl.style.display = 'block'; }
+    if (outEl) outEl.style.display = 'none';
+    return;
   }
-}
+  if (msgEl) msgEl.style.display = 'none';
 
-// ── MODO HISTORIAL ────────────────────────────────────────────
+  const rPre  = ppLinReg(pre);
+  const rPost = ppLinReg(post);
 
-function calcFVPrePost() {
-  const ejId    = document.getElementById('prepost-ej')?.value || 'sentadilla';
-  const preIdx  = document.getElementById('prepost-pre')?.value  || '0';
-  const postIdx = document.getElementById('prepost-post')?.value || '1';
-
-  const msgEl = document.getElementById('prepost-msg');
-
-  if (!cur?.evals) {
-    document.getElementById('prepost-output').style.display = 'none';
-    if (msgEl) msgEl.textContent = 'Sin evaluaciones guardadas para este atleta.';
+  if (!rPre || !rPost) {
+    if (msgEl) { msgEl.textContent = '⚠️ No se pudo calcular la regresión. Verificá que los datos tengan variación.'; msgEl.style.display = 'block'; }
+    if (outEl) outEl.style.display = 'none';
     return;
   }
 
-  const all = Object.entries(cur.evals)
-    .filter(([k]) => k.startsWith('fv_' + ejId + '_'))
-    .sort((a, b) => +a[0].split('_').slice(-1)[0] - +b[0].split('_').slice(-1)[0]);
+  const rm1Pre  = rPre.b  < 0 ? +((vRef - rPre.a)  / rPre.b).toFixed(1)  : null;
+  const rm1Post = rPost.b < 0 ? +((vRef - rPost.a) / rPost.b).toFixed(1) : null;
 
-  if (all.length < 2) {
-    document.getElementById('prepost-output').style.display = 'none';
-    if (msgEl) msgEl.textContent = 'Se necesitan al menos 2 evaluaciones guardadas del mismo ejercicio. Usá el modo "Ingreso manual" si no tenés historial.';
+  if (preRmEl)  preRmEl.textContent  = rm1Pre  ? rm1Pre  + ' kg' : '— (b≥0)';
+  if (postRmEl) postRmEl.textContent = rm1Post ? rm1Post + ' kg' : '— (b≥0)';
+  if (preR2El)  preR2El.textContent  = 'R²=' + rPre.r2;
+  if (postR2El) postR2El.textContent = 'R²=' + rPost.r2;
+
+  if (!rm1Pre || !rm1Post) {
+    if (msgEl) { msgEl.textContent = '⚠️ La pendiente es positiva — revisá los datos (VMP debe bajar al subir la carga).'; msgEl.style.display = 'block'; }
+    if (outEl) outEl.style.display = 'none';
     return;
   }
 
-  const pre  = all[+preIdx]?.[1];
-  const post = all[+postIdx]?.[1];
-
-  if (!pre || !post) {
-    document.getElementById('prepost-output').style.display = 'none';
-    if (msgEl) msgEl.textContent = 'Eval Pre o Post no encontrada.';
-    return;
-  }
-
-  if (msgEl) msgEl.textContent = '';
-  _preData  = pre;
-  _postData = post;
-
-  const rawSection = document.getElementById('prepost-raw-section');
-  if (rawSection) rawSection.style.display = 'none';
-
-  _renderPrePostOutput(pre, post);
-}
-
-// ── RENDER COMPARTIDO ─────────────────────────────────────────
-// Cálculo exacto de la planilla Tecni:
-//   VMP_pct = a + b * (RM * pct / 100)
-//   cam% = (VMP_post - VMP_pre) / VMP_pre * 100
-
-function _renderPrePostOutput(pre, post) {
   // KPIs
-  const dRM  = (pre.oneRM && post.oneRM) ? ((post.oneRM - pre.oneRM) / pre.oneRM * 100).toFixed(1) : null;
-  const dV0  = (pre.a && post.a) ? ((post.a - pre.a) / pre.a * 100).toFixed(1) : null;
-  const dPend = (pre.b && post.b) ? ((post.b - pre.b) / Math.abs(pre.b) * 100).toFixed(1) : null;
+  const dRM   = ((rm1Post - rm1Pre) / rm1Pre * 100).toFixed(1);
+  const dV0   = ((rPost.a - rPre.a) / Math.abs(rPre.a) * 100).toFixed(1);
+  const dPend = ((rPost.b - rPre.b) / Math.abs(rPre.b) * 100).toFixed(1);
 
-  const mkK = (label, valPre, valPost, delta, unit, invert) => {
-    const d = parseFloat(delta);
-    const positive = invert ? d < 0 : d > 0;
-    const c = isNaN(d) ? 'var(--text3)' : positive ? 'var(--neon)' : 'var(--red)';
-    const sign = d > 0 ? '+' : '';
+  const mkKPI = (label, vPre, vPost, delta, unit, invertGood) => {
+    const d  = parseFloat(delta);
+    const ok = invertGood ? d < 0 : d > 0;
+    const c  = isNaN(d) ? 'var(--text3)' : ok ? 'var(--neon)' : 'var(--red)';
     return `<div style="background:var(--bg4);border:1px solid ${c}33;border-radius:10px;padding:12px;text-align:center">
-      <div style="font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;margin-bottom:5px">${label}</div>
-      <div style="display:flex;justify-content:center;gap:14px;margin-bottom:5px">
-        <div><div style="font-size:9px;color:#4D9EFF;font-family:var(--mono)">PRE</div><div style="font-family:var(--mono);font-size:14px;font-weight:700;color:#4D9EFF">${valPre ?? '—'}${unit}</div></div>
-        <div><div style="font-size:9px;color:#39FF7A;font-family:var(--mono)">POST</div><div style="font-family:var(--mono);font-size:14px;font-weight:700;color:#39FF7A">${valPost ?? '—'}${unit}</div></div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;margin-bottom:6px">${label}</div>
+      <div style="display:flex;justify-content:center;gap:12px;margin-bottom:6px">
+        <div><div style="font-size:9px;color:#4D9EFF;font-family:var(--mono)">PRE</div><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:#4D9EFF">${vPre}${unit}</div></div>
+        <div><div style="font-size:9px;color:#39FF7A;font-family:var(--mono)">POST</div><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:#39FF7A">${vPost}${unit}</div></div>
       </div>
-      <div style="font-family:var(--mono);font-size:22px;font-weight:800;color:${c}">${isNaN(d) ? '—' : sign + delta + '%'}</div>
+      <div style="font-family:var(--mono);font-size:22px;font-weight:800;color:${c}">${d > 0 ? '+' : ''}${delta}%</div>
     </div>`;
   };
 
   document.getElementById('prepost-kpis').innerHTML =
-    mkK('1RM estimado',   pre.oneRM?.toFixed(1), post.oneRM?.toFixed(1), dRM,   ' kg', false) +
-    mkK('V₀ (intersec.)', pre.a?.toFixed(4),     post.a?.toFixed(4),     dV0,   ' m/s', false) +
-    mkK('Pendiente (b)',  pre.b?.toFixed(5),      post.b?.toFixed(5),     dPend, '',    true);
+    mkKPI('1RM estimado',   rm1Pre,            rm1Post,            dRM,   ' kg',  false) +
+    mkKPI('V₀ (intersec.)', rPre.a.toFixed(4), rPost.a.toFixed(4), dV0,   ' m/s', false) +
+    mkKPI('Pendiente (b)',  rPre.b.toFixed(5),  rPost.b.toFixed(5), dPend, '',     true);
 
-  // Tabla % RM → kg → VMP — exactamente como planilla Tecni
-  // VMP(pct) = a + b * (RM * pct / 100)
-  const tbody = document.getElementById('prepost-tbody');
-  tbody.innerHTML = PP_PCTS.map(pct => {
-    const kgPre  = pre.oneRM  ? +(pre.oneRM  * pct / 100).toFixed(1) : null;
-    const kgPost = post.oneRM ? +(post.oneRM * pct / 100).toFixed(1) : null;
-
-    // VMP calculada con la regresión: VMP = a + b * kg_al_pct
-    const vPre  = (kgPre  != null && pre.a  != null && pre.b  != null) ? +(pre.a  + pre.b  * kgPre).toFixed(3)  : null;
-    const vPost = (kgPost != null && post.a != null && post.b != null) ? +(post.a + post.b * kgPost).toFixed(3) : null;
-
-    const cam   = (vPre && vPost) ? +((vPost - vPre) / Math.abs(vPre) * 100).toFixed(1) : null;
-    const camCol = cam == null ? 'var(--text3)' : cam > 0 ? 'var(--neon)' : 'var(--red)';
-    const camSign = cam != null && cam > 0 ? '+' : '';
-
+  // Tabla % RM → kg → VMP → cam%
+  document.getElementById('prepost-tbody').innerHTML = PP_PCTS.map(pct => {
+    const kgPre  = +(rm1Pre  * pct / 100).toFixed(1);
+    const kgPost = +(rm1Post * pct / 100).toFixed(1);
+    const vPre   = +(rPre.a  + rPre.b  * kgPre).toFixed(3);
+    const vPost  = +(rPost.a + rPost.b * kgPost).toFixed(3);
+    const cam    = vPre ? +((vPost - vPre) / Math.abs(vPre) * 100).toFixed(1) : null;
+    const cc = cam == null ? 'var(--text3)' : cam > 0 ? 'var(--neon)' : 'var(--red)';
     return `<tr>
-      <td class="mono-cell" style="color:var(--text2);font-weight:700">${pct}%</td>
-      <td class="mono-cell" style="color:#4D9EFF">${kgPre ?? '—'}</td>
-      <td class="mono-cell" style="color:#4D9EFF">${vPre ?? '—'}</td>
-      <td class="mono-cell" style="color:#39FF7A">${kgPost ?? '—'}</td>
-      <td class="mono-cell" style="color:#39FF7A">${vPost ?? '—'}</td>
-      <td class="mono-cell" style="color:${camCol};font-weight:700">${cam != null ? camSign + cam + '%' : '—'}</td>
+      <td class="mono-cell" style="font-weight:700;color:var(--text2)">${pct}%</td>
+      <td class="mono-cell" style="color:#4D9EFF">${kgPre}</td>
+      <td class="mono-cell" style="color:#4D9EFF">${vPre > 0 ? vPre : '—'}</td>
+      <td class="mono-cell" style="color:#39FF7A">${kgPost}</td>
+      <td class="mono-cell" style="color:#39FF7A">${vPost > 0 ? vPost : '—'}</td>
+      <td class="mono-cell" style="color:${cc};font-weight:700">${cam != null ? (cam > 0 ? '+' : '') + cam + '%' : '—'}</td>
     </tr>`;
   }).join('');
 
-  document.getElementById('prepost-output').style.display = 'block';
+  outEl.style.display = 'block';
 }
 
-function updatePrePostSelects() {
-  if (!cur?.evals) return;
-  const ejId = document.getElementById('prepost-ej')?.value || 'sentadilla';
-  const all  = Object.entries(cur.evals)
-    .filter(([k]) => k.startsWith('fv_' + ejId + '_'))
-    .sort((a, b) => +a[0].split('_').slice(-1)[0] - +b[0].split('_').slice(-1)[0]);
-
-  ['prepost-pre', 'prepost-post'].forEach((selId, si) => {
-    const sel = document.getElementById(selId);
-    if (!sel) return;
-    sel.innerHTML = all.length
-      ? all.map((e, i) => `<option value="${i}" ${i === (si === 1 ? all.length - 1 : 0) ? 'selected' : ''}>${i + 1}ra — ${e[1].fecha || 'sin fecha'}</option>`).join('')
-      : '<option value="">Sin evals guardadas</option>';
-  });
-}
+// Mantener compatibilidad con el hook de historial (modo antiguo)
+function calcFVPrePost() { ppCalcular(); }
+function updatePrePostSelects() {}
+function calcPPManual() { ppCalcular(); }
+function setPPTab() {}
+function addPPRow(side) { ppAddRow(side); }
 
 // ════════════════════════════════════════
 //  DJ INCREMENTAL — IQ y RSI
