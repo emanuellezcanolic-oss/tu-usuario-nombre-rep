@@ -210,8 +210,8 @@ function addPPRow(side) {
   const wrap = document.getElementById('pp-' + side + '-rows');
   if (!wrap) return;
   const count = side === 'pre' ? _ppPreCount++ : _ppPostCount++;
-  _ppPreRows  = side === 'pre'  ? [..._ppPreRows, count]  : _ppPreRows;
-  _ppPostRows = side === 'post' ? [..._ppPostRows, count] : _ppPostRows;
+  if (side === 'pre')  _ppPreRows.push(count);
+  if (side === 'post') _ppPostRows.push(count);
   const div = document.createElement('div');
   div.id = 'pp-' + side + '-row-' + count;
   div.style.cssText = 'display:flex;gap:6px;margin-bottom:5px;align-items:center';
@@ -229,11 +229,13 @@ function addPPRow(side) {
 function _ppGetPairs(side) {
   const wrap = document.getElementById('pp-' + side + '-rows');
   if (!wrap) return [];
-  return [...wrap.querySelectorAll('div[id^="pp-' + side + '-row"]')].map(div => {
-    const kg  = parseFloat(div.querySelector('input[id*="-kg-"]')?.value);
-    const vmp = parseFloat(div.querySelector('input[id*="-vmp-"]')?.value);
+  return [...wrap.querySelectorAll('div[id]')].map(div => {
+    const inputs = div.querySelectorAll('input');
+    if (inputs.length < 2) return null;
+    const kg  = parseFloat(inputs[0].value);
+    const vmp = parseFloat(inputs[1].value);
     return { kg, vmp };
-  }).filter(p => !isNaN(p.kg) && !isNaN(p.vmp) && p.kg > 0 && p.vmp > 0);
+  }).filter(p => p && !isNaN(p.kg) && !isNaN(p.vmp) && p.kg > 0 && p.vmp > 0);
 }
 
 function _linReg(pairs) {
