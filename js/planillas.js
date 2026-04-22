@@ -306,8 +306,11 @@ function ppCalcular() {
   }
 
   // 1RM via regresión inversa kg=f(VMP) — método Excel/Tecni
-  const rm1Pre  = (rPre.aK  != null && rPre.bK  < 0) ? +(rPre.aK  + rPre.bK  * vRef).toFixed(1) : (rPre.b  < 0 ? +((vRef - rPre.a)  / rPre.b).toFixed(1)  : null);
-  const rm1Post = (rPost.aK != null && rPost.bK < 0) ? +(rPost.aK + rPost.bK * vRef).toFixed(1) : (rPost.b < 0 ? +((vRef - rPost.a) / rPost.b).toFixed(1) : null);
+  // RAW: precisión completa para cálculos; display: 1 decimal
+  const rm1PreRaw  = (rPre.aK  != null && rPre.bK  < 0) ? rPre.aK  + rPre.bK  * vRef : (rPre.b  < 0 ? (vRef - rPre.a)  / rPre.b  : null);
+  const rm1PostRaw = (rPost.aK != null && rPost.bK < 0) ? rPost.aK + rPost.bK * vRef : (rPost.b < 0 ? (vRef - rPost.a) / rPost.b : null);
+  const rm1Pre  = rm1PreRaw  ? +rm1PreRaw.toFixed(1)  : null;
+  const rm1Post = rm1PostRaw ? +rm1PostRaw.toFixed(1) : null;
 
   if (preRmEl)  preRmEl.textContent  = rm1Pre  ? rm1Pre  + ' kg' : '— (b≥0)';
   if (postRmEl) postRmEl.textContent = rm1Post ? rm1Post + ' kg' : '— (b≥0)';
@@ -396,19 +399,19 @@ function ppCalcular() {
     }
   }
 
-  // ── TABLA 2: % RM → kg → VMP → cam% ────────────────────────
+  // ── TABLA 2: % RM → kg → VMP → cam% (usa raw para precisión exacta) ──
   document.getElementById('prepost-tbody').innerHTML = PP_PCTS.map(pct => {
-    const kgPre  = +(rm1Pre  * pct / 100).toFixed(1);
-    const kgPost = +(rm1Post * pct / 100).toFixed(1);
+    const kgPre  = rm1PreRaw  * pct / 100;
+    const kgPost = rm1PostRaw * pct / 100;
     const vPre   = +(rPre.a  + rPre.b  * kgPre).toFixed(3);
     const vPost  = +(rPost.a + rPost.b * kgPost).toFixed(3);
     const cam    = vPre ? +((vPost - vPre) / Math.abs(vPre) * 100).toFixed(1) : null;
     const cc = cam == null ? 'var(--text3)' : cam > 0 ? 'var(--neon)' : 'var(--red)';
     return `<tr>
       <td class="mono-cell" style="font-weight:700;color:var(--text2)">${pct}%</td>
-      <td class="mono-cell" style="color:#4D9EFF">${kgPre}</td>
+      <td class="mono-cell" style="color:#4D9EFF">${kgPre.toFixed(1)}</td>
       <td class="mono-cell" style="color:#4D9EFF">${vPre > 0 ? vPre : '—'}</td>
-      <td class="mono-cell" style="color:#39FF7A">${kgPost}</td>
+      <td class="mono-cell" style="color:#39FF7A">${kgPost.toFixed(1)}</td>
       <td class="mono-cell" style="color:#39FF7A">${vPost > 0 ? vPost : '—'}</td>
       <td class="mono-cell" style="color:${cc};font-weight:700">${cam != null ? (cam > 0 ? '+' : '') + cam + '%' : '—'}</td>
     </tr>`;
@@ -417,56 +420,66 @@ function ppCalcular() {
   outEl.style.display = 'block';
 
   // ── GRÁFICOS ─────────────────────────────────────────────────
-  const chartOpts = (title) => ({
+  const darkChartOpts = (xLabel) => ({
     responsive: true,
     plugins: {
-      legend: { labels: { color: '#a0a0a0', font: { family: 'monospace', size: 10 } } },
-      tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(3)} m/s` } }
+      legend: { labels: { color: '#a0a0a0', font: { family: 'monospace', size: 10 }, usePointStyle: true, pointStyle: 'circle' } },
+      tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${(+ctx.parsed.y).toFixed(3)} m/s` } }
     },
     scales: {
-      x: { title: { display: true, text: title, color: '#666', font: { size: 10 } }, ticks: { color: '#888' }, grid: { color: '#2a2a2a' } },
-      y: { title: { display: true, text: 'VMP (m/s)', color: '#666', font: { size: 10 } }, ticks: { color: '#888' }, grid: { color: '#2a2a2a' } }
-    }
+      x: { type: 'linear', title: { display: true, text: xLabel, color: '#555', font: { size: 10 } }, ticks: { color: '#666' }, grid: { color: '#1e1e1e' } },
+      y: { title: { display: true, text: 'VMP (m/s)', color: '#555', font: { size: 10 } }, ticks: { color: '#666' }, grid: { color: '#1e1e1e' } }
+    },
+    animation: { duration: 350 }
   });
 
-  // Gráfico 1 — cargas absolutas (mismos kg en ambos ejes)
-  const allKgAbs = [...new Set([...pre.map(p => p.kg), ...post.map(p => p.kg)])].sort((a,b) => a-b);
-  const vmpAbsPre  = allKgAbs.map(kg => +(rPre.a  + rPre.b  * kg).toFixed(3));
-  const vmpAbsPost = allKgAbs.map(kg => +(rPost.a + rPost.b * kg).toFixed(3));
+  const mkScatterLine = (pairs, reg, color) => {
+    // puntos reales medidos
+    const pts = pairs.map(p => ({ x: p.kg, y: p.vmp }));
+    // línea de regresión suave entre min y max kg
+    const kgMin = Math.min(...pairs.map(p=>p.kg));
+    const kgMax = Math.max(...pairs.map(p=>p.kg));
+    const steps = 40;
+    const line = Array.from({length: steps+1}, (_,i) => {
+      const kg = kgMin + (kgMax - kgMin) * i / steps;
+      return { x: +kg.toFixed(2), y: +(reg.a + reg.b * kg).toFixed(4) };
+    });
+    return [
+      { data: pts,  borderColor: color, backgroundColor: color, pointRadius: 5, pointStyle: 'circle', showLine: false, order: 2 },
+      { data: line, borderColor: color, backgroundColor: 'transparent', pointRadius: 0, showLine: true, borderDash: [], tension: 0, order: 1 }
+    ];
+  };
+
+  // Gráfico 1 — cargas absolutas: curva F-V vs kg real
   const absCtx = document.getElementById('pp-abs-chart');
   if (absCtx) {
     if (absCtx._ppChart) absCtx._ppChart.destroy();
+    const [preScPts, preScLine]   = mkScatterLine(pre,  rPre,  '#4D9EFF');
+    const [postScPts, postScLine] = mkScatterLine(post, rPost, '#39FF7A');
+    preScPts.label  = 'Pre';  preScLine.label  = '';
+    postScPts.label = 'Post'; postScLine.label = '';
     absCtx._ppChart = new Chart(absCtx, {
-      type: 'line',
-      data: {
-        labels: allKgAbs,
-        datasets: [
-          { label: 'Pre',  data: vmpAbsPre,  borderColor: '#4D9EFF', backgroundColor: '#4D9EFF22', pointRadius: pre.map(p => allKgAbs.includes(p.kg) ? 5 : 0),  tension: 0.3 },
-          { label: 'Post', data: vmpAbsPost, borderColor: '#39FF7A', backgroundColor: '#39FF7A22', pointRadius: post.map(p => allKgAbs.includes(p.kg) ? 5 : 0), tension: 0.3 }
-        ]
-      },
-      options: { ...chartOpts('Carga (kg)'), animation: { duration: 400 } }
+      type: 'scatter',
+      data: { datasets: [preScPts, preScLine, postScPts, postScLine] },
+      options: darkChartOpts('Carga (kg)')
     });
   }
 
-  // Gráfico 2 — cargas relativas (%RM), eje X = %RM, datos de regresión
-  const relPcts = PP_PCTS;
-  const relLabs = relPcts.map(p => p + '%');
-  const vmpRelPre  = relPcts.map(p => { const kg = rm1Pre  * p / 100; return +(rPre.a  + rPre.b  * kg).toFixed(3); });
-  const vmpRelPost = relPcts.map(p => { const kg = rm1Post * p / 100; return +(rPost.a + rPost.b * kg).toFixed(3); });
+  // Gráfico 2 — cargas relativas: curva F-V con eje X = kg absoluto de cada %RM
   const relCtx = document.getElementById('pp-rel-chart');
   if (relCtx) {
     if (relCtx._ppChart) relCtx._ppChart.destroy();
+    const relPrePts  = PP_PCTS.map(p => ({ x: +(rm1PreRaw  * p / 100).toFixed(2), y: +(rPre.a  + rPre.b  * (rm1PreRaw  * p / 100)).toFixed(4) }));
+    const relPostPts = PP_PCTS.map(p => ({ x: +(rm1PostRaw * p / 100).toFixed(2), y: +(rPost.a + rPost.b * (rm1PostRaw * p / 100)).toFixed(4) }));
     relCtx._ppChart = new Chart(relCtx, {
-      type: 'line',
+      type: 'scatter',
       data: {
-        labels: relLabs,
         datasets: [
-          { label: 'Pre',  data: vmpRelPre,  borderColor: '#4D9EFF', backgroundColor: '#4D9EFF22', pointRadius: 3, tension: 0.3 },
-          { label: 'Post', data: vmpRelPost, borderColor: '#39FF7A', backgroundColor: '#39FF7A22', pointRadius: 3, tension: 0.3 }
+          { label: 'Pre',  data: relPrePts,  borderColor: '#4D9EFF', backgroundColor: '#4D9EFF', pointRadius: 4, showLine: true, tension: 0, order: 1 },
+          { label: 'Post', data: relPostPts, borderColor: '#39FF7A', backgroundColor: '#39FF7A', pointRadius: 4, showLine: true, tension: 0, order: 1 }
         ]
       },
-      options: { ...chartOpts('% RM'), animation: { duration: 400 } }
+      options: darkChartOpts('Carga (kg) — mismo %RM')
     });
   }
 }
