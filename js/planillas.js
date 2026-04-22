@@ -217,19 +217,34 @@ function ppGetPairs(side) {
 function ppLinReg(pairs) {
   const n = pairs.length;
   if (n < 2) return null;
-  const sX  = pairs.reduce((s, p) => s + p.kg, 0);
+
+  // VMP = a + b*kg  (para predecir VMP a cualquier kg)
+  const sX  = pairs.reduce((s, p) => s + p.kg,  0);
   const sY  = pairs.reduce((s, p) => s + p.vmp, 0);
   const sXY = pairs.reduce((s, p) => s + p.kg * p.vmp, 0);
-  const sX2 = pairs.reduce((s, p) => s + p.kg * p.kg, 0);
+  const sX2 = pairs.reduce((s, p) => s + p.kg * p.kg,  0);
   const den = n * sX2 - sX * sX;
   if (Math.abs(den) < 1e-12) return null;
   const b = (n * sXY - sX * sY) / den;
   const a = sY / n - b * sX / n;
+
+  // R² sobre VMP = a + b*kg
   const mY = sY / n;
   const ss = pairs.reduce((s, p) => s + (p.vmp - mY) ** 2, 0);
   const sr = pairs.reduce((s, p) => s + (p.vmp - (a + b * p.kg)) ** 2, 0);
   const r2 = ss > 0 ? +(1 - sr / ss).toFixed(4) : 1;
-  return { a, b, r2 };
+
+  // kg = aK + bK*VMP  (regresión inversa — método Excel/Tecni para 1RM)
+  const sV  = sY, sK = sX;
+  const sV2 = pairs.reduce((s, p) => s + p.vmp * p.vmp, 0);
+  const denK = n * sV2 - sV * sV;
+  let aK = null, bK = null;
+  if (Math.abs(denK) > 1e-12) {
+    bK = (n * sXY - sK * sV) / denK;
+    aK = sK / n - bK * sV / n;
+  }
+
+  return { a, b, r2, aK, bK };
 }
 
 function ppLiveUpdate() {
@@ -249,7 +264,7 @@ function ppLiveUpdate() {
     }
     const r = ppLinReg(pairs);
     if (!r) { rmEl.textContent = '—'; r2El.textContent = '—'; return; }
-    const rm = r.b < 0 ? +((vRef - r.a) / r.b).toFixed(1) : null;
+    const rm = (r.aK != null && r.bK < 0) ? +(r.aK + r.bK * vRef).toFixed(1) : (r.b < 0 ? +((vRef - r.a) / r.b).toFixed(1) : null);
     rmEl.textContent = rm ? rm + ' kg' : '— (pendiente +)';
     r2El.textContent = 'R²=' + r.r2;
   });
@@ -290,8 +305,9 @@ function ppCalcular() {
     return;
   }
 
-  const rm1Pre  = rPre.b  < 0 ? +((vRef - rPre.a)  / rPre.b).toFixed(1)  : null;
-  const rm1Post = rPost.b < 0 ? +((vRef - rPost.a) / rPost.b).toFixed(1) : null;
+  // 1RM via regresión inversa kg=f(VMP) — método Excel/Tecni
+  const rm1Pre  = (rPre.aK  != null && rPre.bK  < 0) ? +(rPre.aK  + rPre.bK  * vRef).toFixed(1) : (rPre.b  < 0 ? +((vRef - rPre.a)  / rPre.b).toFixed(1)  : null);
+  const rm1Post = (rPost.aK != null && rPost.bK < 0) ? +(rPost.aK + rPost.bK * vRef).toFixed(1) : (rPost.b < 0 ? +((vRef - rPost.a) / rPost.b).toFixed(1) : null);
 
   if (preRmEl)  preRmEl.textContent  = rm1Pre  ? rm1Pre  + ' kg' : '— (b≥0)';
   if (postRmEl) postRmEl.textContent = rm1Post ? rm1Post + ' kg' : '— (b≥0)';
@@ -399,6 +415,60 @@ function ppCalcular() {
   }).join('');
 
   outEl.style.display = 'block';
+
+  // ── GRÁFICOS ─────────────────────────────────────────────────
+  const chartOpts = (title) => ({
+    responsive: true,
+    plugins: {
+      legend: { labels: { color: '#a0a0a0', font: { family: 'monospace', size: 10 } } },
+      tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(3)} m/s` } }
+    },
+    scales: {
+      x: { title: { display: true, text: title, color: '#666', font: { size: 10 } }, ticks: { color: '#888' }, grid: { color: '#2a2a2a' } },
+      y: { title: { display: true, text: 'VMP (m/s)', color: '#666', font: { size: 10 } }, ticks: { color: '#888' }, grid: { color: '#2a2a2a' } }
+    }
+  });
+
+  // Gráfico 1 — cargas absolutas (mismos kg en ambos ejes)
+  const allKgAbs = [...new Set([...pre.map(p => p.kg), ...post.map(p => p.kg)])].sort((a,b) => a-b);
+  const vmpAbsPre  = allKgAbs.map(kg => +(rPre.a  + rPre.b  * kg).toFixed(3));
+  const vmpAbsPost = allKgAbs.map(kg => +(rPost.a + rPost.b * kg).toFixed(3));
+  const absCtx = document.getElementById('pp-abs-chart');
+  if (absCtx) {
+    if (absCtx._ppChart) absCtx._ppChart.destroy();
+    absCtx._ppChart = new Chart(absCtx, {
+      type: 'line',
+      data: {
+        labels: allKgAbs,
+        datasets: [
+          { label: 'Pre',  data: vmpAbsPre,  borderColor: '#4D9EFF', backgroundColor: '#4D9EFF22', pointRadius: pre.map(p => allKgAbs.includes(p.kg) ? 5 : 0),  tension: 0.3 },
+          { label: 'Post', data: vmpAbsPost, borderColor: '#39FF7A', backgroundColor: '#39FF7A22', pointRadius: post.map(p => allKgAbs.includes(p.kg) ? 5 : 0), tension: 0.3 }
+        ]
+      },
+      options: { ...chartOpts('Carga (kg)'), animation: { duration: 400 } }
+    });
+  }
+
+  // Gráfico 2 — cargas relativas (%RM), eje X = %RM, datos de regresión
+  const relPcts = PP_PCTS;
+  const relLabs = relPcts.map(p => p + '%');
+  const vmpRelPre  = relPcts.map(p => { const kg = rm1Pre  * p / 100; return +(rPre.a  + rPre.b  * kg).toFixed(3); });
+  const vmpRelPost = relPcts.map(p => { const kg = rm1Post * p / 100; return +(rPost.a + rPost.b * kg).toFixed(3); });
+  const relCtx = document.getElementById('pp-rel-chart');
+  if (relCtx) {
+    if (relCtx._ppChart) relCtx._ppChart.destroy();
+    relCtx._ppChart = new Chart(relCtx, {
+      type: 'line',
+      data: {
+        labels: relLabs,
+        datasets: [
+          { label: 'Pre',  data: vmpRelPre,  borderColor: '#4D9EFF', backgroundColor: '#4D9EFF22', pointRadius: 3, tension: 0.3 },
+          { label: 'Post', data: vmpRelPost, borderColor: '#39FF7A', backgroundColor: '#39FF7A22', pointRadius: 3, tension: 0.3 }
+        ]
+      },
+      options: { ...chartOpts('% RM'), animation: { duration: 400 } }
+    });
+  }
 }
 
 // Mantener compatibilidad con el hook de historial (modo antiguo)
