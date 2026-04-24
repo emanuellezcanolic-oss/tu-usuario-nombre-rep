@@ -107,6 +107,75 @@ const HOMBRO_TESTS = [
   { id:'apprehension', name:'Apprehension / Relocation', sub:'Inestabilidad GH anterior · Sn 0.72', tag:'tag-y' },
 ];
 
+const CERVICAL_TESTS_RADICULAR = [
+  { id:'spurling',       name:'Spurling',                    sub:'Radiculopatía cervical · Sn 0.50 / Sp 0.86 · LR+ 3.5',  tag:'tag-r',  ref:'Flexión lateral + extensión + compresión axial hacia lado sintomático' },
+  { id:'distraccion-cx', name:'Distracción cervical',        sub:'Radiculopatía · Sn 0.44 / Sp 0.90 · complementa Spurling', tag:'tag-b', ref:'Tracción manual con paciente supino — alivio = compresión discal/facetaria' },
+  { id:'ultt1',          name:'ULTT1 (mediano)',              sub:'Tensión N. mediano · Sn 0.97 / Sp 0.22 — alta Sn',       tag:'tag-b',  ref:'Depresión escápula + abd + RE + ext codo + sup + ext muñeca/dedos' },
+  { id:'ultt2',          name:'ULTT2 (radial)',               sub:'Tensión N. radial · diferencia &gt;10° = positivo',       tag:'tag-b',  ref:'Depresión escápula + RI + flex codo + pro + flex muñeca/dedos' },
+  { id:'ultt3',          name:'ULTT3 (cubital)',              sub:'Tensión N. cubital · parestesias 4°-5° dedo',            tag:'tag-b',  ref:'Depresión escápula + abd + RE + flex codo + ext muñeca — diferencia bilateral &gt;10° = positivo' },
+  { id:'abd-alivio',     name:'Shoulder Abduction Relief',   sub:'Radiculopatía C5-C6 · Sn 0.43 / Sp 0.93',               tag:'tag-b',  ref:'Mano ipsilateral en la cabeza — alivio de síntomas = positivo' },
+  { id:'jackson-cx',     name:'Jackson Compression',         sub:'Radiculopatía · LR+ 2.9 · similar a Spurling',           tag:'tag-y',  ref:'Rotación + extensión ipsilateral + compresión axial — dolor/parestesias = positivo' },
+  { id:'valsalva-cx',    name:'Valsalva cervical',            sub:'Lesión ocupante / hernia discal · LR+ 2.3 intracraneal', tag:'tag-y',  ref:'Aumento presión intradiscal con esfuerzo — dolor/parestesias = positivo' },
+];
+const CERVICAL_TESTS_HEADACHE = [
+  { id:'flexion-rot',    name:'Flexion-Rotation Test (CFRT)', sub:'Cefalea cervicogénica C1-C2 · Sn 0.91 / Sp 0.90',      tag:'tag-r',  ref:'Supino, flex. máx. cervical, rotar suavemente hasta tope — &lt;32° o asimetría &gt;10° = positivo' },
+  { id:'ppivm-c0c3',    name:'PPIVM C0–C3',                  sub:'Movilidad intervertebral pasiva alta · cefalea',         tag:'tag-b',  ref:'PA y unilateral sobre C0-C3 — hipomóvil = segmento involucrado' },
+  { id:'crfl-test',     name:'CRFL (Cervical Rotation Lat. Flex.)', sub:'Síndrome de 1° costilla / outlet torácico · Sn 0.77 / Sp 0.75', tag:'tag-y', ref:'Rotación contralateral + flexión lateral ipsilateral — restricción = 1° costilla elevada' },
+];
+const CERVICAL_TESTS_ESTABILIDAD = [
+  { id:'sharp-purser',       name:'Sharp-Purser',            sub:'Inestabilidad C1-C2 · Sn 0.69 / Sp 0.96 — AR/trauma',  tag:'tag-r',  ref:'Cabeza en semiflexión, empuje posterior occipital — clic/alivio = inestabilidad transversa' },
+  { id:'alar-lig',           name:'Alar Ligament Test',      sub:'Estabilidad alar · Sn 0.27 / Sp 0.64 — post-whiplash', tag:'tag-b',  ref:'Mov. lateral con cabeza fija — ausencia de movimiento acoplado = laxitud' },
+  { id:'ant-shear-c12',      name:'Anterior Shear C1-C2',    sub:'Inestabilidad atlanto-axial · screening',               tag:'tag-y',  ref:'Paciente supino, fuerza anterior sobre C2 — síntomas = positivo (derivar)' },
+  { id:'dvat-test',          name:'DVAT (Vertebral Artery)',  sub:'Insuficiencia vertebrobasilar · pre-manipulación screening', tag:'tag-r', ref:'Extensión + rotación sostenida 30 seg cada lado — vértigo/nistagmo/náuseas = CONTRAINDICACIÓN manipulación' },
+];
+const CERVICAL_TESTS_MIELOPATIA = [
+  { id:'hoffmann',    name:'Signo de Hoffmann',      sub:'UMN / Mielopatía · Sn 0.58 / Sp 0.78',         tag:'tag-r', ref:'Flick del dedo medio — flexión refleja pulgar/índice = UMN positivo (derivar)' },
+  { id:'inv-sup',     name:'Inverted Supinator Sign', sub:'Mielopatía C5-C6 · hiporeflexia nivel + hiperreflexia distal', tag:'tag-r', ref:'Percusión braquiorradial — flexión dedos en lugar de muñeca = signo de Babinski del miembro superior' },
+  { id:'lhermitte',   name:'Signo de Lhermitte',     sub:'Compresión cordón posterior · Sn 0.27 / Sp 0.90', tag:'tag-r', ref:'Flexión pasiva cervical — descarga eléctrica hacia miembros = positivo (derivar urgente)' },
+  { id:'finger-esc',  name:'Finger Escape Sign',     sub:'Debilidad intrínseca T1 · mielopatía avanzada',  tag:'tag-y', ref:'Dedos extendidos — 5° dedo abducido involuntariamente = debilidad intrínseca' },
+  { id:'step-test',   name:'Tandem Gait / Step Test', sub:'Ataxia medular · coordinación mielopatía',       tag:'tag-y', ref:'Caminar en tándem 10 pasos — desequilibrio = compromiso cordón lateral (derivar)' },
+];
+
+const CERVICAL_ROM = [
+  { id:'flex-cx',   label:'Flexión cervical',    ref:'60–80°',  mdc:'5–10°' },
+  { id:'ext-cx',    label:'Extensión cervical',   ref:'50–70°',  mdc:'5–10°' },
+  { id:'latd-cx',   label:'Inclinación lateral D', ref:'45°',    mdc:'5°' },
+  { id:'lati-cx',   label:'Inclinación lateral I', ref:'45°',    mdc:'5°' },
+  { id:'rotd-cx',   label:'Rotación D',           ref:'60–80°',  mdc:'5°' },
+  { id:'roti-cx',   label:'Rotación I',           ref:'60–80°',  mdc:'5°' },
+];
+
+const CX_MYOTOMAS = [
+  { nivel:'C4', mov:'Elevación escapular', id:'myo-c4' },
+  { nivel:'C5', mov:'Abducción hombro (deltoides)', id:'myo-c5' },
+  { nivel:'C6', mov:'Flexión codo / extensión muñeca', id:'myo-c6' },
+  { nivel:'C7', mov:'Extensión codo / flexión muñeca', id:'myo-c7' },
+  { nivel:'C8', mov:'Flexión dedos (FPD)', id:'myo-c8' },
+  { nivel:'T1', mov:'Abducción dedo meñique', id:'myo-t1' },
+];
+const CX_REFLEJOS = [
+  { nombre:'Bicipital', nivel:'C5-C6', id:'ref-bic' },
+  { nombre:'Braquiorradial', nivel:'C6', id:'ref-bqr' },
+  { nombre:'Tricipital', nivel:'C7', id:'ref-tri' },
+];
+const NDI_ITEMS = [
+  'Intensidad de dolor','Cuidado personal (lavarse, vestirse)','Levantar objetos',
+  'Lectura','Cefalea/dolor de cabeza','Concentración','Trabajo',
+  'Manejo de auto','Dormir','Actividades recreativas'
+];
+const NDI_LABELS = [
+  ['Sin dolor','Dolor leve ocasional','Dolor moderado frecuente','Dolor moderado constante','Dolor severo frecuente','Dolor severo constante'],
+  ['Normal sin dolor','Normal con algo de dolor','Lento y cuidadoso','Con algo de ayuda','Necesita mucha ayuda','No puedo solo/a'],
+  ['Sin problema','Objetos pesados sin dolor','Objetos pesados con dolor','Objetos moderados con dolor','Solo objetos ligeros','No puedo levantar nada'],
+  ['Sin problema','Leo todo sin dolor','Leo todo con leve dolor','No puedo leer todo por dolor','Apenas puedo leer','No puedo leer en absoluto'],
+  ['Sin cefalea','Cefalea leve infrecuente','Cefalea moderada infrecuente','Cefalea moderada frecuente','Cefalea severa frecuente','Cefalea constante'],
+  ['Sin dificultad','Concentración plena con esfuerzo','Dificultad leve para concentrarme','Dificultad moderada para concentrarme','Mucha dificultad para concentrarme','No puedo concentrarme en absoluto'],
+  ['Puedo trabajar normal','Solo mi trabajo habitual','Puedo hacer la mayoría','No puedo hacer todo mi trabajo','Solo trabajo muy poco','No puedo trabajar en absoluto'],
+  ['Sin problema','Con algo de molestia','Con dolor moderado','Con dolor severo — debo parar','Apenas puedo manejar','No puedo manejar en absoluto'],
+  ['Duermo sin problema','Leve perturbación del sueño','Moderada perturbación del sueño','Dolor me despierta menos de la mitad','Dolor me despierta más de la mitad','No puedo dormir por el dolor'],
+  ['Sin restricción','Algo de dolor pero normal','Solo actividades leves sin dolor','Solo actividades leves con dolor','Casi no puedo hacer actividades','No hago actividades recreativas'],
+];
+
 const CODO_TESTS_LATERAL = [
   { id:'cozen',      name:'Cozen',                   sub:'Epicondilalgia lateral · Sn 0.84 / Sp 0.75', tag:'tag-r',  ref:'Extensión muñeca resistida con codo extendido' },
   { id:'mill',       name:'Mill (estiramiento)',      sub:'Extensores epicóndilo · Sn 0.53 / Sp 0.69',  tag:'tag-b',  ref:'Pronación + flexión muñeca + extensión codo' },

@@ -936,6 +936,7 @@ function buildCXTests() {
   _buildCervTestGroup('cx-tests-radicular',   CERVICAL_TESTS_RADICULAR);
   _buildCervTestGroup('cx-tests-headache',    CERVICAL_TESTS_HEADACHE);
   _buildCervTestGroup('cx-tests-estabilidad', CERVICAL_TESTS_ESTABILIDAD);
+  _buildCervTestGroup('cx-tests-mielopatia',  CERVICAL_TESTS_MIELOPATIA);
 }
 
 function _buildCervTestGroup(containerId, tests) {
@@ -1012,36 +1013,58 @@ function calcCXNFE() {
 
 function buildCXMyotomas() {
   const c = document.getElementById('cx-myotomas-fields'); if(!c || c.innerHTML) return;
-  c.innerHTML = CX_MYOTOMAS.map(m => `
-    <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
-      <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--neon);min-width:28px">${m.nivel}</div>
-      <div style="font-size:11px;color:var(--text2);flex:1">${m.mov}</div>
-      <select class="inp inp-mono" id="${m.id}-d" style="width:60px;padding:3px 6px;font-size:11px">
-        <option>5/5</option><option>4+</option><option>4/5</option><option>4-</option><option>3/5</option><option>2/5</option><option>1/5</option><option>0/5</option>
-      </select>
-      <select class="inp inp-mono" id="${m.id}-i" style="width:60px;padding:3px 6px;font-size:11px">
-        <option>5/5</option><option>4+</option><option>4/5</option><option>4-</option><option>3/5</option><option>2/5</option><option>1/5</option><option>0/5</option>
-      </select>
+  const opts = ['5/5','4+','4/5','4-','3/5','2/5','1/5','0/5'].map(v=>`<option>${v}</option>`).join('');
+  c.innerHTML = `
+    <div style="display:grid;grid-template-columns:36px 1fr 64px 64px;gap:4px 8px;align-items:center;padding:4px 0 8px;border-bottom:1px solid var(--border)">
+      <span style="font-size:9px;color:var(--text3)">Nivel</span>
+      <span style="font-size:9px;color:var(--text3)">Movimiento test</span>
+      <span style="font-size:9px;color:var(--text3);text-align:center">D</span>
+      <span style="font-size:9px;color:var(--text3);text-align:center">I</span>
+    </div>` +
+  CX_MYOTOMAS.map(m => `
+    <div style="display:grid;grid-template-columns:36px 1fr 64px 64px;gap:4px 8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
+      <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--neon)">${m.nivel}</div>
+      <div style="font-size:11px;color:var(--text2)">${m.mov}</div>
+      <select class="inp inp-mono" id="${m.id}-d" style="padding:3px 4px;font-size:11px;text-align:center" onchange="checkMyotomaAsym('${m.id}')">${opts}</select>
+      <select class="inp inp-mono" id="${m.id}-i" style="padding:3px 4px;font-size:11px;text-align:center" onchange="checkMyotomaAsym('${m.id}')">${opts}</select>
     </div>
-  `).join('') + '<div style="display:flex;justify-content:flex-end;gap:16px;padding-top:4px"><span style="font-size:10px;color:var(--text3)">← D &nbsp;&nbsp; I →</span></div>';
+    <div id="${m.id}-alert" style="display:none;font-size:10px;color:var(--red);padding:2px 8px 4px">⚠️ Asimetría D/I — posible nivel comprometido</div>
+  `).join('');
+}
+
+function checkMyotomaAsym(id) {
+  const d = document.getElementById(id+'-d')?.value;
+  const i = document.getElementById(id+'-i')?.value;
+  const al = document.getElementById(id+'-alert');
+  if(!al) return;
+  al.style.display = (d && i && d !== i) ? 'block' : 'none';
 }
 
 function buildCXReflejos() {
   const c = document.getElementById('cx-reflejos-fields'); if(!c || c.innerHTML) return;
   c.innerHTML = CX_REFLEJOS.map(r => `
-    <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)">
-      <div style="font-size:11px;font-weight:600;flex:1">${r.nombre} <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">${r.nivel}</span></div>
-      <div style="display:flex;gap:4px">
-        <span style="font-size:10px;color:var(--text3);align-self:center;margin-right:2px">D</span>
-        <button class="ot-btn" style="font-size:9px;padding:3px 6px" onclick="toggleOT(this,'pos')">↑ Hiper</button>
-        <button class="ot-btn" style="font-size:9px;padding:3px 6px" onclick="toggleOT(this,'neg')">= Normal</button>
-        <button class="ot-btn" style="font-size:9px;padding:3px 6px" onclick="toggleOT(this,'absent')">↓ Hipo</button>
+    <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:12px;font-weight:600">${r.nombre}</span>
+        <span style="font-family:var(--mono);font-size:10px;color:var(--neon)">${r.nivel}</span>
       </div>
-      <div style="display:flex;gap:4px">
-        <span style="font-size:10px;color:var(--text3);align-self:center;margin-right:2px">I</span>
-        <button class="ot-btn" style="font-size:9px;padding:3px 6px" onclick="toggleOT(this,'pos')">↑ Hiper</button>
-        <button class="ot-btn" style="font-size:9px;padding:3px 6px" onclick="toggleOT(this,'neg')">= Normal</button>
-        <button class="ot-btn" style="font-size:9px;padding:3px 6px" onclick="toggleOT(this,'absent')">↓ Hipo</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div>
+          <div style="font-size:9px;color:var(--text3);margin-bottom:4px;text-align:center">DERECHA</div>
+          <div style="display:flex;gap:3px;justify-content:center">
+            <button class="ot-btn" style="font-size:9px;padding:3px 6px" onclick="toggleOT(this,'hiper')">↑ Hiper</button>
+            <button class="ot-btn btn-neon" style="font-size:9px;padding:3px 6px" onclick="toggleOT(this,'norm')">= Norm</button>
+            <button class="ot-btn" style="font-size:9px;padding:3px 6px" onclick="toggleOT(this,'hipo')">↓ Hipo</button>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:9px;color:var(--text3);margin-bottom:4px;text-align:center">IZQUIERDA</div>
+          <div style="display:flex;gap:3px;justify-content:center">
+            <button class="ot-btn" style="font-size:9px;padding:3px 6px" onclick="toggleOT(this,'hiper')">↑ Hiper</button>
+            <button class="ot-btn btn-neon" style="font-size:9px;padding:3px 6px" onclick="toggleOT(this,'norm')">= Norm</button>
+            <button class="ot-btn" style="font-size:9px;padding:3px 6px" onclick="toggleOT(this,'hipo')">↓ Hipo</button>
+          </div>
+        </div>
       </div>
     </div>
   `).join('');
@@ -1051,11 +1074,16 @@ function buildNDI() {
   const c = document.getElementById('ndi-fields'); if(!c || c.innerHTML) return;
   cxNdiVals = new Array(10).fill(null);
   c.innerHTML = NDI_ITEMS.map((item, i) => `
-    <div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">
+    <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)">
       <div style="font-size:11px;font-weight:600;margin-bottom:6px">${i+1}. ${item}</div>
-      <div style="display:flex;gap:4px;flex-wrap:wrap">
-        ${[0,1,2,3,4,5].map(v => `<button class="ot-btn" style="font-size:10px;padding:3px 8px" onclick="selectNDI(this,${i},${v})">${v}</button>`).join('')}
+      <div style="display:flex;gap:3px;flex-wrap:wrap">
+        ${[0,1,2,3,4,5].map(v => `
+          <button class="ot-btn" style="font-size:10px;padding:4px 10px;flex:1;min-width:36px" onclick="selectNDI(this,${i},${v})" title="${NDI_LABELS[i]?.[v]||''}">
+            <span style="font-family:var(--mono);font-weight:700">${v}</span>
+          </button>
+        `).join('')}
       </div>
+      <div id="ndi-hint-${i}" style="font-size:9px;color:var(--text3);margin-top:4px;font-style:italic"></div>
     </div>
   `).join('');
 }
@@ -1065,6 +1093,8 @@ function selectNDI(btn, idx, val) {
   siblings.forEach(b => b.classList.remove('btn-neon'));
   btn.classList.add('btn-neon');
   cxNdiVals[idx] = val;
+  const hint = document.getElementById('ndi-hint-'+idx);
+  if(hint && NDI_LABELS[idx]?.[val]) hint.textContent = NDI_LABELS[idx][val];
   calcNDI();
 }
 
