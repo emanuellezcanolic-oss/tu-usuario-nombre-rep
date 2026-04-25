@@ -175,163 +175,21 @@
       </div>
     </div>
 
-    <!-- GRID: Body Chart + Anamnesis -->
-    <div class="grid-2 mb-14" style="gap:16px;align-items:start">
+        <!-- K-SUBTABS: Body Chart | Anamnesis | Tests -->
+    <div style="display:flex;gap:4px;border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:12px">
+      <button id="kstab-mapa"      onclick="showKineTab('mapa',this)"      style="flex:none;padding:6px 18px;font-size:11px;font-family:var(--mono);font-weight:700;text-transform:uppercase;letter-spacing:.07em;border-radius:4px;cursor:pointer;transition:all .15s;background:var(--neon);color:#000;border:none">🗺️ Body Chart</button>
+      <button id="kstab-anamnesis" onclick="showKineTab('anamnesis',this)" style="flex:none;padding:6px 18px;font-size:11px;font-family:var(--mono);font-weight:700;text-transform:uppercase;letter-spacing:.07em;border-radius:4px;cursor:pointer;transition:all .15s;background:var(--bg2);color:var(--text2);border:1px solid var(--border)">📋 Anamnesis</button>
+      <button id="kstab-tests"     onclick="showKineTab('tests',this)"     style="flex:none;padding:6px 18px;font-size:11px;font-family:var(--mono);font-weight:700;text-transform:uppercase;letter-spacing:.07em;border-radius:4px;cursor:pointer;transition:all .15s;background:var(--bg2);color:var(--text2);border:1px solid var(--border)">🔬 Tests</button>
+    </div>
 
-      <!-- BODY CHART -->
-      <div class="card card-glow">
-        <div class="card-header">
-          <h3>🗺️ Body Chart — mapa del dolor</h3>
-          <div class="flex" style="gap:5px">
-            <button class="btn btn-neon btn-sm" id="btn-front" onclick="setBodyView('front')" style="font-size:10px;padding:4px 10px">Frente</button>
-            <button class="btn btn-ghost btn-sm" id="btn-back" onclick="setBodyView('back')" style="font-size:10px;padding:4px 10px">Posterior</button>
-          </div>
-        </div>
-        <div class="card-body" style="padding:10px">
-          <p style="font-size:9px;font-family:var(--mono);color:var(--text3);text-align:center;margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em">Tocá una zona para marcarla · 2° toque = Recuperado</p>
+    <!-- KTAB: MAPA (AdvancedBodyChart) -->
+    <div id="ktab-mapa" class="k-stab-panel">
+      <div id="advanced-body-chart" style="width:100%;min-height:60vh"></div>
+    </div>
 
-          <!-- SVG FRONTAL -->
-          <div id="body-front" class="body-chart-container">
-            <svg viewBox="0 0 200 440" width="170" style="cursor:pointer">
-              <!-- Cabeza -->
-              <ellipse cx="100" cy="28" rx="22" ry="26" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
-              <!-- Cuello -->
-              <rect x="92" y="52" width="16" height="15" rx="4" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
-              <!-- Torso -->
-              <path d="M66 67 Q55 72 52 92 L50 162 Q53 170 100 170 Q147 170 150 162 L148 92 Q145 72 134 67 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
-              <!-- Brazo D -->
-              <path d="M52 70 L34 138 L50 140 L65 80 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
-              <!-- Brazo I -->
-              <path d="M148 70 L166 138 L150 140 L135 80 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
-              <!-- Antebrazo D -->
-              <path d="M34 148 L26 198 L44 200 L50 148 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
-              <!-- Antebrazo I -->
-              <path d="M166 148 L174 198 L156 200 L150 148 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
-              <!-- Muslo D -->
-              <path d="M70 188 L60 272 L84 274 L90 188 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
-              <!-- Muslo I -->
-              <path d="M130 188 L140 272 L116 274 L110 188 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
-              <!-- Pantorrilla D -->
-              <path d="M60 290 L58 374 L84 374 L82 290 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
-              <!-- Pantorrilla I -->
-              <path d="M140 290 L142 374 L116 374 L118 290 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
-              <!-- Pie D -->
-              <ellipse cx="72" cy="388" rx="15" ry="8" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
-              <!-- Pie I -->
-              <ellipse cx="128" cy="388" rx="15" ry="8" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
-
-              <!-- ── ZONAS INTERACTIVAS ── -->
-              <!-- Hombro D -->
-              <ellipse id="z-hombro-d" class="body-zone" data-zone="hombro-d" data-label="Hombro Derecho" data-panel="hombro"
-                cx="57" cy="82" rx="17" ry="15" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
-              <!-- Hombro I -->
-              <ellipse id="z-hombro-i" class="body-zone" data-zone="hombro-i" data-label="Hombro Izquierdo" data-panel="hombro"
-                cx="143" cy="82" rx="17" ry="15" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
-              <!-- Codo D -->
-              <ellipse id="z-codo-d" class="body-zone" data-zone="codo-d" data-label="Codo Derecho" data-panel="codo"
-                cx="42" cy="140" rx="11" ry="9" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
-              <!-- Codo I -->
-              <ellipse id="z-codo-i" class="body-zone" data-zone="codo-i" data-label="Codo Izquierdo" data-panel="codo"
-                cx="158" cy="140" rx="11" ry="9" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
-              <!-- Lumbar (frente = abdomen/lumbar) -->
-              <rect id="z-lumbar" class="body-zone" data-zone="lumbar" data-label="Lumbar" data-panel="lumbar"
-                x="80" y="132" width="40" height="32" rx="8" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
-              <!-- Cadera D -->
-              <!-- Ingle D/I -->
-              <ellipse id="z-ingle-d" class="body-zone" data-zone="ingle-d" data-label="Ingle Derecha" data-panel="ingle"
-                cx="108" cy="205" rx="14" ry="10" fill="rgba(57,255,122,.04)" stroke="rgba(57,255,122,.15)" stroke-width="1"/>
-              <ellipse id="z-ingle-i" class="body-zone" data-zone="ingle-i" data-label="Ingle Izquierda" data-panel="ingle"
-                cx="82" cy="205" rx="14" ry="10" fill="rgba(57,255,122,.04)" stroke="rgba(57,255,122,.15)" stroke-width="1"/>
-              <ellipse id="z-cadera-d" class="body-zone" data-zone="cadera-d" data-label="Cadera Derecha" data-panel="cadera"
-                cx="68" cy="178" rx="22" ry="16" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
-              <!-- Cadera I -->
-              <ellipse id="z-cadera-i" class="body-zone" data-zone="cadera-i" data-label="Cadera Izquierda" data-panel="cadera"
-                cx="132" cy="178" rx="22" ry="16" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
-              <!-- Rodilla D -->
-              <ellipse id="z-rodilla-d" class="body-zone" data-zone="rodilla-d" data-label="Rodilla Derecha" data-panel="rodilla"
-                cx="70" cy="282" rx="16" ry="14" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
-              <!-- Rodilla I -->
-              <ellipse id="z-rodilla-i" class="body-zone" data-zone="rodilla-i" data-label="Rodilla Izquierda" data-panel="rodilla"
-                cx="130" cy="282" rx="16" ry="14" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
-              <!-- Tobillo D -->
-              <ellipse id="z-tobillo-d" class="body-zone" data-zone="tobillo-d" data-label="Tobillo Derecho" data-panel="tobillo"
-                cx="70" cy="378" rx="14" ry="10" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
-              <!-- Tobillo I -->
-              <ellipse id="z-tobillo-i" class="body-zone" data-zone="tobillo-i" data-label="Tobillo Izquierdo" data-panel="tobillo"
-                cx="130" cy="378" rx="14" ry="10" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
-
-              <!-- Labels -->
-              <text x="57" y="86" text-anchor="middle" font-size="5" fill="#3a3a3a" font-family="JetBrains Mono">H.D</text>
-              <text x="143" y="86" text-anchor="middle" font-size="5" fill="#3a3a3a" font-family="JetBrains Mono">H.I</text>
-              <text x="100" y="150" text-anchor="middle" font-size="5" fill="#3a3a3a" font-family="JetBrains Mono">LUMB</text>
-              <text x="68" y="182" text-anchor="middle" font-size="5" fill="#3a3a3a" font-family="JetBrains Mono">CAD.D</text>
-              <text x="132" y="182" text-anchor="middle" font-size="5" fill="#3a3a3a" font-family="JetBrains Mono">CAD.I</text>
-              <text x="70" y="286" text-anchor="middle" font-size="5" fill="#3a3a3a" font-family="JetBrains Mono">ROD.D</text>
-              <text x="130" y="286" text-anchor="middle" font-size="5" fill="#3a3a3a" font-family="JetBrains Mono">ROD.I</text>
-              <text x="70" y="382" text-anchor="middle" font-size="5" fill="#3a3a3a" font-family="JetBrains Mono">TOB.D</text>
-              <text x="130" y="382" text-anchor="middle" font-size="5" fill="#3a3a3a" font-family="JetBrains Mono">TOB.I</text>
-            </svg>
-          </div>
-
-          <!-- SVG POSTERIOR -->
-          <div id="body-back" class="body-chart-container" style="display:none">
-            <svg viewBox="0 0 200 440" width="170" style="cursor:pointer">
-              <!-- Cabeza -->
-              <ellipse cx="100" cy="28" rx="22" ry="26" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
-              <rect x="92" y="52" width="16" height="15" rx="4" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
-              <!-- Torso -->
-              <path d="M66 67 Q55 72 52 92 L50 162 Q53 170 100 170 Q147 170 150 162 L148 92 Q145 72 134 67 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
-              <!-- Brazos -->
-              <path d="M52 70 L34 138 L50 140 L65 80 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
-              <path d="M148 70 L166 138 L150 140 L135 80 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
-              <path d="M34 148 L26 198 L44 200 L50 148 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
-              <path d="M166 148 L174 198 L156 200 L150 148 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
-              <!-- Muslos -->
-              <path d="M70 188 L60 272 L84 274 L90 188 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
-              <path d="M130 188 L140 272 L116 274 L110 188 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
-              <!-- Pantorrillas -->
-              <path d="M60 290 L58 374 L84 374 L82 290 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
-              <path d="M140 290 L142 374 L116 374 L118 290 Z" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
-              <ellipse cx="72" cy="388" rx="15" ry="8" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
-              <ellipse cx="128" cy="388" rx="15" ry="8" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
-
-              <!-- ZONAS POSTERIORES -->
-              <ellipse id="z-cervical" class="body-zone" data-zone="cervical" data-label="Cervical" data-panel="cervical"
-                cx="100" cy="58" rx="14" ry="8" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
-              <rect id="z-dorsal" class="body-zone" data-zone="dorsal" data-label="Dorsal/Torácica" data-panel="lumbar"
-                x="82" y="82" width="36" height="40" rx="8" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
-              <ellipse id="z-lumbar-post" class="body-zone" data-zone="lumbar-post" data-label="Lumbar Posterior" data-panel="lumbar"
-                cx="100" cy="148" rx="24" ry="18" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
-              <ellipse id="z-hombro-pd" class="body-zone" data-zone="hombro-pd" data-label="Hombro Post. D" data-panel="hombro"
-                cx="57" cy="82" rx="17" ry="15" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
-              <ellipse id="z-hombro-pi" class="body-zone" data-zone="hombro-pi" data-label="Hombro Post. I" data-panel="hombro"
-                cx="143" cy="82" rx="17" ry="15" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
-              <ellipse id="z-gluteo-d" class="body-zone" data-zone="gluteo-d" data-label="Glúteo Derecho" data-panel="cadera"
-                cx="76" cy="178" rx="22" ry="18" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
-              <ellipse id="z-gluteo-i" class="body-zone" data-zone="gluteo-i" data-label="Glúteo Izquierdo" data-panel="cadera"
-                cx="124" cy="178" rx="22" ry="18" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
-              <ellipse id="z-pantorrilla-d" class="body-zone" data-zone="pantorrilla-d" data-label="Pantorrilla D" data-panel="tobillo"
-                cx="70" cy="330" rx="14" ry="24" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
-              <ellipse id="z-pantorrilla-i" class="body-zone" data-zone="pantorrilla-i" data-label="Pantorrilla I" data-panel="tobillo"
-                cx="130" cy="330" rx="14" ry="24" fill="rgba(57,255,122,0)" stroke="#333" stroke-width="1.5"/>
-
-              <!-- Labels post -->
-              <text x="100" y="62" text-anchor="middle" font-size="5" fill="#3a3a3a" font-family="JetBrains Mono">CERV</text>
-              <text x="100" y="104" text-anchor="middle" font-size="5" fill="#3a3a3a" font-family="JetBrains Mono">DORS</text>
-              <text x="100" y="152" text-anchor="middle" font-size="5" fill="#3a3a3a" font-family="JetBrains Mono">LUMB</text>
-              <text x="76" y="182" text-anchor="middle" font-size="5" fill="#3a3a3a" font-family="JetBrains Mono">GLUT.D</text>
-              <text x="124" y="182" text-anchor="middle" font-size="5" fill="#3a3a3a" font-family="JetBrains Mono">GLUT.I</text>
-            </svg>
-          </div>
-
-          <!-- Zones list -->
-          <div id="body-zones-list" class="mt-8" style="min-height:28px">
-            <div style="font-size:9px;color:var(--text3);font-family:var(--mono);text-align:center">Sin zonas marcadas</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ANAMNESIS -->
+    <!-- KTAB: ANAMNESIS -->
+    <div id="ktab-anamnesis" class="k-stab-panel" style="display:none">
+<!-- ANAMNESIS -->
       <div style="display:flex;flex-direction:column;gap:12px">
         <!-- Motivo + mecanismo -->
         <div class="card">
@@ -430,9 +288,12 @@
           </div>
         </div>
       </div>
+
     </div>
 
-    <!-- TESTS ORTOPÉDICOS POR ZONA -->
+    <!-- KTAB: TESTS -->
+    <div id="ktab-tests" class="k-stab-panel" style="display:none">
+<!-- TESTS ORTOPÉDICOS POR ZONA -->
     <div id="kinesio-tests-area">
       <div class="flex-b mb-12">
         <div style="font-family:var(--mono);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.10em;color:var(--neon)">
@@ -786,10 +647,11 @@
         <div class="card-header"><h3 style="color:var(--red)">🔴 Tests positivos activos</h3><span style="font-size:10px;color:var(--text2);font-family:var(--mono)">Incluidos en el informe PDF</span></div>
         <div class="card-body" id="kine-positivos-list"></div>
       </div>
+
+    </div>
     </div>
   </div>
-
-  <!-- ══ TAB: FUERZA F-V ══ -->
+<!-- ══ TAB: FUERZA F-V ══ -->
   <div id="ptab-fuerza" class="hidden">
     <div class="card mb-14">
       <div class="card-header">
@@ -2484,7 +2346,8 @@
   <script src="js/saltos.js?v=2"></script>
   <script src="js/movilidad.js?v=2"></script>
   <script src="js/sprint.js?v=2"></script>
-  <script src="js/kine.js?v=3"></script>
+  <script src="js/AdvancedBodyChart.js?v=1"></script>
+  <script src="js/kine.js?v=4"></script>
   <script src="js/informe.js?v=2"></script>
   <script src="js/video.js?v=2"></script>
   <script src="js/functools.js?v=2"></script>

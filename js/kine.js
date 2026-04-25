@@ -2,6 +2,26 @@
 // cur, atletas, kineState, etc. se definen en app.js
 // Este archivo asume que app.js ya fue cargado
 
+// ── Sub-tab switcher for Kinesiología section ──────────────────────────────
+let _abcInited = false;
+function showKineTab(tab, btn) {
+  ['mapa','anamnesis','tests'].forEach(t => {
+    const panel = document.getElementById('ktab-' + t);
+    const stab  = document.getElementById('kstab-' + t);
+    if (panel) panel.style.display = (t === tab) ? '' : 'none';
+    if (stab) {
+      const active = t === tab;
+      stab.style.background = active ? 'var(--neon)' : 'var(--bg2)';
+      stab.style.color      = active ? '#000'        : 'var(--text2)';
+      stab.style.border     = active ? 'none'        : '1px solid var(--border)';
+    }
+  });
+  if (tab === 'mapa' && !_abcInited && typeof ABC !== 'undefined') {
+    ABC.init();
+    _abcInited = true;
+  }
+}
+
 function buildHooperFields(){
   const c=document.getElementById('hooper-fields');if(!c||c.innerHTML)return;
   const items=[['fat-h-sueno','Calidad del sueño'],['fat-h-estres','Nivel de estrés'],['fat-h-fatiga','Fatiga general'],['fat-h-doms','Dolor muscular (DOMS)']];
@@ -61,7 +81,10 @@ function saveFatiga(){
 function initKinesio(){
   if(!cur)return;
   kineState=cur.kinesio?JSON.parse(JSON.stringify(cur.kinesio)):{bodyZones:{},tests:{},form:{}};
-  // Wire up all body zones
+  // Init AdvancedBodyChart (re-renders with current athlete data)
+  _abcInited = false;
+  if (typeof ABC !== 'undefined') { ABC.init(); _abcInited = true; }
+  // Wire up all body zones (old chart, kept for compatibility)
   document.querySelectorAll('.body-zone').forEach(el=>{
     el.onclick=null;
     el.addEventListener('click',()=>onBodyZoneClick(el));
