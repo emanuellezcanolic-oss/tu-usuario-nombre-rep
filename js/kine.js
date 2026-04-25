@@ -322,10 +322,10 @@ function renderBodyZonesList(){
 }
 
 function setBodyView(view){
-  document.getElementById('body-front').style.display=view==='front'?'flex':'none';
-  document.getElementById('body-back').style.display=view==='back'?'flex':'none';
-  document.getElementById('btn-front').className='btn btn-sm '+(view==='front'?'btn-neon':'btn-ghost');
-  document.getElementById('btn-back').className='btn btn-sm '+(view==='back'?'btn-neon':'btn-ghost');
+  const bf=document.getElementById('body-front');if(bf)bf.style.display=view==='front'?'flex':'none';
+  const bb=document.getElementById('body-back'); if(bb)bb.style.display=view==='back'?'flex':'none';
+  const tf=document.getElementById('btn-front');if(tf)tf.className='btn btn-sm '+(view==='front'?'btn-neon':'btn-ghost');
+  const tb=document.getElementById('btn-back'); if(tb)tb.className='btn btn-sm '+(view==='back'?'btn-neon':'btn-ghost');
 }
 
 function updateEVA(){
