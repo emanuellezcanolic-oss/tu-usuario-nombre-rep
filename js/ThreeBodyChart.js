@@ -90,6 +90,8 @@ const TBC = window.TBC = {
           </div>
           <div id="tbc-info" style="position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,0.75);padding:6px 10px;border-radius:5px;color:var(--neon);font-size:11px;display:none;border:1px solid var(--neon);max-width:60%"></div>
           <div id="tbc-tooltip" style="position:absolute;pointer-events:none;background:rgba(0,0,0,0.9);border:1px solid var(--border);color:var(--text);font-size:11px;padding:4px 8px;border-radius:4px;display:none;z-index:10"></div>
+          <div id="tbc-lesions" style="position:absolute;top:10px;right:10px;width:240px;max-height:480px;overflow:auto;background:rgba(0,0,0,.82);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font-size:11px;display:none"></div>
+          <button id="tbc-lesions-toggle" onclick="TBC.toggleLesionPanel()" style="position:absolute;top:10px;right:10px;background:var(--bg1);border:1px solid var(--neon);color:var(--neon);padding:5px 10px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600">📋 Lesiones</button>
         </div>
         <div style="padding:8px 12px;background:var(--bg1);border-top:1px solid var(--border);font-size:10px;color:var(--text3);text-align:center">
           🖱️ arrastrá para rotar · rueda para zoom · clic en estructura para ver panel clínico
@@ -213,6 +215,9 @@ const TBC = window.TBC = {
     const ld = document.getElementById('tbc-loading');
     if (any){
       if (ld) ld.style.display = 'none';
+      // build hotspots + apply existing tints
+      try { this._buildHotspots(); } catch(e){ console.warn('[TBC] hotspots',e); }
+      try { this.applyLesionTints(); } catch(e){}
     } else {
       if (ld){
         ld.innerHTML = `<div style="color:var(--amber);text-align:center;padding:20px;max-width:90%">
@@ -257,6 +262,8 @@ const TBC = window.TBC = {
     this.mouse.y = -((e.clientY - rect.top)  / rect.height) * 2 + 1;
     this.raycaster.setFromCamera(this.mouse, this.camera);
     const targets = [];
+    // hotspots PRIMERO (renderOrder alto, prioridad click)
+    this._hotspots.forEach(h => h.visible !== false && targets.push(h));
     Object.entries(this.layerObjs).forEach(([id, grp]) => {
       if (this.layerOn[id]) grp.traverse(o => o.isMesh && targets.push(o));
     });
@@ -268,17 +275,37 @@ const TBC = window.TBC = {
     }
     const obj = hits[0].object;
     const hit = hits[0];
-    const name = obj.name || '(sin nombre)';
+    const hot = obj.userData?.hotspot;
     if (isClick){
-      const ctx = this._buildLesionCtx(obj, hit);
-      this._showInfo(name, ctx.region);
+      let ctx;
+      if (hot){
+        ctx = {
+          meshName: 'joint:'+hot.id,
+          displayName: hot.name,
+          side: hot.side,
+          region: hot.region,
+          segment: null,
+          category: 'joint',
+          kind: 'joint'
+        };
+      } else {
+        ctx = this._buildLesionCtx(obj, hit);
+      }
+      this._showInfo(ctx.displayName, ctx.region);
       if (typeof LSH !== 'undefined') LSH.open(ctx);
       else console.warn('[TBC] LSH no cargado');
     } else {
-      this._setHover(obj);
-      this._showTooltip(e, this._prettyName(name));
+      if (hot){
+        this._hideHover();
+        this._showTooltip(e, hot.name);
+      } else {
+        this._setHover(obj);
+        this._showTooltip(e, this._prettyName(obj.name||''));
+      }
     }
   },
+
+  _hideHover(){ this._clearHover(); },
 
   // ── lesion context builder ─────────────────────────────────────────────
   _buildLesionCtx(obj, hit){
@@ -395,7 +422,182 @@ const TBC = window.TBC = {
       this.controls.target.copy(this._homeTarget);
       this.controls.update();
     }
+  },
+
+  // ── joint hotspots ─────────────────────────────────────────────────────
+  // se construyen DESPUÉS de que carga skeleton, derivando posiciones de
+  // bbox de huesos clave. Cada hotspot es esfera transparente clickeable.
+  _hotspots: [],
+  _meshIndex: {}, // meshName → THREE.Mesh (para tinte por lesión)
+
+  _buildHotspots(){
+    const sk = this.layerObjs.skeleton;
+    if (!sk) return;
+    // index meshes
+    sk.traverse(o => { if (o.isMesh && o.name) this._meshIndex[o.name] = o; });
+    const mu = this.layerObjs.muscle;
+    if (mu) mu.traverse(o => { if (o.isMesh && o.name) this._meshIndex[o.name] = o; });
+
+    const findBbox = (regex) => {
+      const box = new THREE.Box3();
+      let any = false;
+      sk.traverse(o => { if (o.isMesh && regex.test(o.name||'')){ box.expandByObject(o); any = true; }});
+      return any ? box : null;
+    };
+    const center = b => b ? b.getCenter(new THREE.Vector3()) : null;
+
+    // joints to compute
+    const JOINTS = [
+      { id:'hombro.l',   region:'hombro',   side:'L', name:'Hombro Izq',   from:[/Humerus\.l/i, /Scapula\.l/i],   pick:'top' },
+      { id:'hombro.r',   region:'hombro',   side:'R', name:'Hombro Der',   from:[/Humerus\.r/i, /Scapula\.r/i],   pick:'top' },
+      { id:'codo.l',     region:'codo',     side:'L', name:'Codo Izq',     from:[/Humerus\.l/i, /Radius\.l/i],    pick:'between' },
+      { id:'codo.r',     region:'codo',     side:'R', name:'Codo Der',     from:[/Humerus\.r/i, /Radius\.r/i],    pick:'between' },
+      { id:'cadera.l',   region:'cadera',   side:'L', name:'Cadera Izq',   from:[/Femur\.l/i, /Hip bone\.l/i],    pick:'top' },
+      { id:'cadera.r',   region:'cadera',   side:'R', name:'Cadera Der',   from:[/Femur\.r/i, /Hip bone\.r/i],    pick:'top' },
+      { id:'rodilla.l',  region:'rodilla',  side:'L', name:'Rodilla Izq',  from:[/Patella\.l/i],                  pick:'center' },
+      { id:'rodilla.r',  region:'rodilla',  side:'R', name:'Rodilla Der',  from:[/Patella\.r/i],                  pick:'center' },
+      { id:'tobillo.l',  region:'tobillo',  side:'L', name:'Tobillo Izq',  from:[/Talus\.l/i],                    pick:'center' },
+      { id:'tobillo.r',  region:'tobillo',  side:'R', name:'Tobillo Der',  from:[/Talus\.r/i],                    pick:'center' },
+      { id:'cervical',   region:'cervical', side:'',  name:'Cervical',     from:[/Vertebra C[345]/i],             pick:'center' },
+      { id:'lumbar',     region:'lumbar',   side:'',  name:'Lumbar',       from:[/Vertebra L[234]/i],             pick:'center' },
+    ];
+
+    // estimate scale: 1.5% of model height for sphere radius
+    const root = new THREE.Box3().setFromObject(sk);
+    const radius = Math.max(0.018, root.getSize(new THREE.Vector3()).y * 0.022);
+
+    JOINTS.forEach(j => {
+      const boxes = j.from.map(rx => findBbox(rx)).filter(Boolean);
+      if (!boxes.length) return;
+      let pos;
+      if (j.pick === 'top'){
+        // proximal end of first bone (high Y of first, with low Y of second blended)
+        pos = boxes[0].getCenter(new THREE.Vector3());
+        if (boxes[1]) pos.lerp(boxes[1].getCenter(new THREE.Vector3()), 0.5);
+        pos.y = boxes[0].max.y * 0.95 + boxes[0].min.y * 0.05; // toward top
+      } else if (j.pick === 'between'){
+        // midpoint between bottom of bone1 and top of bone2
+        const p1 = new THREE.Vector3((boxes[0].min.x+boxes[0].max.x)/2, boxes[0].min.y, (boxes[0].min.z+boxes[0].max.z)/2);
+        const p2 = boxes[1] ? new THREE.Vector3((boxes[1].min.x+boxes[1].max.x)/2, boxes[1].max.y, (boxes[1].min.z+boxes[1].max.z)/2) : p1;
+        pos = p1.lerp(p2, 0.5);
+      } else {
+        pos = boxes[0].getCenter(new THREE.Vector3());
+      }
+
+      const geom = new THREE.SphereGeometry(radius, 24, 16);
+      const mat = new THREE.MeshBasicMaterial({
+        color: 0x39FF7A, transparent: true, opacity: 0.32, depthTest: false
+      });
+      const sphere = new THREE.Mesh(geom, mat);
+      sphere.position.copy(pos);
+      sphere.renderOrder = 999;
+      sphere.userData.hotspot = j;
+
+      // outer ring (concentric circle effect)
+      const ringGeom = new THREE.SphereGeometry(radius * 1.6, 24, 16);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: 0x39FF7A, transparent: true, opacity: 0.10, depthTest: false, wireframe: true
+      });
+      const ring = new THREE.Mesh(ringGeom, ringMat);
+      ring.position.copy(pos);
+      ring.renderOrder = 998;
+      ring.userData.hotspot = j;
+
+      this.scene.add(sphere);
+      this.scene.add(ring);
+      this._hotspots.push(sphere, ring);
+    });
+    console.log('[TBC] hotspots built:', this._hotspots.length / 2);
+  },
+
+  toggleHotspots(on){
+    this._hotspots.forEach(h => h.visible = on);
+  },
+
+  // ── lesion panel + tint ────────────────────────────────────────────────
+  toggleLesionPanel(){
+    const p = document.getElementById('tbc-lesions');
+    const b = document.getElementById('tbc-lesions-toggle');
+    if (!p || !b) return;
+    const open = p.style.display === 'none';
+    p.style.display = open ? 'block' : 'none';
+    b.style.display = open ? 'none'  : 'block';
+    if (open) this.renderLesionList();
+  },
+
+  renderLesionList(){
+    const p = document.getElementById('tbc-lesions');
+    if (!p || typeof LSH === 'undefined') return;
+    const arr = LSH.list();
+    const head = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-weight:700;color:var(--neon);font-size:11px;letter-spacing:.1em">LESIONES (${arr.length})</span>
+        <button onclick="TBC.toggleLesionPanel()" style="background:transparent;border:none;color:var(--text2);cursor:pointer;font-size:14px">✕</button>
+      </div>`;
+    if (!arr.length){
+      p.innerHTML = head + '<div style="color:var(--text3);font-size:10px;text-align:center;padding:14px">Sin lesiones registradas.<br>Hacé clic en una estructura del modelo.</div>';
+      return;
+    }
+    const items = arr.map(l => {
+      const vasC = l.vas<=3?'var(--neon)':l.vas<=6?'var(--amber)':'var(--red)';
+      const path = l.pathology || l.pathologyCustom || '—';
+      return `
+      <div style="border:1px solid var(--border);border-radius:5px;padding:6px 8px;margin-bottom:5px;background:rgba(255,255,255,.02)">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:4px">
+          <b style="font-size:11px;color:var(--text)">${l.displayName}</b>
+          <span style="font-size:14px;font-weight:700;color:${vasC};font-family:var(--mono)">${l.vas}</span>
+        </div>
+        <div style="font-size:9px;color:var(--text3);margin:2px 0">${l.side?l.side+' · ':''}${l.segment||''}${l.region?' · '+l.region:''}</div>
+        <div style="font-size:10px;color:var(--text2)">${path}</div>
+        <div style="display:flex;gap:4px;margin-top:5px">
+          <button onclick="TBC.focusLesion('${l.meshName.replace(/'/g,"\\'")}')" style="flex:1;padding:3px;background:var(--bg1);border:1px solid var(--border);color:var(--text2);border-radius:3px;cursor:pointer;font-size:9px">📍 Ver</button>
+          <button onclick="LSH.delete('${l.id}')" style="padding:3px 8px;background:transparent;border:1px solid var(--red);color:var(--red);border-radius:3px;cursor:pointer;font-size:9px">🗑</button>
+        </div>
+      </div>`;
+    }).join('');
+    p.innerHTML = head + items;
+  },
+
+  applyLesionTints(){
+    if (typeof LSH === 'undefined') return;
+    // reset previous tinted meshes
+    if (this._tinted){
+      this._tinted.forEach(m => {
+        if (m && m.material) m.material.emissive?.setHex(0x000000);
+      });
+    }
+    this._tinted = [];
+    LSH.list().forEach(l => {
+      const m = this._meshIndex[l.meshName];
+      if (m && m.material && m.material.emissive){
+        const c = l.vas <= 3 ? 0x208a3a : l.vas <= 6 ? 0xc28a1e : 0xc73838;
+        m.material.emissive.setHex(c);
+        m.material.emissiveIntensity = 0.55;
+        this._tinted.push(m);
+      }
+    });
+  },
+
+  focusLesion(meshName){
+    const m = this._meshIndex[meshName];
+    if (!m || !this.controls) return;
+    const box = new THREE.Box3().setFromObject(m);
+    if (box.isEmpty()) return;
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const dist = Math.max(size.x, size.y, size.z) * 4;
+    this.camera.position.set(center.x, center.y, center.z + dist);
+    this.controls.target.copy(center);
+    this.controls.update();
   }
 };
+
+// hook lesion updates
+document.addEventListener('lsh:update', () => {
+  if (TBC._started){
+    TBC.renderLesionList();
+    TBC.applyLesionTints();
+  }
+});
 
 })();
