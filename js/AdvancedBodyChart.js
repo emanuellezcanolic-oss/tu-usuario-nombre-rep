@@ -711,7 +711,7 @@ const ABC = window.ABC = {
 
   // ── load history from evals ───────────────────────────────────────────────
   _loadHistoryFromEvals() {
-    if (!cur?.evals) return;
+    if (!cur?.evals || !Array.isArray(cur.evals)) return;
     const hist = cur.kinesio?.history || {};
     cur.evals.forEach(ev => {
       if (!ev.zonas) return;
