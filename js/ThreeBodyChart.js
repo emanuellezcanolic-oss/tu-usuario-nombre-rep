@@ -267,23 +267,78 @@ const TBC = window.TBC = {
       return;
     }
     const obj = hits[0].object;
+    const hit = hits[0];
     const name = obj.name || '(sin nombre)';
     if (isClick){
-      const panel = meshToPanel(name);
-      this._showInfo(name, panel);
-      if (panel && SHEET_MAP_3D[panel]){
-        const sheetId = SHEET_MAP_3D[panel];
-        if (document.getElementById(sheetId) && typeof openModal === 'function'){
-          try { openModal(sheetId); } catch(e){ console.warn('[TBC] openModal failed', e); }
-        }
-        if (typeof initKlinicalSheet === 'function'){
-          try { initKlinicalSheet(panel); } catch(e){}
-        }
-      }
+      const ctx = this._buildLesionCtx(obj, hit);
+      this._showInfo(name, ctx.region);
+      if (typeof LSH !== 'undefined') LSH.open(ctx);
+      else console.warn('[TBC] LSH no cargado');
     } else {
       this._setHover(obj);
-      this._showTooltip(e, name);
+      this._showTooltip(e, this._prettyName(name));
     }
+  },
+
+  // ── lesion context builder ─────────────────────────────────────────────
+  _buildLesionCtx(obj, hit){
+    const name = obj.name || '';
+    const layer = obj.userData?.layer || 'muscle';
+    const side = this._detectSide(name);
+    const segment = layer === 'muscle' ? this._detectSegment(obj, hit.point) : null;
+    const region = meshToPanel(name) || '';
+    const displayName = this._prettyName(name);
+
+    // category default by layer + segment
+    let category = 'muscle';
+    if (layer === 'skeleton') category = 'bone';
+    else if (segment === 'proximal' || segment === 'distal') category = 'tendon';
+    else category = 'muscle';
+
+    return {
+      meshName: name,
+      displayName,
+      side,
+      region,
+      segment,
+      category,
+      kind: layer
+    };
+  },
+
+  _detectSide(name){
+    const n = name.toLowerCase();
+    if (/\.l(\.|$)/.test(n) || /\bleft\b/.test(n)) return 'L';
+    if (/\.r(\.|$)/.test(n) || /\bright\b/.test(n)) return 'R';
+    return '';
+  },
+
+  _detectSegment(mesh, worldPoint){
+    // bbox in world space, project click onto longest axis
+    const box = new THREE.Box3().setFromObject(mesh);
+    if (box.isEmpty()) return null;
+    const size = box.getSize(new THREE.Vector3());
+    const axes = [['x',size.x],['y',size.y],['z',size.z]].sort((a,b)=>b[1]-a[1]);
+    const ax = axes[0][0]; // longest
+    const t = (worldPoint[ax] - box.min[ax]) / (box.max[ax] - box.min[ax]);
+    // anatomy convention: top of bbox (high Y) = proximal for limbs
+    // for vertical muscles ax=y → t=1 means top → proximal
+    // invert if Y axis to match: proximal = high Y
+    const norm = (ax === 'y') ? (1 - t) : t;
+    if (norm < 0.33) return 'proximal';
+    if (norm > 0.66) return 'distal';
+    return 'vientre';
+  },
+
+  _prettyName(name){
+    return (name||'')
+      .replace(/\.[lr](\.|$)/i,'$1')
+      .replace(/\.[a-z0-9]+$/i,'')
+      .replace(/_/g,' ')
+      .replace(/\bmuscle\b/i,'')
+      .replace(/\s+/g,' ')
+      .trim()
+      .replace(/^\w/, c => c.toUpperCase());
   },
 
   _setHover(obj){
