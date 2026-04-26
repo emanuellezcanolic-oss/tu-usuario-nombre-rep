@@ -540,22 +540,26 @@ const MA = window.MA = {
       [11,13],[13,15],[12,14],[14,16], [11,12],[11,23],[12,24],[23,24],
       [23,25],[25,27],[24,26],[26,28], [27,31],[28,32],[27,29],[28,30]
     ];
-    ctx.lineWidth = 3.5; ctx.strokeStyle = '#39FF7A'; ctx.lineCap = 'round';
+    // skeleton: línea sutil con leve glow
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.shadowColor = 'rgba(57,255,122,.6)'; ctx.shadowBlur = 4;
+    ctx.lineWidth = 1.6; ctx.strokeStyle = 'rgba(57,255,122,.95)';
     PAIRS.forEach(([a,b]) => {
       const A = lm[a], B = lm[b]; if (!A||!B) return;
       ctx.beginPath();
       ctx.moveTo(X(A), Y(A)); ctx.lineTo(X(B), Y(B));
       ctx.stroke();
     });
+    ctx.shadowBlur = 0;
 
-    // landmarks: en edit mode más grandes y blancos con borde
+    // landmarks: pequeños y limpios
     const editing = this._editMode;
     lm.forEach((p,i) => { if(!p) return;
       ctx.beginPath();
-      ctx.arc(X(p), Y(p), editing ? 7 : 3.5, 0, Math.PI*2);
-      ctx.fillStyle = editing ? (this._dragIdx === i ? '#ffb020' : '#fff') : '#fff';
+      ctx.arc(X(p), Y(p), editing ? 6.5 : 2.2, 0, Math.PI*2);
+      ctx.fillStyle = editing ? (this._dragIdx === i ? '#ffb020' : '#fff') : 'rgba(255,255,255,.95)';
       ctx.fill();
-      if (editing){ ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5; ctx.stroke(); }
+      if (editing){ ctx.strokeStyle = '#000'; ctx.lineWidth = 1.2; ctx.stroke(); }
     });
 
     if (editing){
@@ -582,18 +586,34 @@ const MA = window.MA = {
     while (diff < -Math.PI) diff += 2*Math.PI;
     ctx.arc(X(B), Y(B), r, start, start+diff, diff < 0);
     ctx.closePath();
-    ctx.fillStyle = col + '55';
+    ctx.fillStyle = col + '22';
     ctx.fill();
-    ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke();
-    // label
+    ctx.strokeStyle = col + 'cc'; ctx.lineWidth = 1.2; ctx.stroke();
+    // label compacto con bg pill
     const midA = start + diff/2;
-    const lx = X(B) + Math.cos(midA) * (r*0.55);
-    const ly = Math.cos(midA) === 0 ? Y(B) : Y(B) + Math.sin(midA) * (r*0.55);
-    ctx.font = 'bold 18px monospace';
+    const lx = X(B) + Math.cos(midA) * (r*0.6);
+    const ly = Y(B) + Math.sin(midA) * (r*0.6);
+    const txt = `${Math.round(ang)}°`;
+    ctx.font = '600 12px ui-monospace,SFMono-Regular,Menlo,monospace';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#000'; ctx.fillText(`${Math.round(ang)}°`, lx+1, ly+1);
-    ctx.fillStyle = '#fff'; ctx.fillText(`${Math.round(ang)}°`, lx, ly);
+    const tw = ctx.measureText(txt).width;
+    ctx.fillStyle = 'rgba(0,0,0,.78)';
+    this._roundRect(lx - tw/2 - 5, ly - 9, tw + 10, 18, 4);
+    ctx.fill();
+    ctx.fillStyle = col;
+    ctx.fillText(txt, lx, ly);
     ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
+  },
+
+  _roundRect(x,y,w,h,r){
+    const ctx = this._ctx;
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
   },
 
   _finish(){
