@@ -16,28 +16,9 @@ function showKineTab(tab, btn) {
       stab.style.border     = active ? 'none'        : '1px solid var(--border)';
     }
   });
-  if (tab === 'mapa' && !_abcInited && typeof ABC !== 'undefined') {
-    ABC.init();
-    _abcInited = true;
+  if (tab === 'mapa' && typeof TBC !== 'undefined' && !TBC._started) {
+    TBC.init();
   }
-}
-
-// Toggle 2D ↔ 3D body chart
-function setBodyChartMode(mode, btn){
-  const d2 = document.getElementById('advanced-body-chart');
-  const d3 = document.getElementById('three-body-chart');
-  const b2 = document.getElementById('bc-mode-2d');
-  const b3 = document.getElementById('bc-mode-3d');
-  const is3D = mode === '3d';
-  if (d2) d2.style.display = is3D ? 'none' : '';
-  if (d3) d3.style.display = is3D ? '' : 'none';
-  [b2,b3].forEach(b => { if (!b) return;
-    const on = (b===btn);
-    b.style.background = on ? 'var(--neon)' : 'var(--bg2)';
-    b.style.color      = on ? '#000'        : 'var(--text2)';
-    b.style.border     = on ? 'none'        : '1px solid var(--border)';
-  });
-  if (is3D && typeof TBC !== 'undefined' && !TBC._started) TBC.init();
 }
 
 function buildHooperFields(){
@@ -99,9 +80,8 @@ function saveFatiga(){
 function initKinesio(){
   if(!cur)return;
   kineState=cur.kinesio?JSON.parse(JSON.stringify(cur.kinesio)):{bodyZones:{},tests:{},form:{}};
-  // Init AdvancedBodyChart (re-renders with current athlete data)
-  _abcInited = false;
-  if (typeof ABC !== 'undefined') { ABC.init(); _abcInited = true; }
+  // Default sub-tab: Anamnesis
+  showKineTab('anamnesis', document.getElementById('kstab-anamnesis'));
   // Wire up all body zones (old chart, kept for compatibility)
   document.querySelectorAll('.body-zone').forEach(el=>{
     el.onclick=null;
