@@ -314,12 +314,15 @@ const MA = window.MA = {
       const t = frame / fps;
       v.currentTime = t;
       await new Promise(r => { v.onseeked = r; });
-      const result = poseLandmarker.detectForVideo(v, performance.now());
-      if (result?.landmarks?.[0]){
-        const lm = result.landmarks[0];
+      const key = Math.round(v.currentTime * 30);
+      let lm = this._overrides && this._overrides[key];
+      if (!lm){
+        const result = poseLandmarker.detectForVideo(v, performance.now());
+        if (result?.landmarks?.[0]) lm = result.landmarks[0];
+      }
+      if (lm){
         const a = allAngles(lm);
-        a._t = t;
-        a._lm = lm;
+        a._t = t; a._lm = lm;
         this._frames.push(a);
         this._draw(lm);
       }
@@ -350,9 +353,151 @@ const MA = window.MA = {
     const c = document.getElementById('ma-canvas');
     const v = document.getElementById('ma-video');
     this._canvas = c; this._ctx = c.getContext('2d');
+    this._video = v;
+    this._overrides = this._overrides || {};
     this._fitCanvas();
-    // re-fit on window resize
-    window.addEventListener('resize', () => this._fitCanvas(), { passive:true });
+    if (!this._evtBound){
+      window.addEventListener('resize', () => this._fitCanvas(), { passive:true });
+      // pause/play → toggle edit mode + run pose on current frame
+      v.addEventListener('pause', () => this._enterEditMode());
+      v.addEventListener('play',  () => this._exitEditMode());
+      v.addEventListener('seeked', () => this._onSeeked());
+      // edit drag
+      c.style.pointerEvents = 'none'; // default canvas no clicks (lo manejamos via overlay div)
+      // overlay invisible div for events
+      let ov = document.getElementById('ma-edit-ov');
+      if (!ov){
+        ov = document.createElement('div');
+        ov.id = 'ma-edit-ov';
+        ov.style.cssText = 'position:absolute;inset:0;cursor:crosshair;display:none';
+        c.parentElement.appendChild(ov);
+        ov.addEventListener('mousedown', e => this._dragStart(e));
+        ov.addEventListener('mousemove', e => this._dragMove(e));
+        ov.addEventListener('mouseup',   e => this._dragEnd(e));
+        ov.addEventListener('mouseleave',e => this._dragEnd(e));
+        // touch
+        ov.addEventListener('touchstart', e => { e.preventDefault(); this._dragStart(e.touches[0]); }, {passive:false});
+        ov.addEventListener('touchmove',  e => { e.preventDefault(); this._dragMove(e.touches[0]); }, {passive:false});
+        ov.addEventListener('touchend',   e => this._dragEnd(e));
+      }
+      this._evtBound = true;
+      // step controls
+      this._injectStepControls();
+    }
+  },
+
+  _injectStepControls(){
+    if (document.getElementById('ma-steps')) return;
+    const html = `
+      <div id="ma-steps" style="display:flex;gap:6px;justify-content:center;align-items:center;padding:6px;background:var(--bg1);border-top:1px solid var(--border);font-size:11px">
+        <button class="btn btn-ghost btn-sm" onclick="MA.stepFrame(-5)">⏪ -5</button>
+        <button class="btn btn-ghost btn-sm" onclick="MA.stepFrame(-1)">◀ -1</button>
+        <button class="btn btn-neon btn-sm" onclick="MA.togglePlay()">⏯ Play/Pause</button>
+        <button class="btn btn-ghost btn-sm" onclick="MA.stepFrame(1)">▶ +1</button>
+        <button class="btn btn-ghost btn-sm" onclick="MA.stepFrame(5)">⏩ +5</button>
+        <span style="flex:1"></span>
+        <button class="btn btn-ghost btn-sm" onclick="MA.detectCurrentFrame()" title="Re-detectar pose en frame actual">🔄 Re-detectar</button>
+      </div>`;
+    const wrap = this._video.parentElement;
+    wrap.insertAdjacentHTML('afterend', html);
+  },
+
+  togglePlay(){
+    const v = this._video;
+    if (v.paused) v.play(); else v.pause();
+  },
+
+  stepFrame(n){
+    const v = this._video;
+    v.pause();
+    const fps = 30; // approx
+    v.currentTime = Math.max(0, Math.min(v.duration||1e6, v.currentTime + n/fps));
+  },
+
+  async detectCurrentFrame(){
+    if (!poseReady){ await initPose(); }
+    if (!poseReady) return;
+    const v = this._video;
+    const result = poseLandmarker.detectForVideo(v, performance.now());
+    if (result?.landmarks?.[0]){
+      this._lastLm = result.landmarks[0];
+      const key = this._frameKey();
+      delete this._overrides[key]; // forzar re-detect
+      this._draw(this._lastLm);
+    }
+  },
+
+  _frameKey(){
+    return Math.round(this._video.currentTime * 30);
+  },
+
+  async _enterEditMode(){
+    this._editMode = true;
+    const ov = document.getElementById('ma-edit-ov');
+    if (ov) ov.style.display = 'block';
+    // detect pose en frame actual si no hay override
+    const key = this._frameKey();
+    if (this._overrides[key]){
+      this._lastLm = this._overrides[key];
+    } else if (poseReady){
+      const r = poseLandmarker.detectForVideo(this._video, performance.now());
+      if (r?.landmarks?.[0]) this._lastLm = r.landmarks[0];
+    }
+    if (this._lastLm) this._draw(this._lastLm);
+  },
+
+  _exitEditMode(){
+    this._editMode = false;
+    this._dragIdx = null;
+    const ov = document.getElementById('ma-edit-ov');
+    if (ov) ov.style.display = 'none';
+  },
+
+  _onSeeked(){
+    const key = this._frameKey();
+    if (this._overrides[key]){
+      this._lastLm = this._overrides[key];
+      this._draw(this._lastLm);
+    } else if (this._editMode && poseReady){
+      const r = poseLandmarker.detectForVideo(this._video, performance.now());
+      if (r?.landmarks?.[0]){ this._lastLm = r.landmarks[0]; this._draw(this._lastLm); }
+    }
+  },
+
+  _dragStart(e){
+    if (!this._editMode || !this._lastLm || !this._lastDraw) return;
+    const c = this._canvas;
+    const rect = c.getBoundingClientRect();
+    const px = (e.clientX - rect.left), py = (e.clientY - rect.top);
+    const o = this._lastDraw.o;
+    let best = -1, bestD = 25*25; // 25px radius
+    this._lastLm.forEach((p,i) => {
+      if (!p) return;
+      const x = o.dx + p.x*o.dw, y = o.dy + p.y*o.dh;
+      const d = (px-x)*(px-x) + (py-y)*(py-y);
+      if (d < bestD){ bestD = d; best = i; }
+    });
+    if (best >= 0){ this._dragIdx = best; this._dragMove(e); }
+  },
+
+  _dragMove(e){
+    if (!this._editMode || this._dragIdx == null || !this._lastLm) return;
+    const c = this._canvas;
+    const rect = c.getBoundingClientRect();
+    const px = e.clientX - rect.left, py = e.clientY - rect.top;
+    const o = this._lastDraw.o;
+    const nx = (px - o.dx) / o.dw, ny = (py - o.dy) / o.dh;
+    this._lastLm[this._dragIdx] = { ...this._lastLm[this._dragIdx], x:nx, y:ny };
+    this._draw(this._lastLm);
+  },
+
+  _dragEnd(){
+    if (this._dragIdx == null) return;
+    // persistir override en el frame actual
+    const key = this._frameKey();
+    this._overrides[key] = this._lastLm.map(p => p ? {...p} : p);
+    this._dragIdx = null;
+    this._draw(this._lastLm);
   },
 
   // calcula área DISPLAYED del video (cuenta letterboxing por object-fit:contain)
@@ -376,35 +521,79 @@ const MA = window.MA = {
     ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
     const X = p => o.dx + p.x * o.dw;
     const Y = p => o.dy + p.y * o.dh;
+    this._lastLm = lm;
+    this._lastDraw = { o, X, Y };
 
-    const PAIRS = [
-      [11,13],[13,15],[12,14],[14,16],          // arms
-      [11,12],[11,23],[12,24],[23,24],          // torso
-      [23,25],[25,27],[24,26],[26,28],          // legs
-      [27,31],[28,32],[27,29],[28,30]           // feet
+    // arcos angulares (pie slice estilo) en articulaciones clave
+    const JOINTS = [
+      [L.L_HIP,L.L_KNEE,L.L_ANKLE, '#39FF7A'],
+      [L.R_HIP,L.R_KNEE,L.R_ANKLE, '#39FF7A'],
+      [L.L_SHOULDER,L.L_HIP,L.L_KNEE, '#5dd4ff'],
+      [L.R_SHOULDER,L.R_HIP,L.R_KNEE, '#5dd4ff'],
+      [L.L_SHOULDER,L.L_ELBOW,L.L_WRIST, '#ffb020'],
+      [L.R_SHOULDER,L.R_ELBOW,L.R_WRIST, '#ffb020']
     ];
-    ctx.lineWidth = 3; ctx.strokeStyle = '#39FF7A';
+    JOINTS.forEach(([a,b,c,col]) => this._drawAngleArc(lm[a],lm[b],lm[c],col,X,Y));
+
+    // skeleton lines
+    const PAIRS = [
+      [11,13],[13,15],[12,14],[14,16], [11,12],[11,23],[12,24],[23,24],
+      [23,25],[25,27],[24,26],[26,28], [27,31],[28,32],[27,29],[28,30]
+    ];
+    ctx.lineWidth = 3.5; ctx.strokeStyle = '#39FF7A'; ctx.lineCap = 'round';
     PAIRS.forEach(([a,b]) => {
-      const A = lm[a], B = lm[b];
-      if (!A||!B) return;
+      const A = lm[a], B = lm[b]; if (!A||!B) return;
       ctx.beginPath();
       ctx.moveTo(X(A), Y(A)); ctx.lineTo(X(B), Y(B));
       ctx.stroke();
     });
-    ctx.fillStyle = '#fff';
-    lm.forEach(p => { if(!p) return;
+
+    // landmarks: en edit mode más grandes y blancos con borde
+    const editing = this._editMode;
+    lm.forEach((p,i) => { if(!p) return;
       ctx.beginPath();
-      ctx.arc(X(p), Y(p), 3.5, 0, Math.PI*2);
+      ctx.arc(X(p), Y(p), editing ? 7 : 3.5, 0, Math.PI*2);
+      ctx.fillStyle = editing ? (this._dragIdx === i ? '#ffb020' : '#fff') : '#fff';
       ctx.fill();
+      if (editing){ ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5; ctx.stroke(); }
     });
-    // angle annotations on knees
-    [[L.L_HIP,L.L_KNEE,L.L_ANKLE,'IZQ'], [L.R_HIP,L.R_KNEE,L.R_ANKLE,'DER']].forEach(([a,b,c,lbl]) => {
-      const A=lm[a],B=lm[b],C=lm[c]; if(!A||!B||!C) return;
-      const ang = angle2D(A,B,C); if (ang==null) return;
-      ctx.font = 'bold 16px monospace';
-      ctx.fillStyle = ang < 90 ? '#39FF7A' : ang < 130 ? '#FFB020' : '#FF4040';
-      ctx.fillText(`${lbl} ${ang.toFixed(0)}°`, X(B) + 8, Y(B));
-    });
+
+    if (editing){
+      ctx.font = 'bold 12px monospace'; ctx.fillStyle = '#ffb020';
+      ctx.fillText('✎ EDIT MODE — arrastrá puntos para corregir', 10, 22);
+    }
+  },
+
+  // dibuja arco angular tipo pie slice con label grande
+  _drawAngleArc(A,B,C,col,X,Y){
+    if (!A||!B||!C) return;
+    const ctx = this._ctx;
+    const ang = angle2D(A,B,C); if (ang==null) return;
+    const a1 = Math.atan2(Y(A)-Y(B), X(A)-X(B));
+    const a2 = Math.atan2(Y(C)-Y(B), X(C)-X(B));
+    const r = Math.hypot(X(A)-X(B), Y(A)-Y(B)) * 0.55;
+    // fill pie slice
+    ctx.beginPath();
+    ctx.moveTo(X(B), Y(B));
+    // detect angular direction (short way)
+    let start = a1, end = a2;
+    let diff = end - start;
+    while (diff > Math.PI)  diff -= 2*Math.PI;
+    while (diff < -Math.PI) diff += 2*Math.PI;
+    ctx.arc(X(B), Y(B), r, start, start+diff, diff < 0);
+    ctx.closePath();
+    ctx.fillStyle = col + '55';
+    ctx.fill();
+    ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke();
+    // label
+    const midA = start + diff/2;
+    const lx = X(B) + Math.cos(midA) * (r*0.55);
+    const ly = Math.cos(midA) === 0 ? Y(B) : Y(B) + Math.sin(midA) * (r*0.55);
+    ctx.font = 'bold 18px monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#000'; ctx.fillText(`${Math.round(ang)}°`, lx+1, ly+1);
+    ctx.fillStyle = '#fff'; ctx.fillText(`${Math.round(ang)}°`, lx, ly);
+    ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
   },
 
   _finish(){
