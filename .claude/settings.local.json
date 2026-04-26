@@ -31,7 +31,8 @@
       "Bash(rm assets/body_skin.glb)",
       "Bash(git add *)",
       "Bash(git commit *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(node -c \"C:/Users/Usuario/Documents/Claude/movemetrics/js/LesionSheet.js\")"
     ]
   }
 }

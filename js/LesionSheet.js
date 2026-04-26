@@ -114,6 +114,13 @@ const LSH = window.LSH = {
     m.id = this._modalId;
     m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:9999;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)';
     m.innerHTML = `
+      <style>
+        #${this._modalId} select, #${this._modalId} option {
+          background:#0f0f0f !important; color:#eaeaea !important;
+        }
+        #${this._modalId} select:focus { outline:1px solid var(--neon); }
+        #${this._modalId} input::placeholder, #${this._modalId} textarea::placeholder { color:#666; }
+      </style>
       <div id="lsh-card" style="width:min(680px,94vw);max-height:92vh;overflow:auto;background:var(--bg2);border:1px solid var(--neon);border-radius:10px;padding:0;box-shadow:0 0 40px rgba(57,255,122,.25)">
         <div id="lsh-head"></div>
         <div id="lsh-body" style="padding:14px 18px"></div>

@@ -8,7 +8,7 @@
 const ASSET_BASE = 'assets/';
 const LAYERS = [
   { id:'skeleton', file:'body_skeleton.glb', label:'🦴 Esqueleto', color:0xeeeede, opacity:1.0 },
-  { id:'muscle',   file:'body_muscle.glb',   label:'💪 Músculos',  color:0xb84a3c, opacity:0.92 },
+  { id:'muscle',   file:'body_muscle.glb',   label:'💪 Músculos',  color:0xa83838, opacity:0.95 },
   { id:'skin',     file:'body_skin.glb',     label:'👤 Piel',      color:0xd9b39a, opacity:0.35 },
 ];
 
@@ -81,7 +81,13 @@ const TBC = window.TBC = {
             </label>
           `).join('')}
           <span style="flex:1"></span>
-          <button class="btn btn-ghost btn-sm" onclick="TBC.resetView()" style="font-size:11px">⟳ Reset vista</button>
+          <select onchange="TBC.setStyle(this.value)" style="background:#0f0f0f;color:#eaeaea;border:1px solid var(--border);padding:5px 8px;border-radius:5px;font-size:11px;cursor:pointer">
+            <option value="realista" selected>🩸 Realista</option>
+            <option value="vivo">🔥 Vivo</option>
+            <option value="xray">🩻 X-Ray</option>
+            <option value="wire">🕸 Wireframe</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="TBC.resetView()" style="font-size:11px">⟳ Reset</button>
         </div>
         <div id="tbc-canvas-wrap" style="position:relative;width:100%;height:520px;background:radial-gradient(ellipse at center, #1a1a1a 0%, #050505 100%)">
           <div id="tbc-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:13px;flex-direction:column;gap:8px">
@@ -113,14 +119,16 @@ const TBC = window.TBC = {
     this.renderer.outputColorSpace = THREE.SRGBColorSpace || THREE.sRGBEncoding;
     this.container.appendChild(this.renderer.domElement);
 
-    // luces
-    this.scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-    const key = new THREE.DirectionalLight(0xffffff, 0.9);
-    key.position.set(2, 4, 3);
-    this.scene.add(key);
-    const rim = new THREE.DirectionalLight(0x88aaff, 0.3);
-    rim.position.set(-3, 2, -2);
-    this.scene.add(rim);
+    // luces — setup volumétrico para anatomía (key + fill + rim + hemi)
+    this.scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+    const hemi = new THREE.HemisphereLight(0xffeedd, 0x222244, 0.45);
+    this.scene.add(hemi);
+    const key = new THREE.DirectionalLight(0xfff0e0, 1.05);
+    key.position.set(3, 5, 4); this.scene.add(key);
+    const fill = new THREE.DirectionalLight(0xddeeff, 0.45);
+    fill.position.set(-4, 2, 2); this.scene.add(fill);
+    const rim = new THREE.DirectionalLight(0x88aaff, 0.55);
+    rim.position.set(-2, 3, -4); this.scene.add(rim);
 
     // controles
     if (THREE.OrbitControls){
@@ -414,6 +422,38 @@ const TBC = window.TBC = {
   toggleLayer(id, on){
     this.layerOn[id] = on;
     if (this.layerObjs[id]) this.layerObjs[id].visible = on;
+  },
+
+  styleMode:'realista',
+  setStyle(mode){
+    this.styleMode = mode;
+    const STYLES = {
+      realista: { skeleton:{c:0xeeeede,r:0.6,m:0.0,o:1.0,w:false,emi:0x000000,ei:0},
+                  muscle:  {c:0xa83838,r:0.5,m:0.05,o:0.95,w:false,emi:0x1a0000,ei:0.15} },
+      vivo:     { skeleton:{c:0xfafaee,r:0.45,m:0.0,o:1.0,w:false,emi:0x111111,ei:0.1},
+                  muscle:  {c:0xd83838,r:0.35,m:0.0,o:1.0,w:false,emi:0x401010,ei:0.35} },
+      xray:     { skeleton:{c:0x88ddff,r:0.2,m:0.1,o:0.55,w:false,emi:0x224466,ei:0.6},
+                  muscle:  {c:0xff5566,r:0.2,m:0.1,o:0.30,w:false,emi:0x661122,ei:0.4} },
+      wire:     { skeleton:{c:0x39FF7A,r:1.0,m:0.0,o:0.6,w:true,emi:0x000000,ei:0},
+                  muscle:  {c:0xff6666,r:1.0,m:0.0,o:0.5,w:true,emi:0x000000,ei:0} },
+    };
+    const s = STYLES[mode] || STYLES.realista;
+    Object.entries(this.layerObjs).forEach(([id, grp]) => {
+      const cfg = s[id]; if (!cfg) return;
+      grp.traverse(o => {
+        if (!o.isMesh || !o.material) return;
+        o.material.color?.setHex(cfg.c);
+        o.material.roughness = cfg.r;
+        o.material.metalness = cfg.m;
+        o.material.opacity = cfg.o;
+        o.material.transparent = cfg.o < 1;
+        o.material.wireframe = cfg.w;
+        if (o.material.emissive){ o.material.emissive.setHex(cfg.emi); o.material.emissiveIntensity = cfg.ei; }
+        o.material.needsUpdate = true;
+      });
+    });
+    // re-aplicar tintes de lesión sobre el estilo nuevo
+    try { this.applyLesionTints(); } catch(e){}
   },
 
   resetView(){
