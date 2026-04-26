@@ -1582,8 +1582,62 @@
 
   <!-- ══ TAB: FMS ══ -->
   <div id="ptab-fms" class="hidden">
+
+    <!-- ═════ ANÁLISIS VIDEO AI (MediaPipe Pose) ═════ -->
+    <div class="card" style="margin-bottom:18px;border:1px solid var(--neon)">
+      <div class="card-header" style="background:rgba(57,255,122,.08)">
+        <h3 style="color:var(--neon)">🎥 Análisis Video AI</h3>
+        <span class="tag" style="background:var(--neon);color:#000">Auto · MediaPipe</span>
+      </div>
+      <div class="card-body">
+        <div class="grid-2" style="gap:10px;margin-bottom:12px">
+          <div>
+            <div class="il mb-4">Ejercicio</div>
+            <select id="ma-exercise" style="width:100%;padding:7px;background:var(--bg1);color:var(--text);border:1px solid var(--border);border-radius:5px">
+              <option value="squat_bipodal">Sentadilla bipodal</option>
+              <option value="squat_unipodal_l">Sentadilla unipodal IZQ</option>
+              <option value="squat_unipodal_r">Sentadilla unipodal DER</option>
+              <option value="lunge">Zancada</option>
+              <option value="cmj">Salto CMJ</option>
+              <option value="free">Análisis libre (todos los ángulos)</option>
+            </select>
+          </div>
+          <div>
+            <div class="il mb-4">Vista cámara</div>
+            <select id="ma-view" style="width:100%;padding:7px;background:var(--bg1);color:var(--text);border:1px solid var(--border);border-radius:5px">
+              <option value="front">Frontal</option>
+              <option value="side_l">Perfil izquierdo</option>
+              <option value="side_r">Perfil derecho</option>
+              <option value="back">Posterior</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+          <input type="file" id="ma-file" accept="video/*" style="display:none" onchange="MA.loadVideo(this.files[0])">
+          <button class="btn btn-neon" onclick="document.getElementById('ma-file').click()">📁 Subir video</button>
+          <button class="btn btn-ghost" onclick="MA.useWebcam()">📹 Webcam en vivo</button>
+          <button class="btn btn-ghost" id="ma-analyze-btn" onclick="MA.analyze()" disabled>▶ Analizar</button>
+          <span id="ma-status" style="align-self:center;font-size:11px;color:var(--text3);font-family:var(--mono)">Esperando video…</span>
+        </div>
+        <div style="position:relative;background:#000;border:1px solid var(--border);border-radius:6px;overflow:hidden">
+          <video id="ma-video" controls playsinline style="width:100%;display:block;max-height:480px;object-fit:contain"></video>
+          <canvas id="ma-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none"></canvas>
+        </div>
+        <div id="ma-results" style="margin-top:12px;display:none">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:10px" id="ma-kpis"></div>
+          <div id="ma-flags" style="margin-bottom:10px"></div>
+          <canvas id="ma-chart" style="width:100%;height:160px;background:var(--bg1);border:1px solid var(--border);border-radius:5px"></canvas>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn btn-neon btn-sm" onclick="MA.save()">💾 Guardar análisis</button>
+            <button class="btn btn-ghost btn-sm" onclick="MA.exportJSON()">📄 Export JSON</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═════ FMS MANUAL (legacy, fotos + checks) ═════ -->
     <div class="flex-b mb-16">
-      <div><div style="font-size:15px;font-weight:700">Calidad de Movimiento</div><div style="font-size:12px;color:var(--text2)">OHS (2 fotos) · Step-Down (4 fotos) · Criterios SÍ/NO</div></div>
+      <div><div style="font-size:15px;font-weight:700">Calidad de Movimiento — Manual</div><div style="font-size:12px;color:var(--text2)">OHS (2 fotos) · Step-Down (4 fotos) · Criterios SÍ/NO</div></div>
       <button class="btn btn-neon btn-sm" onclick="saveFMS()">💾 Guardar FMS</button>
     </div>
     <div class="grid-2" style="gap:14px">
@@ -2353,6 +2407,7 @@
   <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
   <script src="js/ThreeBodyChart.js?v=7"></script>
   <script src="js/LesionSheet.js?v=2"></script>
+  <script type="module" src="js/MoveAnalysis.js?v=1"></script>
   <script src="js/anatomy-zones.js?v=2"></script>
   <script src="js/AdvancedBodyChart.js?v=4"></script>
   <script src="js/kine.js?v=7"></script>
