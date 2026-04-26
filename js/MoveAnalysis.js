@@ -349,15 +349,34 @@ const MA = window.MA = {
   _setupCanvas(){
     const c = document.getElementById('ma-canvas');
     const v = document.getElementById('ma-video');
-    c.width  = v.videoWidth  || 1280;
-    c.height = v.videoHeight || 720;
     this._canvas = c; this._ctx = c.getContext('2d');
+    this._fitCanvas();
+    // re-fit on window resize
+    window.addEventListener('resize', () => this._fitCanvas(), { passive:true });
+  },
+
+  // calcula área DISPLAYED del video (cuenta letterboxing por object-fit:contain)
+  _fitCanvas(){
+    const v = this._video, c = this._canvas;
+    if (!v || !c) return;
+    const cw = v.clientWidth, ch = v.clientHeight;
+    const vw = v.videoWidth || 1280, vh = v.videoHeight || 720;
+    c.width = cw; c.height = ch;
+    const vAR = vw/vh, cAR = cw/ch;
+    let dw, dh, dx, dy;
+    if (vAR > cAR){ dw = cw; dh = cw/vAR; dx = 0; dy = (ch-dh)/2; }
+    else          { dh = ch; dw = ch*vAR; dy = 0; dx = (cw-dw)/2; }
+    c._off = { dx, dy, dw, dh };
   },
 
   _draw(lm){
     const ctx = this._ctx; if (!ctx) return;
-    const w = this._canvas.width, h = this._canvas.height;
-    ctx.clearRect(0,0,w,h);
+    this._fitCanvas();
+    const o = this._canvas._off || { dx:0, dy:0, dw:this._canvas.width, dh:this._canvas.height };
+    ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+    const X = p => o.dx + p.x * o.dw;
+    const Y = p => o.dy + p.y * o.dh;
+
     const PAIRS = [
       [11,13],[13,15],[12,14],[14,16],          // arms
       [11,12],[11,23],[12,24],[23,24],          // torso
@@ -369,22 +388,22 @@ const MA = window.MA = {
       const A = lm[a], B = lm[b];
       if (!A||!B) return;
       ctx.beginPath();
-      ctx.moveTo(A.x*w, A.y*h); ctx.lineTo(B.x*w, B.y*h);
+      ctx.moveTo(X(A), Y(A)); ctx.lineTo(X(B), Y(B));
       ctx.stroke();
     });
     ctx.fillStyle = '#fff';
     lm.forEach(p => { if(!p) return;
       ctx.beginPath();
-      ctx.arc(p.x*w, p.y*h, 3.5, 0, Math.PI*2);
+      ctx.arc(X(p), Y(p), 3.5, 0, Math.PI*2);
       ctx.fill();
     });
     // angle annotations on knees
     [[L.L_HIP,L.L_KNEE,L.L_ANKLE,'IZQ'], [L.R_HIP,L.R_KNEE,L.R_ANKLE,'DER']].forEach(([a,b,c,lbl]) => {
       const A=lm[a],B=lm[b],C=lm[c]; if(!A||!B||!C) return;
       const ang = angle2D(A,B,C); if (ang==null) return;
-      ctx.font = 'bold 18px monospace';
+      ctx.font = 'bold 16px monospace';
       ctx.fillStyle = ang < 90 ? '#39FF7A' : ang < 130 ? '#FFB020' : '#FF4040';
-      ctx.fillText(`${lbl} ${ang.toFixed(0)}°`, B.x*w + 10, B.y*h);
+      ctx.fillText(`${lbl} ${ang.toFixed(0)}°`, X(B) + 8, Y(B));
     });
   },
 
