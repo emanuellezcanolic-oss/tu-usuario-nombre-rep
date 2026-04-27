@@ -1594,11 +1594,21 @@
           <div>
             <div class="il mb-4">Ejercicio</div>
             <select id="ma-exercise" style="width:100%;padding:7px;background:var(--bg1);color:var(--text);border:1px solid var(--border);border-radius:5px">
-              <option value="squat_bipodal">Sentadilla bipodal</option>
-              <option value="squat_unipodal_l">Sentadilla unipodal IZQ</option>
-              <option value="squat_unipodal_r">Sentadilla unipodal DER</option>
-              <option value="lunge">Zancada</option>
-              <option value="cmj">Salto CMJ</option>
+              <optgroup label="Básicos">
+                <option value="squat_bipodal">Sentadilla bipodal</option>
+                <option value="squat_unipodal_l">Sentadilla unipodal IZQ</option>
+                <option value="squat_unipodal_r">Sentadilla unipodal DER</option>
+                <option value="lunge">Zancada</option>
+                <option value="cmj">Salto CMJ</option>
+              </optgroup>
+              <optgroup label="Tests científicos">
+                <option value="ohs">Overhead Squat (Cook FMS)</option>
+                <option value="step_down">Step Down 5-criteria (Park 2013)</option>
+                <option value="drop_jump_less">Drop Jump LESS (Padua 2009)</option>
+                <option value="tuck_jump">Tuck Jump (Myer 2008)</option>
+                <option value="hop_test_l">Single Hop IZQ (Noyes LSI)</option>
+                <option value="hop_test_r">Single Hop DER (Noyes LSI)</option>
+              </optgroup>
               <option value="free">Análisis libre (todos los ángulos)</option>
             </select>
           </div>
@@ -1612,12 +1622,31 @@
             </select>
           </div>
         </div>
-        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
           <input type="file" id="ma-file" accept="video/*" style="display:none" onchange="MA.loadVideo(this.files[0])">
           <button class="btn btn-neon" onclick="document.getElementById('ma-file').click()">📁 Subir video</button>
           <button class="btn btn-ghost" onclick="MA.useWebcam()">📹 Webcam en vivo</button>
           <button class="btn btn-ghost" id="ma-analyze-btn" onclick="MA.analyze()" disabled>▶ Analizar</button>
           <span id="ma-status" style="align-self:center;font-size:11px;color:var(--text3);font-family:var(--mono)">Esperando video…</span>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;align-items:center;background:var(--bg1);padding:6px 10px;border-radius:5px">
+          <span style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:700">📸 Capturar al slot</span>
+          <select id="ma-snap-dest" style="padding:5px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;font-size:11px">
+            <optgroup label="Overhead Squat (OHS)">
+              <option value="slot-ohs-frente">OHS · Frente</option>
+              <option value="slot-ohs-perfil">OHS · Perfil</option>
+            </optgroup>
+            <optgroup label="Step Down">
+              <option value="slot-sd-fd">SD · Frente Derecha</option>
+              <option value="slot-sd-pd">SD · Perfil Derecha</option>
+              <option value="slot-sd-fi">SD · Frente Izquierda</option>
+              <option value="slot-sd-pi">SD · Perfil Izquierda</option>
+            </optgroup>
+          </select>
+          <label style="font-size:10px;color:var(--text2);display:flex;align-items:center;gap:4px;cursor:pointer">
+            <input type="checkbox" id="ma-snap-overlay" checked> Con esqueleto
+          </label>
+          <button class="btn btn-neon btn-sm" onclick="MA.snapshot()" style="font-size:11px">📸 Capturar frame</button>
         </div>
         <div style="position:relative;background:#000;border:1px solid var(--border);border-radius:6px;overflow:hidden">
           <video id="ma-video" controls playsinline style="width:100%;display:block;max-height:480px;object-fit:contain"></video>
@@ -2407,7 +2436,7 @@
   <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
   <script src="js/ThreeBodyChart.js?v=7"></script>
   <script src="js/LesionSheet.js?v=2"></script>
-  <script type="module" src="js/MoveAnalysis.js?v=5"></script>
+  <script type="module" src="js/MoveAnalysis.js?v=6"></script>
   <script src="js/anatomy-zones.js?v=2"></script>
   <script src="js/AdvancedBodyChart.js?v=4"></script>
   <script src="js/kine.js?v=7"></script>

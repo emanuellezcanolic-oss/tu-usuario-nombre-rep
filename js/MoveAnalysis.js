@@ -224,6 +224,195 @@ const TEMPLATES = {
       });
       return { kpis, flags: [] };
     }
+  },
+
+  // ── TESTS CIENTÍFICOS ─────────────────────────────────────────────────
+
+  // Overhead Squat — Cook FMS scoring 0-3
+  // Ref: Cook G. Movement (2010). Criterios sobre frame de máx flexión.
+  ohs: {
+    name:'Overhead Squat (FMS)',
+    analyze(frames, view){
+      const kpis = {}, flags = [];
+      const minK = Math.min(...frames.map(f => Math.min(f.knee_l||999, f.knee_r||999)));
+      const maxLean = Math.max(...frames.map(f => Math.abs(f.trunk_lean||0)));
+      const asym = Math.abs(lower(frames.map(f=>f.knee_l),999) - lower(frames.map(f=>f.knee_r),999));
+      let score = 3;
+      if (minK > 90) score--;             // sin profundidad completa
+      if (maxLean > 30) score--;          // tronco muy adelantado
+      if (asym > 8) score--;              // asimetría marcada
+      if (view === 'front'){
+        const valg = Math.max(...frames.map(f=>Math.max(Math.abs(f.valgus_l||0),Math.abs(f.valgus_r||0))));
+        if (valg > 0.04) score = Math.min(score,1);
+      }
+      score = Math.max(0,score);
+      kpis['Score FMS'] = score+'/3';
+      kpis['Profundidad mín rodilla'] = minK.toFixed(0)+'°';
+      kpis['Inclin. tronco máx'] = maxLean.toFixed(0)+'°';
+      kpis['Asimetría'] = asym.toFixed(1)+'°';
+      const lvl = score===3?'green':score>=2?'amber':'red';
+      flags.push({lvl, msg:`Score FMS Overhead Squat: ${score}/3 — ${score===3?'óptimo':score===2?'compensaciones leves':score===1?'disfunción':'no logra'}`});
+      return { kpis, flags };
+    }
+  },
+
+  // Step Down Test — Park 2013, 5 criterios bilaterales
+  // Ref: Park JS et al. JESF 2013. Trunk, pelvis, knee position, knee valgus, balance.
+  step_down: {
+    name:'Step Down (Park)',
+    analyze(frames, view){
+      const kpis = {}, flags = [];
+      const valgL = Math.max(...frames.map(f=>Math.abs(f.valgus_l||0)));
+      const valgR = Math.max(...frames.map(f=>Math.abs(f.valgus_r||0)));
+      const pelvT = Math.max(...frames.map(f=>Math.abs(f.pelvis_tilt||0)));
+      const shouT = Math.max(...frames.map(f=>Math.abs(f.shoulder_tilt||0)));
+      const trunkLean = Math.max(...frames.map(f=>Math.abs(f.trunk_lean||0)));
+      const minK = Math.min(...frames.map(f=>Math.min(f.knee_l||999,f.knee_r||999)));
+
+      // 5 criterios Park
+      const errs = [];
+      if (trunkLean > 15) errs.push('Tronco no neutro');
+      if (pelvT > 5) errs.push('Caída pélvica (Trendelenburg)');
+      if (Math.max(valgL,valgR) > 0.04) errs.push('Valgo dinámico rodilla');
+      if (shouT > 5) errs.push('Hombros desnivelados');
+      if (minK > 100) errs.push('No alcanza profundidad');
+      const score = 5 - errs.length;
+      kpis['Score'] = score+'/5';
+      kpis['Profundidad'] = minK.toFixed(0)+'°';
+      kpis['Valgo IZQ'] = valgL.toFixed(3);
+      kpis['Valgo DER'] = valgR.toFixed(3);
+      kpis['Tilt pélvico'] = pelvT.toFixed(1)+'°';
+      flags.push({lvl: score>=4?'green':score>=3?'amber':'red', msg:`Park Score: ${score}/5 — ${score>=4?'buena calidad':'requiere intervención'}`});
+      errs.forEach(e => flags.push({lvl:'amber', msg:e}));
+      return { kpis, flags };
+    }
+  },
+
+  // Landing Error Scoring System — Padua 2009. 17 criterios drop-jump.
+  // Implementación pragmática: detecta frame de IC (initial contact) por descenso brusco de pies
+  drop_jump_less: {
+    name:'Drop Jump LESS',
+    analyze(frames, view){
+      const kpis = {}, flags = [];
+      // detectar IC = frame donde tobillos llegan a su Y máxima (más abajo en pantalla)
+      let icIdx = 0, maxY = -Infinity;
+      frames.forEach((f,i) => {
+        const lm = f._lm; if (!lm) return;
+        const ay = ((lm[L.L_ANKLE]?.y||0) + (lm[L.R_ANKLE]?.y||0))/2;
+        if (ay > maxY){ maxY = ay; icIdx = i; }
+      });
+      const ic = frames[icIdx]; if (!ic){ kpis['Error']='Sin frames'; return {kpis,flags}; }
+
+      const errors = [];
+      // 1. Knee flexion at IC < 30° → error
+      const kf = Math.min(ic.knee_l||180, ic.knee_r||180);
+      if (kf > 150) errors.push('Poca flexión rodilla en IC');
+      // 2. Hip flexion at IC < 30°
+      const hf = Math.min(ic.hip_l||180, ic.hip_r||180);
+      if (hf > 150) errors.push('Poca flexión cadera en IC');
+      // 3. Trunk flexion < 30°
+      if (Math.abs(ic.trunk_lean||0) < 10) errors.push('Tronco erecto (sin flexión)');
+      // 4. Knee valgus at IC
+      if (Math.max(Math.abs(ic.valgus_l||0), Math.abs(ic.valgus_r||0)) > 0.04) errors.push('Valgo dinámico en IC');
+      // 5. Lateral trunk flexion
+      if (Math.abs(ic.shoulder_tilt||0) > 5) errors.push('Inclinación lateral tronco');
+      // 6. Asymmetric landing
+      const asy = Math.abs((ic.knee_l||0)-(ic.knee_r||0));
+      if (asy > 10) errors.push('Aterrizaje asimétrico');
+      // 7. Feet rotation (proxy: pelvis_tilt)
+      if (Math.abs(ic.pelvis_tilt||0) > 5) errors.push('Pelvis no nivelada');
+
+      // After-IC: max knee flexion (depth)
+      const post = frames.slice(icIdx, icIdx+15);
+      const maxFlex = Math.min(...post.map(f=>Math.min(f.knee_l||180,f.knee_r||180)));
+      // 8. Knee flexion displacement < 45°
+      if ((kf - maxFlex) < 45) errors.push('Absorción insuficiente (<45° flexión rodilla)');
+      // 9. Trunk flexion displacement
+      const maxTrunk = Math.max(...post.map(f=>Math.abs(f.trunk_lean||0)));
+      if ((maxTrunk - Math.abs(ic.trunk_lean||0)) < 20) errors.push('Tronco no absorbe');
+
+      const score = errors.length;
+      const risk = score >= 6 ? 'ALTO RIESGO ACL' : score >= 4 ? 'Riesgo moderado' : 'Bajo riesgo';
+      kpis['LESS Score'] = score + '/17';
+      kpis['Riesgo'] = risk;
+      kpis['Frame IC'] = icIdx;
+      kpis['Flex rodilla IC'] = kf.toFixed(0)+'°';
+      kpis['Flex rodilla máx'] = maxFlex.toFixed(0)+'°';
+      flags.push({lvl: score>=6?'red':score>=4?'amber':'green', msg:`LESS: ${score} errores · ${risk}`});
+      errors.forEach(e => flags.push({lvl:'amber', msg:e}));
+      return { kpis, flags };
+    }
+  },
+
+  // Tuck Jump Assessment — Myer 2008. 10 criterios sobre múltiples saltos consecutivos.
+  tuck_jump: {
+    name:'Tuck Jump (Myer)',
+    analyze(frames, view){
+      const kpis = {}, flags = [];
+      const errors = [];
+      // 1. Lower extremity valgus at landing
+      const maxVal = Math.max(...frames.map(f=>Math.max(Math.abs(f.valgus_l||0),Math.abs(f.valgus_r||0))));
+      if (maxVal > 0.04) errors.push('Valgo en aterrizaje');
+      // 2. Thighs do not reach parallel (peak height)
+      const maxKneeFlex = Math.min(...frames.map(f=>Math.min(f.knee_l||180,f.knee_r||180)));
+      if (maxKneeFlex > 100) errors.push('Muslos no llegan a paralelo');
+      // 3. Foot placement not shoulder-width (proxy: pelvis distance vs ankle distance)
+      const lastFr = frames[frames.length-1]; const lm = lastFr?._lm;
+      if (lm){
+        const hipW = Math.abs(lm[L.L_HIP].x - lm[L.R_HIP].x);
+        const ankW = Math.abs(lm[L.L_ANKLE].x - lm[L.R_ANKLE].x);
+        if (Math.abs(ankW - hipW) > 0.06) errors.push('Pies fuera de ancho hombros');
+      }
+      // 4. Foot contact symmetry (compare ankle Y at peaks)
+      const askL = frames.map(f => f._lm?.[L.L_ANKLE]?.y||0);
+      const askR = frames.map(f => f._lm?.[L.R_ANKLE]?.y||0);
+      const diff = Math.abs(Math.max(...askL) - Math.max(...askR));
+      if (diff > 0.03) errors.push('Aterrizaje asimétrico pies');
+      // 5. Excessive landing noise (proxy: low knee flex absorption)
+      if ((180 - maxKneeFlex) < 60) errors.push('Aterrizaje rígido (poca absorción)');
+      // 6. Pause between jumps (skip - requiere análisis temporal)
+      // 7. Trunk position lateral
+      const maxShouT = Math.max(...frames.map(f=>Math.abs(f.shoulder_tilt||0)));
+      if (maxShouT > 5) errors.push('Inclinación tronco lateral');
+      // 8. Technique decline over time (skip - simplificado)
+
+      const score = errors.length;
+      kpis['Tuck Jump errores'] = score + '/8';
+      kpis['Valgo máx'] = maxVal.toFixed(3);
+      kpis['Profundidad rodilla'] = maxKneeFlex.toFixed(0)+'°';
+      flags.push({lvl: score>=4?'red':score>=2?'amber':'green', msg:`Tuck Jump: ${score}/8 errores ${score>=4?'(alto riesgo)':''}`});
+      errors.forEach(e => flags.push({lvl:'amber', msg:e}));
+      return { kpis, flags };
+    }
+  },
+
+  // Single Hop — Noyes 1991. Distancia se mide manualmente, este analiza calidad técnica
+  hop_test_l: {
+    name:'Single Hop IZQ',
+    analyze(frames, view){
+      return TEMPLATES._hop_analyze(frames, view, 'L');
+    }
+  },
+  hop_test_r: {
+    name:'Single Hop DER',
+    analyze(frames, view){
+      return TEMPLATES._hop_analyze(frames, view, 'R');
+    }
+  },
+  _hop_analyze(frames, view, side){
+    const kpis = {}, flags = [];
+    const ksuf = side === 'L' ? 'knee_l' : 'knee_r';
+    const vsuf = side === 'L' ? 'valgus_l' : 'valgus_r';
+    const minK = Math.min(...frames.map(f=>f[ksuf]||180));
+    const maxV = Math.max(...frames.map(f=>Math.abs(f[vsuf]||0)));
+    const lean = Math.max(...frames.map(f=>Math.abs(f.trunk_lean||0)));
+    kpis['Profundidad rodilla'] = minK.toFixed(0)+'°';
+    kpis['Valgo máx aterrizaje'] = maxV.toFixed(3);
+    kpis['Inclin. tronco máx'] = lean.toFixed(0)+'°';
+    if (maxV > 0.05) flags.push({lvl:'red', msg:'Valgo en aterrizaje'});
+    if (lean > 25) flags.push({lvl:'amber', msg:'Tronco compensa lateralmente'});
+    flags.push({lvl:'green', msg:'Distancia: medirla manualmente y registrar LSI vs lado contralateral'});
+    return { kpis, flags };
   }
 };
 
@@ -691,6 +880,82 @@ const MA = window.MA = {
     cur.movimiento.push({ ...this._last, frames: this._frames.map(f => ({...f, _lm:undefined})) });
     if (typeof saveAtletas === 'function') saveAtletas();
     alert('Análisis guardado en historia del atleta.');
+  },
+
+  // ── snapshot frame → FMS slot ──────────────────────────────────────────
+  snapshot(){
+    const v = this._video || document.getElementById('ma-video');
+    if (!v || !v.videoWidth){ alert('Cargá un video primero.'); return; }
+    const dest = document.getElementById('ma-snap-dest').value;
+    const overlay = document.getElementById('ma-snap-overlay').checked;
+
+    // composite a tamaño video real
+    const tmp = document.createElement('canvas');
+    tmp.width = v.videoWidth; tmp.height = v.videoHeight;
+    const tx = tmp.getContext('2d');
+    tx.drawImage(v, 0, 0, tmp.width, tmp.height);
+
+    if (overlay && this._lastLm){
+      this._drawSkeletonRaw(tx, this._lastLm, tmp.width, tmp.height);
+    }
+    const dataUrl = tmp.toDataURL('image/jpeg', 0.92);
+    this._pasteToSlot(dest, dataUrl);
+    // scroll to FMS section
+    const slot = document.getElementById(dest);
+    if (slot) slot.scrollIntoView({behavior:'smooth', block:'center'});
+    this._setStatus(`✓ Frame capturado a ${dest}`);
+  },
+
+  _pasteToSlot(slotId, dataUrl){
+    const slot = document.getElementById(slotId);
+    if (!slot){ console.warn('[MA] slot not found', slotId); return; }
+    let img = slot.querySelector('img');
+    if (!img){ img = document.createElement('img'); slot.appendChild(img); }
+    img.src = dataUrl;
+    img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit';
+    slot.style.border = '1px solid var(--neon)';
+    const txt = slot.querySelector('div'); if (txt) txt.style.display = 'none';
+  },
+
+  _drawSkeletonRaw(ctx, lm, w, h){
+    const PAIRS = [
+      [11,13],[13,15],[12,14],[14,16],[11,12],[11,23],[12,24],[23,24],
+      [23,25],[25,27],[24,26],[26,28],[27,31],[28,32],[27,29],[28,30]
+    ];
+    ctx.lineCap='round';
+    ctx.shadowColor = 'rgba(57,255,122,.7)'; ctx.shadowBlur = 6;
+    ctx.lineWidth = Math.max(2, w/600); ctx.strokeStyle = '#39FF7A';
+    PAIRS.forEach(([a,b]) => {
+      const A=lm[a],B=lm[b]; if(!A||!B) return;
+      ctx.beginPath();
+      ctx.moveTo(A.x*w, A.y*h); ctx.lineTo(B.x*w, B.y*h);
+      ctx.stroke();
+    });
+    ctx.shadowBlur = 0;
+    const SKIP = new Set([1,2,3,4,5,6,7,8,9,10]);
+    lm.forEach((p,i)=>{ if(!p||SKIP.has(i)) return;
+      ctx.beginPath(); ctx.arc(p.x*w, p.y*h, Math.max(3, w/400), 0, Math.PI*2);
+      ctx.fillStyle = '#fff'; ctx.fill();
+    });
+    // angle arcs
+    [[L.L_HIP,L.L_KNEE,L.L_ANKLE,'#39FF7A'],[L.R_HIP,L.R_KNEE,L.R_ANKLE,'#39FF7A']].forEach(([a,b,c,col])=>{
+      const A=lm[a],B=lm[b],C=lm[c]; if(!A||!B||!C) return;
+      const ang = angle2D(A,B,C); if (ang==null) return;
+      const a1=Math.atan2((A.y-B.y)*h,(A.x-B.x)*w), a2=Math.atan2((C.y-B.y)*h,(C.x-B.x)*w);
+      const r=Math.hypot((A.x-B.x)*w,(A.y-B.y)*h)*0.55;
+      let d=a2-a1; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI;
+      ctx.beginPath(); ctx.moveTo(B.x*w,B.y*h);
+      ctx.arc(B.x*w,B.y*h,r,a1,a1+d,d<0); ctx.closePath();
+      ctx.fillStyle=col+'33'; ctx.fill();
+      ctx.strokeStyle=col; ctx.lineWidth=2; ctx.stroke();
+      const mid=a1+d/2;
+      const lx=B.x*w+Math.cos(mid)*r*0.6, ly=B.y*h+Math.sin(mid)*r*0.6;
+      ctx.font = `bold ${Math.max(14,w/50)}px monospace`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillStyle='#000'; ctx.fillText(`${Math.round(ang)}°`, lx+1, ly+1);
+      ctx.fillStyle='#fff'; ctx.fillText(`${Math.round(ang)}°`, lx, ly);
+    });
+    ctx.textAlign='start'; ctx.textBaseline='alphabetic';
   },
 
   exportJSON(){
