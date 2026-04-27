@@ -69,6 +69,8 @@ const EX = window.EX = {
     v.addEventListener('loadedmetadata', () => this._fitCanvas());
     v.addEventListener('seeked', () => this._render());
     v.addEventListener('timeupdate', () => this._updateInfo());
+    v.addEventListener('play',  () => this._syncPlayBtn());
+    v.addEventListener('pause', () => this._syncPlayBtn());
     window.addEventListener('resize', () => { this._fitCanvas(); this._render(); });
 
     // wheel scrub
@@ -255,14 +257,16 @@ const EX = window.EX = {
     const col = a.color || '#5dd4ff';
     const dim = ghost ? .55 : 1;
     ctx.globalAlpha = dim;
-    ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2;
-    ctx.font = 'bold 13px monospace'; ctx.textBaseline = 'middle';
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
 
     if (a.type === 'line' || a.type === 'calibrate'){
       if (pts.length < 2) { this._drawDot(pts[0], col); ctx.globalAlpha=1; return; }
+      // halo negro detrás para contraste
+      ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = 4;
+      ctx.strokeStyle = col; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y); ctx.lineTo(pts[1].x, pts[1].y); ctx.stroke();
-      this._drawDot(pts[0], col); this._drawDot(pts[1], col);
-      // label distancia
+      ctx.shadowBlur = 0;
+      this._drawDot(pts[0], col, 6); this._drawDot(pts[1], col, 6);
       const o = this._off;
       const dxv = (a.points[1].x - a.points[0].x) * o.vw;
       const dyv = (a.points[1].y - a.points[0].y) * o.vh;
@@ -270,27 +274,36 @@ const EX = window.EX = {
       const lbl = this._calibration
         ? `${(distPx/this._calibration.pxPerCm).toFixed(1)} cm`
         : `${distPx.toFixed(0)} px`;
-      this._labelAt((pts[0].x+pts[1].x)/2, (pts[0].y+pts[1].y)/2 - 14, lbl, col);
+      this._labelAt((pts[0].x+pts[1].x)/2, (pts[0].y+pts[1].y)/2 - 18, lbl, col, 16);
     } else if (a.type === 'angle'){
-      if (pts.length === 1){ this._drawDot(pts[0], col); ctx.globalAlpha=1; return; }
+      if (pts.length === 1){ this._drawDot(pts[0], col, 6); ctx.globalAlpha=1; return; }
+      // dos segmentos con halo
+      ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = 4;
+      ctx.strokeStyle = col; ctx.lineWidth = 3.2;
       ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y); ctx.lineTo(pts[1].x,pts[1].y);
       if (pts[2]) ctx.lineTo(pts[2].x,pts[2].y);
       ctx.stroke();
-      pts.forEach(p => this._drawDot(p, col));
+      ctx.shadowBlur = 0;
+      pts.forEach(p => this._drawDot(p, col, 6));
       if (pts.length === 3){
         const ang = this._angle3(pts[0],pts[1],pts[2]);
-        const r = Math.min(40, Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y)*0.5);
+        const segMin = Math.min(
+          Math.hypot(pts[0].x-pts[1].x, pts[0].y-pts[1].y),
+          Math.hypot(pts[2].x-pts[1].x, pts[2].y-pts[1].y)
+        );
+        const r = Math.max(28, Math.min(70, segMin * 0.45));
         const a1 = Math.atan2(pts[0].y-pts[1].y, pts[0].x-pts[1].x);
         const a2 = Math.atan2(pts[2].y-pts[1].y, pts[2].x-pts[1].x);
         let d = a2-a1; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI;
+        // pie slice
         ctx.beginPath(); ctx.moveTo(pts[1].x,pts[1].y);
         ctx.arc(pts[1].x,pts[1].y, r, a1, a1+d, d<0); ctx.closePath();
-        ctx.fillStyle = col + '33'; ctx.fill();
-        ctx.strokeStyle = col; ctx.stroke();
+        ctx.fillStyle = col + '44'; ctx.fill();
+        ctx.strokeStyle = col; ctx.lineWidth = 1.8; ctx.stroke();
         const mid = a1 + d/2;
-        const lx = pts[1].x + Math.cos(mid)*r*0.6;
-        const ly = pts[1].y + Math.sin(mid)*r*0.6;
-        this._labelAt(lx, ly, `${ang.toFixed(0)}°`, col);
+        const lx = pts[1].x + Math.cos(mid)*r*0.62;
+        const ly = pts[1].y + Math.sin(mid)*r*0.62;
+        this._labelAt(lx, ly, `${ang.toFixed(0)}°`, col, 18);
       }
     } else if (a.type === 'rect'){
       if (pts.length < 2){ this._drawDot(pts[0], col); ctx.globalAlpha=1; return; }
@@ -313,11 +326,16 @@ const EX = window.EX = {
     ctx.fillStyle = col; ctx.beginPath(); ctx.arc(p.x,p.y,r,0,Math.PI*2); ctx.fill();
     ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.stroke();
   },
-  _labelAt(x,y,txt,col){
+  _labelAt(x,y,txt,col,size){
     const ctx = this._ctx;
+    const sz = size || 14;
+    ctx.font = `bold ${sz}px ui-monospace,Menlo,monospace`;
+    ctx.textBaseline = 'middle';
     const w = ctx.measureText(txt).width;
-    ctx.fillStyle = 'rgba(0,0,0,.78)';
-    this._roundRect(x - w/2 - 5, y - 9, w + 10, 18, 4); ctx.fill();
+    const h = sz + 8;
+    ctx.fillStyle = 'rgba(0,0,0,.85)';
+    this._roundRect(x - w/2 - 7, y - h/2, w + 14, h, 5); ctx.fill();
+    ctx.strokeStyle = col; ctx.lineWidth = 1.2; ctx.stroke();
     ctx.fillStyle = col; ctx.textAlign='center';
     ctx.fillText(txt, x, y);
     ctx.textAlign='start';
@@ -337,7 +355,18 @@ const EX = window.EX = {
   },
 
   // ── controles ──────────────────────────────────────────────────────────
-  togglePlay(){ const v=this._video; if(v.paused) v.play(); else v.pause(); },
+  togglePlay(){
+    const v=this._video; if(v.paused) v.play(); else v.pause();
+    setTimeout(()=>{ const ic=document.getElementById('ex-play-ic'); const btn=document.getElementById('ex-play-btn');
+      if(ic) ic.textContent = v.paused ? '▶️' : '⏸️';
+      if(btn) btn.lastChild.textContent = v.paused ? ' Play' : ' Pause';
+    }, 50);
+  },
+  _syncPlayBtn(){
+    const v=this._video; const ic=document.getElementById('ex-play-ic'); const btn=document.getElementById('ex-play-btn');
+    if(ic) ic.textContent = v.paused ? '▶️' : '⏸️';
+    if(btn && btn.lastChild) btn.lastChild.textContent = v.paused ? ' Play' : ' Pause';
+  },
   step(n){ const v=this._video; v.pause(); v.currentTime = Math.max(0, Math.min(v.duration||1e6, v.currentTime + n/30)); },
   setSpeed(s){ this._video.playbackRate = +s; },
   toggleMirror(){ this._mirror = !this._mirror; this._render(); },

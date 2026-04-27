@@ -1695,40 +1695,41 @@
         </div>
 
         <!-- toolbar herramientas -->
-        <div id="ex-toolbar" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;background:var(--bg1);padding:6px;border-radius:5px;border:1px solid var(--border)">
-          <button class="ex-tool" data-tool="select"  onclick="EX.setTool(this)" title="Seleccionar/mover">🖱</button>
-          <button class="ex-tool" data-tool="line"    onclick="EX.setTool(this)" title="Línea/distancia (2 clicks)">📏 Línea</button>
-          <button class="ex-tool" data-tool="angle"   onclick="EX.setTool(this)" title="Ángulo (3 clicks)">📐 Ángulo</button>
-          <button class="ex-tool" data-tool="marker"  onclick="EX.setTool(this)" title="Marcador con texto">📌 Marker</button>
-          <button class="ex-tool" data-tool="rect"    onclick="EX.setTool(this)" title="Rectángulo">▭ Rect</button>
-          <button class="ex-tool" data-tool="circle"  onclick="EX.setTool(this)" title="Círculo">◯ Círc</button>
-          <button class="ex-tool" data-tool="calibrate" onclick="EX.setTool(this)" title="Calibrar pixels→cm">🎯 Calibrar</button>
-          <span style="border-left:1px solid var(--border);margin:0 3px"></span>
-          <button class="ex-tool" onclick="EX.toggleMirror()"  title="Espejo horizontal">🪞</button>
-          <button class="ex-tool" onclick="EX.toggleGrid()"    title="Grid postural">#</button>
-          <select id="ex-speed" onchange="EX.setSpeed(this.value)" style="padding:4px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;font-size:11px">
+        <div id="ex-toolbar" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;background:var(--bg1);padding:8px;border-radius:6px;border:1px solid var(--border);align-items:center">
+          <button class="ex-tool"  data-tool="select"   onclick="EX.setTool(this)" title="Seleccionar"><span class="ti">🖱️</span> Sel</button>
+          <button class="ex-tool"  data-tool="line"     onclick="EX.setTool(this)" title="Línea / distancia (2 clicks)"><span class="ti">📏</span> Línea</button>
+          <button class="ex-tool"  data-tool="angle"    onclick="EX.setTool(this)" title="Ángulo (3 clicks)"><span class="ti">📐</span> Ángulo</button>
+          <button class="ex-tool"  data-tool="marker"   onclick="EX.setTool(this)" title="Marcador con texto"><span class="ti">📍</span> Punto</button>
+          <button class="ex-tool"  data-tool="rect"     onclick="EX.setTool(this)" title="Rectángulo"><span class="ti">⬜</span> Rect</button>
+          <button class="ex-tool"  data-tool="circle"   onclick="EX.setTool(this)" title="Círculo"><span class="ti">⭕</span> Círc</button>
+          <button class="ex-tool"  data-tool="calibrate" onclick="EX.setTool(this)" title="Calibrar px→cm con regla real"><span class="ti">📐</span> Calibrar</button>
+          <span style="width:1px;height:24px;background:var(--border);margin:0 4px"></span>
+          <button class="ex-tool" id="ex-mirror-btn" onclick="EX.toggleMirror()" title="Espejo horizontal"><span class="ti">🔁</span> Espejo</button>
+          <button class="ex-tool" id="ex-grid-btn"   onclick="EX.toggleGrid()" title="Grid postural overlay"><span class="ti">⊞</span> Grid</button>
+          <span class="ti" style="font-size:14px;margin-left:4px">⚡</span>
+          <select id="ex-speed" onchange="EX.setSpeed(this.value)" style="padding:5px 8px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;font-size:12px;font-weight:700">
             <option value="0.1">0.1×</option><option value="0.25">0.25×</option><option value="0.5">0.5×</option>
             <option value="1" selected>1×</option><option value="1.5">1.5×</option><option value="2">2×</option>
           </select>
           <span style="flex:1"></span>
-          <button class="ex-tool" onclick="EX.undo()" title="Deshacer última">↶</button>
-          <button class="ex-tool" onclick="EX.clearFrame()" title="Borrar anotaciones de este frame">🗑 Frame</button>
-          <button class="ex-tool" onclick="EX.clearAll()" title="Borrar TODAS">🗑 Todo</button>
-          <button class="btn btn-neon btn-sm" onclick="EX.snapshot()" style="font-size:11px">📸 Capturar</button>
+          <button class="ex-tool" onclick="EX.undo()" title="Deshacer última anotación"><span class="ti">↩️</span> Undo</button>
+          <button class="ex-tool" onclick="EX.clearFrame()" title="Borrar anotaciones de este frame solamente" style="border-color:var(--amber);color:var(--amber)"><span class="ti">🧹</span> Frame</button>
+          <button class="ex-tool" onclick="EX.clearAll()"   title="Borrar TODAS las anotaciones del video" style="border-color:var(--red);color:var(--red)"><span class="ti">🗑️</span> Todo</button>
+          <button class="btn btn-neon btn-sm" onclick="EX.snapshot()" style="font-size:12px;padding:6px 12px"><span class="ti">📸</span> Capturar</button>
         </div>
 
         <div style="position:relative;background:#000;border:1px solid var(--border);border-radius:6px;overflow:hidden">
           <video id="ex-video" controls playsinline style="width:100%;display:block;max-height:480px;object-fit:contain"></video>
           <canvas id="ex-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;cursor:crosshair"></canvas>
         </div>
-        <div style="display:flex;gap:6px;justify-content:center;align-items:center;padding:6px;background:var(--bg1);border-top:1px solid var(--border);font-size:11px">
-          <button class="btn btn-ghost btn-sm" onclick="EX.step(-5)">⏪ -5</button>
-          <button class="btn btn-ghost btn-sm" onclick="EX.step(-1)">◀ -1</button>
-          <button class="btn btn-neon btn-sm" onclick="EX.togglePlay()">⏯</button>
-          <button class="btn btn-ghost btn-sm" onclick="EX.step(1)">▶ +1</button>
-          <button class="btn btn-ghost btn-sm" onclick="EX.step(5)">⏩ +5</button>
+        <div style="display:flex;gap:6px;justify-content:center;align-items:center;padding:8px;background:var(--bg1);border-top:1px solid var(--border);font-size:11px">
+          <button class="ex-tool" onclick="EX.step(-5)" title="Atrás 5 frames"><span class="ti">⏮️</span> -5</button>
+          <button class="ex-tool" onclick="EX.step(-1)" title="Atrás 1 frame"><span class="ti">◀️</span> -1</button>
+          <button class="ex-tool" id="ex-play-btn" onclick="EX.togglePlay()" title="Play/Pause" style="background:var(--neon);color:#000;border-color:var(--neon);font-weight:700;padding:7px 16px"><span class="ti" id="ex-play-ic">▶️</span> Play</button>
+          <button class="ex-tool" onclick="EX.step(1)" title="Adelante 1 frame">+1 <span class="ti">▶️</span></button>
+          <button class="ex-tool" onclick="EX.step(5)" title="Adelante 5 frames">+5 <span class="ti">⏭️</span></button>
           <span style="flex:1"></span>
-          <span id="ex-frame-info" style="font-family:var(--mono);font-size:10px;color:var(--text3)">—</span>
+          <span id="ex-frame-info" style="font-family:var(--mono);font-size:11px;color:var(--text2);background:var(--bg2);padding:4px 8px;border-radius:4px;border:1px solid var(--border)">—</span>
         </div>
         <div id="ex-anno-list" style="margin-top:8px"></div>
       </div>
@@ -2512,9 +2513,11 @@
     details.fms-accordion > summary:hover { border-color:var(--neon) }
     details.fms-accordion { margin-bottom:10px }
     .snap-data-box { font-size:10px; font-family:var(--mono); color:var(--text2); background:rgba(0,0,0,.3); border-left:2px solid var(--neon); padding:5px 7px; margin-top:5px; border-radius:3px; line-height:1.5 }
-    .ex-tool { padding:5px 9px; background:var(--bg2); color:var(--text); border:1px solid var(--border); border-radius:4px; cursor:pointer; font-size:11px; font-family:var(--mono); transition:all .15s }
-    .ex-tool:hover { border-color:#5dd4ff; color:#5dd4ff }
+    .ex-tool { padding:7px 11px; background:var(--bg2); color:var(--text); border:1px solid var(--border); border-radius:5px; cursor:pointer; font-size:12px; font-family:var(--mono); font-weight:600; transition:all .15s; display:inline-flex; align-items:center; gap:4px; line-height:1 }
+    .ex-tool .ti { font-size:14px; line-height:1 }
+    .ex-tool:hover { border-color:#5dd4ff; color:#5dd4ff; background:rgba(93,212,255,.06) }
     .ex-tool.active { background:#5dd4ff; color:#000; border-color:#5dd4ff }
+    .ex-tool.active .ti { filter:none }
   </style>
   <!-- Three.js para viewer 3D anatomía -->
   <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
@@ -2524,7 +2527,7 @@
   <script src="js/ThreeBodyChart.js?v=7"></script>
   <script src="js/LesionSheet.js?v=2"></script>
   <script type="module" src="js/MoveAnalysis.js?v=7"></script>
-  <script src="js/ExpertAnalysis.js?v=1"></script>
+  <script src="js/ExpertAnalysis.js?v=2"></script>
   <script src="js/anatomy-zones.js?v=2"></script>
   <script src="js/AdvancedBodyChart.js?v=4"></script>
   <script src="js/kine.js?v=7"></script>
