@@ -29,6 +29,9 @@ const INF = window.INF = {
     'vmp-press':            { label:'VMP Press Banca', icon:'🏋️' },
     'vmp-pm':               { label:'VMP Peso Muerto', icon:'🏋️' },
     'saltabilidad':         { label:'Saltabilidad (CMJ + Hop + Broad)', icon:'🦘' },
+    'composicion-corporal': { label:'Composición Corporal (NEW)', icon:'⚖️' },
+    'wellness':             { label:'Wellness · Hooper (NEW)', icon:'🌿' },
+    'analisis-ai':          { label:'Análisis Movimiento AI (NEW)', icon:'🤖' },
     'cierre':               { label:'Cierre + contacto', icon:'✅', always:true },
   },
 
