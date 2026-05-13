@@ -19,12 +19,16 @@ function openInformeBuilder(){
 
   const cat = INF.CATALOG;
   const items = Object.entries(cat).map(([id, info]) => {
-    const checked = info.always ? 'checked disabled' : '';
-    return `<label style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--bg1);border:1px solid var(--border);border-radius:5px;cursor:pointer;transition:all .15s;margin-bottom:5px" onmouseover="this.style.borderColor='var(--neon)'" onmouseout="this.style.borderColor='var(--border)'">
-      <input type="checkbox" class="inf-sec-cb" data-section="${id}" ${checked} ${!info.always?'checked':''} style="width:16px;height:16px;accent-color:var(--neon)">
+    const exists = !!INF._sections[id];
+    const checked = info.always && exists ? 'checked disabled' : '';
+    const disabled = !exists ? 'disabled' : '';
+    const opacity = exists ? '1' : '0.4';
+    return `<label style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--bg1);border:1px solid var(--border);border-radius:5px;cursor:${exists?'pointer':'not-allowed'};transition:all .15s;margin-bottom:5px;opacity:${opacity}" ${exists?"onmouseover=\"this.style.borderColor='var(--neon)'\" onmouseout=\"this.style.borderColor='var(--border)'\"":""}>
+      <input type="checkbox" class="inf-sec-cb" data-section="${id}" ${checked} ${disabled} ${exists && !info.always?'checked':''} style="width:16px;height:16px;accent-color:var(--neon)">
       <span style="font-size:16px">${info.icon}</span>
       <span style="flex:1;font-size:12px;color:var(--text)">${info.label}</span>
       ${info.always?'<span style="font-size:9px;color:var(--text3);text-transform:uppercase">obligatoria</span>':''}
+      ${!exists?'<span style="font-size:9px;color:var(--amber);text-transform:uppercase">próximamente</span>':''}
     </label>`;
   }).join('');
 
@@ -36,7 +40,8 @@ function openInformeBuilder(){
         <button onclick="document.getElementById('inf-builder-modal').remove()" style="background:transparent;border:1px solid var(--border);color:var(--text2);padding:5px 10px;border-radius:5px;cursor:pointer;font-size:11px">✕</button>
       </div>
       <div style="padding:14px 18px">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:10px">Marcá las secciones que querés incluir. El informe se abre en una ventana nueva → "🖨 Imprimir / Guardar PDF" para exportar.</div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Marcá las secciones que querés incluir. El informe se abre en una ventana nueva → "🖨 Imprimir / Guardar PDF" para exportar.</div>
+        <div style="font-size:10px;color:var(--amber);background:rgba(255,176,32,.08);border-left:2px solid var(--amber);padding:6px 10px;margin-bottom:10px;border-radius:3px">⚠️ Al imprimir: <b>activar "Gráficos de fondo"</b> en opciones avanzadas del diálogo print, sino los fondos PNG no aparecen. Layout: A4 horizontal · margen 0.</div>
         <div style="display:flex;gap:6px;margin-bottom:10px">
           <button class="btn btn-ghost btn-sm" onclick="document.querySelectorAll('.inf-sec-cb:not(:disabled)').forEach(c=>c.checked=true)">☑ Todas</button>
           <button class="btn btn-ghost btn-sm" onclick="document.querySelectorAll('.inf-sec-cb:not(:disabled)').forEach(c=>c.checked=false)">☐ Ninguna</button>
