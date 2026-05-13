@@ -2,9 +2,13 @@
 (function(){
   if (typeof INF === 'undefined') return;
   INF.register('movilidad-tobillo', (a, ev) => {
-    const m = a.movilidad || ev.movilidad || {};
-    const lD = m.lungeD ?? m.tobLungeD ?? null;
-    const lI = m.lungeI ?? m.tobLungeI ?? null;
+    // data path: cur.lungeD/lungeI directo, o última eval movilidad
+    let lD = a.lungeD ?? null;
+    let lI = a.lungeI ?? null;
+    if (lD == null && a.evals){
+      const lastMov = Object.values(a.evals).filter(e => e?.lungeD != null).pop();
+      if (lastMov){ lD = lastMov.lungeD; lI = lastMov.lungeI; }
+    }
     const pct = INF.pctDiff(lD, lI);
 
     const semaforo = v => INF.semaforoFromVal(v, 35, 40);
