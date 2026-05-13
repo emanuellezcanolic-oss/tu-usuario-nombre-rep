@@ -176,7 +176,8 @@ const WS = window.WS = {
     v.src = URL.createObjectURL(file);
     v.load();
     if (side === 'A'){
-      // sincronizar src a videos legacy ocultos para que MA/EX no rompan
+      const ph = document.getElementById('ws-placeholder-a'); if (ph) ph.style.display = 'none';
+      const st = document.getElementById('ws-stage-a'); if (st) st.style.display = '';
       ['ma-video','ex-video','vc-video-a'].forEach(id => {
         const el = document.getElementById(id); if (el) { el.src = v.src; }
       });
