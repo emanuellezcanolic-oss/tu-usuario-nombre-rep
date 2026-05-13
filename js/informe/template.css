@@ -1,4 +1,4 @@
-/* js/informe/template.css — diseño "The Move Club" para informe HTML */
+/* js/informe/template.css — Move Club exact replica (PNG backgrounds + text overlay) */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Bebas+Neue&display=swap');
 
@@ -14,154 +14,83 @@ body {
 .rpt-toolbar {
   position: sticky; top: 0; z-index: 100;
   background: #000; border-bottom: 2px solid #39FF7A;
-  padding: 14px 20px; display: flex; gap: 10px; align-items: center;
-  box-shadow: 0 4px 12px rgba(57,255,122,.15);
+  padding: 12px 20px; display: flex; gap: 10px; align-items: center;
 }
-.rpt-toolbar h1 { font-size: 16px; font-weight: 700; color: #39FF7A; flex: 1; letter-spacing: .05em; }
+.rpt-toolbar h1 { font-size: 14px; font-weight: 700; color: #39FF7A; flex: 1; letter-spacing: .05em; }
 .rpt-toolbar button {
-  background: #39FF7A; color: #000; border: none; padding: 10px 20px;
-  border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 13px;
+  background: #39FF7A; color: #000; border: none; padding: 9px 18px;
+  border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 12px;
   font-family: inherit; letter-spacing: .04em;
 }
 .rpt-toolbar button.ghost { background: transparent; color: #fff; border: 1px solid #444; }
 .rpt-toolbar button:hover { filter: brightness(1.1); }
 
+/* PÁGINA — 16:9 widescreen como Canva (2400×1350) */
 .rpt-page {
-  width: 210mm; min-height: 297mm; margin: 24px auto;
-  background: #0a0a0a; color: #fff; position: relative;
-  padding: 20mm 18mm 18mm; overflow: hidden;
+  width: 1200px;
+  height: 675px; /* 16:9 */
+  margin: 20px auto;
+  position: relative;
+  overflow: hidden;
+  background: #0a0a0a center/cover no-repeat;
   box-shadow: 0 8px 40px rgba(0,0,0,.6);
   page-break-after: always;
 }
-.rpt-page::before {
-  content: ''; position: absolute; top: 0; left: 0; width: 6px; height: 100%;
-  background: linear-gradient(180deg, #39FF7A, #1a9d4d);
-}
 
-.rpt-h1 {
+/* Overlay base: posicionado en % para escalar con cualquier zoom */
+.rpt-ov {
+  position: absolute;
+  color: #fff;
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 48px; font-weight: 900; letter-spacing: .04em;
-  color: #fff; line-height: 1; margin-bottom: 4px;
-}
-.rpt-h1 .accent { color: #39FF7A; }
-.rpt-sub {
-  font-size: 11px; color: #888; text-transform: uppercase;
-  letter-spacing: .15em; margin-bottom: 24px;
+  font-weight: 900;
+  letter-spacing: .03em;
+  text-shadow: 0 2px 4px rgba(0,0,0,.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.rpt-section-title {
-  display: flex; align-items: center; gap: 14px; margin-bottom: 18px;
-}
-.rpt-section-title .num {
-  background: #39FF7A; color: #000; width: 38px; height: 38px;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 900; font-size: 18px; border-radius: 6px;
-}
-.rpt-section-title h2 {
+.rpt-ov.num {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 32px; font-weight: 900; letter-spacing: .04em;
+  font-weight: 700;
+  color: #fff;
 }
 
-.rpt-card {
-  background: #121212; border: 1px solid #1f1f1f; border-radius: 8px;
-  padding: 16px 18px; margin-bottom: 14px;
+.rpt-ov.val-good { color: #39FF7A; }
+.rpt-ov.val-warn { color: #ffb020; }
+.rpt-ov.val-bad  { color: #ff4060; }
+
+.rpt-ov.text {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
 }
 
-.rpt-kpi-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 10px; margin: 14px 0;
+/* placeholder cuando no hay foto */
+.rpt-ov.photo-slot {
+  background: rgba(0,0,0,.4);
+  border: 2px dashed rgba(57,255,122,.3);
 }
-.rpt-kpi {
-  background: #121212; border-left: 3px solid #39FF7A;
-  padding: 12px 14px; border-radius: 4px;
-}
-.rpt-kpi .label { font-size: 9px; color: #888; text-transform: uppercase; letter-spacing: .12em; margin-bottom: 4px; }
-.rpt-kpi .value { font-size: 22px; font-weight: 900; color: #39FF7A; font-family: 'Bebas Neue', sans-serif; }
-.rpt-kpi .unit  { font-size: 12px; color: #aaa; font-weight: 400; margin-left: 4px; }
-
-.rpt-table {
-  width: 100%; border-collapse: collapse; margin: 12px 0;
-  font-size: 12px;
-}
-.rpt-table th {
-  background: #1a1a1a; color: #39FF7A; padding: 8px 12px; text-align: left;
-  font-size: 10px; text-transform: uppercase; letter-spacing: .08em; font-weight: 700;
-  border-bottom: 1px solid #2a2a2a;
-}
-.rpt-table td {
-  padding: 8px 12px; border-bottom: 1px solid #1a1a1a;
-}
-.rpt-table tr:nth-child(even) td { background: #0f0f0f; }
-.rpt-val-good  { color: #39FF7A; font-weight: 700; }
-.rpt-val-warn  { color: #ffb020; font-weight: 700; }
-.rpt-val-bad   { color: #ff4060; font-weight: 700; }
-
-/* semáforo: 3 dots */
-.rpt-semaforo { display: inline-flex; gap: 6px; align-items: center; margin-left: 8px; }
-.rpt-semaforo span {
-  width: 14px; height: 14px; border-radius: 50%;
-  background: #1a1a1a; border: 1px solid #2a2a2a;
-}
-.rpt-semaforo span.on.green  { background: #39FF7A; box-shadow: 0 0 8px #39FF7A; }
-.rpt-semaforo span.on.amber  { background: #ffb020; box-shadow: 0 0 8px #ffb020; }
-.rpt-semaforo span.on.red    { background: #ff4060; box-shadow: 0 0 8px #ff4060; }
-
-.rpt-analysis {
-  background: #0f0f0f; border-left: 2px solid #39FF7A;
-  padding: 12px 16px; margin-top: 14px;
-  font-size: 11.5px; color: #ccc; line-height: 1.6;
-}
-.rpt-analysis b { color: #fff; }
-
-.rpt-photo-grid {
-  display: grid; grid-template-columns: repeat(2, 1fr);
-  gap: 10px; margin: 14px 0;
-}
-.rpt-photo {
-  background: #000; border: 1px solid #1f1f1f; border-radius: 6px;
-  aspect-ratio: 4/5; overflow: hidden; position: relative;
-}
-.rpt-photo img { width: 100%; height: 100%; object-fit: cover; }
-.rpt-photo .caption {
-  position: absolute; bottom: 0; left: 0; right: 0;
-  background: linear-gradient(0deg, rgba(0,0,0,.9), transparent);
-  padding: 16px 12px 8px; color: #39FF7A;
-  font-size: 10px; text-transform: uppercase; letter-spacing: .1em; font-weight: 700;
+.rpt-ov.photo-slot img {
+  width: 100%; height: 100%; object-fit: cover;
 }
 
-.rpt-footer {
-  position: absolute; bottom: 12mm; left: 18mm; right: 18mm;
-  display: flex; justify-content: space-between; align-items: center;
-  border-top: 1px solid #1f1f1f; padding-top: 10px;
-  font-size: 9px; color: #555; letter-spacing: .08em; text-transform: uppercase;
-}
-.rpt-footer .brand { color: #39FF7A; font-weight: 700; }
-
-.rpt-cover {
-  display: flex; flex-direction: column; justify-content: center; align-items: center;
-  text-align: center; min-height: 257mm;
-}
-.rpt-cover .big {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 96px; color: #39FF7A; letter-spacing: .08em; line-height: .9;
-}
-.rpt-cover .athlete {
-  font-size: 28px; font-weight: 700; margin: 16px 0 4px; color: #fff;
-}
-.rpt-cover .meta { font-size: 13px; color: #888; letter-spacing: .12em; text-transform: uppercase; }
-.rpt-cover .photo-circle {
-  width: 180px; height: 180px; border-radius: 50%; overflow: hidden;
-  border: 3px solid #39FF7A; margin: 30px auto; background: #1a1a1a;
-}
-.rpt-cover .photo-circle img { width: 100%; height: 100%; object-fit: cover; }
-.rpt-cover .eval-tags { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
-.rpt-cover .eval-tag {
-  background: #121212; border: 1px solid #39FF7A; color: #39FF7A;
-  padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: .06em;
+/* responsive: scale automático para que la página quepa en viewport */
+@media (max-width: 1240px) {
+  .rpt-page { width: 95vw; height: calc(95vw * 9 / 16); }
+  .rpt-ov { font-size: calc(2vw * var(--scale, 1)); }
 }
 
 @media print {
   body { background: #fff; }
   .rpt-toolbar { display: none; }
-  .rpt-page { margin: 0; box-shadow: none; page-break-after: always; }
+  .rpt-page {
+    margin: 0; box-shadow: none;
+    page-break-after: always;
+    width: 100%; height: 100vh;
+    page-break-inside: avoid;
+  }
+  @page {
+    size: landscape;
+    margin: 0;
+  }
 }
