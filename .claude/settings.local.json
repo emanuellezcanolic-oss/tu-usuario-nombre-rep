@@ -37,7 +37,10 @@
       "Bash(node -c \"C:/Users/Usuario/Documents/Claude/movemetrics/js/ExpertAnalysis.js\")",
       "Bash(node -c \"C:/Users/Usuario/Documents/Claude/movemetrics/js/VideoCompare.js\")",
       "Bash(node -c \"C:/Users/Usuario/Documents/Claude/movemetrics/js/Suite.js\")",
-      "Bash(node -c \"C:/Users/Usuario/Documents/Claude/movemetrics/js/Workspace.js\")"
+      "Bash(node -c \"C:/Users/Usuario/Documents/Claude/movemetrics/js/Workspace.js\")",
+      "Bash(git -C \"C:\\\\Users\\\\Usuario\\\\Documents\\\\Claude\\\\movemetrics\" remote -v)",
+      "WebFetch(domain:docs.google.com)",
+      "mcp__Claude_in_Chrome__list_connected_browsers"
     ]
   }
 }
