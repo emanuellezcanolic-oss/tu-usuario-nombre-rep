@@ -5,8 +5,11 @@
 
 function openInformeBuilder(){
   if (typeof INF === 'undefined'){ alert('Builder no cargado'); return; }
-  const atleta = window.cur;
-  if (!atleta){ alert('Seleccioná un atleta primero'); return; }
+  const atleta = (typeof cur !== 'undefined') ? cur : null;
+  if (!atleta){
+    alert('Seleccioná un atleta primero.\nIr a "Atletas" → click sobre un atleta → después volver a Historial.');
+    return;
+  }
 
   let modal = document.getElementById('inf-builder-modal');
   if (modal) modal.remove();
@@ -52,7 +55,8 @@ function openInformeBuilder(){
 function generarInformeHTML(){
   const ids = Array.from(document.querySelectorAll('.inf-sec-cb:checked')).map(c => c.dataset.section);
   if (!ids.length){ alert('Marcá al menos una sección'); return; }
-  INF.generate(ids, window.cur);
+  const atleta = (typeof cur !== 'undefined') ? cur : null;
+  INF.generate(ids, atleta);
   document.getElementById('inf-builder-modal')?.remove();
 }
 
