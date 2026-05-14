@@ -16,7 +16,8 @@ const INF = window.INF = {
   CATALOG: {
     'portada':              { label:'Portada', icon:'🎯', always:true },
     'intro':                { label:'Evaluaciones realizadas (intro)', icon:'📋' },
-    'calidad-movimiento':   { label:'Calidad de Movimiento (OHS + SLS)', icon:'🎬' },
+    'calidad-movimiento-ohs': { label:'Calidad Movimiento · Overhead Squat', icon:'🏋️' },
+    'calidad-movimiento-sls': { label:'Calidad Movimiento · Single-Leg Squat', icon:'🦵' },
     'movilidad-tobillo':    { label:'Movilidad Tobillo (Lunge)', icon:'🦶' },
     'movilidad-cadera':     { label:'Movilidad Cadera (TROM)', icon:'🦵' },
     'movilidad-hombro':     { label:'Movilidad Hombro (RI/RE/TROM)', icon:'💪' },
