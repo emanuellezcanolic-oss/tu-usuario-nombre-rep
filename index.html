@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -20,8 +20,13 @@
 <!-- ── SIDEBAR ── -->
 <aside class="sidebar">
   <div class="sidebar-logo">
-    <h1><span class="accent">∧</span> MOVEMETRICS</h1>
-    <p>Plataforma deportivo-clínica</p>
+    <div class="sidebar-logo-lockup">
+      <img src="assets/img/isotipo-camel.png" class="sidebar-logo-isotipo" alt="The Move Club">
+      <div class="sidebar-logo-text">
+        <h1>MOVEMETRICS</h1>
+        <p>Plataforma deportivo-clínica</p>
+      </div>
+    </div>
     <div class="version-badge">v12 · INVESTOR EDITION</div>
   </div>
 
@@ -48,10 +53,10 @@
   </nav>
 
   <div class="sidebar-footer">
-    <div id="sb-atleta-info" style="color:var(--neon);margin-bottom:4px">Sin atleta activo</div>
-    <div>∧ MoveMetrics <span>v12.0</span></div>
+    <div id="sb-atleta-info" style="color:var(--verde);margin-bottom:4px">Sin atleta activo</div>
+    <div>MoveMetrics <span>v12.0</span></div>
     <div>Lic. Emanuel Lezcano</div>
-    <button onclick="showApiKeyModal()" style="margin-top:8px;width:100%;background:rgba(57,255,122,.08);border:1px solid rgba(57,255,122,.15);border-radius:6px;color:#39FF7A;font-size:10px;font-family:'JetBrains Mono',monospace;padding:5px 8px;cursor:pointer;letter-spacing:.06em" id="api-key-btn">🔑 API KEY</button>
+    <button onclick="showApiKeyModal()" style="margin-top:8px;width:100%;background:var(--verde08);border:1px solid var(--verde40);border-radius:6px;color:var(--verde);font-size:10px;font-family:'JetBrains Mono',monospace;padding:5px 8px;cursor:pointer;letter-spacing:.06em" id="api-key-btn">🔑 API KEY</button>
   </div>
 </aside>
 
@@ -136,7 +141,7 @@
         <div class="card-body">
           <canvas id="radar-chart" height="230"></canvas>
           <div class="flex mt-8" style="justify-content:center;gap:14px;font-size:10px;color:var(--text2)">
-            <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:rgba(57,255,122,.6);margin-right:4px;vertical-align:middle"></span>Actual</span>
+            <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--verde80);margin-right:4px;vertical-align:middle"></span>Actual</span>
             <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:rgba(77,158,255,.3);margin-right:4px;vertical-align:middle"></span>Objetivo</span>
           </div>
         </div>
@@ -300,7 +305,7 @@
           🔬 Tests ortopédicos — <span id="kine-zona-label">seleccioná una zona</span>
         </div>
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;padding:12px;background:rgba(57,255,122,.03);border:1px solid rgba(57,255,122,.08);border-radius:12px">
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;padding:12px;background:var(--verde04);border:1px solid var(--verde08);border-radius:12px">
         <div style="width:100%;font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Acceso rapido por zona</div>
         <button class="btn btn-ghost btn-sm" onclick="showKinePanel('hombro','Hombro')" style="font-size:10px">Hombro</button>
         <button class="btn btn-ghost btn-sm" onclick="showKinePanel('codo','Codo')" style="font-size:10px">Codo</button>
@@ -852,7 +857,7 @@
         <span class="tag tag-g">Δ% VMP · Δ% 1RM · cam%</span>
       </div>
       <div class="card-body">
-        <div style="font-size:11px;color:var(--text2);margin-bottom:14px;padding:8px;background:rgba(57,255,122,.05);border-radius:8px;line-height:1.6">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:14px;padding:8px;background:var(--verde08);border-radius:8px;line-height:1.6">
           Ingresá los pares <b style="color:var(--text2)">Carga (kg) / VMP (m/s)</b> de cada evaluación. Mínimo 3 pares por lado. El sistema hace la regresión lineal y genera la tabla exactamente como la planilla Tecni.
         </div>
 
@@ -912,8 +917,8 @@
           </div>
 
           <!-- POST -->
-          <div style="background:var(--bg4);border:1px solid rgba(57,255,122,.25);border-radius:10px;padding:12px">
-            <div style="font-family:var(--mono);font-size:10px;font-weight:700;text-transform:uppercase;color:#39FF7A;margin-bottom:8px;letter-spacing:.1em">● Evaluación POST</div>
+          <div style="background:var(--bg4);border:1px solid var(--verde40);border-radius:10px;padding:12px">
+            <div style="font-family:var(--mono);font-size:10px;font-weight:700;text-transform:uppercase;color:var(--verde);margin-bottom:8px;letter-spacing:.1em">● Evaluación POST</div>
             <div style="display:grid;grid-template-columns:1fr 1fr 20px;gap:4px;margin-bottom:4px">
               <span style="font-size:9px;color:var(--text3);text-align:center">Carga kg</span>
               <span style="font-size:9px;color:var(--text3);text-align:center">VMP m/s</span>
@@ -941,9 +946,9 @@
                 <button onclick="this.closest('div').remove();ppLiveUpdate()" style="background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;padding:0">×</button>
               </div>
             </div>
-            <button onclick="ppAddRow('post')" style="width:100%;margin-top:6px;background:rgba(57,255,122,.08);border:1px solid rgba(57,255,122,.2);color:#39FF7A;border-radius:6px;padding:5px;font-size:11px;cursor:pointer">+ Fila POST</button>
+            <button onclick="ppAddRow('post')" style="width:100%;margin-top:6px;background:var(--verde08);border:1px solid var(--verde40);color:var(--verde);border-radius:6px;padding:5px;font-size:11px;cursor:pointer">+ Fila POST</button>
             <div style="margin-top:8px;font-size:11px;font-family:var(--mono)">
-              1RM: <span id="pp-post-rm" style="color:#39FF7A;font-weight:700">—</span>
+              1RM: <span id="pp-post-rm" style="color:var(--verde);font-weight:700">—</span>
               &nbsp;R²: <span id="pp-post-r2" style="color:var(--text2)">—</span>
             </div>
           </div>
@@ -966,7 +971,7 @@
                 <tr>
                   <th>Carga kg</th>
                   <th style="color:#4D9EFF">VMP PRE</th>
-                  <th style="color:#39FF7A">VMP POST</th>
+                  <th style="color:var(--verde)">VMP POST</th>
                   <th>Δ% VMP</th>
                 </tr>
               </thead>
@@ -996,8 +1001,8 @@
                   <th>% RM</th>
                   <th style="color:#4D9EFF">PRE kg</th>
                   <th style="color:#4D9EFF">PRE VMP</th>
-                  <th style="color:#39FF7A">POST kg</th>
-                  <th style="color:#39FF7A">POST VMP</th>
+                  <th style="color:var(--verde)">POST kg</th>
+                  <th style="color:var(--verde)">POST VMP</th>
                   <th>cam %</th>
                 </tr>
               </thead>
@@ -1058,7 +1063,7 @@
                 <option value="Single Leg Squat I">Single Leg Squat Izquierda</option>
               </select>
             </div>
-            <div id="valgo-upload-area" style="border:2px dashed rgba(57,255,122,.2);border-radius:10px;padding:24px;text-align:center;cursor:pointer;margin-bottom:10px" onclick="document.getElementById('valgo-file-inp').click()">
+            <div id="valgo-upload-area" style="border:2px dashed var(--verde40);border-radius:10px;padding:24px;text-align:center;cursor:pointer;margin-bottom:10px" onclick="document.getElementById('valgo-file-inp').click()">
               <div style="font-size:24px;margin-bottom:6px">🎬</div>
               <div style="font-size:13px;font-weight:700;color:var(--neon)">Cargar video frontal</div>
               <div style="font-size:11px;color:var(--text2);margin-top:4px">Camara frontal -- se deben ver ambas rodillas</div>
@@ -1116,7 +1121,7 @@
                 <div class="ig">
                   <label class="il">Color de lineas</label>
                   <div style="display:flex;gap:6px;align-items:center">
-                    <div style="width:26px;height:26px;border-radius:6px;background:#39FF7A;cursor:pointer;border:2px solid #fff" onclick="setValgoColor('#39FF7A',this)" id="vc-1"></div>
+                    <div style="width:26px;height:26px;border-radius:6px;background:var(--verde);cursor:pointer;border:2px solid #fff" onclick="setValgoColor('var(--verde)',this)" id="vc-1"></div>
                     <div style="width:26px;height:26px;border-radius:6px;background:#FF4444;cursor:pointer" onclick="setValgoColor('#FF4444',this)" id="vc-2"></div>
                     <div style="width:26px;height:26px;border-radius:6px;background:#4D9EFF;cursor:pointer" onclick="setValgoColor('#4D9EFF',this)" id="vc-3"></div>
                     <div style="width:26px;height:26px;border-radius:6px;background:#FFB020;cursor:pointer" onclick="setValgoColor('#FFB020',this)" id="vc-4"></div>
@@ -1529,7 +1534,7 @@
 
         <!-- ASR -->
         <div id="hiit-asr">
-          <div style="font-size:11px;color:var(--text2);margin-bottom:12px;line-height:1.6;padding:8px;background:rgba(57,255,122,.04);border-radius:8px">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:12px;line-height:1.6;padding:8px;background:var(--verde04);border-radius:8px">
             ASR = Velocidad anaeróbica de sprint. Ingresá el sprint test y el test de vVO2 para calcular la prescripción.
           </div>
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:14px">
@@ -1585,8 +1590,8 @@
   <div id="ptab-fms" class="hidden">
 
     <!-- ═════ WORKSPACE UNIFICADO (Movement Suite) ═════ -->
-    <div class="card" style="margin-bottom:18px;border:2px solid var(--neon);background:linear-gradient(180deg,rgba(57,255,122,.04),transparent 80px)">
-      <div class="card-header" style="background:rgba(57,255,122,.1)">
+    <div class="card" style="margin-bottom:18px;border:2px solid var(--neon);background:linear-gradient(180deg,var(--verde04),transparent 80px)">
+      <div class="card-header" style="background:var(--verde15)">
         <h3 style="color:var(--neon)">🎬 Workspace Análisis Movimiento</h3>
         <span class="tag" style="background:var(--neon);color:#000">IA + Experto + Comparativo</span>
       </div>
@@ -1644,7 +1649,7 @@
           <div>
             <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:3px"><span id="ws-label-a">📹 Video A</span></div>
             <!-- Placeholder cuando no hay video -->
-            <div id="ws-placeholder-a" style="background:linear-gradient(180deg,var(--bg2),var(--bg1));border:2px dashed var(--border);border-radius:8px;padding:48px 20px;text-align:center;cursor:pointer;transition:all .15s" onclick="document.getElementById('ws-file-a').click()" onmouseover="this.style.borderColor='var(--neon)';this.style.background='linear-gradient(180deg,rgba(57,255,122,.05),var(--bg1))'" onmouseout="this.style.borderColor='var(--border)';this.style.background='linear-gradient(180deg,var(--bg2),var(--bg1))'">
+            <div id="ws-placeholder-a" style="background:linear-gradient(180deg,var(--bg2),var(--bg1));border:2px dashed var(--border);border-radius:8px;padding:48px 20px;text-align:center;cursor:pointer;transition:all .15s" onclick="document.getElementById('ws-file-a').click()" onmouseover="this.style.borderColor='var(--neon)';this.style.background='linear-gradient(180deg,var(--verde08),var(--bg1))'" onmouseout="this.style.borderColor='var(--border)';this.style.background='linear-gradient(180deg,var(--bg2),var(--bg1))'">
               <div style="font-size:48px;margin-bottom:10px">🎬</div>
               <div style="font-size:14px;font-weight:700;color:var(--neon);margin-bottom:6px">Cargá un video para empezar</div>
               <div style="font-size:11px;color:var(--text3);line-height:1.6;max-width:480px;margin:0 auto">
@@ -1726,7 +1731,7 @@
     <!-- LEGACY removed: AI/Expert/Compare separate panes (replaced by Workspace above) -->
     <div id="suite-pane-ai" class="suite-pane" style="display:none">
     <div class="card" style="border:1px solid var(--neon);margin-top:0">
-      <div class="card-header" style="background:rgba(57,255,122,.08)">
+      <div class="card-header" style="background:var(--verde08)">
         <h3 style="color:var(--neon)">🎥 Análisis Video AI</h3>
         <span class="tag" style="background:var(--neon);color:#000">Auto · MediaPipe</span>
       </div>
@@ -2042,7 +2047,7 @@
         <div class="card-body" style="padding:12px">
 
           <!-- Upload -->
-          <div id="video-upload-area" style="border:2px dashed rgba(57,255,122,.2);border-radius:10px;padding:32px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:12px" onclick="document.getElementById('video-file-inp').click()" ondragover="event.preventDefault();this.style.borderColor='var(--neon)'" ondrop="handleVideoDrop(event)">
+          <div id="video-upload-area" style="border:2px dashed var(--verde40);border-radius:10px;padding:32px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:12px" onclick="document.getElementById('video-file-inp').click()" ondragover="event.preventDefault();this.style.borderColor='var(--neon)'" ondrop="handleVideoDrop(event)">
             <div style="font-size:28px;margin-bottom:8px">🎬</div>
             <div style="font-size:13px;font-weight:700;color:var(--neon);margin-bottom:4px">Cargar video</div>
             <div style="font-size:11px;color:var(--text2)">Hacé clic o arrastrá tu video aquí<br>MP4, MOV, AVI — grabado en cámara lenta recomendado</div>
@@ -2153,7 +2158,7 @@
           <div class="card-body">
             <div style="text-align:center;padding:16px 0">
               <div style="font-size:10px;color:var(--text3);font-family:var(--mono);letter-spacing:.1em;margin-bottom:6px">ALTURA DE SALTO</div>
-              <div id="video-height-display" style="font-family:var(--mono);font-size:56px;font-weight:800;color:var(--neon);line-height:1;text-shadow:0 0 30px rgba(57,255,122,.3)">—</div>
+              <div id="video-height-display" style="font-family:var(--mono);font-size:56px;font-weight:800;color:var(--neon);line-height:1;text-shadow:0 0 30px var(--verde40)">—</div>
               <div style="font-size:14px;color:var(--text2);margin-top:4px">centímetros</div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px">
@@ -2264,7 +2269,7 @@
           <div class="card-header"><h3>📹 Video + Tracking</h3><span id="vmp-tracking-status" class="tag tag-y">Sin video</span></div>
           <div class="card-body" style="padding:10px">
 
-            <div id="vmp-upload-area" style="border:2px dashed rgba(57,255,122,.2);border-radius:10px;padding:28px;text-align:center;cursor:pointer;margin-bottom:10px" onclick="document.getElementById('vmp-file-inp').click()">
+            <div id="vmp-upload-area" style="border:2px dashed var(--verde40);border-radius:10px;padding:28px;text-align:center;cursor:pointer;margin-bottom:10px" onclick="document.getElementById('vmp-file-inp').click()">
               <div style="font-size:28px;margin-bottom:6px">🎬</div>
               <div style="font-size:13px;font-weight:700;color:var(--neon)">Cargar video de perfil</div>
               <div style="font-size:11px;color:var(--text2);margin-top:4px">Camara lateral -- barra visible todo el recorrido</div>
@@ -2342,7 +2347,7 @@
             <div class="ig">
               <label class="il">Fase a analizar</label>
               <div style="display:flex;gap:6px">
-                <button class="btn btn-sm" id="fase-btn-prop" onclick="setVMPFase('propulsiva')" style="flex:1;background:rgba(57,255,122,.1);border:1px solid rgba(57,255,122,.3);color:var(--neon);font-size:10px">Propulsiva</button>
+                <button class="btn btn-sm" id="fase-btn-prop" onclick="setVMPFase('propulsiva')" style="flex:1;background:var(--verde15);border:1px solid var(--verde40);color:var(--neon);font-size:10px">Propulsiva</button>
                 <button class="btn btn-ghost btn-sm" id="fase-btn-exc" onclick="setVMPFase('excentrica')" style="flex:1;font-size:10px">Excentrica</button>
                 <button class="btn btn-ghost btn-sm" id="fase-btn-todo" onclick="setVMPFase('completo')" style="flex:1;font-size:10px">Completo</button>
               </div>
@@ -2372,7 +2377,7 @@
           <div class="card-body">
             <div style="text-align:center;padding:12px 0">
               <div style="font-size:10px;color:var(--text2);font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">VMP</div>
-              <div id="vmp-result-vmp" style="font-family:var(--mono);font-size:52px;font-weight:800;color:var(--neon);line-height:1;text-shadow:0 0 30px rgba(57,255,122,.3)">0.00</div>
+              <div id="vmp-result-vmp" style="font-family:var(--mono);font-size:52px;font-weight:800;color:var(--neon);line-height:1;text-shadow:0 0 30px var(--verde40)">0.00</div>
               <div style="font-size:13px;color:var(--text2);margin-top:4px">m/s</div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px">
@@ -2397,7 +2402,7 @@
             <div id="vmp-ref-compare" style="margin-top:12px;padding:10px;background:var(--bg4);border-radius:8px;font-size:11px;line-height:1.7"></div>
 
             <!-- Zona F-V -->
-            <div style="margin-top:10px;padding:10px;background:rgba(57,255,122,.04);border:1px solid rgba(57,255,122,.1);border-radius:8px">
+            <div style="margin-top:10px;padding:10px;background:var(--verde04);border:1px solid var(--verde15);border-radius:8px">
               <div style="font-size:10px;font-family:var(--mono);color:var(--text2);margin-bottom:4px">INTEGRACION F-V</div>
               <div id="vmp-fv-preview" style="font-size:12px;color:var(--text)">Guarda el resultado para agregarlo al perfil F-V</div>
             </div>
@@ -2429,7 +2434,7 @@
         <button class="btn btn-outline" onclick="exportAllData()">📤 Exportar JSON</button>
       </div>
     </div>
-    <div style="padding:12px 14px;background:linear-gradient(135deg,rgba(57,255,122,.04),rgba(77,158,255,.04));border:1px solid var(--border2);border-radius:var(--r2);margin-bottom:16px;font-size:12px;color:var(--text2)">
+    <div style="padding:12px 14px;background:linear-gradient(135deg,var(--verde04),rgba(77,158,255,.04));border:1px solid var(--border2);border-radius:var(--r2);margin-bottom:16px;font-size:12px;color:var(--text2)">
       <b style="color:var(--neon)">📈 Evolución visual del atleta.</b> Los puntos de color muestran el estado en cada fecha registrada.
     </div>
     <div class="card">
@@ -2689,7 +2694,7 @@
   <script src="js/sprint.js?v=2"></script>
   <style>
     select option, select optgroup { background:#0f0f0f !important; color:#eaeaea !important; }
-    select optgroup { font-weight:700; color:#39FF7A !important; }
+    select optgroup { font-weight:700; color:var(--verde) !important; }
     details.fms-accordion > summary { cursor:pointer; padding:10px 14px; background:var(--bg1); border:1px solid var(--border); border-radius:6px; font-weight:700; list-style:none; display:flex; justify-content:space-between; align-items:center; user-select:none }
     details.fms-accordion > summary::after { content:'▼'; font-size:11px; color:var(--text3); transition:transform .2s }
     details.fms-accordion[open] > summary::after { transform:rotate(180deg) }
@@ -2704,11 +2709,11 @@
       border:1px solid var(--border); background:var(--bg2); color:var(--text);
       letter-spacing:.02em; line-height:1;
     }
-    .btn:hover, .ex-tool:hover { border-color:var(--neon); color:var(--neon); background:rgba(57,255,122,.06) }
-    .btn-neon, button.btn-neon { background:var(--neon); color:#000; border-color:var(--neon) }
-    .btn-neon:hover, button.btn-neon:hover { background:#52ff8a; color:#000; border-color:#52ff8a }
+    .btn:hover, .ex-tool:hover { border-color:var(--neon); color:var(--neon); background:var(--verde08) }
+    .btn-neon, button.btn-neon { background:var(--neon); color:var(--negro); border-color:var(--neon) }
+    .btn-neon:hover, button.btn-neon:hover { background:#8a9560; color:var(--negro); border-color:#8a9560 }
     .btn-ghost, button.btn-ghost { background:transparent; color:var(--text2); border-color:var(--border) }
-    .btn-ghost:hover { color:var(--neon); border-color:var(--neon); background:rgba(57,255,122,.05) }
+    .btn-ghost:hover { color:var(--neon); border-color:var(--neon); background:var(--verde08) }
     .btn-sm { padding:6px 10px; font-size:11px }
     .btn:disabled, .ex-tool:disabled { opacity:.4; cursor:not-allowed }
     .btn[onclick*="MEDIR"] { /* legacy support */ }
@@ -2724,7 +2729,7 @@
       border:5px solid transparent; border-top-color:var(--neon); pointer-events:none; z-index:9999
     }
     .suite-tab { padding:9px 18px; font-size:12px; font-weight:700; background:var(--bg2); color:var(--text2); border:1px solid var(--border); border-radius:6px 6px 0 0 }
-    .suite-tab.active { background:var(--neon); color:#000; border-color:var(--neon); border-bottom-color:var(--neon) }
+    .suite-tab.active { background:var(--neon); color:var(--negro); border-color:var(--neon); border-bottom-color:var(--neon) }
     .suite-tab:hover:not(.active) { color:var(--neon); border-color:var(--neon) }
     .ex-tool .ti { font-size:14px; line-height:1 }
     .ex-tool:hover { border-color:#5dd4ff; color:#5dd4ff; background:rgba(93,212,255,.06) }
@@ -2787,12 +2792,12 @@
     <!-- Canvas + flecha -->
     <div style="position:relative;width:200px;height:200px;margin:0 auto 8px">
       <canvas id="goniometro-canvas" width="200" height="200"></canvas>
-      <div id="goniometro-flecha" style="position:absolute;bottom:50%;left:50%;width:3px;height:76px;background:var(--neon);border-radius:2px;transform-origin:50% 100%;transform:translateX(-50%) rotate(0deg);box-shadow:0 0 8px rgba(57,255,122,.5)"></div>
+      <div id="goniometro-flecha" style="position:absolute;bottom:50%;left:50%;width:3px;height:76px;background:var(--neon);border-radius:2px;transform-origin:50% 100%;transform:translateX(-50%) rotate(0deg);box-shadow:0 0 8px var(--verde80)"></div>
     </div>
 
     <!-- Angulo grande -->
     <div style="text-align:center;margin-bottom:16px">
-      <div id="goniometro-angulo" style="font-family:var(--mono);font-size:52px;font-weight:800;color:var(--neon);line-height:1;text-shadow:0 0 20px rgba(57,255,122,.3)">0.0</div>
+      <div id="goniometro-angulo" style="font-family:var(--mono);font-size:52px;font-weight:800;color:var(--neon);line-height:1;text-shadow:0 0 20px var(--verde40)">0.0</div>
       <div style="font-size:11px;color:var(--text2);font-family:var(--mono)">grados</div>
     </div>
 
@@ -2838,7 +2843,7 @@
           <button class="btn btn-ghost btn-sm" onclick="setVJFps('s480',this)" style="font-size:10px">Slow 480</button>
           <button class="btn btn-ghost btn-sm" onclick="setVJFps('s960',this)" style="font-size:10px">Slow 960</button>
         </div>
-        <div id="vj-fps-tip" style="font-family:var(--mono);font-size:9px;color:var(--neon);margin-top:6px;padding:5px 8px;background:rgba(57,255,122,.04);border-radius:6px">
+        <div id="vj-fps-tip" style="font-family:var(--mono);font-size:9px;color:var(--neon);margin-top:6px;padding:5px 8px;background:var(--verde04);border-radius:6px">
           Video normal -- mas preciso
         </div>
       </div>
@@ -2854,7 +2859,7 @@
     </div>
 
     <!-- Upload area -->
-    <div id="vj-upload-area" style="border:2px dashed rgba(57,255,122,.2);border-radius:10px;padding:24px;text-align:center;cursor:pointer;margin-bottom:12px" onclick="document.getElementById('vj-file-inp').click()">
+    <div id="vj-upload-area" style="border:2px dashed var(--verde40);border-radius:10px;padding:24px;text-align:center;cursor:pointer;margin-bottom:12px" onclick="document.getElementById('vj-file-inp').click()">
       <div style="font-size:24px;margin-bottom:6px">🎬</div>
       <div style="font-size:13px;font-weight:700;color:var(--neon)">Cargar video del salto</div>
       <div style="font-size:11px;color:var(--text2);margin-top:4px">Grabado con camara lenta recomendado (120+ FPS)</div>
@@ -3053,7 +3058,7 @@
 
     <!-- TAB: ESCALAS -->
     <div id="htab-cuest" style="display:none">
-      <div style="font-size:11px;color:var(--text2);margin-bottom:12px;padding:8px;background:rgba(57,255,122,.05);border-radius:8px">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:12px;padding:8px;background:var(--verde08);border-radius:8px">
         CPG 2025 Rec.#8 — Cuestionarios obligatorios. Usá MCID para interpretar cambio clínico.
       </div>
       <!-- ASES -->
@@ -3234,13 +3239,13 @@
 
     <!-- TAB: FUERZA -->
     <div id="ctab-fuerza" style="display:none">
-      <div style="font-size:11px;color:var(--text2);margin-bottom:10px;padding:8px;background:rgba(57,255,122,.05);border-radius:8px">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px;padding:8px;background:var(--verde08);border-radius:8px">
         Lucado 2022 — <strong style="color:var(--neon)">PFGS Sn 65% / Sp 97%</strong> para LET · MDC entre-sesiones = 9.4 kg · MCID = 7 kg
       </div>
       <div class="card mb-12">
         <div class="card-header">
           <h3>Pain-Free Grip Strength (PFGS)</h3>
-          <span class="tag" style="background:rgba(57,255,122,.15);color:var(--neon);font-size:9px">Sn 65% · Sp 97%</span>
+          <span class="tag" style="background:var(--verde15);color:var(--neon);font-size:9px">Sn 65% · Sp 97%</span>
         </div>
         <div class="card-body">
           <div style="font-size:10px;color:var(--text3);margin-bottom:8px">Codo extendido · antebrazo pronado · leve extensión muñeca · 2° posición mango · media de 3 intentos</div>
@@ -3283,7 +3288,7 @@
 
     <!-- TAB: ESCALAS -->
     <div id="ctab-esc" style="display:none">
-      <div style="font-size:11px;color:var(--text2);margin-bottom:12px;padding:8px;background:rgba(57,255,122,.05);border-radius:8px">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:12px;padding:8px;background:var(--verde08);border-radius:8px">
         Lucado 2022 Rec. — PRTEE gold standard para LET · MCID = 7 pts · ICC 0.96 · Completar al inicio y alta
       </div>
       <div class="card mb-12">
@@ -3375,7 +3380,7 @@
           <label style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;cursor:pointer">
             <input type="radio" name="cx-clasificacion" value="nprp" onchange="updateCXClasif(this)">
             <span><span style="font-size:12px;font-weight:600;color:var(--red)">NPRP</span> — <span style="font-size:11px">Dolor Radicular · Spurling+, ULNT+, parestesias en extremidad</span></span></label>
-          <div id="cx-clasif-hint" style="margin-top:10px;padding:8px;border-radius:6px;font-size:11px;background:rgba(57,255,122,.05);border:1px solid rgba(57,255,122,.1);display:none"></div>
+          <div id="cx-clasif-hint" style="margin-top:10px;padding:8px;border-radius:6px;font-size:11px;background:var(--verde08);border:1px solid var(--verde15);display:none"></div>
         </div>
       </div>
       <div class="card mb-12">
@@ -3439,7 +3444,7 @@
 
     <!-- TAB: MOTOR -->
     <div id="cxtab-motor" style="display:none">
-      <div style="font-size:11px;color:var(--text2);margin-bottom:10px;padding:8px;background:rgba(57,255,122,.05);border-radius:8px">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px;padding:8px;background:var(--verde08);border-radius:8px">
         CPG 2017 Rec. B — CCFT y Neck Flexor Endurance para NPMCI/WAD. Myotomas C5–C8 para radiculopatía.
       </div>
       <!-- CCFT -->
@@ -3487,7 +3492,7 @@
 
     <!-- TAB: ESCALAS -->
     <div id="cxtab-esc" style="display:none">
-      <div style="font-size:11px;color:var(--text2);margin-bottom:12px;padding:8px;background:rgba(57,255,122,.05);border-radius:8px">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:12px;padding:8px;background:var(--verde08);border-radius:8px">
         CPG 2017 Rec. A — NDI es el gold standard · MCID 7.5 pts (0–50) · MDC 5 pts
       </div>
       <div class="card mb-12">
@@ -3670,7 +3675,7 @@
 
     <!-- RTP -->
     <div id="rtab-rtp" style="display:none">
-      <div class="card mb-10" style="border-color:rgba(57,255,122,.2);background:rgba(57,255,122,.03)">
+      <div class="card mb-10" style="border-color:var(--verde40);background:var(--verde04)">
         <div class="card-header"><h3 style="color:var(--neon)">✅ Return to Play — Criterios</h3></div>
         <div class="card-body">
           <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Hop Tests LSI: criterio RTP &gt;90% en todos</div>
