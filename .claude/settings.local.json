@@ -41,7 +41,21 @@
       "Bash(git -C \"C:\\\\Users\\\\Usuario\\\\Documents\\\\Claude\\\\movemetrics\" remote -v)",
       "WebFetch(domain:docs.google.com)",
       "mcp__Claude_in_Chrome__list_connected_browsers",
-      "Bash(find \"C:\\\\Users\\\\Usuario\" -name \".git\" -maxdepth 5 -type d 2>/dev/null | head -20)"
+      "Bash(find \"C:\\\\Users\\\\Usuario\" -name \".git\" -maxdepth 5 -type d 2>/dev/null | head -20)",
+      "Bash(node *)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cmd /c \"C:\\Users\\Usuario\\Documents\\Claude\\movemetrics\\autopush.bat\""
+          }
+        ]
+      }
     ]
   }
 }
