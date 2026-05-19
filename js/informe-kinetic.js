@@ -12,16 +12,22 @@ const KP = {
 const KD = { W:297, H:210, M:12 };
 let _kCtx = {};
 
+function _kToast(msg, type) {
+  if (typeof showToast === 'function') _kToast(msg, type);
+  else { const t=type==='error'?'❌':type==='ok'?'✓':'ℹ'; console.log(t,msg); }
+}
+
 /* ── MODAL ──────────────────────────────────────────────────── */
 function openKineticPDFModal() {
-  if (!cur) { showToast('Seleccioná un atleta primero','warn'); return; }
+  if (!cur) { alert('Seleccioná un atleta primero'); return; }
   let el = document.getElementById('modal-kinetic-pdf');
   if (!el) {
     el = document.createElement('div');
     el.id = 'modal-kinetic-pdf';
     el.className = 'modal';
+    el.style.alignItems = 'center';
     el.innerHTML = `
-<div class="modal-box" style="max-width:460px;background:var(--negro2)">
+<div class="modal-sheet" style="max-width:480px;border-radius:16px;padding:24px">
   <div class="modal-header" style="border-bottom:1px solid rgba(121,130,84,.2)">
     <div>
       <h3 style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--offwhite)">PDF KINETIC PRECISION</h3>
@@ -60,14 +66,14 @@ async function _kGenerar() {
     clinica:   !!document.getElementById('kpdf-clinica')?.checked,
   };
   closeModal('modal-kinetic-pdf');
-  showToast('Generando PDF Kinetic Precision…','info');
+  _kToast('Generando PDF Kinetic Precision…','info');
   try { await generarKineticPDF(secs); }
-  catch(e) { console.error('KineticPDF:',e); showToast('Error PDF: '+e.message,'error'); }
+  catch(e) { console.error('KineticPDF:',e); _kToast('Error PDF: '+e.message,'error'); }
 }
 
 /* ── MAIN GENERATOR ─────────────────────────────────────────── */
 async function generarKineticPDF(secs={portada:true,fuerza:true,velocidad:true,clinica:true}) {
-  if (!window.jspdf?.jsPDF) { showToast('jsPDF no cargado','error'); return; }
+  if (!window.jspdf?.jsPDF) { _kToast('jsPDF no cargado','error'); return; }
   const {jsPDF} = window.jspdf;
   const s = cur; if (!s) return;
 
@@ -85,7 +91,7 @@ async function generarKineticPDF(secs={portada:true,fuerza:true,velocidad:true,c
   const kin = _kGetKine(s);
   const hop = _kGetHooper(s);
 
-  showToast('Consultando IA…','info');
+  _kToast('Consultando IA…','info');
   const ai = await _kAI(s,fv,sal,sp,kin);
 
   let first = true;
@@ -97,7 +103,7 @@ async function generarKineticPDF(secs={portada:true,fuerza:true,velocidad:true,c
   if (secs.clinica)   { np(); _kPageClinica(doc,s,kin,hop,ai); }
 
   doc.save(`MoveMetrics_${(s.nombre||'atleta').replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.pdf`);
-  showToast('PDF generado ✓','ok');
+  _kToast('PDF generado ✓','ok');
 }
 
 /* ── DATA EXTRACTORS ────────────────────────────────────────── */
