@@ -48,11 +48,42 @@ const ORTHO_TESTS = {
     { id:'slr-cruzado',name:'SLR cruzado',   sub:'Hernia grave',         ref:'Sn 0.29 / Sp 0.88' }
   ],
   cadera: [
-    { id:'fadir',         name:'FADIR',        sub:'FAI / Labrum',       ref:'Sn 0.96 / Sp 0.10' },
-    { id:'faber',         name:'FABER (Patrick)',sub:'Articulación SI / Cápsula',ref:'Sn 0.57 / Sp 0.71' },
-    { id:'trendelenburg', name:'Trendelenburg', sub:'Glúteo medio',       ref:'Sn 0.73 / Sp 0.77' },
-    { id:'ober',          name:'Ober',          sub:'Banda iliotibial',   ref:'Tensión IT band' },
-    { id:'thomas',        name:'Thomas',        sub:'Acortamiento psoas', ref:'Sn 0.89 / Sp 0.91' }
+    // ── FAI / Labrum / Intraarticular ────────────────────────────────────
+    { id:'fadir',              name:'FADIR',                    sub:'FAI / Labrum — cribado',           ref:'Sn 0.96 / Sp 0.10 — Ishøi BJSM 2021' },
+    { id:'prone-ir-neutral',   name:'Prone IR neutro (0° flex)',sub:'FAI — MEJOR rule-in individual',   ref:'LR+ 4.83 / Sp 94% — Ishøi BJSM 2021' },
+    { id:'faber',              name:'FABER (Patrick)',           sub:'SI / Cápsula / Displasia',         ref:'Sn 0.57 / Sp 0.71 — Reiman BJSM 2012' },
+    { id:'scour',              name:'Scour / Labral stress',    sub:'Intraarticular / Labrum',          ref:'Sn 0.50 / Sp 0.29 — Maslowski 2010' },
+    { id:'irop',               name:'IROP (IR + Sobrepresión)', sub:'FAI / Labrum',                     ref:'Sn 0.91 / Sp 0.18 — Maslowski 2010' },
+    { id:'third-test',         name:'THIRD test',               sub:'Labrum — rule-in',                 ref:'Sn 98% / Sp 75% / LR+ 3.9 — Myrick 2014' },
+    { id:'thomas',             name:'Thomas',                   sub:'Labrum / Psoas — LR+ 11.1',        ref:'Sn 0.89 / Sp 0.92 / LR+ 11.1 — Reiman 2012' },
+    { id:'stinchfield',        name:'Stinchfield (Resisted SLR)',sub:'Intraarticular inespecífico',     ref:'Sn 0.59 / Sp 0.32 — Maslowski 2010' },
+    { id:'posterior-impingement',name:'Posterior impingement',  sub:'FAI posterior / Labrum posterior', ref:'Sn 0.21 — baja Sn, alta especificidad' },
+    { id:'maximal-squat',      name:'Maximal squat test',       sub:'FAI / Morfología cam',             ref:'Sn 0.75 / Sp 0.41 — Ayeni 2014 (en Reiman 2014)' },
+    { id:'fpaw',               name:'FPAW (Foot Progression Angle Walking)',sub:'Morfología cam',       ref:'Sn 0.61 / Sp 0.56 — Caliesch BMJ Open 2020' },
+    // ── Microinestabilidad ───────────────────────────────────────────────
+    { id:'anterior-apprehension',name:'Anterior apprehension',  sub:'Microinestabilidad anterior',      ref:'Sn 0.71 / Sp 0.85 — Wong 2022' },
+    { id:'abd-ext-er',         name:'Abducción-Extensión-RE',   sub:'Microinestabilidad — CPR',         ref:'Sn 0.81 / Sp 0.89 — Wong 2022' },
+    { id:'prone-er',           name:'Prone External Rotation',  sub:'Microinestabilidad — alta Sp',     ref:'Sn 0.33 / Sp 0.98 — Wong 2022' },
+    // ── Displasia / Otros ────────────────────────────────────────────────
+    { id:'log-roll',           name:'Log Roll',                  sub:'Intraarticular / Displasia',       ref:'Sn 0.42 / Sp 0.62 — Wong 2022' },
+    { id:'ligamentum-teres',   name:'Ligamentum Teres test',    sub:'Lesión lig. redondo',              ref:'Enseki JOSPT CPG 2023' },
+    { id:'trendelenburg',      name:'Trendelenburg',             sub:'Glúteo medio / GTPS',              ref:'Sn 0.61 / Sp 0.92 / LR+ 6.83 — Reiman 2012' },
+    { id:'ober',               name:'Ober',                      sub:'Banda iliotibial / Coxa saltans',  ref:'Tensión IT band' }
+  ],
+  caderaGluteal: [
+    { id:'resisted-hip-abduction', name:'Resisted Hip Abduction',     sub:'Tendinopatía glútea',          ref:'Sn 0.71 / Sp 0.84 / LR+ 5.50 — Reiman 2012' },
+    { id:'resisted-ext-derotation',name:'Resisted External Derotation',sub:'Tendinopatía glútea — mejor test', ref:'Sn 88% / Sp 97.3% / LR+ 32.6 — Lequesne 2008' }
+  ],
+  caderaFractura: [
+    { id:'pppt',         name:'PPPT (Patela-Pubis Percussion)',  sub:'Fractura cuello femoral',          ref:'Sn 95% / Sp 86% / LR+ 6.11 — Reiman 2012 meta-análisis' },
+    { id:'fulcrum-test', name:'Fulcrum test (Stress fracture)',  sub:'Fractura de estrés fémur',         ref:'Sn 88-93% / Sp 13-75% — Johnson & Kang' }
+  ],
+  caderaOA: [
+    { id:'squat-posterior-pain',  name:'Cuclillas → dolor posterior', sub:'Artrosis cadera — mejor sign', ref:'LR+ 6.1 / Sn 24% / Sp 96% — Simel JAMA 2019' },
+    { id:'groin-abd-add-pain',    name:'Dolor ingle en abd/aducc',    sub:'Artrosis cadera',              ref:'LR+ 5.7 / Sn 33% / Sp 94% — Simel JAMA 2019' },
+    { id:'abductor-weakness-oa',  name:'Debilidad abductora',         sub:'Artrosis cadera',              ref:'LR+ 4.5 / Sn 44% / Sp 90% — Simel JAMA 2019' },
+    { id:'hip-adduction-loss',    name:'Pérdida aducción pasiva',     sub:'Artrosis cadera',              ref:'LR+ 4.2 / Sn 80% / Sp 81% — Simel JAMA 2019' },
+    { id:'hip-ir-loss',           name:'Pérdida RI pasiva',           sub:'Artrosis cadera',              ref:'LR+ 3.2 / Sn 66% / Sp 79% — Simel JAMA 2019' }
   ],
   dohaAductores: [
     { id:'doha-squeeze-0',    name:'Squeeze test 0 deg',         sub:'Aductores -- ingle atletica',         ref:'Sn 0.78 / Sp 0.50 -- cadera 0 grados' },

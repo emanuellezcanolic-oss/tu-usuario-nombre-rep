@@ -111,6 +111,9 @@ function buildOrthoPanels(){
   buildOrthoPanel('tp-tobillo',           ORTHO_TESTS.tobillo);
   buildOrthoPanel('tp-lumbar',            ORTHO_TESTS.lumbar);
   buildOrthoPanel('tp-cadera',            ORTHO_TESTS.cadera);
+  buildOrthoPanel('tp-cadera-gluteal',    ORTHO_TESTS.caderaGluteal    || []);
+  buildOrthoPanel('tp-cadera-fractura',   ORTHO_TESTS.caderaFractura   || []);
+  buildOrthoPanel('tp-cadera-oa',         ORTHO_TESTS.caderaOA         || []);
   buildOrthoPanel('tp-doha-aductores',    ORTHO_TESTS.dohaAductores);
   buildOrthoPanel('tp-doha-psoas',        ORTHO_TESTS.dohaPsoas);
   buildOrthoPanel('tp-doha-inguinal',     ORTHO_TESTS.dohaInguinal);
@@ -226,7 +229,7 @@ function setOrthoTest(id,result){
 }
 
 function updateKinePositivos(){
-  const allTests=[...ORTHO_TESTS.subacro,...ORTHO_TESTS.manguito,...ORTHO_TESTS.biceps,...ORTHO_TESTS.ligamentos,...ORTHO_TESTS.meniscos,...ORTHO_TESTS.funcionales,...ORTHO_TESTS.tobillo,...ORTHO_TESTS.lumbar,...ORTHO_TESTS.cadera,...ORTHO_TESTS.dohaAductores,...ORTHO_TESTS.dohaPsoas,...ORTHO_TESTS.dohaInguinal,...ORTHO_TESTS.dohaComplementarios,...ORTHO_TESTS.cervicalNeural,...ORTHO_TESTS.cervicalArticular,...ORTHO_TESTS.cervicalMuscular,...ORTHO_TESTS.codoLateral,...ORTHO_TESTS.codoMedial,...ORTHO_TESTS.codoLigamentos,...ORTHO_TESTS.patelo,...ORTHO_TESTS.tendonesRodilla,...ORTHO_TESTS.pie,...ORTHO_TESTS.muneca];
+  const allTests=[...ORTHO_TESTS.subacro,...ORTHO_TESTS.manguito,...ORTHO_TESTS.biceps,...ORTHO_TESTS.ligamentos,...ORTHO_TESTS.meniscos,...ORTHO_TESTS.funcionales,...ORTHO_TESTS.tobillo,...ORTHO_TESTS.lumbar,...ORTHO_TESTS.cadera,...(ORTHO_TESTS.caderaGluteal||[]),...(ORTHO_TESTS.caderaFractura||[]),...(ORTHO_TESTS.caderaOA||[]),...ORTHO_TESTS.dohaAductores,...ORTHO_TESTS.dohaPsoas,...ORTHO_TESTS.dohaInguinal,...ORTHO_TESTS.dohaComplementarios,...ORTHO_TESTS.cervicalNeural,...ORTHO_TESTS.cervicalArticular,...ORTHO_TESTS.cervicalMuscular,...ORTHO_TESTS.codoLateral,...ORTHO_TESTS.codoMedial,...ORTHO_TESTS.codoLigamentos,...ORTHO_TESTS.patelo,...ORTHO_TESTS.tendonesRodilla,...ORTHO_TESTS.pie,...ORTHO_TESTS.muneca];
   const positivos=Object.entries(kineState.tests).filter(([,v])=>v.result==='pos').map(([id,v])=>{
     const t=allTests.find(x=>x.id===id);return t?{name:t.name,sub:t.sub,obs:v.obs}:null;
   }).filter(Boolean);
@@ -240,6 +243,7 @@ function updateKinePositivos(){
         <span class="tag tag-r">POSITIVO</span>
       </div>`).join('');
   }else card.style.display='none';
+  if(typeof renderDiagnosticosCadera==='function')renderDiagnosticosCadera();
 }
 
 function onBodyZoneClick(el){
@@ -271,7 +275,7 @@ function showKinePanel(panel,label){
     'cervical': 'sheet-cervical',
     'cadera': 'sheet-rodilla',
     'gluteo': 'sheet-rodilla',
-    'ingle': 'sheet-groin',
+    // 'ingle' removed — muestra tests-panel-ingle con batería Doha completa
     'pantorrilla': 'sheet-tobillo',
     'pie': 'sheet-tobillo',
     'codo': 'sheet-codo',
@@ -358,7 +362,7 @@ function saveKinesio(){
   form.fecha=document.getElementById('kine-fecha')?.value;
   kineState.form=form;
   cur.kinesio=JSON.parse(JSON.stringify(kineState));
-  const allTests=[...ORTHO_TESTS.subacro,...ORTHO_TESTS.manguito,...ORTHO_TESTS.biceps,...ORTHO_TESTS.ligamentos,...ORTHO_TESTS.meniscos,...ORTHO_TESTS.funcionales,...ORTHO_TESTS.tobillo,...ORTHO_TESTS.lumbar,...ORTHO_TESTS.cadera,...ORTHO_TESTS.dohaAductores,...ORTHO_TESTS.dohaPsoas,...ORTHO_TESTS.dohaInguinal,...ORTHO_TESTS.dohaComplementarios,...ORTHO_TESTS.cervicalNeural,...ORTHO_TESTS.cervicalArticular,...ORTHO_TESTS.cervicalMuscular,...ORTHO_TESTS.codoLateral,...ORTHO_TESTS.codoMedial,...ORTHO_TESTS.codoLigamentos,...ORTHO_TESTS.patelo,...ORTHO_TESTS.tendonesRodilla,...ORTHO_TESTS.pie,...ORTHO_TESTS.muneca];
+  const allTests=[...ORTHO_TESTS.subacro,...ORTHO_TESTS.manguito,...ORTHO_TESTS.biceps,...ORTHO_TESTS.ligamentos,...ORTHO_TESTS.meniscos,...ORTHO_TESTS.funcionales,...ORTHO_TESTS.tobillo,...ORTHO_TESTS.lumbar,...ORTHO_TESTS.cadera,...(ORTHO_TESTS.caderaGluteal||[]),...(ORTHO_TESTS.caderaFractura||[]),...(ORTHO_TESTS.caderaOA||[]),...ORTHO_TESTS.dohaAductores,...ORTHO_TESTS.dohaPsoas,...ORTHO_TESTS.dohaInguinal,...ORTHO_TESTS.dohaComplementarios,...ORTHO_TESTS.cervicalNeural,...ORTHO_TESTS.cervicalArticular,...ORTHO_TESTS.cervicalMuscular,...ORTHO_TESTS.codoLateral,...ORTHO_TESTS.codoMedial,...ORTHO_TESTS.codoLigamentos,...ORTHO_TESTS.patelo,...ORTHO_TESTS.tendonesRodilla,...ORTHO_TESTS.pie,...ORTHO_TESTS.muneca];
   if(!cur.evals)cur.evals={};
   cur.evals['kinesio_'+(form.fecha||Date.now())]={fecha:form.fecha,motivo:form.motivo,eva:form.eva,zonas:Object.fromEntries(Object.entries(kineState.bodyZones).filter(([,v])=>!v.recuperado)),testsPositivos:Object.entries(kineState.tests).filter(([,v])=>v.result==='pos').map(([id])=>{const t=allTests.find(x=>x.id===id);return t?t.name:id;}),dx:form.dx};
   cur.lesionesActivas=Object.entries(kineState.bodyZones).filter(([,v])=>!v.recuperado).map(([,v])=>v.label);

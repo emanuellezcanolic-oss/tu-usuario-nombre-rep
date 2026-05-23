@@ -398,14 +398,28 @@
       <div id="tests-panel-cadera" class="kine-panel hidden">
         <div class="grid-2" style="gap:12px">
           <div class="card">
-            <div class="card-header"><h3>Tests cadera</h3><span class="tag tag-y">Cadera / SIJ</span></div>
+            <div class="card-header"><h3>Tests cadera -- FAI / Labrum / Inestabilidad</h3><span class="tag tag-y">Intraarticular</span></div>
             <div class="card-body" id="tp-cadera"></div>
           </div>
           <div class="card">
             <div class="card-header"><h3>ROM Cadera</h3><span class="tag tag-b">Act / Pas</span></div>
             <div class="card-body" id="tp-rom-cadera"></div>
           </div>
+          <div class="card">
+            <div class="card-header"><h3>Tendinopat&#237;a gl&#250;tea (GTPS)</h3><span class="tag tag-b">Extraarticular</span></div>
+            <div class="card-body" id="tp-cadera-gluteal"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Artrosis de cadera (OA)</h3><span class="tag">Degenerativa</span></div>
+            <div class="card-body" id="tp-cadera-oa"></div>
+          </div>
+          <div class="card" style="border-color:rgba(255,68,68,.3)">
+            <div class="card-header"><h3>Fractura / Urgencia</h3><span class="tag tag-r">Urgencia</span></div>
+            <div class="card-body" id="tp-cadera-fractura"></div>
+          </div>
         </div>
+        <!-- Motor diagn&#243;stico de cadera -->
+        <div id="kine-dx-cadera-card" style="display:none"></div>
       </div>
 
 
@@ -2691,6 +2705,7 @@
 
 <!-- ════════ SCRIPT ════════ -->
   <!-- ══ JS MODULAR — orden de carga ══ -->
+  <script src="js/data/papers-cadera-rules.js?v=1"></script>
   <script src="js/data/ortho-tests.js?v=1"></script>
   <script src="js/app.js?v=4"></script>
   <script src="js/atletas.js?v=2"></script>
@@ -2770,6 +2785,7 @@
   <script src="js/informe/template-filler.js?v=1"></script>
   <script src="js/informe/generators/movilidad-tobillo.js?v=1"></script>
   <script src="js/kine.js?v=7"></script>
+  <script src="js/diagnostico-cadera.js?v=1"></script>
   <script src="js/informe.js?v=2"></script>
   <script src="js/informe-kinetic.js?v=1"></script>
   <script src="js/video.js?v=2"></script>
