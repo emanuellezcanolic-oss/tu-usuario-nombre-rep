@@ -403,21 +403,18 @@ textarea.inp { resize: vertical; min-height: 80px; line-height: 1.7; }
 /* ─── MODAL ─── */
 .modal {
   display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,.88); z-index: 500;
-  backdrop-filter: blur(12px);
+  background: var(--negro2); z-index: 500;
+  overflow-y: auto;
 }
-.modal.open { display: flex; align-items: flex-end; justify-content: center; }
+.modal.open { display: block; padding: 20px 16px 40px; }
 .modal-sheet {
   background: var(--negro3);
-  border-radius: 24px 24px 0 0; width: 100%;
-  max-width: 700px; max-height: 93vh; overflow-y: auto;
-  padding: 28px 24px 52px;
-  border: 1px solid var(--ow10); border-bottom: none;
+  border-radius: 12px; width: 100%;
+  max-width: min(960px, 96vw); margin: 0 auto;
+  padding: 24px;
+  border: 1px solid var(--ow10);
 }
-.modal-handle {
-  width: 36px; height: 3px; background: var(--ow10);
-  border-radius: 2px; margin: 0 auto 24px;
-}
+.modal-handle { display: none; }
 .modal-title  { font-family: var(--display); font-size: 28px; font-weight: 400; letter-spacing: .05em; margin-bottom: 4px; color: var(--ow); }
 .modal-sub    { font-size: 13px; color: var(--ow50); margin-bottom: 22px; }
 
