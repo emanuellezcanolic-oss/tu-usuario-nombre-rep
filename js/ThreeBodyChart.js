@@ -34,7 +34,8 @@ const MESH_TO_PANEL = [
 const SHEET_MAP_3D = {
   hombro:'sheet-hombro', cervical:'sheet-cervical', lumbar:'sheet-lumbar',
   rodilla:'sheet-rodilla', tobillo:'sheet-tobillo', codo:'sheet-codo',
-  cadera:'sheet-rodilla', ingle:'sheet-groin'
+  // cadera → no sheet modal (uses tests-panel-cadera inline)
+  // ingle  → subsumed into cadera panel
 };
 
 function meshToPanel(name){

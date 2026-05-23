@@ -49,7 +49,8 @@ const CAT_LABELS = {
 const REGION_TO_SHEET = {
   hombro:'sheet-hombro', cervical:'sheet-cervical', lumbar:'sheet-lumbar',
   rodilla:'sheet-rodilla', tobillo:'sheet-tobillo', codo:'sheet-codo',
-  cadera:'sheet-rodilla', ingle:'sheet-groin'
+  // cadera → no sheet modal, falls through to tests-panel-cadera via showKinePanel
+  // ingle  → falls through to cadera panel (Doha section inside cadera)
 };
 
 const uuid = () => 'lx_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
@@ -313,8 +314,10 @@ const LSH = window.LSH = {
   },
 
   _goTests(sheetId, region){
-    if (typeof openModal === 'function' && document.getElementById(sheetId)){
+    if (typeof openModal === 'function' && sheetId && document.getElementById(sheetId)){
       openModal(sheetId);
+      // Initialize sheet content (ROM fields, test buttons, scales)
+      if (typeof initKlinicalSheet === 'function') initKlinicalSheet(region);
     } else if (typeof showKinePanel === 'function'){
       showKinePanel(region, region);
     } else {
