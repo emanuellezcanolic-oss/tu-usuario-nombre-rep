@@ -198,7 +198,10 @@
       <div style="display:flex;flex-direction:column;gap:12px">
         <!-- Motivo + mecanismo -->
         <div class="card">
-          <div class="card-header"><h3>📋 Anamnesis — Historia clínica MOVE</h3></div>
+          <div class="card-header">
+            <h3>📋 Anamnesis — Historia clínica MOVE</h3>
+            <button onclick="anamnesisIA()" style="background:rgba(57,255,122,.12);border:1px solid var(--neon);border-radius:6px;color:var(--neon);font-size:10px;font-family:'JetBrains Mono',monospace;padding:4px 12px;cursor:pointer;letter-spacing:.06em;white-space:nowrap">🤖 Asistente IA</button>
+          </div>
           <div class="card-body">
             <div class="ig"><label class="il">Motivo de consulta</label>
               <textarea class="inp" id="kine-motivo" rows="2" placeholder="Motivo principal de la consulta..."></textarea></div>

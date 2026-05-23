@@ -369,5 +369,256 @@ function saveKinesio(){
 }
 
 // ══════════════════════════════════════════════════════
+//  ASISTENTE IA — ANAMNESIS
+// ══════════════════════════════════════════════════════
+
+async function anamnesisIA() {
+  const API_KEY = getApiKey();
+  if (!API_KEY) { showApiKeyModal(); return; }
+
+  // Leer estado actual del formulario
+  const get = id => (document.getElementById(id)?.value || '').trim();
+  const isChecked = id => document.getElementById(id)?.classList.contains('yes');
+
+  const estadoActual = {
+    motivo:       get('kine-motivo'),
+    mecanismo:    get('kine-mecanismo'),
+    fechaLesion:  get('kine-fecha-lesion'),
+    fechaCx:      get('kine-fecha-cx'),
+    medico:       get('kine-medico'),
+    dx:           get('kine-dx'),
+    tratPrevio:   kineState.form?.tratPrevio || '',
+    tratCual:     get('kine-trat-cual'),
+    estudios:     (kineState.form?.estudios || []).join(', '),
+    eva:          get('kine-eva'),
+    dolorMov:     get('kine-dolor-mov'),
+    antecedentes: [...document.querySelectorAll('.kine-antec:checked')].map(c=>c.value).join(', '),
+    antecObs:     get('kine-antec-obs'),
+    deportePrev:  get('kine-deporte-prev'),
+    actActual:    get('kine-act-actual'),
+    frec:         get('kine-frec'),
+    horas:        get('kine-horas'),
+    objetivos:    [...document.querySelectorAll('.kine-objetivo:checked')].map(c=>c.value).join(', '),
+    objDet:       get('kine-obj-det'),
+  };
+
+  const paciente = cur ? `Nombre: ${cur.nombre||'—'} | Edad: ${cur.edad||'—'} | Deporte: ${cur.deporte||'—'}` : 'Sin atleta seleccionado';
+
+  // Modal de espera
+  const modal = document.createElement('div');
+  modal.id = 'anamnesis-ia-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px)';
+  modal.innerHTML = `
+    <div style="background:#0f0f0f;border:1px solid rgba(57,255,122,.25);border-radius:16px;padding:32px;width:100%;max-width:560px;margin:16px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--neon);letter-spacing:.12em;margin-bottom:8px;text-transform:uppercase">🤖 Asistente Clínico IA</div>
+      <div id="anamnesis-ia-status" style="font-size:14px;font-weight:700;color:#f0f0f0;margin-bottom:8px">Analizando formulario...</div>
+      <div style="font-size:12px;color:#666;font-family:'JetBrains Mono',monospace">Leyendo campos · Consultando IA · Aplicando correcciones</div>
+      <div id="anamnesis-ia-body" style="margin-top:20px"></div>
+    </div>`;
+  document.body.appendChild(modal);
+
+  const prompt = `Sos un asistente clínico integrado en MoveMetrics, plataforma deportivo-clínica para kinesiólogos argentinos.
+
+PACIENTE: ${paciente}
+
+ESTADO ACTUAL DEL FORMULARIO DE ANAMNESIS:
+1. Motivo de consulta: "${estadoActual.motivo || '(vacío)'}"
+2. Mecanismo de lesión: "${estadoActual.mecanismo || '(vacío)'}"
+3. Fecha lesión: "${estadoActual.fechaLesion || '(vacío)'}"
+4. Fecha cirugía: "${estadoActual.fechaCx || '(vacío)'}"
+5. Médico a cargo: "${estadoActual.medico || '(vacío)'}"
+6. Diagnóstico médico: "${estadoActual.dx || '(vacío)'}"
+7. Tratamiento previo: "${estadoActual.tratPrevio || '(vacío)'}"
+8. ¿Cuál tratamiento?: "${estadoActual.tratCual || '(vacío)'}"
+9. Estudios complementarios marcados: "${estadoActual.estudios || 'ninguno'}"
+10. EVA (0-10): "${estadoActual.eva || '0'}"
+11. Movimiento que intensifica dolor: "${estadoActual.dolorMov || '(vacío)'}"
+12. Antecedentes patológicos marcados: "${estadoActual.antecedentes || 'ninguno'}"
+13. Observaciones / cirugías previas: "${estadoActual.antecObs || '(vacío)'}"
+14. Deportes anteriores: "${estadoActual.deportePrev || '(vacío)'}"
+15. Actividad física actual: "${estadoActual.actActual || '(vacío)'}"
+16. Frecuencia semanal: "${estadoActual.frec || '(vacío)'}"
+17. Horas/semana: "${estadoActual.horas || '(vacío)'}"
+18. Objetivos marcados: "${estadoActual.objetivos || 'ninguno'}"
+19. Desarrollo de objetivos: "${estadoActual.objDet || '(vacío)'}"
+
+REGLAS ESTRICTAS:
+- Si un campo tiene contenido: devolvé una versión corregida (ortografía, orden clínico, español rioplatense) O null si no hay cambios.
+- Si un campo está vacío: completalo SOLO si podés inferirlo con certeza desde otros campos. Si no, devolvé null. NUNCA inventés datos clínicos, diagnósticos, fechas ni nombres.
+- Para "estudios": solo marcá los mencionados explícitamente en motivo o mecanismo. Usá exactamente estos valores: "resonancia", "radiografia", "ecografia", "tomografia".
+- Para "antecedentes": solo los mencionados explícitamente. Valores: "Genitourinarias","Digestivas","Hormonales","Sanguíneas","Cardiovasculares","Neurológicas","Reumatológicas","Psicológicas".
+- Para "objetivos": solo los inferibles con certeza. Valores: "Deportivo","Acondicionamiento General","Salud","Calidad de Vida".
+- Para "tratPrevio": "si" o "no" solo si está claro en el texto. Null si no.
+- Para "eva": entero 0-10 solo si el motivo menciona nivel de dolor explícito. Null si no.
+- Para "fechaLesion" y "fechaCx": formato YYYY-MM-DD. Null si no hay fecha mencionada.
+- La precisión tiene prioridad absoluta. Ante cualquier duda, devolvé null.
+
+Respondé ÚNICAMENTE con JSON válido, sin texto adicional:
+{
+  "motivo": string|null,
+  "mecanismo": string|null,
+  "fechaLesion": "YYYY-MM-DD"|null,
+  "fechaCx": "YYYY-MM-DD"|null,
+  "medico": string|null,
+  "dx": string|null,
+  "tratPrevio": "si"|"no"|null,
+  "tratCual": string|null,
+  "estudios": ["resonancia","radiografia","ecografia","tomografia"] subset|null,
+  "eva": 0-10|null,
+  "dolorMov": string|null,
+  "antecedentes": string[]|null,
+  "antecObs": string|null,
+  "deportePrev": string|null,
+  "actActual": string|null,
+  "frec": string|null,
+  "horas": string|null,
+  "objetivos": string[]|null,
+  "objDet": string|null
+}`;
+
+  try {
+    document.getElementById('anamnesis-ia-status').textContent = 'Consultando IA clínica...';
+
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + API_KEY },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        max_tokens: 800,
+        temperature: 0,
+        messages: [
+          { role: 'system', content: 'Sos un asistente clínico de kinesiología deportiva. Respondés SOLO con JSON válido, sin markdown, sin explicaciones.' },
+          { role: 'user', content: prompt }
+        ]
+      })
+    });
+
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+
+    let raw = data.choices?.[0]?.message?.content || '';
+    raw = raw.replace(/```json|```/g, '').trim();
+    const d = JSON.parse(raw);
+
+    // Aplicar cambios y registrar resumen
+    const correcciones = [];
+    const completados  = [];
+    const sinDatos     = [];
+
+    function aplicarTexto(id, campo, valor, labelNombre) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const anterior = el.value.trim();
+      if (valor === null || valor === undefined) { if (!anterior) sinDatos.push(labelNombre); return; }
+      if (anterior && valor !== anterior) { el.value = valor; correcciones.push({ campo: labelNombre, antes: anterior, despues: valor }); }
+      else if (!anterior) { el.value = valor; completados.push(labelNombre); }
+    }
+
+    aplicarTexto('kine-motivo',      'motivo',      d.motivo,      'Motivo de consulta');
+    aplicarTexto('kine-mecanismo',   'mecanismo',   d.mecanismo,   'Mecanismo de lesión');
+    aplicarTexto('kine-fecha-lesion','fechaLesion',  d.fechaLesion, 'Fecha de lesión');
+    aplicarTexto('kine-fecha-cx',    'fechaCx',      d.fechaCx,     'Fecha de cirugía');
+    aplicarTexto('kine-medico',      'medico',       d.medico,      'Médico a cargo');
+    aplicarTexto('kine-dx',          'dx',           d.dx,          'Diagnóstico médico');
+    aplicarTexto('kine-trat-cual',   'tratCual',     d.tratCual,    'Tratamiento previo (cuál)');
+    aplicarTexto('kine-dolor-mov',   'dolorMov',     d.dolorMov,    'Movimiento que intensifica dolor');
+    aplicarTexto('kine-antec-obs',   'antecObs',     d.antecObs,    'Obs. / Cirugías previas');
+    aplicarTexto('kine-deporte-prev','deportePrev',  d.deportePrev, 'Deportes anteriores');
+    aplicarTexto('kine-act-actual',  'actActual',    d.actActual,   'Actividad física actual');
+    aplicarTexto('kine-frec',        'frec',         d.frec,        'Frecuencia semanal');
+    aplicarTexto('kine-horas',       'horas',        d.horas,       'Horas/semana');
+    aplicarTexto('kine-obj-det',     'objDet',       d.objDet,      'Desarrollo de objetivos');
+
+    // Tratamiento previo SI/NO
+    if (d.tratPrevio) {
+      const anterior = kineState.form?.tratPrevio || '';
+      if (!anterior) { setKineTrat(d.tratPrevio); completados.push('Tratamiento previo (SI/NO)'); }
+    }
+
+    // EVA
+    if (d.eva !== null && d.eva !== undefined) {
+      const el = document.getElementById('kine-eva');
+      const anterior = parseInt(el?.value) || 0;
+      if (el && anterior === 0 && d.eva > 0) { el.value = d.eva; updateEVA(); completados.push('EVA'); }
+    }
+
+    // Estudios complementarios
+    if (Array.isArray(d.estudios) && d.estudios.length) {
+      const actuales = kineState.form?.estudios || [];
+      const nuevos = d.estudios.filter(e => !actuales.includes(e));
+      nuevos.forEach(e => { toggleEstudio(e); });
+      if (nuevos.length) completados.push('Estudios: ' + nuevos.join(', '));
+    }
+
+    // Antecedentes patológicos
+    if (Array.isArray(d.antecedentes) && d.antecedentes.length) {
+      const actuales = [...document.querySelectorAll('.kine-antec:checked')].map(c=>c.value);
+      const nuevos = d.antecedentes.filter(a => !actuales.includes(a));
+      nuevos.forEach(a => { const cb = document.querySelector(`.kine-antec[value="${a}"]`); if(cb) cb.checked = true; });
+      if (nuevos.length) completados.push('Antecedentes: ' + nuevos.join(', '));
+    }
+
+    // Objetivos
+    if (Array.isArray(d.objetivos) && d.objetivos.length) {
+      const actuales = [...document.querySelectorAll('.kine-objetivo:checked')].map(c=>c.value);
+      const nuevos = d.objetivos.filter(o => !actuales.includes(o));
+      nuevos.forEach(o => { const cb = document.querySelector(`.kine-objetivo[value="${o}"]`); if(cb) cb.checked = true; });
+      if (nuevos.length) completados.push('Objetivos: ' + nuevos.join(', '));
+    }
+
+    // Mostrar resumen en el modal
+    document.getElementById('anamnesis-ia-status').textContent = '✅ Formulario procesado';
+
+    const filaCorrec = correcciones.map(c => `
+      <div style="margin-bottom:10px;padding:10px;background:rgba(57,255,122,.05);border:1px solid rgba(57,255,122,.15);border-radius:8px">
+        <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--neon);margin-bottom:4px">${c.campo}</div>
+        <div style="font-size:11px;color:#888;text-decoration:line-through;margin-bottom:2px">${c.antes}</div>
+        <div style="font-size:12px;color:#f0f0f0">${c.despues}</div>
+      </div>`).join('');
+
+    const filaComp = completados.length
+      ? completados.map(c => `<div style="font-size:12px;color:#39FF7A;padding:3px 0">✓ ${c}</div>`).join('')
+      : '<div style="font-size:12px;color:#666">— ninguno</div>';
+
+    const filaSin = sinDatos.length
+      ? sinDatos.map(c => `<div style="font-size:12px;color:#666;padding:3px 0">— ${c}</div>`).join('')
+      : '<div style="font-size:12px;color:#666">—</div>';
+
+    document.getElementById('anamnesis-ia-body').innerHTML = `
+      <div style="max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:16px">
+        ${correcciones.length ? `
+        <div>
+          <div style="font-size:11px;font-family:'JetBrains Mono',monospace;color:#FFB020;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">✏️ Correcciones (${correcciones.length})</div>
+          ${filaCorrec}
+        </div>` : ''}
+        <div>
+          <div style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--neon);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">✅ Campos completados (${completados.length})</div>
+          ${filaComp}
+        </div>
+        <div>
+          <div style="font-size:11px;font-family:'JetBrains Mono',monospace;color:#444;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">⬜ Sin datos suficientes (${sinDatos.length})</div>
+          ${filaSin}
+        </div>
+        <div style="font-size:10px;color:#444;font-family:'JetBrains Mono',monospace;border-top:1px solid #1a1a1a;padding-top:10px">
+          ⚠️ Registro clínico real. Revisá los cambios antes de guardar.
+        </div>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:10px">
+        <button onclick="saveKinesio();document.getElementById('anamnesis-ia-modal').remove();showSaveToast()" style="flex:1;background:var(--neon);color:#000;border:none;border-radius:8px;padding:11px;font-weight:700;font-size:13px;cursor:pointer">💾 Guardar evaluación</button>
+        <button onclick="document.getElementById('anamnesis-ia-modal').remove()" style="background:#1a1a1a;color:#888;border:1px solid #333;border-radius:8px;padding:11px 16px;font-size:13px;cursor:pointer">Cerrar</button>
+      </div>`;
+
+  } catch(e) {
+    const st = document.getElementById('anamnesis-ia-status');
+    if (st) st.textContent = '❌ Error: ' + e.message;
+    const body = document.getElementById('anamnesis-ia-body');
+    if (body) body.innerHTML = `<button onclick="document.getElementById('anamnesis-ia-modal').remove()" style="margin-top:12px;background:#1a1a1a;color:#888;border:1px solid #333;border-radius:8px;padding:11px 16px;font-size:13px;cursor:pointer">Cerrar</button>`;
+    console.error('Anamnesis IA error:', e);
+  }
+}
+
+window.anamnesisIA = anamnesisIA;
+
+// ══════════════════════════════════════════════════════
 //  INFORME IA + PDF
 // ══════════════════════════════════════════════════════
