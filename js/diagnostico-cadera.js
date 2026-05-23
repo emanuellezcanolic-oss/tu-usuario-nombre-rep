@@ -77,9 +77,8 @@ function renderDiagnosticosCadera() {
   ]);
 
   const positivos = Object.entries(kineState.tests)
-    .filter(([, v]) => v.result === 'pos' && caderaIds.has(v.id !== undefined ? v.id : ''))
-    .map(([id]) => id)
-    .filter(id => caderaIds.has(id));
+    .filter(([id, v]) => v.result === 'pos' && caderaIds.has(id))
+    .map(([id]) => id);
 
   if (positivos.length === 0) { card.style.display = 'none'; return; }
 

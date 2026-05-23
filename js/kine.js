@@ -38,6 +38,54 @@ function buildHooperFields(){
   </div>`;
 }
 
+function buildWellnessCadera(){
+  const c=document.getElementById('tp-ihot12');if(!c||c.innerHTML)return;
+  const items=[
+    ['ihot-1', 'Frecuencia del dolor de cadera'],
+    ['ihot-2', 'Intensidad del dolor en actividad de alta demanda'],
+    ['ihot-3', 'Sensación de que la cadera va a "fallar" o bloquear'],
+    ['ihot-4', 'Necesidad de evitar actividades por la cadera'],
+    ['ihot-5', 'Dificultad subir / bajar escaleras'],
+    ['ihot-6', 'Dificultad entrar / salir de vehículo'],
+    ['ihot-7', 'Preocupación por la condición de la cadera'],
+    ['ihot-8', 'Distracción de la cadera en trabajo o estudio'],
+    ['ihot-9', 'Frustración por la limitación que genera la cadera'],
+    ['ihot-10','Dificultad en tareas del hogar y actividades cotidianas'],
+    ['ihot-11','Dificultad estar de pie por períodos prolongados'],
+    ['ihot-12','Dificultad para realizar deporte / actividad física habitual'],
+  ];
+  let html='<div style="font-size:10px;color:var(--text3);margin-bottom:12px">0 = máximo problema · 100 = sin problema</div>';
+  items.forEach(([id,lbl],i)=>{
+    html+=`<div style="margin-bottom:14px">
+      <div class="flex-b" style="margin-bottom:4px">
+        <span style="font-size:11px;font-weight:600">${i+1}. ${lbl}</span>
+        <span id="${id}-val" style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--neon);min-width:28px;text-align:right">50</span>
+      </div>
+      <input class="hooper-slider" type="range" min="0" max="100" value="50" id="${id}" oninput="document.getElementById('${id}-val').textContent=this.value;calcIHOT12()">
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3);font-family:var(--mono)"><span>0 Máx problema</span><span>100 Sin problema</span></div>
+    </div>`;
+  });
+  html+=`<div style="background:var(--bg4);border:1px solid var(--border);border-radius:var(--r);padding:12px;text-align:center;margin-top:8px">
+    <div style="font-size:10px;color:var(--text2);margin-bottom:4px">Puntaje iHOT-12</div>
+    <div id="ihot-total" style="font-family:var(--mono);font-size:28px;font-weight:800;color:var(--neon)">50</div>
+    <div id="ihot-status" style="font-size:11px;color:var(--text2);margin-top:4px">—</div>
+    <div id="ihot-rec" style="font-size:10px;color:var(--text3);margin-top:6px;line-height:1.4"></div>
+  </div>`;
+  c.innerHTML=html;
+}
+
+function calcIHOT12(){
+  const ids=['ihot-1','ihot-2','ihot-3','ihot-4','ihot-5','ihot-6','ihot-7','ihot-8','ihot-9','ihot-10','ihot-11','ihot-12'];
+  const vals=ids.map(id=>+document.getElementById(id)?.value||50);
+  const score=Math.round(vals.reduce((a,b)=>a+b,0)/ids.length);
+  const col=score>=70?'var(--neon)':score>=50?'var(--amber)':'var(--red)';
+  const el=document.getElementById('ihot-total'),st=document.getElementById('ihot-status'),rc=document.getElementById('ihot-rec');
+  if(el){el.textContent=score;el.style.color=col;}
+  if(st)st.textContent=score>=70?'✅ Función conservada':score>=50?'⚠️ Limitación moderada':'🔴 Limitación significativa';
+  if(rc)rc.textContent=score>=70?'Resultado satisfactorio. Continuar monitoreo.':score>=50?'Considerar kinesioterapia dirigida y seguimiento.':'Evaluar derivación. Alta carga de enfermedad percibida.';
+  if(st){st.style.color=col;}
+}
+
 function calcFatiga(){
   const ids=['fat-h-sueno','fat-h-estres','fat-h-fatiga','fat-h-doms'];
   const vals=ids.map(id=>+document.getElementById(id)?.value||4);
@@ -118,6 +166,7 @@ function buildOrthoPanels(){
   buildOrthoPanel('tp-doha-psoas',        ORTHO_TESTS.dohaPsoas);
   buildOrthoPanel('tp-doha-inguinal',     ORTHO_TESTS.dohaInguinal);
   buildOrthoPanel('tp-doha-complementarios', ORTHO_TESTS.dohaComplementarios);
+  buildWellnessCadera();
   buildOrthoPanel('tp-cervical-neural',   ORTHO_TESTS.cervicalNeural);
   buildOrthoPanel('tp-cervical-articular',ORTHO_TESTS.cervicalArticular);
   buildOrthoPanel('tp-cervical-muscular', ORTHO_TESTS.cervicalMuscular);

@@ -315,7 +315,7 @@
         <button class="btn btn-ghost btn-sm" onclick="showKinePanel('cervical','Cervical')" style="font-size:10px">Cervical</button>
         <button class="btn btn-ghost btn-sm" onclick="showKinePanel('lumbar','Lumbar')" style="font-size:10px">Lumbar</button>
         <button class="btn btn-ghost btn-sm" onclick="showKinePanel('cadera','Cadera')" style="font-size:10px">Cadera</button>
-        <button class="btn btn-sm" onclick="showKinePanel('ingle','Ingle Doha')" style="font-size:10px;background:rgba(255,176,32,.08);border:1px solid rgba(255,176,32,.2);color:#FFB020">Ingle/Doha</button>
+        <button class="btn btn-sm" onclick="showKinePanel('cadera','Cadera');setTimeout(()=>{document.getElementById('cadera-doha-section')?.scrollIntoView({behavior:'smooth',block:'start'})},300)" style="font-size:10px;background:rgba(255,176,32,.08);border:1px solid rgba(255,176,32,.2);color:#FFB020">Ingle/Doha</button>
         <button class="btn btn-ghost btn-sm" onclick="showKinePanel('rodilla','Rodilla')" style="font-size:10px">Rodilla</button>
         <button class="btn btn-ghost btn-sm" onclick="showKinePanel('patelo','Patelofemoral')" style="font-size:10px">Patelofemoral</button>
         <button class="btn btn-ghost btn-sm" onclick="showKinePanel('tobillo','Tobillo')" style="font-size:10px">Tobillo</button>
@@ -418,32 +418,49 @@
             <div class="card-body" id="tp-cadera-fractura"></div>
           </div>
         </div>
+        <!-- Ingle deportiva / Consenso de Doha -->
+        <div id="cadera-doha-section" style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <span style="font-size:11px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.06em">&#9917; Ingle deportiva &middot; Consenso de Doha</span>
+            <span class="tag tag-y" style="font-size:9px">Clasificaci&#243;n 2015</span>
+          </div>
+          <div class="grid-2" style="gap:12px">
+            <div class="card">
+              <div class="card-header"><h3>Doha &middot; Aductores</h3><span class="tag tag-r">Ingle deportiva</span></div>
+              <div class="card-body" id="tp-doha-aductores"></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3>Doha &middot; Iliopsoas</h3><span class="tag tag-y">Ingle anterior</span></div>
+              <div class="card-body" id="tp-doha-psoas"></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3>Doha &middot; Inguinal</h3><span class="tag tag-b">Canal inguinal</span></div>
+              <div class="card-body" id="tp-doha-inguinal"></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3>Tests complementarios</h3><span class="tag tag-g">Cadera / Pubis</span></div>
+              <div class="card-body" id="tp-doha-complementarios"></div>
+            </div>
+          </div>
+        </div>
+        <!-- Encuestas de outcome &middot; Cadera -->
+        <div id="cadera-wellness-section" style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <span style="font-size:11px;font-weight:700;color:var(--neon);text-transform:uppercase;letter-spacing:.06em">&#128202; Outcome &middot; Cadera</span>
+            <span class="tag tag-b" style="font-size:9px">iHOT-12</span>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>iHOT-12 &middot; Hip Outcome Tool</h3><span class="tag tag-y">Funcional &middot; Deportivo</span></div>
+            <div class="card-body" id="tp-ihot12"></div>
+          </div>
+        </div>
         <!-- Motor diagn&#243;stico de cadera -->
         <div id="kine-dx-cadera-card" style="display:none"></div>
       </div>
 
 
-      <!-- Panel ingle / Doha -->
-      <div id="tests-panel-ingle" class="kine-panel hidden">
-        <div class="grid-2" style="gap:12px">
-          <div class="card">
-            <div class="card-header"><h3>Consenso de Doha -- Aductores</h3><span class="tag tag-r">Ingle deportiva</span></div>
-            <div class="card-body" id="tp-doha-aductores"></div>
-          </div>
-          <div class="card">
-            <div class="card-header"><h3>Consenso de Doha -- Iliopsoas</h3><span class="tag tag-y">Ingle anterior</span></div>
-            <div class="card-body" id="tp-doha-psoas"></div>
-          </div>
-          <div class="card">
-            <div class="card-header"><h3>Consenso de Doha -- Inguinal</h3><span class="tag tag-b">Canal inguinal</span></div>
-            <div class="card-body" id="tp-doha-inguinal"></div>
-          </div>
-          <div class="card">
-            <div class="card-header"><h3>Tests complementarios</h3><span class="tag tag-g">Cadera / Pubis</span></div>
-            <div class="card-body" id="tp-doha-complementarios"></div>
-          </div>
-        </div>
-      </div>
+      <!-- Panel ingle / Doha (contenido movido a tests-panel-cadera) -->
+      <div id="tests-panel-ingle" class="kine-panel hidden"></div>
 
       <!-- Panel cervical -->
       <div id="tests-panel-cervical" class="kine-panel hidden">
@@ -2784,8 +2801,8 @@
   <script src="js/informe/sections/cierre.js?v=2"></script>
   <script src="js/informe/template-filler.js?v=1"></script>
   <script src="js/informe/generators/movilidad-tobillo.js?v=1"></script>
-  <script src="js/kine.js?v=7"></script>
-  <script src="js/diagnostico-cadera.js?v=1"></script>
+  <script src="js/kine.js?v=8"></script>
+  <script src="js/diagnostico-cadera.js?v=2"></script>
   <script src="js/informe.js?v=2"></script>
   <script src="js/informe-kinetic.js?v=1"></script>
   <script src="js/video.js?v=2"></script>
