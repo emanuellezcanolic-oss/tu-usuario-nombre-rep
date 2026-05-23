@@ -322,8 +322,8 @@ function showKinePanel(panel,label){
     'lumbar-post': 'sheet-lbp',
     'dorsal': 'sheet-lbp',
     'cervical': 'sheet-cervical',
-    'cadera': 'sheet-rodilla',
-    'gluteo': 'sheet-rodilla',
+    // 'cadera' — muestra tests-panel-cadera (no sheet modal)
+    // 'gluteo' — muestra tests-panel-cadera (no sheet modal)
     // 'ingle' removed — muestra tests-panel-ingle con batería Doha completa
     'pantorrilla': 'sheet-tobillo',
     'pie': 'sheet-tobillo',
@@ -337,9 +337,11 @@ function showKinePanel(panel,label){
     initKlinicalSheet(panel);
     return;
   }
-  // Fallback to old behavior
+  // Panel alias: gluteo -> cadera
+  const PANEL_ALIAS = { gluteo: 'cadera' };
+  const resolvedPanel = PANEL_ALIAS[panel] || panel;
   document.querySelectorAll('.kine-panel').forEach(p=>p.classList.add('hidden'));
-  const el=document.getElementById('tests-panel-'+panel);
+  const el=document.getElementById('tests-panel-'+resolvedPanel);
   if(el){el.classList.remove('hidden');document.getElementById('kine-zona-label')&&(document.getElementById('kine-zona-label').textContent=label+' -- Tests activos');el.scrollIntoView({behavior:'smooth',block:'start'});}
 }
 
