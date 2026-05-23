@@ -500,7 +500,10 @@
       <div class="card mt-16" style="border-color:rgba(255,176,32,.2)">
         <div class="card-header">
           <h3 style="color:var(--amber)">📌 Seguimiento de Lesión Activa</h3>
-          <span class="tag tag-y">Estado · Etapa · RTS</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span class="tag tag-y">Estado · Etapa · RTS</span>
+            <button onclick="autoFillLesionIA()" style="background:rgba(57,255,122,.12);border:1px solid var(--neon);border-radius:6px;color:var(--neon);font-size:10px;font-family:'JetBrains Mono',monospace;padding:4px 10px;cursor:pointer;letter-spacing:.06em">⚡ IA</button>
+          </div>
         </div>
         <div class="card-body">
           <div class="grid-2" style="gap:14px">

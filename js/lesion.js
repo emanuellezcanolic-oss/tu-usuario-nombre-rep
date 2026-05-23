@@ -329,3 +329,124 @@ let caitVals2 = new Array(9).fill(null);
 let faamAvdVals = new Array(21).fill(null);
 let faamDepVals = new Array(8).fill(null);
 let startbackVals = new Array(9).fill(null);
+
+// ══════════════════════════════════════════════════════
+//  AUTO-FILL CON IA — extrae datos de texto clínico
+// ══════════════════════════════════════════════════════
+
+async function autoFillLesionIA() {
+  const API_KEY = getApiKey();
+  if (!API_KEY) { showApiKeyModal(); return; }
+
+  const modal = document.createElement('div');
+  modal.id = 'les-ia-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px)';
+  modal.innerHTML = `
+    <div style="background:#0f0f0f;border:1px solid rgba(57,255,122,.25);border-radius:16px;padding:28px;width:100%;max-width:500px;margin:16px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--neon);letter-spacing:.12em;margin-bottom:8px;text-transform:uppercase">⚡ Auto-fill con IA</div>
+      <div style="font-size:14px;font-weight:700;color:#f0f0f0;margin-bottom:6px">Pegá el texto clínico</div>
+      <div style="font-size:12px;color:#888;margin-bottom:14px;line-height:1.6">La IA extrae solo lo que está explícito o fuertemente inferible. Campos sin info se dejan vacíos.</div>
+      <textarea id="les-ia-input" rows="5" placeholder="Ej: el mes pasado, el traumatólogo me dijo que tengo una lesión de menisco..."
+        style="width:100%;background:#141414;border:1px solid rgba(57,255,122,.2);border-radius:8px;color:#f0f0f0;padding:10px 14px;font-size:13px;outline:none;margin-bottom:12px;box-sizing:border-box;resize:vertical;font-family:inherit"></textarea>
+      <div id="les-ia-status" style="font-size:11px;color:#888;margin-bottom:12px;font-family:'JetBrains Mono',monospace;min-height:16px"></div>
+      <div style="display:flex;gap:10px">
+        <button id="les-ia-btn" onclick="runLesionIA()" style="flex:1;background:var(--neon);color:#000;border:none;border-radius:8px;padding:11px;font-weight:700;font-size:13px;cursor:pointer">Analizar y completar</button>
+        <button onclick="document.getElementById('les-ia-modal').remove()" style="background:#1a1a1a;color:#888;border:1px solid #333;border-radius:8px;padding:11px 16px;font-size:13px;cursor:pointer">Cancelar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function runLesionIA() {
+  const API_KEY = getApiKey();
+  const text = document.getElementById('les-ia-input')?.value?.trim();
+  const status = document.getElementById('les-ia-status');
+  const btn = document.getElementById('les-ia-btn');
+  if (!text) { if (status) status.textContent = 'Ingresá texto primero.'; return; }
+
+  if (status) status.textContent = 'Analizando...';
+  if (btn) btn.disabled = true;
+
+  const TIPOS_VALIDOS = [
+    'Esguince ligamentario','Rotura muscular parcial','Rotura muscular total',
+    'Tendinopatia','Rotura LCA','Rotura LCA + reconstruccion','Rotura meniscal',
+    'Fractura','Luxacion','Contusion','Sobrecarga','Hernia discal',
+    'Pubalgia / ingle deportiva','Tendon de Aquiles (rotura)','Tendinopatia Aquiles',
+    'Osteitis pubis','Otro'
+  ];
+
+  const prompt = `Analizá este texto clínico y extraé SOLO la información explícitamente mencionada o fuertemente inferible. Respondé ÚNICAMENTE con un objeto JSON válido, sin texto adicional.
+
+Texto: "${text}"
+
+Reglas estrictas:
+- Si un campo no está en el texto, devolvé null (nunca inventés datos).
+- "tipo": elegí el valor más apropiado de esta lista exacta o null: ${JSON.stringify(TIPOS_VALIDOS)}
+- "estructura": texto libre describiendo qué estructura está lesionada (ej: "menisco medial derecho"), o null.
+- "estado": "agudo" (días), "subagudo" (semanas), "cronico" (meses+), "readap" (retorno al deporte), o null.
+- "dias": número entero de días desde la lesión (si dice "el mes pasado" → 30, "hace 2 semanas" → 14, "hace 3 meses" → 90), o null si no se puede inferir.
+- "obs": resumen clínico breve extraído del texto (máx 120 caracteres), o null.
+
+Devolvé solo el JSON, ejemplo: {"tipo":"Rotura meniscal","estructura":"menisco medial","estado":"subagudo","dias":30,"obs":"Dx traumatólogo: lesión de menisco"}`;
+
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + API_KEY },
+      body: JSON.stringify({
+        model: 'llama-3.1-8b-instant',
+        max_tokens: 200,
+        temperature: 0,
+        messages: [
+          { role: 'system', content: 'Sos un extractor de datos clínicos. Respondés SOLO con JSON válido, sin markdown, sin explicaciones.' },
+          { role: 'user', content: prompt }
+        ]
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+
+    let raw = data.choices?.[0]?.message?.content || '';
+    raw = raw.replace(/```json|```/g, '').trim();
+    const d = JSON.parse(raw);
+
+    let filled = 0;
+    if (d.tipo) {
+      const sel = document.getElementById('les-tipo');
+      if (sel) {
+        const opt = [...sel.options].find(o => o.value === d.tipo || o.text === d.tipo);
+        if (opt) { sel.value = opt.value; filled++; }
+      }
+    }
+    if (d.estructura) {
+      const el = document.getElementById('les-estructura');
+      if (el) { el.value = d.estructura; filled++; }
+    }
+    if (d.estado) { setLesEstado(d.estado); filled++; }
+    if (d.dias !== null && d.dias !== undefined) {
+      const el = document.getElementById('les-dias');
+      if (el) { el.value = d.dias; updateLesDias(); filled++; }
+    }
+    if (d.obs) {
+      const el = document.getElementById('les-obs');
+      if (el) { el.value = d.obs; filled++; }
+    }
+
+    saveLesionSeguimiento();
+    document.getElementById('les-ia-modal')?.remove();
+
+    const toast = document.createElement('div');
+    toast.textContent = `⚡ IA completó ${filled} campo${filled !== 1 ? 's' : ''}`;
+    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:rgba(57,255,122,.15);border:1px solid var(--neon);color:var(--neon);padding:10px 18px;border-radius:8px;font-size:13px;font-family:"JetBrains Mono",monospace;z-index:9999;animation:fadeIn .3s';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+
+  } catch (e) {
+    if (status) status.textContent = 'Error: ' + e.message;
+    if (btn) btn.disabled = false;
+    console.error('IA lesion error:', e);
+  }
+}
+
+window.autoFillLesionIA = autoFillLesionIA;
+window.runLesionIA = runLesionIA;
