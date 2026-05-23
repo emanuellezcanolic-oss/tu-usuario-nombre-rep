@@ -140,3 +140,16 @@ function saveKlinicalSheet(type) {
   showSaveToast();
 }
 
+// ── PRE-BUILD ALL SHEETS AT PAGE LOAD ──────────────────────────────────────
+// Ensures tab content exists regardless of how modals are opened.
+// DOMContentLoaded fires after all <script> tags parsed → all builders defined.
+document.addEventListener('DOMContentLoaded', function() {
+  try { initHombroSheet();   } catch(e) { console.error('initHombroSheet',e); }
+  try { initRodillaSheet();  } catch(e) { console.error('initRodillaSheet',e); }
+  try { initTobilloSheet();  } catch(e) { console.error('initTobilloSheet',e); }
+  try { initLBPSheet();      } catch(e) { console.error('initLBPSheet',e); }
+  try { initGroinSheet();    } catch(e) { console.error('initGroinSheet',e); }
+  try { if(typeof initCodoSheet==='function')    initCodoSheet();    } catch(e) { console.error('initCodoSheet',e); }
+  try { if(typeof initCervicalSheet==='function') initCervicalSheet(); } catch(e) { console.error('initCervicalSheet',e); }
+});
+
