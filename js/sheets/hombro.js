@@ -1,6 +1,6 @@
 // sheets/hombro.js — hoja clínica hombro/muñeca (ROM, tests, fuerza, ASES, WORC, DASH, SPADI)
 function buildHombroROM() {
-  const c = document.getElementById('hombro-rom-fields'); if(!c || c.innerHTML) return;
+  const c = document.getElementById('hombro-rom-fields'); if(!c) return; c.innerHTML = '';
   c.innerHTML = ROM_HOMBRO.map(m => `
     <div class="card mb-8">
       <div class="card-header"><h3>${m.label}</h3><span class="tag tag-b">Ref: ${m.ref}</span></div>
@@ -34,7 +34,7 @@ function calcTROMSheet() {
 }
 
 function buildHombroTests() {
-  const c = document.getElementById('hombro-tests-rapidos'); if(!c || c.innerHTML) return;
+  const c = document.getElementById('hombro-tests-rapidos'); if(!c) return; c.innerHTML = '';
   c.innerHTML = HOMBRO_TESTS.map(t => `
     <div class="card mb-8">
       <div class="card-header"><h3>${t.name}</h3><span class="tag ${t.tag}" style="font-size:9px">${t.sub}</span></div>
@@ -50,7 +50,7 @@ function buildHombroTests() {
 }
 
 function buildHombroFuerza() {
-  const c = document.getElementById('hombro-fuerza-fields'); if(!c || c.innerHTML) return;
+  const c = document.getElementById('hombro-fuerza-fields'); if(!c) return; c.innerHTML = '';
   c.innerHTML = FUERZA_HOMBRO.map(m => `
     <div class="card mb-8">
       <div class="card-header"><h3>${m.label}</h3><span class="tag tag-b">${m.angulo}</span></div>
@@ -79,7 +79,7 @@ function calcHombroAsimetria() {
 }
 
 function buildASES() {
-  const c = document.getElementById('ases-actividades-list'); if(!c || c.innerHTML) return;
+  const c = document.getElementById('ases-actividades-list'); if(!c) return; c.innerHTML = '';
   c.innerHTML = ASES_ITEMS.map((act,i) => `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
       <span style="font-size:12px;flex:1">${act}</span>
@@ -103,7 +103,7 @@ function calcASES2() {
 }
 
 function buildWORC() {
-  const c = document.getElementById('worc-fields-sheet'); if(!c || c.innerHTML) return;
+  const c = document.getElementById('worc-fields-sheet'); if(!c) return; c.innerHTML = '';
   worcVals = new Array(21).fill(0);
   let idx = 0;
   c.innerHTML = WORC_SECTIONS.map(sec => `
@@ -131,7 +131,7 @@ function calcWORC2() {
 }
 
 function buildDASH() {
-  const c = document.getElementById('dash-fields-sheet'); if(!c || c.innerHTML) return;
+  const c = document.getElementById('dash-fields-sheet'); if(!c) return; c.innerHTML = '';
   c.innerHTML = DASH_ITEMS.map((item,i) => `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)">
       <span style="font-size:11px;flex:1">${item}</span>
