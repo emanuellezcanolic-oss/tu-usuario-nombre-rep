@@ -26,6 +26,7 @@ function initHombroSheet() {
   buildASES();
   buildWORC();
   buildDASH();
+  if(typeof buildHombroRTP==='function') buildHombroRTP();
   if(typeof renderDiagnosticosHombro==='function') renderDiagnosticosHombro();
 }
 
@@ -59,7 +60,7 @@ function showHTab(tab, btn) {
   // Lazy-init: build content on first tab switch if modal opened without initKlinicalSheet
   const romFields = document.getElementById('hombro-rom-fields');
   if (romFields && !romFields.innerHTML) initHombroSheet();
-  ['obs','rom','tests','fuerza','cuest'].forEach(t => {
+  ['obs','rom','tests','fuerza','cuest','rtp'].forEach(t => {
     const el = document.getElementById('htab-' + t); if(el) el.style.display = t === tab ? 'block' : 'none';
   });
   document.querySelectorAll('#sheet-hombro .btn').forEach(b => {

@@ -2814,8 +2814,8 @@
   <script src="js/valgo.js?v=2"></script>
   <script src="js/lesion.js?v=5"></script>
   <!-- Clinical sheets split por articulación (originalmente klinical.js 1163 LOC) -->
-  <script src="js/sheets/_common.js?v=5"></script>
-  <script src="js/sheets/hombro.js?v=2"></script>
+  <script src="js/sheets/_common.js?v=6"></script>
+  <script src="js/sheets/hombro.js?v=3"></script>
   <script src="js/sheets/rodilla.js?v=1"></script>
   <script src="js/sheets/tobillo.js?v=1"></script>
   <script src="js/sheets/lumbar.js?v=1"></script>
@@ -2988,6 +2988,7 @@
       <button class="btn btn-ghost btn-sm" id="htab-tests-btn" onclick="showHTab('tests',this)" style="white-space:nowrap;font-size:10px">Tests</button>
       <button class="btn btn-ghost btn-sm" id="htab-fuerza-btn" onclick="showHTab('fuerza',this)" style="white-space:nowrap;font-size:10px">Fuerza</button>
       <button class="btn btn-ghost btn-sm" id="htab-cuest-btn" onclick="showHTab('cuest',this)" style="white-space:nowrap;font-size:10px">Escalas</button>
+      <button class="btn btn-ghost btn-sm" id="htab-rtp-btn" onclick="showHTab('rtp',this)" style="white-space:nowrap;font-size:10px">RTP</button>
     </div>
 
     <!-- TAB: OBSERVACIÓN -->
@@ -3184,6 +3185,11 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- TAB: RETORNO AL JUEGO -->
+    <div id="htab-rtp" style="display:none">
+      <div id="hombro-rtp-fields"></div>
     </div>
 
     <!-- Diagnóstico diferencial EBM -->
