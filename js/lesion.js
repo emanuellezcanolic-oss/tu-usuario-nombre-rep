@@ -101,7 +101,7 @@ const HOMBRO_TESTS = [
   // ── Subacromial / Pinzamiento ────────────────────────────────────────
   { id:'hawkins',   name:'Hawkins-Kennedy',        sub:'DESCARTAR RC · LR− 0.25 · Sn 0.83',       tag:'tag-b' },
   { id:'neer',      name:'Neer impingement',        sub:'Subacromial · Sn 0.72 · DOR 4.02 SIS',     tag:'tag-b' },
-  { id:'painful-arc',name:'Arco doloroso',          sub:'CONFIRMAR RC · LR+ 3.44 · Sp 0.82',        tag:'tag-r' },
+  // painful-arc removido — está hardcoded con más detalle (rango de grados) en el HTML
   { id:'yergason',  name:'Yergason',                sub:'Bíceps / SIS · DOR 4.71 · Sp 86%',         tag:'tag-b' },
   // ── Manguito Rotador ─────────────────────────────────────────────────
   { id:'jobe',      name:'Empty Can (Jobe)',         sub:'Supraespinoso · DOR 3.54 · Sn 71.7%',      tag:'tag-r' },

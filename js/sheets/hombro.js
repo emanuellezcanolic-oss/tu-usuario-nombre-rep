@@ -33,20 +33,53 @@ function calcTROMSheet() {
   }
 }
 
+// Hombro-specific toggle: also locks EVA slider when NEG selected
+function toggleOTHombro(btn, type) {
+  const btnGroup = btn.parentElement;
+  btnGroup.querySelectorAll('.ot-btn').forEach(b => b.classList.remove('pos','neg'));
+  btn.classList.add(type);
+  // lock EVA slider in same column div
+  const col = btnGroup.parentElement;
+  const slider = col.querySelector('.eva-slider');
+  const valEl  = col.querySelector('.eva-val');
+  if (slider) {
+    if (type === 'neg') {
+      slider.disabled = true;
+      slider.value = 0;
+      slider.style.opacity = '0.25';
+      slider.style.pointerEvents = 'none';
+      if (valEl) valEl.textContent = '0';
+    } else {
+      slider.disabled = false;
+      slider.style.opacity = '1';
+      slider.style.pointerEvents = '';
+    }
+  }
+}
+
 function buildHombroTests() {
   const c = document.getElementById('hombro-tests-rapidos'); if(!c) return; c.innerHTML = '';
+  const col = (side) => `
+    <div>
+      <div class="il mb-4">${side}</div>
+      <div style="display:flex;gap:6px">
+        <button class="ot-btn" onclick="toggleOTHombro(this,'pos')">+ POS</button>
+        <button class="ot-btn" onclick="toggleOTHombro(this,'neg')">– NEG</button>
+      </div>
+      <div class="ig mt-6">
+        <label class="il" style="font-size:10px">EVA ${side}</label>
+        <input type="range" class="eva-slider" min="0" max="10" value="0"
+          oninput="this.nextElementSibling.textContent=this.value">
+        <span class="eva-val" style="font-family:var(--mono);font-size:13px;display:block;text-align:center">0</span>
+      </div>
+    </div>`;
   c.innerHTML = HOMBRO_TESTS.map(t => `
     <div class="card mb-8">
       <div class="card-header"><h3>${t.name}</h3><span class="tag ${t.tag}" style="font-size:9px">${t.sub}</span></div>
       <div class="card-body">
-        <div class="grid-2" style="gap:8px">
-          <div><div class="il mb-4">D</div><div style="display:flex;gap:6px"><button class="ot-btn" onclick="toggleOT(this,'pos')">+ POS</button><button class="ot-btn" onclick="toggleOT(this,'neg')">– NEG</button></div></div>
-          <div><div class="il mb-4">I</div><div style="display:flex;gap:6px"><button class="ot-btn" onclick="toggleOT(this,'pos')">+ POS</button><button class="ot-btn" onclick="toggleOT(this,'neg')">– NEG</button></div></div>
-        </div>
-        <div class="ig mt-8"><label class="il">EVA D</label><input type="range" class="eva-slider" min="0" max="10" value="0" oninput="this.nextElementSibling.textContent=this.value"><span style="font-family:var(--mono);font-size:14px;display:block;text-align:center">0</span></div>
+        <div class="grid-2" style="gap:10px">${col('D')}${col('I')}</div>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
 function buildHombroFuerza() {
@@ -651,5 +684,506 @@ function calcRTPSemaforo() {
     verdict.textContent = '❌ ' + passed + '/' + checks.length + ' — NO clearance. Déficit en: ' + failed.join(', ');
     verdict.style.background = 'rgba(255,68,68,.12)'; verdict.style.color = 'var(--red)'; verdict.style.fontWeight = '700';
   }
+}
+
+// ── INFORME KINESIOLÓGICO HOMBRO ─────────────────────────────────────────────
+// Genera un reporte profesional imprimible en nueva ventana
+
+function buildHombroInforme() {
+  const c = document.getElementById('hombro-informe-panel');
+  if (!c || c.innerHTML) return;
+  const profV  = document.getElementById('prof-nombre')?.value || 'Lic. Emanuel Lezcano';
+  const instV  = document.getElementById('prof-inst')?.value   || 'The Move Club';
+  c.innerHTML = `
+  <div style="font-size:11px;color:var(--text3);margin-bottom:12px;padding:8px;background:var(--bg4);border-radius:8px">
+    <strong style="color:var(--amber)">Informe Clínico</strong> · Genera un PDF profesional con los datos de la evaluación actual. Solo se incluyen secciones con datos completados.
+  </div>
+
+  <!-- Destinatario -->
+  <div class="card mb-10">
+    <div class="card-header"><h3>Destinatario</h3></div>
+    <div class="card-body">
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px">
+          <input type="radio" name="inf-dest" value="medico" id="inf-dest-med" checked
+            onchange="document.getElementById('inf-med-fields').style.display='block'">
+          Médico / Especialista
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px">
+          <input type="radio" name="inf-dest" value="paciente" id="inf-dest-pac"
+            onchange="document.getElementById('inf-med-fields').style.display='none'">
+          Paciente / Familia
+        </label>
+      </div>
+      <div id="inf-med-fields">
+        <div class="grid-2" style="gap:8px">
+          <div class="ig"><label class="il">Nombre del médico (Dr./Dra.)</label>
+            <input class="inp" id="inf-doctor-nombre" placeholder="Ej: Juan García"></div>
+          <div class="ig"><label class="il">Especialidad</label>
+            <input class="inp" id="inf-doctor-esp" placeholder="Ej: Ortopedia y Traumatología"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firmante -->
+  <div class="card mb-10">
+    <div class="card-header"><h3>Profesional firmante</h3></div>
+    <div class="card-body">
+      <div class="grid-2" style="gap:8px">
+        <div class="ig"><label class="il">Nombre profesional</label>
+          <input class="inp" id="inf-prof-nombre" placeholder="Lic. Emanuel Lezcano" value="${profV}"></div>
+        <div class="ig"><label class="il">MP / Matrícula</label>
+          <input class="inp" id="inf-prof-mp" placeholder="MP 12345"></div>
+        <div class="ig"><label class="il">Institución</label>
+          <input class="inp" id="inf-prof-inst" placeholder="The Move Club" value="${instV}"></div>
+        <div class="ig"><label class="il">Diagnóstico kinesiológico</label>
+          <input class="inp" id="inf-dx-manual" placeholder="Ej: Tendinopatía supraespinoso crónica D"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Secciones -->
+  <div class="card mb-10">
+    <div class="card-header"><h3>Secciones a incluir</h3></div>
+    <div class="card-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        ${[
+          ['inf-sec-rom','ROM'],['inf-sec-tests','Tests ortopédicos'],
+          ['inf-sec-fuerza','Fuerza HHD'],['inf-sec-escalas','Escalas funcionales'],
+          ['inf-sec-rtp','Criterios RTP'],['inf-sec-trat','Plan de tratamiento'],
+        ].map(([id,label])=>`
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
+            <input type="checkbox" id="${id}" checked> ${label}
+          </label>`).join('')}
+      </div>
+    </div>
+  </div>
+
+  <!-- Notas -->
+  <div class="card mb-12">
+    <div class="card-header"><h3>Notas clínicas adicionales</h3></div>
+    <div class="card-body">
+      <textarea class="inp" id="inf-notas" rows="3"
+        placeholder="Educación al paciente, contraindicaciones, derivaciones sugeridas..."></textarea>
+    </div>
+  </div>
+
+  <!-- Botón -->
+  <button class="btn btn-neon btn-full" onclick="generarInformeHombro()">
+    📄 Generar Informe & Abrir para imprimir
+  </button>`;
+}
+
+// Helper: EVA slider color
+function _iColor(val, low, high) {
+  return +val <= low ? '#2d7a2d' : +val <= high ? '#c65a00' : '#cc3333';
+}
+// Helper: LSI color
+function _lsiColor(pct) {
+  return +pct >= 90 ? '#2d7a2d' : +pct >= 80 ? '#c65a00' : '#cc3333';
+}
+// Helper: section header
+function _infSecHead(num, title) {
+  return `<div style="display:flex;align-items:center;gap:8px;margin:20px 0 10px;padding-bottom:5px;border-bottom:2px solid #e8f0d4">
+    <span style="background:#8fa845;color:#fff;font-size:9px;font-weight:900;padding:2px 9px;border-radius:3px;letter-spacing:1px">${num}</span>
+    <span style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#1e2d0e">${title}</span>
+  </div>`;
+}
+// Helper: data row
+function _infRow(k, v) {
+  return `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #e5e5e0;font-size:11px">
+    <span style="color:#666">${k}</span><span style="font-weight:600">${v||'—'}</span>
+  </div>`;
+}
+// Read orthopedic test DOM state
+function _readHombroTests() {
+  const results = [];
+  // Painful arc (hardcoded card — first card in htab-tests)
+  const htabTests = document.getElementById('htab-tests');
+  if (htabTests) {
+    const paCard = htabTests.querySelector('.card.mb-10');
+    if (paCard) {
+      const cols = paCard.querySelectorAll('.grid-2 > div');
+      const dCol = cols[0], iCol = cols[1];
+      const dPos = dCol?.querySelector('.ot-btn.pos'), dNeg = dCol?.querySelector('.ot-btn.neg');
+      const iPos = iCol?.querySelector('.ot-btn.pos'), iNeg = iCol?.querySelector('.ot-btn.neg');
+      if (dPos||dNeg||iPos||iNeg) results.push({
+        name:'Arco Doloroso (Painful Arc)', ebi:'LR+ 3.44 · Confirmar RC',
+        dR: dPos?'POS':dNeg?'NEG':'—', iR: iPos?'POS':iNeg?'NEG':'—',
+        evaD: dNeg?'0':(dCol?.querySelector('.eva-slider')?.value||'—'),
+        evaI: iNeg?'0':(iCol?.querySelector('.eva-slider')?.value||'—'),
+      });
+    }
+  }
+  // Quick test cards
+  const cards = document.querySelectorAll('#hombro-tests-rapidos .card');
+  cards.forEach((card,idx) => {
+    const test = HOMBRO_TESTS[idx]; if (!test) return;
+    const cols = card.querySelectorAll('.card-body .grid-2 > div');
+    const dCol = cols[0], iCol = cols[1];
+    const dPos = dCol?.querySelector('.ot-btn.pos'), dNeg = dCol?.querySelector('.ot-btn.neg');
+    const iPos = iCol?.querySelector('.ot-btn.pos'), iNeg = iCol?.querySelector('.ot-btn.neg');
+    if (!dPos&&!dNeg&&!iPos&&!iNeg) return;
+    results.push({
+      name: test.name, ebi: test.sub,
+      dR: dPos?'POS':dNeg?'NEG':'—', iR: iPos?'POS':iNeg?'NEG':'—',
+      evaD: dNeg?'0':(dCol?.querySelector('.eva-slider')?.value||'—'),
+      evaI: iNeg?'0':(iCol?.querySelector('.eva-slider')?.value||'—'),
+    });
+  });
+  return results;
+}
+
+function generarInformeHombro() {
+  // ── Data collection ──
+  const g  = id => document.getElementById(id)?.value || '';
+  const gt = id => document.getElementById(id)?.textContent?.trim() || '';
+  const ch = id => document.getElementById(id)?.checked;
+
+  const dest       = document.querySelector('input[name="inf-dest"]:checked')?.value || 'medico';
+  const docNombre  = g('inf-doctor-nombre');
+  const docEsp     = g('inf-doctor-esp');
+  const profNombre = g('inf-prof-nombre') || 'Lic. Emanuel Lezcano';
+  const profMP     = g('inf-prof-mp');
+  const profInst   = g('inf-prof-inst') || 'The Move Club';
+  const dxManual   = g('inf-dx-manual');
+  const notasExtra = g('inf-notas');
+  const fecha      = new Date().toLocaleDateString('es-AR', {day:'2-digit',month:'long',year:'numeric'});
+
+  // Patient
+  const nombre  = cur?.nombre || '—';
+  const edad    = cur?.edad || '';
+  const peso    = cur?.peso || '';
+  const talla   = cur?.talla || '';
+  const deporte = cur?.deporte || '';
+
+  // Red flags & prognostic factors
+  const redflags = [...document.querySelectorAll('.hombro-redflag:checked')].length > 0;
+  const progCbs  = [...document.querySelectorAll('#htab-obs .card:nth-child(2) input[type=checkbox]:checked')];
+  const progList = progCbs.map(el => el.closest('label')?.textContent?.trim() || '').filter(Boolean);
+  const obsNotes = document.querySelector('#htab-obs textarea')?.value || '';
+
+  // ROM
+  const romRows = (ROM_HOMBRO||[]).map(m => ({
+    label: m.label, ref: m.ref,
+    actD: g(`rom-${m.id}-act-d`), actI: g(`rom-${m.id}-act-i`),
+    pasD: g(`rom-${m.id}-pas-d`), pasI: g(`rom-${m.id}-pas-i`),
+  })).filter(r => r.actD||r.actI||r.pasD||r.pasI);
+  const tromD = gt('hombro-trom-d'), tromI = gt('hombro-trom-i');
+
+  // Tests
+  const tests = _readHombroTests();
+
+  // Strength
+  const fuerzaRows = (FUERZA_HOMBRO||[]).map(m => {
+    const d = g(`fuerza-${m.id}-d`), i = g(`fuerza-${m.id}-i`);
+    if (!d && !i) return null;
+    const asim = (d&&i) ? ((Math.abs(+d - +i)/Math.max(+d,+i))*100).toFixed(1) : null;
+    return { label:`${m.label} ${m.angulo}`, d, i, asim };
+  }).filter(Boolean);
+
+  // Scales
+  const ases  = gt('ases-total');
+  const worc  = gt('worc-total-sheet');
+  const worcP = gt('worc-pct-sheet');
+  const dash  = gt('dash-total-sheet');
+  const spadi = gt('spadi-total');
+  const hasEscalas = [ases,worc,dash,spadi].some(v => v && v !== '—');
+
+  // RTP
+  const wosiMod   = gt('wosi-mod-val');
+  const wosiTag   = gt('wosi-mod-tag');
+  const sirsiPct  = gt('sirsi-pct');
+  const kjoc      = g('kjoc-score');
+  const priars    = g('pria-rs');
+  const rtpNrs    = g('rtp-nrs');
+  const lsiER     = gt('rtp-er0-lsi');
+  const ckcuest   = g('ckcuest-reps');
+  const hasRTP = [wosiMod,sirsiPct,kjoc,ckcuest].some(v => v && v !== '—');
+
+  // Diagnostic engine output
+  const dxCard = document.getElementById('kine-dx-hombro-card');
+  const dxHTML = dxCard?.style.display !== 'none' ? (dxCard?.innerHTML || '') : '';
+
+  // ── Section toggles ──
+  const secROM    = ch('inf-sec-rom');
+  const secTests  = ch('inf-sec-tests');
+  const secFuerza = ch('inf-sec-fuerza');
+  const secEsc    = ch('inf-sec-escalas');
+  const secRTP    = ch('inf-sec-rtp');
+  const secTrat   = ch('inf-sec-trat');
+
+  // ── Build HTML ──
+  const css = `
+    body{font-family:Inter,Arial,sans-serif;margin:0;background:#fff;color:#1a1a1a;font-size:12px;line-height:1.5}
+    table{width:100%;border-collapse:collapse;font-size:11px}
+    th{background:#8fa845;color:#fff;padding:6px 8px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+    td{padding:5px 8px;border-bottom:1px solid #e8f0d4}
+    tr:nth-child(even) td{background:#f8faf2}
+    .pos{color:#2d7a2d;font-weight:700}
+    .neg{color:#888}
+    .alerta{color:#cc3333;font-weight:700}
+    .limite{color:#c65a00;font-weight:700}
+    .ok{color:#2d7a2d;font-weight:700}
+    .sec-badge{display:inline-block;background:#8fa845;color:#fff;font-size:9px;font-weight:900;padding:2px 9px;border-radius:3px;letter-spacing:1px;margin-right:8px}
+    .sec-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#1e2d0e}
+    .sec-head{display:flex;align-items:center;margin:20px 0 10px;padding-bottom:6px;border-bottom:2px solid #e8f0d4}
+    .metric-box{background:#f5f7ee;border-radius:6px;padding:10px;text-align:center;border:1px solid #e8f0d4}
+    .metric-val{font-size:22px;font-weight:900;line-height:1}
+    .metric-lbl{font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+    .metric-sub{font-size:8px;color:#999;margin-top:3px}
+    @media print{
+      .no-print{display:none!important}
+      body{font-size:11px}
+      header{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      .sec-badge,.pos,.neg,.metric-box{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    }
+  `;
+
+  // Intro paragraph
+  const intro = dest === 'medico'
+    ? `<div style="padding:16px 32px;background:#f8f9f3;border-left:4px solid #8fa845;font-size:11px;line-height:1.8;color:#2a2a2a">
+        ${docNombre ? `Dr./Dra. <strong>${docNombre}</strong>${docEsp?` (${docEsp})`:''},<br><br>` : ''}
+        Me dirijo a Ud. y su equipo ${docEsp||'médico'} con el agrado de presentarle el informe kinesiológico del/la paciente
+        <strong>${nombre}</strong>${edad?' de '+edad+' años':''}. La evaluación fue realizada con fecha <strong>${fecha}</strong>
+        siguiendo los lineamientos de la Guía de Práctica Clínica CPG 2025 (Desmeules et al., JOSPT) para patología de hombro,
+        con pruebas de rendimiento diagnóstico validadas por meta-análisis (Zhao 2024).
+       </div>`
+    : `<div style="padding:16px 32px;background:#f8f9f3;border-left:4px solid #8fa845;font-size:11px;line-height:1.8;color:#2a2a2a">
+        Estimado/a <strong>${nombre}</strong>:<br><br>
+        A continuación presentamos los resultados de su evaluación kinesiológica del <strong>${fecha}</strong>.
+        Este informe resume los hallazgos sobre su hombro, incluyendo movilidad, fuerza, pruebas clínicas y
+        cuestionarios funcionales, junto con las recomendaciones de tratamiento.
+       </div>`;
+
+  // 01 — Perfil & Screening
+  const sec01 = `
+    ${_infSecHead('01','Perfil del atleta & Screening')}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div style="background:#f5f7ee;border-radius:6px;padding:12px;border:1px solid #e8f0d4">
+        <div style="font-size:9px;text-transform:uppercase;color:#8fa845;font-weight:700;letter-spacing:1px;margin-bottom:8px">Datos del Paciente</div>
+        ${_infRow('Nombre', nombre)}
+        ${_infRow('Edad', edad ? edad+' años' : '')}
+        ${_infRow('Morfología', [peso?peso+'kg':'', talla?talla+'cm':''].filter(Boolean).join(' / '))}
+        ${_infRow('Disciplina', deporte)}
+        ${_infRow('Fecha evaluación', fecha)}
+      </div>
+      <div style="background:#f5f7ee;border-radius:6px;padding:12px;border:1px solid #e8f0d4">
+        <div style="font-size:9px;text-transform:uppercase;color:#8fa845;font-weight:700;letter-spacing:1px;margin-bottom:8px">Screening CPG 2025</div>
+        <div style="font-size:11px;font-weight:700;margin-bottom:8px;color:${redflags?'#cc3333':'#2d7a2d'}">
+          ${redflags ? '⚠ BANDERAS ROJAS DETECTADAS — DERIVAR' : '✓ Sin banderas rojas'}
+        </div>
+        ${progList.length ? `<div style="font-size:10px;color:#c65a00;font-weight:600;margin-bottom:4px">Factores pronósticos activos:</div>
+          ${progList.map(f=>`<div style="font-size:10px;color:#c65a00">• ${f}</div>`).join('')}`
+        : `<div style="font-size:10px;color:#666">Sin factores pronósticos relevantes</div>`}
+        ${obsNotes ? `<div style="font-size:10px;color:#444;margin-top:8px;font-style:italic">${obsNotes}</div>` : ''}
+      </div>
+    </div>`;
+
+  // 02 — ROM
+  const sec02 = (secROM && romRows.length) ? `
+    ${_infSecHead('02','Análisis de rango de movimiento (ROM)')}
+    <div style="font-size:10px;color:#888;margin-bottom:6px">Marco de referencia: CPG 2025 Rec.#6 · MDC activo: 8–23°</div>
+    <table>
+      <tr><th>Movimiento</th><th>Referencia</th><th>Activo D</th><th>Activo I</th><th>Pasivo D</th><th>Pasivo I</th></tr>
+      ${romRows.map(r=>`<tr>
+        <td><strong>${r.label}</strong></td><td style="color:#888">${r.ref}</td>
+        <td>${r.actD?r.actD+'°':'—'}</td><td>${r.actI?r.actI+'°':'—'}</td>
+        <td>${r.pasD?r.pasD+'°':'—'}</td><td>${r.pasI?r.pasI+'°':'—'}</td>
+      </tr>`).join('')}
+      ${(tromD&&tromD!=='—')||(tromI&&tromI!=='—') ? `<tr style="background:#f0f5e8">
+        <td colspan="2"><strong>TROM (RI+RE)</strong></td>
+        <td><strong>${tromD}</strong></td><td><strong>${tromI}</strong></td><td></td><td></td>
+      </tr>` : ''}
+    </table>` : '';
+
+  // 03 — Tests ortopédicos
+  const sec03 = (secTests && tests.length) ? `
+    ${_infSecHead('03','Mapeo ortopédico de provocación')}
+    <div style="font-size:10px;color:#888;margin-bottom:6px">Resultados basados en evidencia · Zhao 2024 meta-análisis · CPG 2025</div>
+    <table>
+      <tr><th>Test</th><th>EBM</th><th>D</th><th>EVA D</th><th>I</th><th>EVA I</th></tr>
+      ${tests.map(t=>`<tr>
+        <td><strong>${t.name}</strong></td>
+        <td style="font-size:10px;color:#666">${t.ebi}</td>
+        <td class="${t.dR==='POS'?'pos':t.dR==='NEG'?'neg':''}">${t.dR==='POS'?'✚ POSITIVO':t.dR==='NEG'?'– NEGATIVO':'—'}</td>
+        <td>${t.dR==='NEG'?'0':(t.evaD||'—')}${t.evaD&&t.evaD!=='—'?'/10':''}</td>
+        <td class="${t.iR==='POS'?'pos':t.iR==='NEG'?'neg':''}">${t.iR==='POS'?'✚ POSITIVO':t.iR==='NEG'?'– NEGATIVO':'—'}</td>
+        <td>${t.iR==='NEG'?'0':(t.evaI||'—')}${t.evaI&&t.evaI!=='—'?'/10':''}</td>
+      </tr>`).join('')}
+    </table>` : '';
+
+  // 04 — Fuerza HHD
+  const sec04 = (secFuerza && fuerzaRows.length) ? `
+    ${_infSecHead('04','Perfil de fuerza dinamométrica (HHD)')}
+    <div style="font-size:10px;color:#888;margin-bottom:6px">Newtons (N) · MDC 15–20% · CPG 2025 Rec.#7</div>
+    <table>
+      <tr><th>Movimiento</th><th>D (N)</th><th>I (N)</th><th>Asimetría</th><th>Interpretación</th></tr>
+      ${fuerzaRows.map(r=>`<tr>
+        <td><strong>${r.label}</strong></td>
+        <td>${r.d||'—'}</td><td>${r.i||'—'}</td>
+        <td class="${r.asim?+r.asim>=20?'alerta':+r.asim>=15?'limite':'ok':''}">${r.asim?r.asim+'%':'—'}</td>
+        <td style="font-size:10px">${r.asim?(+r.asim>=20?'⚠ CRÍTICO >MDC':+r.asim>=15?'Límite MDC':'✓ Normal'):'—'}</td>
+      </tr>`).join('')}
+    </table>` : '';
+
+  // Dashboard metrics
+  const dashboard = (hasEscalas || hasRTP) ? `
+    ${_infSecHead('05','Dashboard — Indicadores clínicos clave')}
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+      ${ases&&ases!=='—'?`<div class="metric-box">
+        <div class="metric-lbl">ASES Score</div>
+        <div class="metric-val" style="color:${+ases>=80?'#2d7a2d':+ases>=60?'#c65a00':'#cc3333'}">${ases}</div>
+        <div class="metric-sub">MCID: 6.4–21.9 · /100</div></div>`:''}
+      ${worc&&worc!=='—'?`<div class="metric-box">
+        <div class="metric-lbl">WORC</div>
+        <div class="metric-val" style="color:${worcP?'#2d7a2d':'#c65a00'}">${worcP||worc}</div>
+        <div class="metric-sub">MCID: 245.3 · /2100</div></div>`:''}
+      ${dash&&dash!=='—'?`<div class="metric-box">
+        <div class="metric-lbl">DASH</div>
+        <div class="metric-val" style="color:${+dash<=30?'#2d7a2d':+dash<=50?'#c65a00':'#cc3333'}">${dash}</div>
+        <div class="metric-sub">MCID: 10.2 · /100</div></div>`:''}
+      ${wosiMod&&wosiMod!=='—'?`<div class="metric-box">
+        <div class="metric-lbl">WOSI mod.</div>
+        <div class="metric-val" style="color:${+wosiMod>=95?'#2d7a2d':+wosiMod>=90?'#c65a00':'#cc3333'}">${wosiMod}</div>
+        <div class="metric-sub">≥95 competencia</div></div>`:''}
+    </div>` : '';
+
+  // 06 — Escalas
+  const sec06 = (secEsc && hasEscalas) ? `
+    ${_infSecHead('06','Escalas funcionales (CPG 2025 Rec.#8)')}
+    <table>
+      <tr><th>Escala</th><th>Score</th><th>MCID</th><th>Interpretación</th></tr>
+      ${ases&&ases!=='—'?`<tr><td>ASES Score</td><td><strong>${ases}/100</strong></td><td>6.4–21.9 pts</td>
+        <td class="${+ases>=80?'ok':+ases>=60?'limite':'alerta'}">${+ases>=80?'Buena función':+ases>=60?'Función moderada':'Función severamente limitada'}</td></tr>`:''}
+      ${worc&&worc!=='—'?`<tr><td>WORC Index</td><td><strong>${worc}/2100</strong>${worcP?` (${worcP})`:''}</td><td>245.3 pts</td>
+        <td style="font-size:10px;color:#666">Menor = mejor</td></tr>`:''}
+      ${dash&&dash!=='—'?`<tr><td>DASH / QuickDASH</td><td><strong>${dash}/100</strong></td><td>10.2 pts</td>
+        <td class="${+dash<=30?'ok':+dash<=50?'limite':'alerta'}">${+dash<=30?'Discapacidad leve':+dash<=50?'Discapacidad moderada':'Discapacidad severa'}</td></tr>`:''}
+      ${spadi&&spadi!=='—'?`<tr><td>SPADI</td><td><strong>${spadi}/100</strong></td><td>8 pts</td>
+        <td class="${+spadi<=30?'ok':+spadi<=50?'limite':'alerta'}">${+spadi<=30?'Leve':+spadi<=50?'Moderado':'Severo'}</td></tr>`:''}
+    </table>` : '';
+
+  // 07 — RTP
+  const sec07 = (secRTP && hasRTP) ? `
+    ${_infSecHead('07','Criterios de retorno al juego (RTP)')}
+    <div style="font-size:10px;color:#888;margin-bottom:6px">Kurz BMJ Open 2023 · Otley et al. 2024</div>
+    <table>
+      <tr><th>Indicador</th><th>Valor</th><th>Criterio</th><th>Estado</th></tr>
+      ${wosiMod&&wosiMod!=='—'?`<tr><td>WOSI modificado</td><td><strong>${wosiMod}</strong></td><td>≥95 competencia / ≥90 práctica</td>
+        <td class="${+wosiMod>=95?'ok':+wosiMod>=90?'limite':'alerta'}">${wosiTag||''}</td></tr>`:''}
+      ${sirsiPct?`<tr><td>SIRSI %</td><td><strong>${sirsiPct}</strong></td><td>Mayor % = mejor</td>
+        <td class="${+sirsiPct.replace('%','')>=75?'ok':'limite'}">Readiness psicológica</td></tr>`:''}
+      ${kjoc?`<tr><td>KJOC Score</td><td><strong>${kjoc}%</strong></td><td>≥88–90% overhead</td>
+        <td class="${+kjoc>=90?'ok':+kjoc>=80?'limite':'alerta'}">${+kjoc>=90?'Normal':+kjoc>=80?'Riesgo leve':'⚠ Riesgo'}</td></tr>`:''}
+      ${rtpNrs?`<tr><td>NRS Dolor</td><td><strong>${rtpNrs}/10</strong></td><td>≤3/10</td>
+        <td class="${+rtpNrs<=3?'ok':+rtpNrs<=6?'limite':'alerta'}">${+rtpNrs<=3?'✓ OK':'⚠ Excede criterio'}</td></tr>`:''}
+      ${lsiER&&lsiER!=='—'?`<tr><td>LSI ER (Fuerza)</td><td><strong>${lsiER}</strong></td><td>≥90%</td>
+        <td class="${+lsiER.replace('LSI: ','').replace('%','')>=90?'ok':'alerta'}">Simetría miembros</td></tr>`:''}
+      ${ckcuest?`<tr><td>CKCUEST</td><td><strong>${ckcuest} reps</strong></td><td>≥21 reps/15s</td>
+        <td class="${+ckcuest>=21?'ok':'alerta'}">${+ckcuest>=22?'Pass ✓':+ckcuest>=21?'Normal':'Déficit'}</td></tr>`:''}
+    </table>` : '';
+
+  // 08 — Diagnóstico presuntivo
+  const sec08 = `
+    ${_infSecHead('08','Diagnóstico kinesiológico presuntivo')}
+    ${dxManual?`<div style="background:#f5f7ee;border-radius:6px;padding:10px;border:1px solid #e8f0d4;font-size:12px;font-weight:600;color:#1e2d0e;margin-bottom:8px">
+      ${dxManual}</div>`:''}
+    ${dxHTML?`<div style="background:#f5f7ee;border-radius:6px;padding:8px;border:1px solid #e8f0d4;font-size:11px">${dxHTML}</div>`
+    :'<div style="font-size:11px;color:#888;font-style:italic">Completar "Diagnóstico kinesiológico" en el formulario o realizar tests en el panel Kinesiólogo para diagnóstico automático.</div>'}`;
+
+  // 09 — Plan de tratamiento
+  const sec09 = secTrat ? `
+    ${_infSecHead('09','Ruta de tratamiento basada en evidencia')}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      ${[
+        ['FASE 1 — Modulación analgésica', 'Sem. 1–3', 'Isometría pesada RE a 0° y 45° (5×45s, 70% MIVC). Protocolo capsular posterior (Sleeper Stretch). Reducción de inhibición artrogénica.'],
+        ['FASE 2 — Orientación estructural (HSR)', 'Sem. 4–8', 'Heavy Slow Resistance 3s/3s. Síntesis colágena. Trabajo escapular: Push-up plus, remo supino, serrato anterior.'],
+        ['FASE 3 — Potencia y cadena cinética', 'Sem. 9–12', 'Pliometría tren superior. Lanzamientos balísticos. Integración de patrones de empuje cruzado con apoyo monopodal.'],
+        ['FASE 4 — RTS específico', 'Sem. 13+', 'Simulación gestual del deporte. Perturbaciones externas reactivas en overhead. Exposición progresiva con criterios objetivos.'],
+      ].map(([titulo,sem,desc])=>`
+      <div style="background:#f5f7ee;border-radius:6px;padding:10px;border:1px solid #e8f0d4">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <strong style="font-size:10px;color:#1e2d0e">${titulo}</strong>
+          <span style="background:#8fa845;color:#fff;font-size:8px;padding:1px 6px;border-radius:3px">${sem}</span>
+        </div>
+        <div style="font-size:10px;color:#555;line-height:1.5">${desc}</div>
+      </div>`).join('')}
+    </div>` : '';
+
+  // 10 — Notas clínicas
+  const sec10 = notasExtra ? `
+    ${_infSecHead('10','Notas clínicas adicionales')}
+    <div style="background:#fdfde8;border-radius:6px;padding:12px;border:1px solid #e8e0a0;font-size:11px;line-height:1.7;white-space:pre-wrap">${notasExtra}</div>` : '';
+
+  // Firma
+  const firma = `
+    <div style="margin-top:32px;padding-top:16px;border-top:2px solid #e8f0d4;display:flex;justify-content:space-between;align-items:flex-end">
+      <div style="font-size:10px;color:#888">
+        <div>THE MOVE CLUB · Kinesiología de Alto Rendimiento</div>
+        <div>CPG 2025 · Desmeules et al. · Zhao 2024 meta-análisis</div>
+      </div>
+      <div style="text-align:right">
+        <div style="width:140px;border-top:1px solid #1e2d0e;margin-bottom:4px"></div>
+        <div style="font-size:11px;font-weight:700">${profNombre}</div>
+        ${profMP?`<div style="font-size:10px;color:#666">${profMP}</div>`:''}
+        <div style="font-size:10px;color:#666">${profInst}</div>
+      </div>
+    </div>`;
+
+  // ── Assemble full report ──
+  const bodyContent = sec01 + sec02 + sec03 + sec04 + dashboard + sec06 + sec07 + sec08 + sec09 + sec10 + firma;
+
+  const fullHTML = `<!DOCTYPE html>
+<html lang="es"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Informe Kinesiológico — ${nombre} — ${fecha}</title>
+  <style>${css}</style>
+</head><body>
+<div class="no-print" style="background:#1e2d0e;padding:12px 24px;display:flex;gap:8px;align-items:center;position:sticky;top:0;z-index:100">
+  <button onclick="window.print()" style="background:#8fa845;color:#fff;border:none;border-radius:4px;padding:8px 16px;font-weight:700;cursor:pointer;font-size:12px">🖨 Imprimir / Guardar PDF</button>
+  <button onclick="toggleEditMode()" id="edit-btn" style="background:#555;color:#fff;border:none;border-radius:4px;padding:8px 14px;cursor:pointer;font-size:12px">✏ Editar</button>
+  <span style="font-size:11px;color:rgba(255,255,255,.5);margin-left:8px">En imprimir → elegir "Guardar como PDF"</span>
+</div>
+<header style="background:#1e2d0e;padding:24px 40px;display:flex;justify-content:space-between;align-items:flex-start">
+  <div>
+    <div style="font-size:26px;font-weight:900;letter-spacing:-.5px;color:#c8e06b">THE MOVE CLUB</div>
+    <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.45);margin-top:2px">REPORTE CLÍNICO KINESIOLÓGICO</div>
+    <div style="font-size:11px;color:rgba(255,255,255,.65);margin-top:6px">Basado en evidencia · CPG 2025 · Desmeules et al. (JOSPT)</div>
+  </div>
+  <div style="text-align:right;color:rgba(255,255,255,.8);font-size:11px">
+    <div style="font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px">Fecha evaluación</div>
+    <div style="font-size:16px;font-weight:700;color:#c8e06b">${fecha}</div>
+    <div style="margin-top:6px">${profNombre}${profMP?' · '+profMP:''}</div>
+    <div style="font-size:10px;color:rgba(255,255,255,.5)">${profInst}</div>
+  </div>
+</header>
+${intro}
+<main id="report-body" style="padding:8px 40px 32px;max-width:800px;margin:0 auto">${bodyContent}</main>
+<footer style="background:#1e2d0e;color:rgba(255,255,255,.4);padding:10px 40px;display:flex;justify-content:space-between;font-size:9px">
+  <span>THE MOVE CLUB · DEPARTAMENTO DE BIOMECÁNICA Y RENDIMIENTO</span>
+  <span>Informe Clínico Kinesiológico · CPG 2025</span>
+</footer>
+<script>
+function toggleEditMode(){
+  const body = document.getElementById('report-body');
+  const btn  = document.getElementById('edit-btn');
+  const intro = document.querySelector('header + div');
+  const editing = body.contentEditable === 'true';
+  body.contentEditable = editing ? 'false' : 'true';
+  if (intro) intro.contentEditable = body.contentEditable;
+  body.style.outline = editing ? 'none' : '2px dashed #8fa845';
+  btn.textContent = editing ? '✏ Editar' : '✓ Listo';
+  btn.style.background = editing ? '#555' : '#8fa845';
+}
+</script>
+</body></html>`;
+
+  const win = window.open('', '_blank', 'width=960,height=860,resizable=yes,scrollbars=yes');
+  if (!win) { alert('Habilitá popups para este sitio para abrir el informe.'); return; }
+  win.document.write(fullHTML);
+  win.document.close();
 }
 

@@ -2812,10 +2812,10 @@
   <script src="js/vmp.js?v=2"></script>
   <script src="js/videojump.js?v=2"></script>
   <script src="js/valgo.js?v=2"></script>
-  <script src="js/lesion.js?v=5"></script>
+  <script src="js/lesion.js?v=6"></script>
   <!-- Clinical sheets split por articulación (originalmente klinical.js 1163 LOC) -->
-  <script src="js/sheets/_common.js?v=6"></script>
-  <script src="js/sheets/hombro.js?v=3"></script>
+  <script src="js/sheets/_common.js?v=7"></script>
+  <script src="js/sheets/hombro.js?v=4"></script>
   <script src="js/sheets/rodilla.js?v=1"></script>
   <script src="js/sheets/tobillo.js?v=1"></script>
   <script src="js/sheets/lumbar.js?v=1"></script>
@@ -2989,6 +2989,7 @@
       <button class="btn btn-ghost btn-sm" id="htab-fuerza-btn" onclick="showHTab('fuerza',this)" style="white-space:nowrap;font-size:10px">Fuerza</button>
       <button class="btn btn-ghost btn-sm" id="htab-cuest-btn" onclick="showHTab('cuest',this)" style="white-space:nowrap;font-size:10px">Escalas</button>
       <button class="btn btn-ghost btn-sm" id="htab-rtp-btn" onclick="showHTab('rtp',this)" style="white-space:nowrap;font-size:10px">RTP</button>
+      <button class="btn btn-ghost btn-sm" id="htab-informe-btn" onclick="showHTab('informe',this)" style="white-space:nowrap;font-size:10px">📄 Informe</button>
     </div>
 
     <!-- TAB: OBSERVACIÓN -->
@@ -3060,15 +3061,15 @@
         <div class="card-header"><h3>Arco doloroso (Painful arc)</h3><span class="tag tag-r">Confirmar RC · LR+ 3.44</span></div>
         <div class="card-body">
           <div class="grid-2" style="gap:10px">
-            <div><div class="il mb-4">D</div><div style="display:flex;gap:6px"><button class="ot-btn" onclick="toggleOT(this,'pos')">+ POS</button><button class="ot-btn" onclick="toggleOT(this,'neg')">– NEG</button></div>
+            <div><div class="il mb-4">D</div><div style="display:flex;gap:6px"><button class="ot-btn" onclick="toggleOTHombro(this,'pos')">+ POS</button><button class="ot-btn" onclick="toggleOTHombro(this,'neg')">– NEG</button></div>
               <div class="ig mt-8"><label class="il">Rango dolor D (°)</label>
                 <div style="display:flex;gap:6px"><input class="inp inp-mono" type="number" placeholder="desde" style="flex:1"><span style="align-self:center;color:var(--text3)">–</span><input class="inp inp-mono" type="number" placeholder="hasta" style="flex:1"></div></div>
-              <div class="ig"><label class="il">EVA D</label><input type="range" class="eva-slider" min="0" max="10" value="0" oninput="this.nextElementSibling.textContent=this.value"><span class="il" style="text-align:center;display:block">0</span></div>
+              <div class="ig"><label class="il">EVA D</label><input type="range" class="eva-slider" min="0" max="10" value="0" oninput="this.nextElementSibling.textContent=this.value"><span class="eva-val il" style="text-align:center;display:block">0</span></div>
             </div>
-            <div><div class="il mb-4">I</div><div style="display:flex;gap:6px"><button class="ot-btn" onclick="toggleOT(this,'pos')">+ POS</button><button class="ot-btn" onclick="toggleOT(this,'neg')">– NEG</button></div>
+            <div><div class="il mb-4">I</div><div style="display:flex;gap:6px"><button class="ot-btn" onclick="toggleOTHombro(this,'pos')">+ POS</button><button class="ot-btn" onclick="toggleOTHombro(this,'neg')">– NEG</button></div>
               <div class="ig mt-8"><label class="il">Rango dolor I (°)</label>
                 <div style="display:flex;gap:6px"><input class="inp inp-mono" type="number" placeholder="desde" style="flex:1"><span style="align-self:center;color:var(--text3)">–</span><input class="inp inp-mono" type="number" placeholder="hasta" style="flex:1"></div></div>
-              <div class="ig"><label class="il">EVA I</label><input type="range" class="eva-slider" min="0" max="10" value="0" oninput="this.nextElementSibling.textContent=this.value"><span class="il" style="text-align:center;display:block">0</span></div>
+              <div class="ig"><label class="il">EVA I</label><input type="range" class="eva-slider" min="0" max="10" value="0" oninput="this.nextElementSibling.textContent=this.value"><span class="eva-val il" style="text-align:center;display:block">0</span></div>
             </div>
           </div>
         </div>
@@ -3190,6 +3191,11 @@
     <!-- TAB: RETORNO AL JUEGO -->
     <div id="htab-rtp" style="display:none">
       <div id="hombro-rtp-fields"></div>
+    </div>
+
+    <!-- TAB: INFORME -->
+    <div id="htab-informe" style="display:none">
+      <div id="hombro-informe-panel"></div>
     </div>
 
     <!-- Diagnóstico diferencial EBM -->
