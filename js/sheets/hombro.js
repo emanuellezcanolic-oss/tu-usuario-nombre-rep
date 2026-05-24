@@ -1484,13 +1484,82 @@ function generarInformeHombro() {
         <td class="${+ckcuest>=21?'ok':'alerta'}">${+ckcuest>=22?'Pass ✓':+ckcuest>=21?'Normal':'Déficit'}</td></tr>`:''}
     </table>` : '';
 
-  // 08 — Diagnóstico presuntivo
-  const sec08 = `
-    ${_infSecHead('08','Diagnóstico kinesiológico presuntivo')}
-    ${dxManual?`<div style="background:#f5f7ee;border-radius:6px;padding:10px;border:1px solid #e8f0d4;font-size:12px;font-weight:600;color:#1e2d0e;margin-bottom:8px">
-      ${dxManual}</div>`:''}
-    ${dxHTML?`<div style="background:#f5f7ee;border-radius:6px;padding:8px;border:1px solid #e8f0d4;font-size:11px">${dxHTML}</div>`
-    :'<div style="font-size:11px;color:#888;font-style:italic">Completar "Diagnóstico kinesiológico" en el formulario o realizar tests en el panel Kinesiólogo para diagnóstico automático.</div>'}`;
+  // 08 — Diagnóstico kinesiológico presuntivo — narrative EBM block
+  const _modalPos = _getHombroModalPositivos();
+  const _posTests = tests.filter(t => t.dR==='POS' || t.iR==='POS');
+  const _negTests = tests.filter(t => (t.dR==='NEG'||t.iR==='NEG') && t.dR!=='POS' && t.iR!=='POS');
+  const _htl = [...(typeof HOMBRO_TESTS!=='undefined'?HOMBRO_TESTS:[]), {id:'painful-arc',name:'Arco Doloroso'}];
+  const _tnOf = id => (_htl.find(t=>t.id===id)?.name||id);
+  let _dxC = '';
+
+  if (dxManual) _dxC += '<div style="background:#f5f7ee;border-radius:6px;padding:10px;border:2px solid #8fa845;font-size:12px;font-weight:700;color:#1e2d0e;margin-bottom:12px">'+dxManual+'</div>';
+
+  if (tests.length > 0) {
+    // ── Narrative paragraph ──
+    let _nar = 'Se realizaron <strong>'+tests.length+' prueba'+(tests.length>1?'s':'')+' ortopédica'+(tests.length>1?'s':'')+' estandarizada'+(tests.length>1?'s':'')+'</strong> de provocación durante la presente evaluación. ';
+    if (_posTests.length > 0) {
+      const _pDesc = _posTests.map(t=>{
+        const _s=[];
+        if(t.dR==='POS') _s.push('D'+(t.evaD&&t.evaD!=='—'&&t.evaD!=='0'?' (EVA '+t.evaD+'/10)':''));
+        if(t.iR==='POS') _s.push('I'+(t.evaI&&t.evaI!=='—'&&t.evaI!=='0'?' (EVA '+t.evaI+'/10)':''));
+        return '<em>'+t.name+'</em> ['+_s.join(', ')+']';
+      }).join('; ');
+      _nar += '<strong style="color:#6b7e20">'+_posTests.length+' test'+(+_posTests.length>1?'s':'')+' result'+(_posTests.length>1?'aron':'ó')+' positivo'+(+_posTests.length>1?'s':'')+':</strong> '+_pDesc+'. ';
+    }
+    if (_negTests.length > 0) {
+      const _nNames = _negTests.slice(0,4).map(t=>'<em>'+t.name+'</em>').join(', ')+(_negTests.length>4?' y '+(_negTests.length-4)+' más':'');
+      _nar += _negTests.length+' test'+(_negTests.length>1?'s':'')+' result'+(_negTests.length>1?'aron':'ó')+' negativo'+(_negTests.length>1?'s':'')+' ('+_nNames+'), lo que permite reducir la probabilidad de diagnósticos alternativos relacionados. ';
+    }
+    _dxC += '<div style="font-size:11px;line-height:1.85;color:#333;margin-bottom:12px;padding:11px 13px;background:#fafbf7;border-radius:6px;border:1px solid #e8f0d4">'+_nar+'</div>';
+
+    // ── EBM Diagnosis engine ──
+    if (_modalPos.length > 0 && typeof diagnosticarHombro==='function') {
+      const _res = diagnosticarHombro(_modalPos);
+      if (_res.diagnosticos.length > 0) {
+        const _top = _res.diagnosticos[0];
+        // Main diagnosis box
+        _dxC += '<div style="border:1px solid #b8d060;border-radius:8px;overflow:hidden;margin-bottom:12px">'
+          +'<div style="background:#8fa845;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">'
+          +'<div><div style="font-size:9px;letter-spacing:1px;color:rgba(255,255,255,.7);margin-bottom:2px">DIAGNÓSTICO PRINCIPAL — EVALUACIÓN BASADA EN EVIDENCIA</div>'
+          +'<div style="font-size:13px;font-weight:900;color:#fff">'+_top.nombre+'</div></div>'
+          +'<div style="background:rgba(255,255,255,.2);color:#fff;font-size:9px;padding:3px 10px;border-radius:4px;text-align:center">'+_top.confianzaLabel+'<br><strong>'+_top.confidence+'%</strong></div></div>'
+          +'<div style="padding:12px 14px">'
+          +'<div style="font-size:11px;color:#444;line-height:1.75;margin-bottom:10px">'+_top.criterio+'</div>'
+          +'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px">'
+          +'<span style="font-size:9px;color:#888;align-self:center">Tests positivos que orientan:</span>'
+          +_top.mainHits.map(t=>'<span style="background:#f9eaea;color:#8b2020;font-size:9px;padding:2px 8px;border-radius:3px;border:1px solid #f0cece">'+_tnOf(t)+'</span>').join('')
+          +_top.supportHits.map(t=>'<span style="background:#fdf5e0;color:#7a5500;font-size:9px;padding:2px 8px;border-radius:3px;border:1px solid #f0e0a0">'+_tnOf(t)+'</span>').join('')
+          +'</div>'
+          +'<div style="font-size:10px;color:#444;line-height:1.7;padding:10px;background:#f5f7ee;border-radius:5px;margin-bottom:8px"><strong style="color:#2d5a0e">Ruta de tratamiento recomendada (CPG 2025):</strong><br>'+_top.tratamiento+'</div>'
+          +'<div style="font-size:9px;color:#aaa;font-style:italic">'+_top.ref+'</div>'
+          +'</div></div>';
+
+        // Differential diagnoses
+        if (_res.diagnosticos.length > 1) {
+          _dxC += '<div style="margin-bottom:8px"><div style="font-size:10px;font-weight:700;color:#555;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Diagnósticos diferenciales a considerar:</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px">';
+          _res.diagnosticos.slice(1).forEach(dx => {
+            const _bc = dx.confidence>=65?'#edf5e0':dx.confidence>=35?'#fef8ec':'#f5f5f5';
+            const _tc = dx.confidence>=65?'#2d6a1a':dx.confidence>=35?'#7a4500':'#666';
+            _dxC += '<div style="background:'+_bc+';border-radius:4px;padding:7px 10px">'
+              +'<div style="font-size:10px;font-weight:700;color:'+_tc+'">'+dx.nombre+'</div>'
+              +'<div style="font-size:9px;color:#888;margin-top:2px">'+dx.confianzaLabel+' · '+dx.confidence+'%</div>'
+              +'<div style="font-size:9px;color:#555;margin-top:3px;line-height:1.4">'+dx.criterio.substring(0,100)+(dx.criterio.length>100?'…':'')+'</div>'
+              +'</div>';
+          });
+          _dxC += '</div></div>';
+        }
+      }
+    } else if (_posTests.length===0 && tests.length>0) {
+      _dxC += '<div style="font-size:11px;color:#555;padding:10px;background:#f8f8f8;border-radius:5px;border-left:3px solid #ccc;line-height:1.7">Todos los tests ortopédicos resultaron negativos en la evaluación actual. Esto orienta a descartar patología estructural mayor del complejo glenohumeral. Se recomienda considerar origen referido cervical o torácico, síndrome de dolor miofascial, o factores contribuyentes psicosociales (kinesiofobia, catastrofización). Evaluación diferencial cervical recomendada.</div>';
+    }
+
+    // Evidence footer
+    _dxC += '<div style="font-size:9px;color:#bbb;text-align:right;margin-top:6px;font-style:italic">Algoritmo diagnóstico basado en: Zhao Y. et al. BMC Musculoskelet Disord 2024 · Desmeules F. et al. JOSPT 2025 (CPG Nivel I) · Beraldo M. et al. Cureus 2025 · Bruna González Rev AKD 2020</div>';
+
+  } else if (!dxManual) {
+    _dxC += '<div style="font-size:11px;color:#888;font-style:italic;padding:10px;background:#f8f8f8;border-radius:5px">No se registraron tests ortopédicos en esta evaluación. Complete el tab Tests del modal hombro para activar el diagnóstico diferencial automático basado en evidencia.</div>';
+  }
+  const sec08 = _infSecHead('08','Diagnóstico kinesiológico presuntivo') + _dxC;
 
   // 09 — Plan de tratamiento
   const sec09 = secTrat ? `
