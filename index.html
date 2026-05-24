@@ -2724,6 +2724,7 @@
   <!-- ══ JS MODULAR — orden de carga ══ -->
   <script src="js/data/papers-cadera-rules.js?v=1"></script>
   <script src="js/data/papers-hombro-rules.js?v=2"></script>
+  <script src="js/data/papers-codo-rules.js?v=1"></script>
   <script src="js/data/ortho-tests.js?v=2"></script>
   <script src="js/app.js?v=4"></script>
   <script src="js/atletas.js?v=2"></script>
@@ -2805,6 +2806,7 @@
   <script src="js/kine.js?v=10"></script>
   <script src="js/diagnostico-cadera.js?v=2"></script>
   <script src="js/diagnostico-hombro.js?v=2"></script>
+  <script src="js/diagnostico-codo.js?v=1"></script>
   <script src="js/informe.js?v=2"></script>
   <script src="js/informe-kinetic.js?v=1"></script>
   <script src="js/video.js?v=2"></script>
@@ -2815,12 +2817,12 @@
   <script src="js/lesion.js?v=6"></script>
   <!-- Clinical sheets split por articulación (originalmente klinical.js 1163 LOC) -->
   <script src="js/sheets/_common.js?v=8"></script>
-  <script src="js/sheets/hombro.js?v=8"></script>
+  <script src="js/sheets/hombro.js?v=11"></script>
   <script src="js/sheets/rodilla.js?v=1"></script>
   <script src="js/sheets/tobillo.js?v=1"></script>
   <script src="js/sheets/lumbar.js?v=1"></script>
   <script src="js/sheets/groin.js?v=1"></script>
-  <script src="js/sheets/codo.js?v=1"></script>
+  <script src="js/sheets/codo.js?v=2"></script>
   <script src="js/sheets/cervical.js?v=1"></script>
   <script src="js/planillas.js?v=2"></script>
 
@@ -3215,8 +3217,11 @@
     <!-- Diagnóstico diferencial EBM -->
     <div id="kine-dx-hombro-card" style="display:none"></div>
 
+    <!-- Missing test alerts — live notification panel -->
+    <div id="hombro-missing-alerts-panel"></div>
+
     <div class="divider"></div>
-    <button class="btn btn-neon btn-full" onclick="saveKlinicalSheet('hombro');closeModal('sheet-hombro')">💾 Guardar evaluación hombro</button>
+    <button class="btn btn-neon btn-full" onclick="saveKlinicalSheet('hombro')">💾 Guardar evaluación hombro</button>
   </div>
 </div>
 
@@ -3236,6 +3241,7 @@
       <button class="btn btn-ghost btn-sm" id="ctab-tests-btn" onclick="showCTab('tests',this)" style="white-space:nowrap;font-size:10px">Tests</button>
       <button class="btn btn-ghost btn-sm" id="ctab-fuerza-btn" onclick="showCTab('fuerza',this)" style="white-space:nowrap;font-size:10px">Fuerza</button>
       <button class="btn btn-ghost btn-sm" id="ctab-esc-btn" onclick="showCTab('esc',this)" style="white-space:nowrap;font-size:10px">Escalas</button>
+      <button class="btn btn-ghost btn-sm" id="ctab-informe-btn" onclick="showCTab('informe',this)" style="white-space:nowrap;font-size:10px">📄 Informe</button>
     </div>
 
     <!-- TAB: OBSERVACIÓN -->
@@ -3284,6 +3290,19 @@
             <input type="range" class="eva-slider" min="0" max="10" value="0" id="codo-nprs-mov" oninput="this.nextElementSibling.textContent=this.value"><span style="font-family:var(--mono);font-size:14px;display:block;text-align:center">0</span></div>
           <div class="ig mt-8"><label class="il">Actividad funcional (0–10)</label>
             <input type="range" class="eva-slider" min="0" max="10" value="0" id="codo-nprs-func" oninput="this.nextElementSibling.textContent=this.value"><span style="font-family:var(--mono);font-size:14px;display:block;text-align:center">0</span></div>
+        </div>
+      </div>
+      <!-- Symptom checklist -->
+      <div class="card mb-12">
+        <div class="card-header">
+          <h3>🩺 Presentación clínica — Síntomas</h3>
+          <span class="tag tag-y" style="font-size:9px">Pre-diagnóstico por síntomas</span>
+        </div>
+        <div class="card-body">
+          <div style="font-size:10px;color:var(--text2);margin-bottom:10px;line-height:1.5">
+            Marcá los síntomas presentes. El motor de inferencia cruzará esta información con los tests para sugerir diagnósticos diferenciales antes (y después) de la exploración ortopédica.
+          </div>
+          <div id="codo-symptoms-list"></div>
         </div>
       </div>
     </div>
@@ -3398,8 +3417,32 @@
       </div>
     </div>
 
+    <!-- TAB: INFORME -->
+    <div id="ctab-informe" style="display:none">
+      <!-- Session bar -->
+      <div id="codo-session-bar" style="display:flex;gap:8px;align-items:center;margin-bottom:12px;padding:8px;background:var(--bg4);border-radius:8px;flex-wrap:wrap">
+        <select id="codo-session-select" class="inp inp-mono" style="font-size:10px;flex:1;min-width:120px" onchange="loadCodoSession(this.value)">
+          <option value="">— Sesión actual —</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" style="font-size:10px;white-space:nowrap" onclick="saveCodoSession()">💾 Guardar sesión</button>
+        <button class="btn btn-ghost btn-sm" style="font-size:10px;white-space:nowrap" onclick="toggleCodoHistorial()">📋 Historial</button>
+      </div>
+      <div id="codo-historial-panel" style="display:none;margin-bottom:12px"></div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:12px;padding:8px;background:rgba(57,255,122,.06);border-radius:8px;line-height:1.5">
+        Generá el informe en PDF con todos los datos de la sesión actual: anamnesis, síntomas, ROM, tests ortopédicos, fuerza, escalas y diagnóstico diferencial basado en evidencia.
+      </div>
+      <button class="btn btn-neon btn-full" style="margin-bottom:12px" onclick="generarInformeCodo()">📄 Generar Informe PDF — Codo</button>
+      <div id="codo-informe-preview" style="font-size:10px;color:var(--text3);text-align:center;padding:20px">
+        El informe se generará como PDF descargable con todos los datos de la evaluación.
+      </div>
+    </div>
+
+    <!-- Diagnostic card (visible below all tabs) -->
+    <div id="kine-dx-codo-card" style="display:none"></div>
+    <div id="codo-missing-alerts-panel"></div>
+
     <div class="divider"></div>
-    <button class="btn btn-neon btn-full" onclick="saveKlinicalSheet('codo');closeModal('sheet-codo')">💾 Guardar evaluación codo</button>
+    <button class="btn btn-neon btn-full" onclick="saveKlinicalSheet('codo')">💾 Guardar evaluación codo</button>
   </div>
 </div>
 
