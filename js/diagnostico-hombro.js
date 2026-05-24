@@ -54,20 +54,26 @@ function _tagClassForCategoriaH(cat) {
   return map[cat] || '';
 }
 
-function renderDiagnosticosHombro() {
+// positivosOverride: optional string[] — used by hombro modal to pass tests directly.
+// If omitted, falls back to kineState.tests (kine panel behaviour, unchanged).
+function renderDiagnosticosHombro(positivosOverride) {
   const card = document.getElementById('kine-dx-hombro-card');
   if (!card) return;
 
-  // Collect all hombro-related test IDs from ORTHO_TESTS
-  const hombroIds = new Set([
-    ...(ORTHO_TESTS.subacro  || []).map(t => t.id),
-    ...(ORTHO_TESTS.manguito || []).map(t => t.id),
-    ...(ORTHO_TESTS.biceps   || []).map(t => t.id)
-  ]);
-
-  const positivos = Object.entries(kineState.tests)
-    .filter(([id, v]) => v.result === 'pos' && hombroIds.has(id))
-    .map(([id]) => id);
+  let positivos;
+  if (positivosOverride) {
+    positivos = positivosOverride;
+  } else {
+    // Original path: read from kine panel kineState
+    const hombroIds = new Set([
+      ...(ORTHO_TESTS.subacro  || []).map(t => t.id),
+      ...(ORTHO_TESTS.manguito || []).map(t => t.id),
+      ...(ORTHO_TESTS.biceps   || []).map(t => t.id)
+    ]);
+    positivos = Object.entries(kineState.tests)
+      .filter(([id, v]) => v.result === 'pos' && hombroIds.has(id))
+      .map(([id]) => id);
+  }
 
   if (positivos.length === 0) { card.style.display = 'none'; return; }
 
@@ -80,11 +86,13 @@ function renderDiagnosticosHombro() {
 
   card.style.display = 'block';
 
-  // Flat list of all hombro tests for name lookup
+  // Flat list of all hombro tests for name lookup — includes HOMBRO_TESTS (modal) + painful-arc
   const allTests = [
     ...(ORTHO_TESTS.subacro  || []),
     ...(ORTHO_TESTS.manguito || []),
-    ...(ORTHO_TESTS.biceps   || [])
+    ...(ORTHO_TESTS.biceps   || []),
+    ...(typeof HOMBRO_TESTS !== 'undefined' ? HOMBRO_TESTS : []),
+    { id:'painful-arc', name:'Arco Doloroso' }
   ];
   const nameOf = id => (allTests.find(t => t.id === id)?.name || id);
 

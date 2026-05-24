@@ -33,7 +33,29 @@ function calcTROMSheet() {
   }
 }
 
+// Read all positive test IDs from the hombro modal Tests tab
+function _getHombroModalPositivos() {
+  const pos = [];
+  // Painful arc (hardcoded first card in htab-tests)
+  const htabTests = document.getElementById('htab-tests');
+  if (htabTests) {
+    const paCard = htabTests.querySelector('.card.mb-10');
+    if (paCard) {
+      const cols = paCard.querySelectorAll('.grid-2 > div');
+      if (cols[0]?.querySelector('.ot-btn.pos') || cols[1]?.querySelector('.ot-btn.pos')) pos.push('painful-arc');
+    }
+  }
+  // Quick test cards (HOMBRO_TESTS)
+  document.querySelectorAll('#hombro-tests-rapidos .card').forEach((card, idx) => {
+    const test = (HOMBRO_TESTS||[])[idx]; if (!test) return;
+    const cols = card.querySelectorAll('.card-body .grid-2 > div');
+    if (cols[0]?.querySelector('.ot-btn.pos') || cols[1]?.querySelector('.ot-btn.pos')) pos.push(test.id);
+  });
+  return pos;
+}
+
 // Hombro-specific toggle: also locks EVA slider when NEG selected
+// and triggers automatic EBM diagnostic update
 function toggleOTHombro(btn, type) {
   const btnGroup = btn.parentElement;
   btnGroup.querySelectorAll('.ot-btn').forEach(b => b.classList.remove('pos','neg'));
@@ -55,6 +77,10 @@ function toggleOTHombro(btn, type) {
       slider.style.pointerEvents = '';
     }
   }
+  // Run EBM diagnostic engine with current modal test state
+  setTimeout(() => {
+    if (typeof renderDiagnosticosHombro === 'function') renderDiagnosticosHombro(_getHombroModalPositivos());
+  }, 0);
 }
 
 function buildHombroTests() {
@@ -1206,6 +1232,9 @@ function exportHombroCSV() {
 }
 
 function generarInformeHombro() {
+  // Ensure diagnostic card is up-to-date with current modal test state
+  if (typeof renderDiagnosticosHombro === 'function') renderDiagnosticosHombro(_getHombroModalPositivos());
+
   // ── Data collection ──
   const g  = id => document.getElementById(id)?.value || '';
   const gt = id => document.getElementById(id)?.textContent?.trim() || '';
