@@ -835,6 +835,376 @@ function _readHombroTests() {
   return results;
 }
 
+// ── SESSION / HISTORY MANAGEMENT ─────────────────────────────────────────────
+// Stores named evaluation snapshots in cur.klinical.hombro.sessions[]
+
+function _readTestColState(col) {
+  if (!col) return null;
+  const btns = col.querySelectorAll('.ot-btn');
+  return {
+    state: btns[0]?.classList.contains('pos') ? 'pos' : btns[1]?.classList.contains('neg') ? 'neg' : null,
+    eva:   col.querySelector('.eva-slider')?.value || '0',
+    rangeFrom: col.querySelectorAll('input[type=number]')?.[0]?.value || '',
+    rangeTo:   col.querySelectorAll('input[type=number]')?.[1]?.value || '',
+  };
+}
+
+function _applyTestColState(col, s) {
+  if (!col || !s) return;
+  const btns = col.querySelectorAll('.ot-btn');
+  btns.forEach(b => b.classList.remove('pos','neg'));
+  if (s.state === 'pos' && btns[0]) btns[0].classList.add('pos');
+  if (s.state === 'neg' && btns[1]) btns[1].classList.add('neg');
+  const slider = col.querySelector('.eva-slider');
+  const valEl  = col.querySelector('.eva-val');
+  if (slider) {
+    slider.value = s.eva || 0;
+    if (valEl) valEl.textContent = s.eva || 0;
+    if (s.state === 'neg') {
+      slider.disabled = true; slider.style.opacity = '0.25'; slider.style.pointerEvents = 'none';
+    } else { slider.disabled = false; slider.style.opacity = '1'; slider.style.pointerEvents = ''; }
+  }
+  const numInputs = col.querySelectorAll('input[type=number]');
+  if (numInputs[0]) numInputs[0].value = s.rangeFrom || '';
+  if (numInputs[1]) numInputs[1].value = s.rangeTo  || '';
+}
+
+function _readHombroSessionData() {
+  const g = id => document.getElementById(id)?.value || '';
+  const data = { label:'', fecha: new Date().toISOString().split('T')[0], timestamp: Date.now(),
+    rom:{}, tests:{}, fuerza:{}, escalas:{}, rtp:{}, obs:{} };
+
+  // ROM
+  (ROM_HOMBRO||[]).forEach(m => {
+    ['act-d','act-i','pas-d','pas-i'].forEach(k => { data.rom[m.id+'-'+k] = g('rom-'+m.id+'-'+k); });
+  });
+
+  // Tests — painful arc (hardcoded card, always first in htab-tests)
+  const htabTests = document.getElementById('htab-tests');
+  if (htabTests) {
+    const paCard = htabTests.querySelector('.card.mb-10');
+    if (paCard) {
+      const cols = paCard.querySelectorAll('.grid-2 > div');
+      data.tests['painful-arc'] = { d: _readTestColState(cols[0]), i: _readTestColState(cols[1]) };
+    }
+  }
+  // Quick test cards
+  document.querySelectorAll('#hombro-tests-rapidos .card').forEach((card, idx) => {
+    const test = (HOMBRO_TESTS||[])[idx]; if (!test) return;
+    const cols = card.querySelectorAll('.card-body .grid-2 > div');
+    data.tests[test.id] = { d: _readTestColState(cols[0]), i: _readTestColState(cols[1]) };
+  });
+
+  // Fuerza
+  (FUERZA_HOMBRO||[]).forEach(m => {
+    ['d','i'].forEach(s => { data.fuerza[m.id+'-'+s] = g('fuerza-'+m.id+'-'+s); });
+  });
+
+  // Escalas
+  data.escalas.asesVals   = [...(window.asesVals||[])];
+  data.escalas.worcVals   = [...(window.worcVals||[])];
+  data.escalas.dashVals   = [...(window.dashVals||[])];
+  data.escalas.asesEva    = +document.querySelector('#htab-cuest .eva-slider')?.value || 0;
+  const spSliders = document.querySelectorAll('#spadi-body .eva-slider');
+  data.escalas.spadiDolor = spSliders[0] ? +spSliders[0].value : 0;
+  data.escalas.spadiDis   = spSliders[1] ? +spSliders[1].value : 0;
+  // Store computed totals for historial display
+  data.escalas.asesTotal  = document.getElementById('ases-total')?.textContent || '';
+  data.escalas.worcTotal  = document.getElementById('worc-total-sheet')?.textContent || '';
+  data.escalas.dashTotal  = document.getElementById('dash-total-sheet')?.textContent || '';
+  data.escalas.spadi      = document.getElementById('spadi-total')?.textContent || '';
+
+  // RTP — all numeric inputs
+  ['wosi-original','sirsi-suma','kjoc-score','pria-rs','rtp-nrs',
+   'rtp-er0-aff','rtp-er0-ctrl','rtp-ir0-aff','rtp-ir0-ctrl',
+   'rtp-er90-aff','rtp-er90-ctrl','rtp-ir90-aff','rtp-ir90-ctrl',
+   'ybt-med-aff','ybt-med-ctrl','ybt-sl-aff','ybt-sl-ctrl','ybt-il-aff','ybt-il-ctrl',
+   'oaht-aff','oaht-ctrl','ckcuest-reps','ssasp-aff','ssasp-ctrl',
+   'baber-aff','baber-ctrl','dropc-aff','dropc-ctrl','rtp-semanas',
+  ].forEach(id => { data.rtp[id] = g(id); });
+  ['baber2','dropcatch','balltaps','ohsnatch','pushupcl','linehops','mckcuest','sidehold'].forEach(id => {
+    ['d','i'].forEach(s => { data.rtp['sarts-'+id+'-'+s] = g('sarts-'+id+'-'+s); });
+  });
+  const rtpNoteEl = document.querySelector('#htab-rtp textarea');
+  data.rtp.notes = rtpNoteEl?.value || '';
+
+  // Obs
+  data.obs.redflags    = [...document.querySelectorAll('.hombro-redflag')].map(c => c.checked);
+  data.obs.progfactors = [...document.querySelectorAll('#htab-obs .card:nth-child(2) input[type=checkbox]')].map(c => c.checked);
+  const atSelects = document.querySelectorAll('#htab-obs .card:nth-child(3) select');
+  data.obs.atrofiaD = atSelects[0]?.value || '';
+  data.obs.atrofiaI = atSelects[1]?.value || '';
+  data.obs.obsText  = document.querySelector('#htab-obs textarea')?.value || '';
+
+  return data;
+}
+
+function _writeHombroSessionData(data) {
+  if (!data) return;
+  const setV = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+
+  // ROM
+  (ROM_HOMBRO||[]).forEach(m => {
+    ['act-d','act-i','pas-d','pas-i'].forEach(k => setV('rom-'+m.id+'-'+k, data.rom?.[m.id+'-'+k]||''));
+  });
+  try { calcTROMSheet(); } catch(e){}
+
+  // Tests — painful arc
+  const htabTests = document.getElementById('htab-tests');
+  if (htabTests && data.tests?.['painful-arc']) {
+    const paCard = htabTests.querySelector('.card.mb-10');
+    if (paCard) {
+      const cols = paCard.querySelectorAll('.grid-2 > div');
+      _applyTestColState(cols[0], data.tests['painful-arc'].d);
+      _applyTestColState(cols[1], data.tests['painful-arc'].i);
+    }
+  }
+  // Quick tests
+  document.querySelectorAll('#hombro-tests-rapidos .card').forEach((card, idx) => {
+    const test = (HOMBRO_TESTS||[])[idx]; if (!test) return;
+    const td = data.tests?.[test.id]; if (!td) return;
+    const cols = card.querySelectorAll('.card-body .grid-2 > div');
+    _applyTestColState(cols[0], td.d); _applyTestColState(cols[1], td.i);
+  });
+
+  // Fuerza
+  (FUERZA_HOMBRO||[]).forEach(m => {
+    ['d','i'].forEach(s => setV('fuerza-'+m.id+'-'+s, data.fuerza?.[m.id+'-'+s]||''));
+  });
+  try { calcHombroAsimetria(); } catch(e){}
+
+  // Escalas — restore arrays + re-paint buttons
+  if (data.escalas?.asesVals) {
+    window.asesVals = [...data.escalas.asesVals];
+    document.querySelectorAll('#ases-actividades-list > div').forEach((item, i) => {
+      const val = asesVals[i];
+      item.querySelectorAll('.ot-btn').forEach(b => { b.className='ot-btn'; b.style.minWidth='28px'; b.style.fontSize='10px'; });
+      if (val !== null && val !== undefined) {
+        const b = item.querySelectorAll('.ot-btn')[val]; if (b) b.classList.add('pos');
+      }
+    });
+  }
+  if (data.escalas?.worcVals) {
+    window.worcVals = [...data.escalas.worcVals];
+    document.querySelectorAll('#worc-fields-sheet .eva-slider').forEach((s, i) => {
+      s.value = worcVals[i]||0;
+      const sp = document.getElementById('wv-'+i); if (sp) sp.textContent = worcVals[i]||0;
+    });
+    try { calcWORC2(); } catch(e){}
+  }
+  if (data.escalas?.dashVals) {
+    window.dashVals = [...data.escalas.dashVals];
+    document.querySelectorAll('#dash-fields-sheet > div').forEach((item, i) => {
+      const val = dashVals[i]; // 1-5
+      item.querySelectorAll('.ot-btn').forEach(b => { b.className='ot-btn'; b.style.minWidth='22px'; b.style.fontSize='10px'; b.style.padding='3px'; });
+      if (val !== null && val !== undefined) {
+        const b = item.querySelectorAll('.ot-btn')[val-1]; if (b) b.classList.add('pos');
+      }
+    });
+    const filled = dashVals.filter(v=>v!==null);
+    if (filled.length===21) {
+      const score = ((filled.reduce((a,b)=>a+b,0)/filled.length-1)/4*100).toFixed(1);
+      const el = document.getElementById('dash-total-sheet'); if (el) el.textContent=score;
+    }
+  }
+  // ASES EVA
+  const asesSlider = document.querySelector('#htab-cuest .eva-slider');
+  if (asesSlider && data.escalas?.asesEva !== undefined) {
+    asesSlider.value = data.escalas.asesEva;
+    const disp = document.getElementById('ases-dolor-val'); if (disp) disp.textContent = data.escalas.asesEva;
+  }
+  try { calcASES2(); } catch(e){}
+  // SPADI sliders
+  const spSliders = document.querySelectorAll('#spadi-body .eva-slider');
+  if (spSliders[0] && data.escalas?.spadiDolor !== undefined) {
+    spSliders[0].value = data.escalas.spadiDolor;
+    if (spSliders[0].nextElementSibling) spSliders[0].nextElementSibling.textContent = data.escalas.spadiDolor;
+  }
+  if (spSliders[1] && data.escalas?.spadiDis !== undefined) {
+    spSliders[1].value = data.escalas.spadiDis;
+    if (spSliders[1].nextElementSibling) spSliders[1].nextElementSibling.textContent = data.escalas.spadiDis;
+  }
+  try { calcSPADI(); } catch(e){}
+
+  // RTP
+  ['wosi-original','sirsi-suma','kjoc-score','pria-rs',
+   'rtp-er0-aff','rtp-er0-ctrl','rtp-ir0-aff','rtp-ir0-ctrl',
+   'rtp-er90-aff','rtp-er90-ctrl','rtp-ir90-aff','rtp-ir90-ctrl',
+   'ybt-med-aff','ybt-med-ctrl','ybt-sl-aff','ybt-sl-ctrl','ybt-il-aff','ybt-il-ctrl',
+   'oaht-aff','oaht-ctrl','ckcuest-reps','ssasp-aff','ssasp-ctrl',
+   'baber-aff','baber-ctrl','dropc-aff','dropc-ctrl','rtp-semanas',
+  ].forEach(id => setV(id, data.rtp?.[id]||''));
+  // NRS slider (range input — set value + display)
+  const nrsSlider = document.getElementById('rtp-nrs');
+  if (nrsSlider && data.rtp?.['rtp-nrs'] !== undefined) {
+    nrsSlider.value = data.rtp['rtp-nrs'];
+    const nrsDisp = document.getElementById('rtp-nrs-val'); if (nrsDisp) nrsDisp.textContent = data.rtp['rtp-nrs'];
+  }
+  ['baber2','dropcatch','balltaps','ohsnatch','pushupcl','linehops','mckcuest','sidehold'].forEach(id => {
+    ['d','i'].forEach(s => setV('sarts-'+id+'-'+s, data.rtp?.['sarts-'+id+'-'+s]||''));
+  });
+  const rtpNoteEl = document.querySelector('#htab-rtp textarea');
+  if (rtpNoteEl) rtpNoteEl.value = data.rtp?.notes || '';
+  // Recalc all RTP indicators
+  try { calcRTPWOSI(); calcRTPSIRSI(); calcRTPKJOC(); calcRTPPRIA();
+        calcRTPFuerza(); calcRTPCKC(); calcRTPYBT(); calcRTPOAHT();
+        calcRTPSSASP(); calcRTPBABER(); calcRTPDropC(); calcRTPSemaforo(); } catch(e){}
+
+  // Obs
+  const rfCbs = document.querySelectorAll('.hombro-redflag');
+  (data.obs?.redflags||[]).forEach((v,i) => { if (rfCbs[i]) rfCbs[i].checked = v; });
+  try { checkHombroRedFlags(); } catch(e){}
+  const pfCbs = document.querySelectorAll('#htab-obs .card:nth-child(2) input[type=checkbox]');
+  (data.obs?.progfactors||[]).forEach((v,i) => { if (pfCbs[i]) pfCbs[i].checked = v; });
+  const atSelects = document.querySelectorAll('#htab-obs .card:nth-child(3) select');
+  if (atSelects[0] && data.obs?.atrofiaD) atSelects[0].value = data.obs.atrofiaD;
+  if (atSelects[1] && data.obs?.atrofiaI) atSelects[1].value = data.obs.atrofiaI;
+  const obsTextEl = document.querySelector('#htab-obs textarea');
+  if (obsTextEl) obsTextEl.value = data.obs?.obsText || '';
+}
+
+function saveHombroSession() {
+  if (!cur) { alert('Seleccioná un atleta primero.'); return; }
+  if (!cur.klinical) cur.klinical = {};
+  if (!cur.klinical.hombro) cur.klinical.hombro = {};
+  if (!cur.klinical.hombro.sessions) cur.klinical.hombro.sessions = [];
+  const n = cur.klinical.hombro.sessions.length + 1;
+  const label = prompt('Nombre de la evaluación:', 'Test ' + n);
+  if (label === null) return;
+  const data = _readHombroSessionData();
+  data.label = label || ('Test ' + n);
+  cur.klinical.hombro.sessions.push(data);
+  atletas = atletas.map(a => a.id === cur.id ? cur : a);
+  saveData();
+  showSaveToast();
+  refreshHombroSessionBar();
+}
+
+function hombroSelectSession(idx) {
+  if (idx < 0 || !cur?.klinical?.hombro?.sessions) return;
+  const session = cur.klinical.hombro.sessions[idx];
+  if (!session) return;
+  _writeHombroSessionData(session);
+  // Update select label
+  const sel = document.getElementById('hombro-session-select');
+  if (sel) sel.value = idx;
+}
+
+function deleteHombroSession(idx) {
+  if (!cur?.klinical?.hombro?.sessions) return;
+  const s = cur.klinical.hombro.sessions[idx];
+  if (!confirm('¿Eliminar evaluación "' + (s?.label||idx) + '"?')) return;
+  cur.klinical.hombro.sessions.splice(idx, 1);
+  atletas = atletas.map(a => a.id === cur.id ? cur : a);
+  saveData();
+  refreshHombroSessionBar();
+  const panel = document.getElementById('hombro-historial-panel');
+  if (panel && panel.style.display !== 'none') showHombroHistorial();
+}
+
+function refreshHombroSessionBar() {
+  const sel = document.getElementById('hombro-session-select');
+  if (!sel) return;
+  const sessions = cur?.klinical?.hombro?.sessions || [];
+  sel.innerHTML = '<option value="-1">— Nueva evaluación —</option>'
+    + sessions.map((s,i) => `<option value="${i}">${s.label} · ${s.fecha}</option>`).join('');
+  // Show session count badge
+  const badge = document.getElementById('hombro-session-count');
+  if (badge) badge.textContent = sessions.length ? sessions.length + ' guardada' + (sessions.length>1?'s':'') : '';
+}
+
+function showHombroHistorial() {
+  const panel = document.getElementById('hombro-historial-panel');
+  if (!panel) return;
+  if (panel.style.display !== 'none') { panel.style.display = 'none'; return; }
+  const sessions = cur?.klinical?.hombro?.sessions || [];
+  if (!sessions.length) { panel.innerHTML = '<div style="padding:10px;text-align:center;font-size:12px;color:var(--text3)">No hay evaluaciones guardadas aún.</div>'; panel.style.display='block'; return; }
+
+  const metrics = [
+    { label: 'ASES Total',     fn: s => s.escalas?.asesTotal||'—' },
+    { label: 'WORC Total',     fn: s => s.escalas?.worcTotal||'—' },
+    { label: 'DASH Score',     fn: s => s.escalas?.dashTotal||'—' },
+    { label: 'SPADI',          fn: s => s.escalas?.spadi||'—' },
+    { label: 'WOSI mod.',      fn: s => { const v=s.rtp?.['wosi-original']; return v?(+(100-+v/21).toFixed(1))+'':'—'; } },
+    { label: 'NRS Dolor',      fn: s => s.rtp?.['rtp-nrs']?s.rtp['rtp-nrs']+'/10':'—' },
+    { label: 'LSI ER 0°',      fn: s => { const a=+s.rtp?.['rtp-er0-aff'],c=+s.rtp?.['rtp-er0-ctrl']; return (a&&c)?+(a/c*100).toFixed(1)+'%':'—'; } },
+    { label: 'CKCUEST',        fn: s => s.rtp?.['ckcuest-reps']?s.rtp['ckcuest-reps']+' reps':'—' },
+  ];
+  (ROM_HOMBRO||[]).forEach(m => {
+    metrics.push({ label: m.label+' D°', fn: s => s.rom?.[m.id+'-act-d']?s.rom[m.id+'-act-d']+'°':'—' });
+    metrics.push({ label: m.label+' I°', fn: s => s.rom?.[m.id+'-act-i']?s.rom[m.id+'-act-i']+'°':'—' });
+  });
+
+  panel.innerHTML = `
+    <div style="background:var(--bg4);border-radius:10px;padding:12px;margin-bottom:14px;overflow-x:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px">
+        <strong style="font-size:13px">📊 Historial de evaluaciones — ${cur?.nombre||''}</strong>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" onclick="exportHombroCSV()" style="font-size:10px">⬇ CSV</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('hombro-historial-panel').style.display='none'" style="font-size:10px">✕</button>
+        </div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:400px">
+        <thead>
+          <tr>
+            <th style="text-align:left;padding:5px 8px;background:var(--bg3);font-size:10px;border-radius:4px 0 0 4px">Métrica</th>
+            ${sessions.map((s,i) => `
+              <th style="text-align:center;padding:5px 8px;background:var(--bg3);font-size:10px;min-width:90px">
+                <div>${s.label}</div>
+                <div style="font-weight:400;color:var(--text3)">${s.fecha}</div>
+                <div style="display:flex;gap:3px;justify-content:center;margin-top:4px">
+                  <button onclick="hombroSelectSession(${i});document.getElementById('hombro-historial-panel').style.display='none'"
+                    style="background:var(--neon);color:#000;border:none;border-radius:3px;padding:2px 5px;cursor:pointer;font-size:9px;font-weight:700">Cargar</button>
+                  <button onclick="deleteHombroSession(${i})"
+                    style="background:rgba(255,68,68,.15);color:var(--red);border:1px solid rgba(255,68,68,.3);border-radius:3px;padding:2px 5px;cursor:pointer;font-size:9px">🗑</button>
+                </div>
+              </th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          ${metrics.map(r => `
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:5px 8px;color:var(--text2);font-size:10px;white-space:nowrap">${r.label}</td>
+              ${sessions.map(s => `<td style="text-align:center;padding:5px 8px;font-family:var(--mono);font-size:11px">${r.fn(s)}</td>`).join('')}
+            </tr>`).join('')}
+        </tbody>
+      </table>
+      <div style="font-size:9px;color:var(--text3);margin-top:8px">Pulsar "Cargar" para restaurar una evaluación en el formulario</div>
+    </div>`;
+  panel.style.display = 'block';
+}
+
+function exportHombroCSV() {
+  const sessions = cur?.klinical?.hombro?.sessions;
+  if (!sessions?.length) return;
+  const headers = ['Métrica', ...sessions.map(s => s.label+' ('+s.fecha+')')];
+  const rows = [
+    ['ASES Total',  ...sessions.map(s => s.escalas?.asesTotal||'')],
+    ['WORC Total',  ...sessions.map(s => s.escalas?.worcTotal||'')],
+    ['DASH Score',  ...sessions.map(s => s.escalas?.dashTotal||'')],
+    ['SPADI',       ...sessions.map(s => s.escalas?.spadi||'')],
+    ['NRS Dolor',   ...sessions.map(s => s.rtp?.['rtp-nrs']||'')],
+    ['CKCUEST reps',...sessions.map(s => s.rtp?.['ckcuest-reps']||'')],
+    ['WOSI orig',   ...sessions.map(s => s.rtp?.['wosi-original']||'')],
+    ['LSI ER 0° aff',...sessions.map(s => s.rtp?.['rtp-er0-aff']||'')],
+    ['LSI ER 0° ctrl',...sessions.map(s => s.rtp?.['rtp-er0-ctrl']||'')],
+  ];
+  (ROM_HOMBRO||[]).forEach(m => {
+    rows.push([m.label+' D act.',  ...sessions.map(s => s.rom?.[m.id+'-act-d']||'')]);
+    rows.push([m.label+' I act.',  ...sessions.map(s => s.rom?.[m.id+'-act-i']||'')]);
+  });
+  (FUERZA_HOMBRO||[]).forEach(m => {
+    rows.push([m.label+' D (N)', ...sessions.map(s => s.fuerza?.[m.id+'-d']||'')]);
+    rows.push([m.label+' I (N)', ...sessions.map(s => s.fuerza?.[m.id+'-i']||'')]);
+  });
+  const csv = [headers, ...rows].map(r => r.map(c => '"'+(c||'').toString().replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url;
+  a.download=(cur?.nombre||'paciente').replace(/\s+/g,'_')+'_hombro_historial.csv';
+  a.click(); URL.revokeObjectURL(url);
+}
+
 function generarInformeHombro() {
   // ── Data collection ──
   const g  = id => document.getElementById(id)?.value || '';

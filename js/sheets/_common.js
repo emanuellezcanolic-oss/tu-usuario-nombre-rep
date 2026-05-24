@@ -11,7 +11,10 @@ function toggleSheetSection(id) {
 function initKlinicalSheet(panel) {
   // Build content based on which sheet opened
   if (panel === 'codo') { initCodoSheet(); return; }
-  if (panel === 'hombro' || panel === 'munieca') initHombroSheet();
+  if (panel === 'hombro' || panel === 'munieca') {
+    initHombroSheet();
+    if(typeof refreshHombroSessionBar==='function') refreshHombroSessionBar();
+  }
   if (panel === 'rodilla' || panel === 'cadera' || panel === 'gluteo') initRodillaSheet();
   if (panel === 'tobillo' || panel === 'pantorrilla' || panel === 'pie') initTobilloSheet();
   if (panel === 'cervical') { initCervicalSheet(); return; }
@@ -29,6 +32,7 @@ function initHombroSheet() {
   if(typeof buildHombroRTP==='function') buildHombroRTP();
   if(typeof buildHombroInforme==='function') buildHombroInforme();
   if(typeof renderDiagnosticosHombro==='function') renderDiagnosticosHombro();
+  if(typeof refreshHombroSessionBar==='function') refreshHombroSessionBar();
 }
 
 function initRodillaSheet() {

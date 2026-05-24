@@ -2814,8 +2814,8 @@
   <script src="js/valgo.js?v=2"></script>
   <script src="js/lesion.js?v=6"></script>
   <!-- Clinical sheets split por articulación (originalmente klinical.js 1163 LOC) -->
-  <script src="js/sheets/_common.js?v=7"></script>
-  <script src="js/sheets/hombro.js?v=4"></script>
+  <script src="js/sheets/_common.js?v=8"></script>
+  <script src="js/sheets/hombro.js?v=5"></script>
   <script src="js/sheets/rodilla.js?v=1"></script>
   <script src="js/sheets/tobillo.js?v=1"></script>
   <script src="js/sheets/lumbar.js?v=1"></script>
@@ -2980,6 +2980,20 @@
         <div style="font-size:12px;color:var(--text2)">RC Tendinopatía · CPG 2025 · Desmeules et al.</div></div>
       <button class="btn btn-ghost btn-sm" onclick="closeModal('sheet-hombro')">✕</button>
     </div>
+
+    <!-- Session bar -->
+    <div id="hombro-session-bar" style="display:flex;gap:6px;align-items:center;margin-bottom:10px;padding:8px 10px;background:var(--bg4);border-radius:8px;flex-wrap:wrap">
+      <span style="font-size:10px;color:var(--text3);white-space:nowrap">Evaluación:</span>
+      <select id="hombro-session-select" class="inp" style="flex:1;min-width:130px;font-size:11px;padding:4px 6px;height:auto;background:var(--bg3)"
+        onchange="hombroSelectSession(+this.value)">
+        <option value="-1">— Nueva evaluación —</option>
+      </select>
+      <span id="hombro-session-count" style="font-size:10px;color:var(--neon);white-space:nowrap"></span>
+      <button class="btn btn-neon btn-sm" onclick="saveHombroSession()" style="white-space:nowrap;font-size:10px">💾 Guardar test</button>
+      <button class="btn btn-ghost btn-sm" onclick="showHombroHistorial()" style="white-space:nowrap;font-size:10px">📊 Historial</button>
+    </div>
+    <!-- Historial comparison panel (shown/hidden on demand) -->
+    <div id="hombro-historial-panel" style="display:none"></div>
 
     <!-- Tab strip -->
     <div style="display:flex;gap:3px;background:var(--bg4);border-radius:8px;padding:3px;margin-bottom:16px;overflow-x:auto">
