@@ -293,6 +293,7 @@ function updateKinePositivos(){
       </div>`).join('');
   }else card.style.display='none';
   if(typeof renderDiagnosticosCadera==='function')renderDiagnosticosCadera();
+  if(typeof renderDiagnosticosHombro==='function')renderDiagnosticosHombro();
 }
 
 function onBodyZoneClick(el){

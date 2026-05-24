@@ -26,6 +26,7 @@ function initHombroSheet() {
   buildASES();
   buildWORC();
   buildDASH();
+  if(typeof renderDiagnosticosHombro==='function') renderDiagnosticosHombro();
 }
 
 function initRodillaSheet() {

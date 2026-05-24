@@ -98,13 +98,23 @@ function restoreLesionSeguimiento() {
 // ══════════════════════════════════════════════════════
 
 const HOMBRO_TESTS = [
-  { id:'hawkins', name:'Hawkins-Kennedy', sub:'DESCARTAR RC (LR− 0.25) · Sn 0.83', tag:'tag-b' },
-  { id:'neer',    name:'Neer impingement', sub:'Compresión subacromial · Sn 0.72', tag:'tag-b' },
-  { id:'jobe',    name:'Empty Can (Jobe)', sub:'Supraespinoso · Sn 0.69', tag:'tag-r' },
-  { id:'patte',   name:'Patte', sub:'Infraespinoso / Redondo menor · Sn 0.92', tag:'tag-r' },
-  { id:'gerber',  name:'Gerber (Lift-off)', sub:'Subescapular · Sn 0.79', tag:'tag-r' },
-  { id:'obrien',  name:"O'Brien (SLAP)", sub:'Labrum superior · Sn 0.47', tag:'tag-y' },
-  { id:'apprehension', name:'Apprehension / Relocation', sub:'Inestabilidad GH anterior · Sn 0.72', tag:'tag-y' },
+  // ── Subacromial / Pinzamiento ────────────────────────────────────────
+  { id:'hawkins',   name:'Hawkins-Kennedy',        sub:'DESCARTAR RC · LR− 0.25 · Sn 0.83',       tag:'tag-b' },
+  { id:'neer',      name:'Neer impingement',        sub:'Subacromial · Sn 0.72 · DOR 4.02 SIS',     tag:'tag-b' },
+  { id:'painful-arc',name:'Arco doloroso',          sub:'CONFIRMAR RC · LR+ 3.44 · Sp 0.82',        tag:'tag-r' },
+  { id:'yergason',  name:'Yergason',                sub:'Bíceps / SIS · DOR 4.71 · Sp 86%',         tag:'tag-b' },
+  // ── Manguito Rotador ─────────────────────────────────────────────────
+  { id:'jobe',      name:'Empty Can (Jobe)',         sub:'Supraespinoso · DOR 3.54 · Sn 71.7%',      tag:'tag-r' },
+  { id:'patte',     name:'Patte',                   sub:'Infraespinoso / Redondo menor · DOR 3.08',  tag:'tag-r' },
+  { id:'re-lag-90', name:'Retraso RE 90°',           sub:'Desgarro completo · DOR 12.70 · Sp 99%',   tag:'tag-r' },
+  // ── Subescapular ─────────────────────────────────────────────────────
+  { id:'gerber',    name:'Gerber (Lift-off)',        sub:'Subescapular · Sn 0.79 · Sp 0.89',         tag:'tag-r' },
+  { id:'ri-lag',    name:'Retraso RI',               sub:'Subescapular · DOR 7.03 · LR+ 4.23',       tag:'tag-r' },
+  { id:'bear-hug',  name:'Bear Hug',                 sub:'Subescapular · Sn 84%',                    tag:'tag-y' },
+  // ── SLAP / Bíceps / Inestabilidad ────────────────────────────────────
+  { id:'obrien',    name:"O'Brien (SLAP)",           sub:'Labrum superior · Sp 89% — confirmatorio', tag:'tag-y' },
+  { id:'speed',     name:'Speed',                    sub:'Tendón bíceps proximal · Sn 0.69',         tag:'tag-b' },
+  { id:'apprehension',name:'Apprehension / Relocation', sub:'Inestabilidad anterior · Sp 0.96',     tag:'tag-y' },
 ];
 
 const CERVICAL_TESTS_RADICULAR = [

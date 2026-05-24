@@ -2723,7 +2723,8 @@
 <!-- ════════ SCRIPT ════════ -->
   <!-- ══ JS MODULAR — orden de carga ══ -->
   <script src="js/data/papers-cadera-rules.js?v=1"></script>
-  <script src="js/data/ortho-tests.js?v=1"></script>
+  <script src="js/data/papers-hombro-rules.js?v=1"></script>
+  <script src="js/data/ortho-tests.js?v=2"></script>
   <script src="js/app.js?v=4"></script>
   <script src="js/atletas.js?v=2"></script>
   <script src="js/dashboard.js?v=2"></script>
@@ -2801,8 +2802,9 @@
   <script src="js/informe/sections/cierre.js?v=2"></script>
   <script src="js/informe/template-filler.js?v=1"></script>
   <script src="js/informe/generators/movilidad-tobillo.js?v=1"></script>
-  <script src="js/kine.js?v=9"></script>
+  <script src="js/kine.js?v=10"></script>
   <script src="js/diagnostico-cadera.js?v=2"></script>
+  <script src="js/diagnostico-hombro.js?v=1"></script>
   <script src="js/informe.js?v=2"></script>
   <script src="js/informe-kinetic.js?v=1"></script>
   <script src="js/video.js?v=2"></script>
@@ -2810,9 +2812,9 @@
   <script src="js/vmp.js?v=2"></script>
   <script src="js/videojump.js?v=2"></script>
   <script src="js/valgo.js?v=2"></script>
-  <script src="js/lesion.js?v=4"></script>
+  <script src="js/lesion.js?v=5"></script>
   <!-- Clinical sheets split por articulación (originalmente klinical.js 1163 LOC) -->
-  <script src="js/sheets/_common.js?v=4"></script>
+  <script src="js/sheets/_common.js?v=5"></script>
   <script src="js/sheets/hombro.js?v=2"></script>
   <script src="js/sheets/rodilla.js?v=1"></script>
   <script src="js/sheets/tobillo.js?v=1"></script>
@@ -3183,6 +3185,9 @@
         </div>
       </div>
     </div>
+
+    <!-- Diagnóstico diferencial EBM -->
+    <div id="kine-dx-hombro-card" style="display:none"></div>
 
     <div class="divider"></div>
     <button class="btn btn-neon btn-full" onclick="saveKlinicalSheet('hombro');closeModal('sheet-hombro')">💾 Guardar evaluación hombro</button>

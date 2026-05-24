@@ -6,10 +6,13 @@ const ORTHO_TESTS = {
     { id:'yocum',   name:'Yocum',           sub:'Espacio subacromial',      ref:'Sn 0.78 / Sp 0.61' }
   ],
   manguito: [
-    { id:'jobe',        name:'Jobe (Empty Can)',   sub:'Supraespinoso',          ref:'Sn 0.69 / Sp 0.66' },
-    { id:'patte',       name:'Patte',              sub:'Infraespinoso/Red. menor',ref:'Sn 0.92 / Sp 0.30' },
-    { id:'gerber',      name:'Gerber (Lift-off)',  sub:'Subescapular',           ref:'Sn 0.79 / Sp 0.89' },
-    { id:'painful-arc', name:'Arco doloroso',      sub:'60-120° = RC',           ref:'LR+ 3.44 -- CONFIRMAR RC' }
+    { id:'jobe',        name:'Jobe (Empty Can)',        sub:'Supraespinoso',               ref:'Sn 0.69 / Sp 0.66 · DOR 3.54 — Zhao 2024' },
+    { id:'patte',       name:'Patte',                  sub:'Infraespinoso/Red. menor',    ref:'Sn 0.92 / Sp 0.30 · DOR 3.08 — Zhao 2024' },
+    { id:'gerber',      name:'Gerber (Lift-off)',       sub:'Subescapular',                ref:'Sn 0.79 / Sp 0.89 — Bruna González 2020' },
+    { id:'painful-arc', name:'Arco doloroso',           sub:'60-120° = RC',                ref:'LR+ 3.44 -- CONFIRMAR RC — Desmeules JOSPT 2025' },
+    { id:'re-lag-90',   name:'Retraso RE 90° (Lag Sign)', sub:'Desgarro MR completo — DOR 12.70 — Sp 99%', ref:'Sn 17% / Sp 99% / LR+ 6.91 — Zhao 2024 meta-análisis' },
+    { id:'ri-lag',      name:'Retraso RI (Lag Sign)',   sub:'Subescapular — DOR 7.03 — LR+ 4.23', ref:'Sn 52.5% / Sp 92% / LR+ 4.23 — Zhao 2024' },
+    { id:'bear-hug',    name:'Bear Hug',                sub:'Subescapular — Sn 84% / DOR 2.77', ref:'Beraldo 2025; Zhao 2024 — Sp 28% genérico / Sp 96% in-person weakness' }
   ],
   biceps: [
     { id:'speed',       name:'Speed',           sub:'Tendón bíceps proximal', ref:'Sn 0.69 / Sp 0.56' },
