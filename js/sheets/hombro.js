@@ -33,6 +33,25 @@ function calcTROMSheet() {
   }
 }
 
+// All test IDs that were performed (either POS or NEG pressed) in the hombro modal
+function _getDoneHombroTestIds() {
+  const done = new Set();
+  const htabTests = document.getElementById('htab-tests');
+  if (htabTests) {
+    const paCard = htabTests.querySelector('.card.mb-10');
+    if (paCard) {
+      const cols = paCard.querySelectorAll('.grid-2 > div');
+      if (cols[0]?.querySelector('.ot-btn.pos,.ot-btn.neg') || cols[1]?.querySelector('.ot-btn.pos,.ot-btn.neg')) done.add('painful-arc');
+    }
+  }
+  document.querySelectorAll('#hombro-tests-rapidos .card').forEach((card, idx) => {
+    const test = (HOMBRO_TESTS||[])[idx]; if (!test) return;
+    const cols = card.querySelectorAll('.card-body .grid-2 > div');
+    if (cols[0]?.querySelector('.ot-btn.pos,.ot-btn.neg') || cols[1]?.querySelector('.ot-btn.pos,.ot-btn.neg')) done.add(test.id);
+  });
+  return done;
+}
+
 // Read all positive test IDs from the hombro modal Tests tab
 function _getHombroModalPositivos() {
   const pos = [];
@@ -1250,12 +1269,16 @@ function generarInformeHombro() {
   const notasExtra = g('inf-notas');
   const fecha      = new Date().toLocaleDateString('es-AR', {day:'2-digit',month:'long',year:'numeric'});
 
-  // Patient
-  const nombre  = cur?.nombre || '—';
-  const edad    = cur?.edad || '';
-  const peso    = cur?.peso || '';
-  const talla   = cur?.talla || '';
-  const deporte = cur?.deporte || '';
+  // Patient — full profile from cur object
+  const nombre   = cur?.nombre   || '—';
+  const edad     = cur?.edad     || '';
+  const sexo     = cur?.sexo     || '';
+  const peso     = cur?.peso     || '';
+  const talla    = cur?.talla    || '';
+  const deporte  = cur?.deporte  || '';
+  const nivel    = cur?.nivel    || '';
+  const objetivo = cur?.objetivo || '';
+  const lesionMC = cur?.lesion   || '';
 
   // Red flags & prognostic factors
   const redflags = [...document.querySelectorAll('.hombro-redflag:checked')].length > 0;
@@ -1362,11 +1385,13 @@ function generarInformeHombro() {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div style="background:#f5f7ee;border-radius:6px;padding:12px;border:1px solid #e8f0d4">
         <div style="font-size:9px;text-transform:uppercase;color:#8fa845;font-weight:700;letter-spacing:1px;margin-bottom:8px">Datos del Paciente</div>
-        ${_infRow('Nombre', nombre)}
-        ${_infRow('Edad', edad ? edad+' años' : '')}
-        ${_infRow('Morfología', [peso?peso+'kg':'', talla?talla+'cm':''].filter(Boolean).join(' / '))}
-        ${_infRow('Disciplina', deporte)}
-        ${_infRow('Fecha evaluación', fecha)}
+        ${_infRow('Nombre completo', nombre)}
+        ${edad ? _infRow('Edad', edad+' años'+(sexo?' · '+sexo:'')) : (sexo?_infRow('Sexo', sexo):'')}
+        ${(peso||talla) ? _infRow('Morfología', [peso?peso+' kg':'', talla?talla+' cm':''].filter(Boolean).join(' / ')) : ''}
+        ${deporte ? _infRow('Deporte / Actividad', deporte+(nivel?' — '+nivel:'')) : ''}
+        ${objetivo ? _infRow('Objetivo', objetivo) : ''}
+        ${lesionMC ? _infRow('Motivo de consulta', lesionMC) : ''}
+        ${_infRow('Fecha de evaluación', fecha)}
       </div>
       <div style="background:#f5f7ee;border-radius:6px;padding:12px;border:1px solid #e8f0d4">
         <div style="font-size:9px;text-transform:uppercase;color:#8fa845;font-weight:700;letter-spacing:1px;margin-bottom:8px">Screening CPG 2025</div>
@@ -1486,10 +1511,25 @@ function generarInformeHombro() {
 
   // 08 — Diagnóstico kinesiológico presuntivo — narrative EBM block
   const _modalPos = _getHombroModalPositivos();
+  const _doneIds  = _getDoneHombroTestIds();
   const _posTests = tests.filter(t => t.dR==='POS' || t.iR==='POS');
   const _negTests = tests.filter(t => (t.dR==='NEG'||t.iR==='NEG') && t.dR!=='POS' && t.iR!=='POS');
-  const _htl = [...(typeof HOMBRO_TESTS!=='undefined'?HOMBRO_TESTS:[]), {id:'painful-arc',name:'Arco Doloroso'}];
-  const _tnOf = id => (_htl.find(t=>t.id===id)?.name||id);
+  const _htl      = [...(typeof HOMBRO_TESTS!=='undefined'?HOMBRO_TESTS:[]), {id:'painful-arc',name:'Arco Doloroso'}];
+  const _tnOf     = id => (_htl.find(t=>t.id===id)?.name||id);
+  const _tnSub    = id => (_htl.find(t=>t.id===id)?.sub||'');
+  // Compute missing test alerts: key tests that were NOT done but relevant (≥1 pos hit exists)
+  const _missingAlerts = [];
+  if (typeof HOMBRO_RULES !== 'undefined') {
+    HOMBRO_RULES.diagnosticos.forEach(dx => {
+      const _ph = dx.testsKey.filter(t => _modalPos.includes(t));
+      const _nd = dx.testsKey.filter(t => !_doneIds.has(t));
+      if (_ph.length >= 1 && _nd.length > 0) {
+        _missingAlerts.push({ dxNombre: dx.nombre, categoria: dx.categoria,
+          missing: _nd, imagingRec: dx.imagingRec||null,
+          reason: _ph.length >= dx.umbral ? 'confirmar hallazgo' : 'descartar diagnóstico' });
+      }
+    });
+  }
   let _dxC = '';
 
   if (dxManual) _dxC += '<div style="background:#f5f7ee;border-radius:6px;padding:10px;border:2px solid #8fa845;font-size:12px;font-weight:700;color:#1e2d0e;margin-bottom:12px">'+dxManual+'</div>';
@@ -1553,8 +1593,27 @@ function generarInformeHombro() {
       _dxC += '<div style="font-size:11px;color:#555;padding:10px;background:#f8f8f8;border-radius:5px;border-left:3px solid #ccc;line-height:1.7">Todos los tests ortopédicos resultaron negativos en la evaluación actual. Esto orienta a descartar patología estructural mayor del complejo glenohumeral. Se recomienda considerar origen referido cervical o torácico, síndrome de dolor miofascial, o factores contribuyentes psicosociales (kinesiofobia, catastrofización). Evaluación diferencial cervical recomendada.</div>';
     }
 
+    // ── Missing test alerts ──
+    if (_missingAlerts.length > 0) {
+      _dxC += '<div style="background:#fffbe6;border:1px solid #e8c030;border-radius:7px;padding:12px 14px;margin-top:14px">';
+      _dxC += '<div style="font-size:10px;font-weight:800;color:#7a5000;margin-bottom:6px;display:flex;align-items:center;gap:8px">⚠️ TESTS COMPLEMENTARIOS RECOMENDADOS — DECISIÓN CLÍNICA</div>';
+      _dxC += '<div style="font-size:10px;color:#666;margin-bottom:10px;line-height:1.6">Los siguientes tests no fueron realizados en la presente evaluación. Incorporarlos permitiría aumentar la certeza diagnóstica o descartar diagnósticos específicos con mayor precisión:</div>';
+      _missingAlerts.forEach(al => {
+        const _md = al.missing.map(id => {
+          const _sub = _tnSub(id);
+          return '<strong>'+_tnOf(id)+'</strong>'+(_sub?' <span style="color:#888;font-size:9px">('+_sub+')</span>':'');
+        }).join(' y/o ');
+        _dxC += '<div style="margin-bottom:8px;padding:9px 11px;background:#fff;border-radius:5px;border-left:3px solid #e8c030">';
+        _dxC += '<div style="font-size:10px;margin-bottom:5px">Para <strong style="color:#7a5000">'+al.reason+'</strong> de '+al.dxNombre+':</div>';
+        _dxC += '<div style="font-size:10px;color:#333;line-height:1.6">→ Realizar: '+_md+'</div>';
+        if (al.imagingRec) _dxC += '<div style="font-size:9px;color:#777;margin-top:5px;padding:5px 8px;background:#fffef0;border-radius:3px;line-height:1.5">📷 <strong>Imagen recomendada:</strong> '+al.imagingRec+'</div>';
+        _dxC += '</div>';
+      });
+      _dxC += '</div>';
+    }
+
     // Evidence footer
-    _dxC += '<div style="font-size:9px;color:#bbb;text-align:right;margin-top:6px;font-style:italic">Algoritmo diagnóstico basado en: Zhao Y. et al. BMC Musculoskelet Disord 2024 · Desmeules F. et al. JOSPT 2025 (CPG Nivel I) · Beraldo M. et al. Cureus 2025 · Bruna González Rev AKD 2020</div>';
+    _dxC += '<div style="font-size:9px;color:#bbb;text-align:right;margin-top:8px;font-style:italic">Algoritmo diagnóstico basado en: Zhao Y. et al. BMC Musculoskelet Disord 2024 · Desmeules F. et al. JOSPT 2025 (CPG Nivel I) · Beraldo M. et al. Cureus 2025 · Bruna González Rev AKD 2020</div>';
 
   } else if (!dxManual) {
     _dxC += '<div style="font-size:11px;color:#888;font-style:italic;padding:10px;background:#f8f8f8;border-radius:5px">No se registraron tests ortopédicos en esta evaluación. Complete el tab Tests del modal hombro para activar el diagnóstico diferencial automático basado en evidencia.</div>';
