@@ -52,7 +52,7 @@ function initTobilloSheet() {
 }
 
 function initLBPSheet() {
-  buildStartBack();
+  initLumbarSheet();
 }
 
 function initGroinSheet() {

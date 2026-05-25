@@ -2809,6 +2809,8 @@
   <script src="js/diagnostico-hombro.js?v=2"></script>
   <script src="js/diagnostico-codo.js?v=1"></script>
   <script src="js/diagnostico-cervical.js?v=1"></script>
+  <script src="js/data/papers-lumbar-rules.js?v=1"></script>
+  <script src="js/diagnostico-lumbar.js?v=1"></script>
   <script src="js/informe.js?v=2"></script>
   <script src="js/informe-kinetic.js?v=1"></script>
   <script src="js/video.js?v=2"></script>
@@ -2818,11 +2820,11 @@
   <script src="js/valgo.js?v=2"></script>
   <script src="js/lesion.js?v=6"></script>
   <!-- Clinical sheets split por articulación (originalmente klinical.js 1163 LOC) -->
-  <script src="js/sheets/_common.js?v=8"></script>
+  <script src="js/sheets/_common.js?v=9"></script>
   <script src="js/sheets/hombro.js?v=11"></script>
   <script src="js/sheets/rodilla.js?v=1"></script>
   <script src="js/sheets/tobillo.js?v=1"></script>
-  <script src="js/sheets/lumbar.js?v=1"></script>
+  <script src="js/sheets/lumbar.js?v=2"></script>
   <script src="js/sheets/groin.js?v=1"></script>
   <script src="js/sheets/codo.js?v=2"></script>
   <script src="js/sheets/cervical.js?v=3"></script>
@@ -4003,32 +4005,154 @@
     <div class="modal-handle"></div>
     <div class="flex-b mb-12">
       <div><div class="modal-title" style="font-size:18px">🔶 Columna lumbar</div>
-        <div style="font-size:12px;color:var(--text2)">O'Sullivan 2018 · STarT Back · ODI · Tests provocativos</div></div>
+        <div style="font-size:12px;color:var(--text2)">CPG Delitto 2012 · Cook SIJ 2006 · STarT Back · ODI</div></div>
       <button class="btn btn-ghost btn-sm" onclick="closeModal('sheet-lbp')">✕</button>
     </div>
-    <div class="card mb-10">
-      <div class="card-header"><h3>Tests provocativos</h3></div>
-      <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
-          <div><div style="font-size:12px;font-weight:600">SLR (Lasègue)</div><div style="font-size:10px;color:var(--text2)">L4-S1 · Positivo &lt;60° · Sn 0.91</div></div>
-          <div style="display:flex;gap:6px"><button class="ot-btn" onclick="toggleOT(this,'pos')">+ POS</button><button class="ot-btn" onclick="toggleOT(this,'neg')">– NEG</button></div>
+    <!-- Tab strip -->
+    <div style="display:flex;gap:3px;background:var(--bg4);border-radius:8px;padding:3px;margin-bottom:16px;overflow-x:auto">
+      <button class="btn btn-neon btn-sm" id="lbptab-obs-btn" onclick="showLBPTab('obs',this)" style="white-space:nowrap;font-size:10px">Clasificación</button>
+      <button class="btn btn-ghost btn-sm" id="lbptab-rom-btn" onclick="showLBPTab('rom',this)" style="white-space:nowrap;font-size:10px">ROM</button>
+      <button class="btn btn-ghost btn-sm" id="lbptab-tests-btn" onclick="showLBPTab('tests',this)" style="white-space:nowrap;font-size:10px">Tests</button>
+      <button class="btn btn-ghost btn-sm" id="lbptab-motor-btn" onclick="showLBPTab('motor',this)" style="white-space:nowrap;font-size:10px">Motor</button>
+      <button class="btn btn-ghost btn-sm" id="lbptab-esc-btn" onclick="showLBPTab('esc',this)" style="white-space:nowrap;font-size:10px">Escalas</button>
+      <button class="btn btn-ghost btn-sm" id="lbptab-informe-btn" onclick="showLBPTab('informe',this)" style="white-space:nowrap;font-size:10px">📄 Informe</button>
+    </div>
+
+    <!-- TAB: CLASIFICACIÓN -->
+    <div id="lbptab-obs">
+      <!-- Red flags -->
+      <div class="card card-danger mb-12">
+        <div class="card-header"><h3 style="color:var(--red)">🚩 Banderas rojas</h3><span class="tag tag-r">Derivar si presentes</span></div>
+        <div class="card-body">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label style="display:flex;align-items:center;gap:8px;font-size:11px"><input type="checkbox" class="lbp-redflag" value="fractura"> Trauma significativo / sospecha fractura</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:11px"><input type="checkbox" class="lbp-redflag" value="tumor"> Pérdida de peso inexplicable / antecedente oncológico</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:11px"><input type="checkbox" class="lbp-redflag" value="cauda"> Síndrome de cauda equina (incontinencia / anestesia en silla)</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:11px"><input type="checkbox" class="lbp-redflag" value="infeccion"> Fiebre / inmunosupresión / uso de drogas IV</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:11px"><input type="checkbox" class="lbp-redflag" value="aorta"> Dolor no mecánico constante / pulsátil</label>
+          </div>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
-          <div><div style="font-size:12px;font-weight:600">SLUMP test</div><div style="font-size:10px;color:var(--text2)">Tensión dural / radiculopatía · Sn 0.84</div></div>
-          <div style="display:flex;gap:6px"><button class="ot-btn" onclick="toggleOT(this,'pos')">+ POS</button><button class="ot-btn" onclick="toggleOT(this,'neg')">– NEG</button></div>
+      </div>
+      <!-- Anamnesis -->
+      <div class="card mb-10">
+        <div class="card-header"><h3>Anamnesis</h3></div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+          <div class="ig">
+            <label class="il">NPRS reposo (0–10)</label>
+            <input class="inp inp-mono" type="number" min="0" max="10" id="lbp-nprs" placeholder="0–10">
+          </div>
+          <div class="ig">
+            <label class="il">Tiempo de evolución</label>
+            <select class="inp" id="lbp-tiempo">
+              <option value="">—</option>
+              <option value="agudo">&lt; 4 semanas (agudo)</option>
+              <option value="subagudo">4–12 semanas (subagudo)</option>
+              <option value="cronico">&gt; 12 semanas (crónico)</option>
+            </select>
+          </div>
+          <div class="ig">
+            <label class="il">Mecanismo / presentación</label>
+            <select class="inp" id="lbp-mecanismo">
+              <option value="">—</option>
+              <option value="especifico">Causa específica (dx imagen)</option>
+              <option value="radicular">Radicular / irradiado a pierna</option>
+              <option value="central">Central / axial</option>
+              <option value="sij">SIJ / pelvis</option>
+              <option value="insidioso">Insidioso sin trauma</option>
+            </select>
+          </div>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0">
-          <div><div style="font-size:12px;font-weight:600">ASLR</div><div style="font-size:10px;color:var(--text2)">Estabilidad lumbopélvica</div></div>
-          <div style="display:flex;gap:6px"><button class="ot-btn" onclick="toggleOT(this,'pos')">+ POS</button><button class="ot-btn" onclick="toggleOT(this,'neg')">– NEG</button></div>
+      </div>
+      <!-- Clasificación CPG -->
+      <div class="card mb-10">
+        <div class="card-header"><h3>Clasificación O'Sullivan 2018</h3><span class="tag tag-b">CPG</span></div>
+        <div class="card-body">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label style="display:flex;align-items:center;gap:8px;font-size:11px"><input type="radio" name="lbp-clasificacion" value="especifico"> LBP específico (patología seria)</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:11px"><input type="radio" name="lbp-clasificacion" value="radiculopatia"> Radiculopatía / dolor referido nervioso</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:11px"><input type="radio" name="lbp-clasificacion" value="noespecifico"> LBP no específico (mayoría)</label>
+          </div>
+        </div>
+      </div>
+      <!-- Síntomas -->
+      <div class="card mb-10">
+        <div class="card-header"><h3>Síntomas clínicos</h3><span class="tag tag-b">EBM</span></div>
+        <div class="card-body">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:8px">Marcá los síntomas presentes. Combinados con los tests generan el diagnóstico diferencial.</div>
+          <div id="lbp-symptoms-list"></div>
         </div>
       </div>
     </div>
-    <!-- STarT Back -->
-    <div class="card mb-10" style="border-color:rgba(255,176,32,.2)">
-      <div class="card-header" style="cursor:pointer" onclick="toggleSheetSection('startback-body')">
-        <h3>STarT Back Tool</h3><span class="tag tag-y">Estratificación riesgo</span>
+
+    <!-- TAB: ROM -->
+    <div id="lbptab-rom" style="display:none">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px;padding:8px;background:rgba(77,158,255,.08);border-radius:8px">
+        Valores normales: Flexión 60°, Extensión 25°, Rotación 30°, Lateralización 25°. Schober normal ≥5 cm.
       </div>
-      <div id="startback-body" style="display:none">
+      <div id="lbp-rom-fields"></div>
+      <!-- Schober -->
+      <div class="card mt-10">
+        <div class="card-header"><h3>Test de Schober</h3><span class="tag tag-b">Movilidad lumbar</span></div>
+        <div class="card-body">
+          <div class="grid-2" style="gap:8px">
+            <div class="ig"><label class="il">Valor Schober (cm)</label>
+              <input class="inp inp-mono" type="number" id="lbp-schober" step="0.1" placeholder="0–10 cm"
+                oninput="const v=+this.value;const el=document.getElementById('lbp-schober-res');el.textContent=v?v+' cm':'—';el.style.color=v>=5?'var(--neon)':'var(--red)';">
+            </div>
+            <div style="display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:6px">
+              <div style="font-size:10px;color:var(--text3)">Normal: ≥5 cm</div>
+              <div id="lbp-schober-res" style="font-size:20px;font-weight:800;font-family:var(--mono);color:var(--text3)">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: TESTS -->
+    <div id="lbptab-tests" style="display:none">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px;padding:8px;background:rgba(77,158,255,.08);border-radius:8px">
+        Tests ortopédicos con evidencia EBM. POS/NEG bilateral cuando aplica. EVA post-test se deshabilita si NEG.
+      </div>
+      <div class="card mb-10">
+        <div class="card-header"><h3>Tests neurales</h3><span class="tag tag-r">Radiculopatía</span></div>
+        <div class="card-body"><div id="lbp-tests-neural"></div></div>
+      </div>
+      <div class="card mb-10">
+        <div class="card-header"><h3>Tests SIJ</h3><span class="tag tag-y">Clúster Cook 2006 ≥3/6</span></div>
+        <div class="card-body"><div id="lbp-tests-sij"></div></div>
+      </div>
+      <div class="card mb-10">
+        <div class="card-header"><h3>Tests estabilidad</h3><span class="tag tag-b">Inestabilidad lumbar</span></div>
+        <div class="card-body"><div id="lbp-tests-estabilidad"></div></div>
+      </div>
+      <div class="card mb-10">
+        <div class="card-header"><h3>Tests estenosis</h3><span class="tag tag-y">Estenosis de canal</span></div>
+        <div class="card-body"><div id="lbp-tests-estenosis"></div></div>
+      </div>
+    </div>
+
+    <!-- TAB: MOTOR -->
+    <div id="lbptab-motor" style="display:none">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px;padding:8px;background:var(--verde08);border-radius:8px">
+        Evaluación neuromuscular. Myotomas L2–S1 bilateral. Reflejos osteotendinosos rotuliano (L3-L4) y aquiliano (S1).
+      </div>
+      <div class="card mb-10">
+        <div class="card-header"><h3>Myotomas L2–S1</h3><span class="tag tag-b">Fuerza muscular MRC</span></div>
+        <div class="card-body"><div id="lbp-myotomas-fields"></div></div>
+      </div>
+      <div class="card mb-10">
+        <div class="card-header"><h3>Reflejos osteotendinosos</h3><span class="tag tag-b">Neurológico</span></div>
+        <div class="card-body"><div id="lbp-reflejos-fields"></div></div>
+      </div>
+    </div>
+
+    <!-- TAB: ESCALAS -->
+    <div id="lbptab-esc" style="display:none">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:12px;padding:8px;background:var(--verde08);border-radius:8px">
+        STarT Back: estratificación de riesgo. ODI: discapacidad funcional. PSFS: funciones específicas del paciente.
+      </div>
+      <div class="card mb-10" style="border-color:rgba(255,176,32,.2)">
+        <div class="card-header"><h3>STarT Back Tool</h3><span class="tag tag-y">Estratificación riesgo</span></div>
         <div class="card-body">
           <div style="font-size:11px;color:var(--text2);margin-bottom:10px">9 ítems — bajo / medio / alto riesgo. Guía intensidad de tratamiento.</div>
           <div id="startback-sheet-fields"></div>
@@ -4040,18 +4164,13 @@
           </div>
         </div>
       </div>
-    </div>
-    <!-- ODI -->
-    <div class="card" style="border-color:rgba(167,139,250,.2)">
-      <div class="card-header" style="cursor:pointer" onclick="toggleSheetSection('odi-body')">
-        <h3>Oswestry Disability Index (ODI)</h3><span class="tag" style="background:rgba(167,139,250,.15);color:#A78BFA">0–100% · MCID 10</span>
-      </div>
-      <div id="odi-body" style="display:none">
+      <div class="card mb-10" style="border-color:rgba(167,139,250,.2)">
+        <div class="card-header"><h3>Oswestry Disability Index (ODI)</h3><span class="tag" style="background:rgba(167,139,250,.15);color:#A78BFA">0–100% · MCID 10</span></div>
         <div class="card-body">
           <div style="font-size:11px;color:var(--text2);margin-bottom:8px">0–20% mínima · 20–40% moderada · 40–60% grave · &gt;60% muy grave</div>
           <div class="ig"><label class="il">Score ODI directo (%)</label>
-            <input class="inp inp-mono" type="number" min="0" max="100" placeholder="0–100"
-              oninput="const v=+this.value;const el=document.getElementById('odi-sheet-total');el.textContent=v+'%';el.style.color=v<=20?'var(--neon)':v<=40?'var(--amber)':'var(--red)'">
+            <input class="inp inp-mono" type="number" min="0" max="100" id="lbp-odi-input" placeholder="0–100"
+              oninput="const v=+this.value;const el=document.getElementById('odi-sheet-total');el.textContent=v+'%';el.style.color=v<=20?'var(--neon)':v<=40?'var(--amber)':'var(--red)';">
             <div style="font-size:10px;color:var(--text3);margin-top:3px">MCID: 10 puntos</div>
           </div>
           <div class="card mt-10" style="border-color:rgba(167,139,250,.3)">
@@ -4062,12 +4181,48 @@
           </div>
         </div>
       </div>
+      <div class="card mb-10">
+        <div class="card-header"><h3>PSFS — Patient-Specific Functional Scale</h3><span class="tag tag-b">MCID 2 pts</span></div>
+        <div class="card-body"><div id="lbp-psfs-fields"></div></div>
+      </div>
     </div>
+
+    <!-- TAB: INFORME -->
+    <div id="lbptab-informe" style="display:none">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;padding:10px;background:var(--bg4);border-radius:8px">
+        <span style="font-size:11px;color:var(--text2);font-weight:600">Sesiones:</span>
+        <select id="lbp-session-select" onchange="loadLBPSession(this.value)"
+          style="flex:1;min-width:120px;font-size:11px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text)">
+          <option value="">— Sesión actual —</option>
+        </select>
+        <button class="btn btn-neon btn-sm" onclick="saveLBPSession()" style="font-size:10px">💾 Guardar sesión</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleLBPHistorial()" style="font-size:10px">📋 Historial</button>
+      </div>
+      <div id="lbp-historial-panel" style="display:none;margin-bottom:12px"></div>
+      <div class="card mb-12" style="border-color:var(--neon)">
+        <div class="card-header" style="background:rgba(57,255,122,.06)">
+          <h3 style="display:flex;align-items:center;gap:8px"><span>📄</span> Informe de evaluación lumbar</h3>
+          <span class="tag tag-y" style="font-size:9px">CPG 2012 · Delitto et al.</span>
+        </div>
+        <div class="card-body">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:12px;line-height:1.5">
+            Genera un informe con: perfil del paciente, síntomas, ROM, tests ortopédicos, motor, escalas (STarT Back / ODI / PSFS) y diagnóstico diferencial EBM.
+          </div>
+          <button class="btn btn-neon btn-full" onclick="generarInformeLumbar()" style="font-size:13px">
+            🖨️ Generar informe lumbar completo
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Diagnóstico diferencial EBM (always visible below tabs) -->
+    <div id="lbp-missing-alerts-panel" style="margin-top:8px"></div>
+    <div id="kine-dx-lbp-card" style="display:none"></div>
+
     <div class="divider"></div>
-    <button class="btn btn-neon btn-full" onclick="saveKlinicalSheet('lbp');closeModal('sheet-lbp')">💾 Guardar evaluación lumbar</button>
+    <button class="btn btn-neon btn-full" onclick="saveKlinicalSheet('lbp')">💾 Guardar evaluación lumbar</button>
   </div>
 </div>
-
 <!-- SHEET: GROIN PAIN (Doha) -->
 <div class="modal" id="sheet-groin">
   <div class="modal-sheet" style="max-width:min(900px,96vw)">
