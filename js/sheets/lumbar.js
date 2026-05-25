@@ -2,11 +2,10 @@
 // CPG: Delitto et al. JOSPT 2012 · Cook SIJ cluster 2006 · O'Sullivan 2018
 // Requires: papers-lumbar-rules.js
 
-'use strict';
-
-let startbackVals = new Array(9).fill(null);
-let lbpPsfsVals   = [null, null, null];
-let lbpOdiScore   = null;
+// startbackVals is declared in lesion.js — reuse that global
+// eslint-disable-next-line no-unused-vars
+let lbpPsfsVals = [null, null, null];
+let lbpOdiScore = null;
 
 // ── Tab switcher ──────────────────────────────────────────────────────────────
 function showLBPTab(tab, btn) {
