@@ -263,7 +263,7 @@ function buildLBPReflejos() {
 }
 
 // ── STarT Back (existing) ─────────────────────────────────────────────────────
-const STARTBACK_ITEMS = [
+const LBP_STARTBACK_ITEMS = [
   'En las últimas 2 semanas, ¿el dolor se extendió a la pierna/s?',
   'En las últimas 2 semanas, ¿tuvo dolor de hombro o cuello?',
   'En las últimas 2 semanas, ¿solo caminó distancias cortas por el dolor?',
@@ -278,7 +278,7 @@ const STARTBACK_ITEMS = [
 function buildStartBack() {
   const c = document.getElementById('startback-sheet-fields'); if (!c || c.innerHTML) return;
   startbackVals = new Array(9).fill(null);
-  c.innerHTML = STARTBACK_ITEMS.map((item, i) => `
+  c.innerHTML = LBP_STARTBACK_ITEMS.map((item, i) => `
     <div style="padding:6px 0;border-bottom:1px solid var(--border)">
       <div style="font-size:11px;margin-bottom:4px">${i+1}. ${item}</div>
       <div style="display:flex;gap:10px">
