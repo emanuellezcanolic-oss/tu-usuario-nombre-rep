@@ -478,6 +478,28 @@ function _readCervicalSessionData() {
     rom[r.id] = { act: gv(`cx-rom-${r.id}-act`), pas: gv(`cx-rom-${r.id}-pas`) };
   });
 
+  // Myotomas
+  const myotomas = (typeof CX_MYOTOMAS !== 'undefined' ? CX_MYOTOMAS : []).map(m => ({
+    id: m.id, d: gv(`${m.id}-d`), i: gv(`${m.id}-i`),
+  }));
+
+  // Reflejos — read data-active from cx-reflejo-btn groups
+  const refCards = document.querySelectorAll('#cx-reflejos-fields > div');
+  const reflejos = [...refCards].map(card => {
+    const btns = card.querySelectorAll('.cx-reflejo-btn');
+    // first 3 = D, next 3 = I
+    const getActive = (start) => {
+      for (let k = start; k < start + 3; k++) {
+        if (btns[k]?.dataset.active) return btns[k].dataset.active;
+      }
+      return '';
+    };
+    return { d: getActive(0), i: getActive(3) };
+  });
+
+  // PSFS activity text
+  const psfsActivities = [1,2,3].map(n => gv(`cx-psfs-act-${n}`));
+
   const symptomsChecked = _getCervicalSelectedSymptoms();
   const clasif = document.querySelector('input[name="cx-clasificacion"]:checked')?.value || '';
 
@@ -494,6 +516,7 @@ function _readCervicalSessionData() {
     psfsResult: gt('cx-psfs-result'),
     cxNdiVals:  [...cxNdiVals],
     cxPsfsVals: [...cxPsfsVals],
+    myotomas, reflejos, psfsActivities,
   };
 }
 
@@ -528,24 +551,149 @@ function loadCervicalSession(idx) {
   const sessions = cur.klinical?.cervical?.sessions || [];
   const s = sessions[parseInt(idx)];
   if (!s) return;
-  const sv = (id, val) => { const el = document.getElementById(id); if(el && val!==undefined) el.value = val; };
-  sv('cx-nprs', s.nprs);
-  sv('cx-tiempo', s.tiempo); sv('cx-mecanismo', s.mecanismo);
+
+  const sv = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.value = val; };
+
+  // ── Basic fields ──
+  sv('cx-nprs', s.nprs); sv('cx-tiempo', s.tiempo); sv('cx-mecanismo', s.mecanismo);
   sv('cfrt-d', s.cfrtD); sv('cfrt-i', s.cfrtI);
   sv('cx-nfe-tiempo', s.nfeTiempo); sv('cx-nfe-sexo', s.nfeSexo);
-  if (s.nprs) { const el = document.getElementById('cx-nprs'); if(el) el.nextElementSibling.textContent = el.value; }
+  const nprsEl = document.getElementById('cx-nprs');
+  if (nprsEl) nprsEl.nextElementSibling.textContent = nprsEl.value;
+
+  // ── ROM ──
+  if (s.rom) {
+    Object.entries(s.rom).forEach(([id, vals]) => {
+      sv(`cx-rom-${id}-act`, vals.act);
+      sv(`cx-rom-${id}-pas`, vals.pas);
+    });
+  }
+
+  // ── Tests (POS/NEG buttons + EVA sliders) ──
+  if (s.tests) {
+    Object.entries(s.tests).forEach(([testId, data]) => {
+      const card = document.querySelector(`[data-test-id="${testId}"]`);
+      if (!card) return;
+      card.querySelectorAll('.cx-test-col').forEach((col, colIdx) => {
+        const side = colIdx === 0 ? 'd' : 'i';
+        const result = data[side];
+        // clear all buttons
+        col.querySelectorAll('.ot-btn').forEach(b => b.classList.remove('pos', 'neg'));
+        if (result) {
+          const target = [...col.querySelectorAll('.ot-btn')]
+            .find(b => (b.getAttribute('onclick') || '').includes(`'${result}'`));
+          if (target) target.classList.add(result);
+        }
+        // EVA slider
+        const slider = col.querySelector('.eva-slider');
+        if (slider) {
+          const evaVal = colIdx === 0 ? data.evaD : data.evaI;
+          slider.value = evaVal || 0;
+          slider.disabled = (result === 'neg');
+          const disp = slider.nextElementSibling;
+          if (disp) disp.textContent = slider.value;
+        }
+      });
+    });
+  }
+
+  // ── CCFT ──
+  if (s.ccft && Object.keys(s.ccft).length) {
+    ccftState = { ...s.ccft };
+    [22, 24, 26, 28, 30].forEach(level => {
+      const val = ccftState[level];
+      if (!val) return;
+      document.querySelectorAll(`[onclick="toggleCCFT(this,'ok',${level})"], [onclick="toggleCCFT(this,'fail',${level})"]`)
+        .forEach(btn => {
+          btn.classList.remove('btn-neon', 'btn-danger');
+          const isOk = (btn.getAttribute('onclick') || '').includes("'ok'");
+          if ((isOk && val === 'ok') || (!isOk && val === 'fail'))
+            btn.classList.add(isOk ? 'btn-neon' : 'btn-danger');
+        });
+    });
+    _updateCCFTResult();
+  }
+
+  // ── NDI ──
+  if (s.cxNdiVals) {
+    cxNdiVals = [...s.cxNdiVals];
+    document.querySelectorAll('#ndi-fields > div').forEach((group, idx) => {
+      if (cxNdiVals[idx] === null) return;
+      const btns = group.querySelectorAll('.ot-btn');
+      btns.forEach(b => b.classList.remove('btn-neon'));
+      const target = [...btns].find(b => (b.getAttribute('onclick') || '').includes(`,${cxNdiVals[idx]})`));
+      if (target) {
+        target.classList.add('btn-neon');
+        const hint = group.querySelector('[id^="ndi-hint-"]');
+        if (hint && typeof NDI_LABELS !== 'undefined' && NDI_LABELS[idx]?.[cxNdiVals[idx]])
+          hint.textContent = NDI_LABELS[idx][cxNdiVals[idx]];
+      }
+    });
+    calcNDI();
+  }
+
+  // ── PSFS ──
+  if (s.cxPsfsVals) {
+    cxPsfsVals = [...s.cxPsfsVals];
+    if (s.psfsActivities) {
+      s.psfsActivities.forEach((txt, n) => sv(`cx-psfs-act-${n+1}`, txt));
+    }
+    document.querySelectorAll('#cx-psfs-fields .ig').forEach((group, idx) => {
+      if (cxPsfsVals[idx] === null) return;
+      const btns = group.querySelectorAll('.ot-btn');
+      btns.forEach(b => b.classList.remove('btn-neon'));
+      const target = [...btns].find(b => (b.getAttribute('onclick') || '').includes(`,${cxPsfsVals[idx]})`));
+      if (target) target.classList.add('btn-neon');
+    });
+    const filled = cxPsfsVals.filter(v => v !== null);
+    const psfsEl = document.getElementById('cx-psfs-result');
+    if (psfsEl && filled.length) {
+      const avg = (filled.reduce((a, b) => a + b, 0) / filled.length).toFixed(1);
+      psfsEl.innerHTML = `<span style="color:${avg>=5?'var(--neon)':avg>=3?'var(--amber)':'var(--red)'}">Promedio PSFS: ${avg}/10</span> <span style="font-size:10px;color:var(--text3)">(${filled.length}/3 actividades · MCID ≥2 pts)</span>`;
+    }
+  }
+
+  // ── Myotomas ──
+  if (s.myotomas) {
+    s.myotomas.forEach(m => { sv(`${m.id}-d`, m.d); sv(`${m.id}-i`, m.i); });
+  }
+
+  // ── Reflejos ──
+  if (s.reflejos) {
+    const refCards = document.querySelectorAll('#cx-reflejos-fields > div');
+    refCards.forEach((card, rIdx) => {
+      if (!s.reflejos[rIdx]) return;
+      const btns = card.querySelectorAll('.cx-reflejo-btn');
+      btns.forEach(b => { b.classList.remove('btn-neon'); b.dataset.active = ''; });
+      ['d','i'].forEach((side, sideIdx) => {
+        const val = s.reflejos[rIdx][side];
+        if (!val) return;
+        const start = sideIdx * 3;
+        for (let k = start; k < start + 3; k++) {
+          if (btns[k] && (btns[k].getAttribute('onclick') || '').includes(`'${val}'`)) {
+            btns[k].classList.add('btn-neon');
+            btns[k].dataset.active = val;
+            break;
+          }
+        }
+      });
+    });
+  }
+
+  // ── Symptoms + clasificación ──
   if (s.symptomsChecked) {
     document.querySelectorAll('#cx-symptoms-list input[type=checkbox]').forEach(cb => {
       cb.checked = s.symptomsChecked.includes(cb.value);
     });
-    if (typeof renderDiagnosticosCervical === 'function')
-      renderDiagnosticosCervical(_getCervicalModalPositivos(), _getCervicalSelectedSymptoms());
   }
   if (s.clasif) {
     const r = document.querySelector(`input[name="cx-clasificacion"][value="${s.clasif}"]`);
     if (r) { r.checked = true; updateCXClasif(r); }
   }
+
   calcCFRT(); calcCXNFE();
+  if (typeof renderDiagnosticosCervical === 'function')
+    renderDiagnosticosCervical(_getCervicalModalPositivos(), _getCervicalSelectedSymptoms());
   showSaveToast();
 }
 
@@ -645,22 +793,25 @@ function generarInformeCervical() {
   const nfeNorm = nfeSexo?.includes('asculino') ? 39 : 29;
   const nfeText = nfeT ? `${nfeT}s (ref ≥${nfeNorm}s) — ${+nfeT >= nfeNorm ? '✓ Normal' : '⚠️ Déficit'}` : '—';
 
-  // Myotomas
+  // Myotomas — only include rows where at least one side evaluated
   const myoRows = (typeof CX_MYOTOMAS !== 'undefined' ? CX_MYOTOMAS : []).map(m => {
     const d = gv(`${m.id}-d`); const i = gv(`${m.id}-i`);
-    return { nivel: m.nivel, mov: m.mov, d: d||'—', i: i||'—', asym: d && i && d !== i };
-  });
+    return { nivel: m.nivel, mov: m.mov, d, i, asym: d && i && d !== i };
+  }).filter(m => m.d || m.i);
 
-  // Reflejos
-  const refRows = (typeof CX_REFLEJOS !== 'undefined' ? CX_REFLEJOS : []).map(r => {
-    const getRef = (id, side) => {
-      const card = document.getElementById(id);
-      const btns = card?.closest('div')?.querySelectorAll(`.ot-btn.btn-neon, .ot-btn.btn-danger`);
-      // Find active button in correct side
-      return '—';
+  // Reflejos — read data-active set by toggleReflejoCX
+  const refCards2 = document.querySelectorAll('#cx-reflejos-fields > div');
+  const refRows = (typeof CX_REFLEJOS !== 'undefined' ? CX_REFLEJOS : []).map((r, rIdx) => {
+    const card = refCards2[rIdx];
+    if (!card) return null;
+    const btns = card.querySelectorAll('.cx-reflejo-btn');
+    const getActive = (start) => {
+      for (let k = start; k < start + 3; k++) if (btns[k]?.dataset.active) return btns[k].dataset.active;
+      return '';
     };
-    return { nombre: r.nombre, nivel: r.nivel };
-  });
+    const d = getActive(0), i = getActive(3);
+    return (d || i) ? { nombre: r.nombre, nivel: r.nivel, d, i } : null;
+  }).filter(Boolean);
 
   // Escalas
   const ndiScore = gt('ndi-total');
@@ -761,28 +912,42 @@ function generarInformeCervical() {
       </tr>`).join('')}
     </table>` : '';
 
-  const sec05 = `
+  const hasCCFT  = Object.keys(ccftState).length > 0;
+  const hasNFE   = !!nfeT;
+  const hasMotor = hasCCFT || hasNFE || myoRows.length > 0 || refRows.length > 0;
+
+  const sec05 = hasMotor ? `
     ${_sec('05','Evaluación neuromuscular y motor')}
     <div class="intro-box">Evaluación de los flexores cervicales profundos (CCFT), endurance (NFE), myotomas C4–T1 y reflejos osteotendinosos. El CCFT es el gold standard para detectar disfunción neuromuscular en dolor cervical (Blomgren 2018). NFE normal: >39 s varones / >29 s mujeres.</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-      <div style="background:#f0f5fd;border-radius:6px;padding:10px;border:1px solid #ddeaf8;text-align:center">
+    ${(hasCCFT || hasNFE) ? `
+    <div style="display:grid;grid-template-columns:${hasCCFT&&hasNFE?'1fr 1fr':'1fr'};gap:12px;margin-bottom:12px">
+      ${hasCCFT ? `<div style="background:#f0f5fd;border-radius:6px;padding:10px;border:1px solid #ddeaf8;text-align:center">
         <div style="font-size:9px;text-transform:uppercase;color:#2a4a7f;font-weight:700;margin-bottom:4px">CCFT</div>
         <div style="font-size:14px;font-weight:900;color:#2a4a7f">${ccftText}</div>
-      </div>
-      <div style="background:#f0f5fd;border-radius:6px;padding:10px;border:1px solid #ddeaf8;text-align:center">
+      </div>` : ''}
+      ${hasNFE ? `<div style="background:#f0f5fd;border-radius:6px;padding:10px;border:1px solid #ddeaf8;text-align:center">
         <div style="font-size:9px;text-transform:uppercase;color:#2a4a7f;font-weight:700;margin-bottom:4px">NFE</div>
         <div style="font-size:13px;font-weight:700;color:#2a4a7f">${nfeText}</div>
-      </div>
-    </div>
+      </div>` : ''}
+    </div>` : ''}
     ${myoRows.length ? `
-    <table>
+    <table style="margin-bottom:10px">
       <tr><th>Nivel</th><th>Movimiento</th><th>D</th><th>I</th><th>Asimetría</th></tr>
       ${myoRows.map(m=>`<tr>
         <td style="font-family:monospace;font-weight:700;color:#2a4a7f">${m.nivel}</td>
-        <td>${m.mov}</td><td>${m.d}</td><td>${m.i}</td>
+        <td>${m.mov}</td><td>${m.d||'—'}</td><td>${m.i||'—'}</td>
         <td class="${m.asym?'asym':''}">${m.asym?'⚠️ Asimetría':'—'}</td>
       </tr>`).join('')}
-    </table>` : ''}`;
+    </table>` : ''}
+    ${refRows.length ? `
+    <table>
+      <tr><th>Reflejo</th><th>Nivel</th><th>Derecha</th><th>Izquierda</th></tr>
+      ${refRows.map(r=>`<tr>
+        <td><strong>${r.nombre}</strong></td>
+        <td style="font-family:monospace;font-size:10px;color:#2a4a7f">${r.nivel}</td>
+        <td>${r.d||'—'}</td><td>${r.i||'—'}</td>
+      </tr>`).join('')}
+    </table>` : ''}` : '';
 
   const sec06 = (ndiScore && ndiScore !== '—') ? `
     ${_sec('06','Escalas funcionales')}
