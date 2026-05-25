@@ -2725,6 +2725,7 @@
   <script src="js/data/papers-cadera-rules.js?v=1"></script>
   <script src="js/data/papers-hombro-rules.js?v=2"></script>
   <script src="js/data/papers-codo-rules.js?v=1"></script>
+  <script src="js/data/papers-cervical-rules.js?v=1"></script>
   <script src="js/data/ortho-tests.js?v=2"></script>
   <script src="js/app.js?v=4"></script>
   <script src="js/atletas.js?v=2"></script>
@@ -2807,6 +2808,7 @@
   <script src="js/diagnostico-cadera.js?v=2"></script>
   <script src="js/diagnostico-hombro.js?v=2"></script>
   <script src="js/diagnostico-codo.js?v=1"></script>
+  <script src="js/diagnostico-cervical.js?v=1"></script>
   <script src="js/informe.js?v=2"></script>
   <script src="js/informe-kinetic.js?v=1"></script>
   <script src="js/video.js?v=2"></script>
@@ -2823,7 +2825,7 @@
   <script src="js/sheets/lumbar.js?v=1"></script>
   <script src="js/sheets/groin.js?v=1"></script>
   <script src="js/sheets/codo.js?v=2"></script>
-  <script src="js/sheets/cervical.js?v=1"></script>
+  <script src="js/sheets/cervical.js?v=2"></script>
   <script src="js/planillas.js?v=2"></script>
 
 
@@ -3461,6 +3463,7 @@
       <button class="btn btn-ghost btn-sm" id="cxtab-tests-btn" onclick="showCXTab('tests',this)" style="white-space:nowrap;font-size:10px">Tests</button>
       <button class="btn btn-ghost btn-sm" id="cxtab-motor-btn" onclick="showCXTab('motor',this)" style="white-space:nowrap;font-size:10px">Motor</button>
       <button class="btn btn-ghost btn-sm" id="cxtab-esc-btn" onclick="showCXTab('esc',this)" style="white-space:nowrap;font-size:10px">Escalas</button>
+      <button class="btn btn-ghost btn-sm" id="cxtab-informe-btn" onclick="showCXTab('informe',this)" style="white-space:nowrap;font-size:10px">📄 Informe</button>
     </div>
 
     <!-- TAB: CLASIFICACIÓN / OBSERVACIÓN -->
@@ -3517,6 +3520,17 @@
           </div>
           <div class="ig"><label class="il">NPRS actual (0–10)</label>
             <input type="range" class="eva-slider" min="0" max="10" value="0" id="cx-nprs" oninput="this.nextElementSibling.textContent=this.value"><span style="font-family:var(--mono);font-size:14px;display:block;text-align:center">0</span></div>
+        </div>
+      </div>
+      <!-- Síntomas clínicos EBM -->
+      <div class="card mb-12">
+        <div class="card-header">
+          <h3>🩺 Presentación clínica — Síntomas</h3>
+          <span class="tag tag-b" style="font-size:9px">CPG 2017 · Diagnóstico diferencial</span>
+        </div>
+        <div class="card-body">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:8px">Marcá los síntomas presentes. Combinados con los tests ortopédicos generan el diagnóstico diferencial.</div>
+          <div id="cx-symptoms-list"></div>
         </div>
       </div>
     </div>
@@ -3631,8 +3645,43 @@
       </div>
     </div>
 
+    <!-- TAB: INFORME -->
+    <div id="cxtab-informe" style="display:none">
+      <!-- Session bar -->
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;padding:10px;background:var(--bg4);border-radius:8px">
+        <span style="font-size:11px;color:var(--text2);font-weight:600">Sesiones:</span>
+        <select id="cx-session-select" onchange="loadCervicalSession(this.value)"
+          style="flex:1;min-width:120px;font-size:11px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text)">
+          <option value="">— Sesión actual —</option>
+        </select>
+        <button class="btn btn-neon btn-sm" onclick="saveCervicalSession()" style="font-size:10px">💾 Guardar sesión</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleCervicalHistorial()" style="font-size:10px">📋 Historial</button>
+      </div>
+      <div id="cx-historial-panel" style="display:none;margin-bottom:12px"></div>
+
+      <!-- Generate PDF -->
+      <div class="card mb-12" style="border-color:var(--neon)">
+        <div class="card-header" style="background:rgba(57,255,122,.06)">
+          <h3 style="display:flex;align-items:center;gap:8px"><span>📄</span> Informe de evaluación cervical</h3>
+          <span class="tag tag-y" style="font-size:9px">CPG 2017 · Blanpied et al.</span>
+        </div>
+        <div class="card-body">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:12px;line-height:1.5">
+            Genera un informe completo con: perfil del paciente, síntomas clínicos, ROM + CFRT, tests ortopédicos, motor (CCFT/NFE/myotomas), escalas (NDI + PSFS) y diagnóstico diferencial EBM.
+          </div>
+          <button class="btn btn-neon btn-full" onclick="generarInformeCervical()" style="font-size:13px">
+            🖨️ Generar informe cervical completo
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Diagnóstico diferencial EBM (always visible below tabs) -->
+    <div id="cx-missing-alerts-panel" style="margin-top:8px"></div>
+    <div id="kine-dx-cervical-card" style="display:none"></div>
+
     <div class="divider"></div>
-    <button class="btn btn-neon btn-full" onclick="saveKlinicalSheet('cervical');closeModal('sheet-cervical')">💾 Guardar evaluación cervical</button>
+    <button class="btn btn-neon btn-full" onclick="saveKlinicalSheet('cervical')">💾 Guardar evaluación cervical</button>
   </div>
 </div>
 
