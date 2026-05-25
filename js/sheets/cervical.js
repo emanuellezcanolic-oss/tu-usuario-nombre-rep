@@ -285,7 +285,8 @@ function calcCXNFE() {
 
 function buildCXMyotomas() {
   const c = document.getElementById('cx-myotomas-fields'); if(!c || c.innerHTML) return;
-  const opts = ['5/5','4+','4/5','4-','3/5','2/5','1/5','0/5'].map(v=>`<option>${v}</option>`).join('');
+  const opts = ['','5/5','4+','4/5','4-','3/5','2/5','1/5','0/5']
+    .map((v,i) => `<option value="${v}"${i===0?' selected':''}>${i===0?'—':v}</option>`).join('');
   c.innerHTML = `
     <div style="display:grid;grid-template-columns:36px 1fr 64px 64px;gap:4px 8px;align-items:center;padding:4px 0 8px;border-bottom:1px solid var(--border)">
       <span style="font-size:9px;color:var(--text3)">Nivel</span>
@@ -312,6 +313,19 @@ function checkMyotomaAsym(id) {
   al.style.display = (d && i && d !== i) ? 'block' : 'none';
 }
 
+function toggleReflejoCX(btn, val) {
+  // Radio-like toggle within the flex group (3 buttons)
+  const siblings = btn.parentElement.querySelectorAll('.cx-reflejo-btn');
+  siblings.forEach(b => { b.classList.remove('btn-neon'); b.dataset.active = ''; });
+  if (btn.dataset.active === val) {
+    // clicking same = deselect
+    btn.dataset.active = '';
+  } else {
+    btn.classList.add('btn-neon');
+    btn.dataset.active = val;
+  }
+}
+
 function buildCXReflejos() {
   const c = document.getElementById('cx-reflejos-fields'); if(!c || c.innerHTML) return;
   c.innerHTML = CX_REFLEJOS.map(r => `
@@ -324,17 +338,17 @@ function buildCXReflejos() {
         <div>
           <div style="font-size:9px;color:var(--text3);margin-bottom:4px;text-align:center">DERECHA</div>
           <div style="display:flex;gap:3px;justify-content:center">
-            <button class="ot-btn" style="font-size:9px;padding:3px 6px" onclick="toggleOT(this,'hiper')">↑ Hiper</button>
-            <button class="ot-btn btn-neon" style="font-size:9px;padding:3px 6px" onclick="toggleOT(this,'norm')">= Norm</button>
-            <button class="ot-btn" style="font-size:9px;padding:3px 6px" onclick="toggleOT(this,'hipo')">↓ Hipo</button>
+            <button class="ot-btn cx-reflejo-btn" style="font-size:9px;padding:3px 6px" onclick="toggleReflejoCX(this,'hiper')">↑ Hiper</button>
+            <button class="ot-btn cx-reflejo-btn" style="font-size:9px;padding:3px 6px" onclick="toggleReflejoCX(this,'norm')">= Norm</button>
+            <button class="ot-btn cx-reflejo-btn" style="font-size:9px;padding:3px 6px" onclick="toggleReflejoCX(this,'hipo')">↓ Hipo</button>
           </div>
         </div>
         <div>
           <div style="font-size:9px;color:var(--text3);margin-bottom:4px;text-align:center">IZQUIERDA</div>
           <div style="display:flex;gap:3px;justify-content:center">
-            <button class="ot-btn" style="font-size:9px;padding:3px 6px" onclick="toggleOT(this,'hiper')">↑ Hiper</button>
-            <button class="ot-btn btn-neon" style="font-size:9px;padding:3px 6px" onclick="toggleOT(this,'norm')">= Norm</button>
-            <button class="ot-btn" style="font-size:9px;padding:3px 6px" onclick="toggleOT(this,'hipo')">↓ Hipo</button>
+            <button class="ot-btn cx-reflejo-btn" style="font-size:9px;padding:3px 6px" onclick="toggleReflejoCX(this,'hiper')">↑ Hiper</button>
+            <button class="ot-btn cx-reflejo-btn" style="font-size:9px;padding:3px 6px" onclick="toggleReflejoCX(this,'norm')">= Norm</button>
+            <button class="ot-btn cx-reflejo-btn" style="font-size:9px;padding:3px 6px" onclick="toggleReflejoCX(this,'hipo')">↓ Hipo</button>
           </div>
         </div>
       </div>
