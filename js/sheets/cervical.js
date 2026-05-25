@@ -825,17 +825,17 @@ function generarInformeCervical() {
   const css = `
     body{font-family:Inter,Arial,sans-serif;margin:0;background:#fff;color:#1a1a1a;font-size:12px;line-height:1.5}
     table{width:100%;border-collapse:collapse;font-size:11px}
-    th{background:#2a4a7f;color:#fff;padding:6px 8px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
-    td{padding:5px 8px;border-bottom:1px solid #ddeaf8}
-    tr:nth-child(even) td{background:#f0f5fd}
+    th{background:#8fa845;color:#fff;padding:6px 8px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+    td{padding:5px 8px;border-bottom:1px solid #e8f0d4}
+    tr:nth-child(even) td{background:#f5f7ee}
     .pos{color:#2d7a2d;font-weight:700} .neg{color:#888}
     .alerta{color:#cc3333;font-weight:700} .limite{color:#c65a00;font-weight:700} .ok{color:#2d7a2d;font-weight:700}
     .asym{color:#cc3333;font-weight:700}
-    .sec-badge{display:inline-block;background:#2a4a7f;color:#fff;font-size:9px;font-weight:900;padding:2px 9px;border-radius:3px;letter-spacing:1px;margin-right:8px}
-    .sec-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#1a2e5e}
-    .sec-head{display:flex;align-items:center;margin:20px 0 10px;padding-bottom:6px;border-bottom:2px solid #ddeaf8}
-    .intro-box{font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f0f5fd;border-radius:5px;border-left:3px solid #2a4a7f}
-    .dx-card{padding:10px;border:1px solid #ddeaf8;border-radius:6px;margin-bottom:8px}
+    .sec-badge{display:inline-block;background:#8fa845;color:#fff;font-size:9px;font-weight:900;padding:2px 9px;border-radius:3px;letter-spacing:1px;margin-right:8px}
+    .sec-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#1e2d0e}
+    .sec-head{display:flex;align-items:center;margin:20px 0 10px;padding-bottom:6px;border-bottom:2px solid #e8f0d4}
+    .intro-box{font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f5f7ee;border-radius:5px;border-left:3px solid #8fa845}
+    .dx-card{padding:10px;border:1px solid #e8f0d4;border-radius:6px;margin-bottom:8px}
     .dx-nprp{border-color:#cc3333;background:#fff8f8}
     .dx-npha{border-color:#b87a00;background:#fffbf0}
     .dx-npmci{border-color:#b05a00;background:#fff8f0}
@@ -854,16 +854,16 @@ function generarInformeCervical() {
     ${_sec('01','Perfil del paciente')}
     <div class="intro-box">Datos de identificación y contexto clínico registrados al inicio de la evaluación cervical.</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div style="background:#f0f5fd;border-radius:6px;padding:12px;border:1px solid #ddeaf8">
-        <div style="font-size:9px;text-transform:uppercase;color:#2a4a7f;font-weight:700;letter-spacing:1px;margin-bottom:8px">Datos del Paciente</div>
+      <div style="background:#f5f7ee;border-radius:6px;padding:12px;border:1px solid #e8f0d4">
+        <div style="font-size:9px;text-transform:uppercase;color:#8fa845;font-weight:700;letter-spacing:1px;margin-bottom:8px">Datos del Paciente</div>
         ${nombre ? `<div style="margin-bottom:4px"><span style="font-size:10px;color:#888">Nombre:</span> <strong>${nombre}</strong></div>` : ''}
         ${edad   ? `<div style="margin-bottom:4px"><span style="font-size:10px;color:#888">Edad:</span> ${edad} años${sexo?' · '+sexo:''}</div>` : ''}
         ${deporte? `<div style="margin-bottom:4px"><span style="font-size:10px;color:#888">Deporte:</span> ${deporte}</div>` : ''}
         ${lesionMC?`<div style="margin-bottom:4px"><span style="font-size:10px;color:#888">Motivo:</span> ${lesionMC}</div>` : ''}
         <div style="margin-bottom:4px"><span style="font-size:10px;color:#888">Fecha:</span> ${fecha}</div>
       </div>
-      <div style="background:#f0f5fd;border-radius:6px;padding:12px;border:1px solid #ddeaf8">
-        <div style="font-size:9px;text-transform:uppercase;color:#2a4a7f;font-weight:700;letter-spacing:1px;margin-bottom:8px">Datos Cervicales</div>
+      <div style="background:#f5f7ee;border-radius:6px;padding:12px;border:1px solid #e8f0d4">
+        <div style="font-size:9px;text-transform:uppercase;color:#8fa845;font-weight:700;letter-spacing:1px;margin-bottom:8px">Datos Cervicales</div>
         <div style="margin-bottom:4px"><span style="font-size:10px;color:#888">Evolución:</span> ${tiempo}</div>
         <div style="margin-bottom:4px"><span style="font-size:10px;color:#888">Mecanismo:</span> ${mecanismo}</div>
         <div style="margin-bottom:4px"><span style="font-size:10px;color:#888">NPRS:</span> ${nprs}/10</div>
@@ -875,7 +875,7 @@ function generarInformeCervical() {
     ${_sec('02','Presentación clínica reportada')}
     <div class="intro-box">Síntomas referidos por el paciente durante la anamnesis, organizados por región anatómica. Orientan el pre-diagnóstico diferencial antes de los tests ortopédicos.</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
-      ${symptomLabels.map(l => `<span style="background:#f0f5fd;border:1px solid #a0c0f0;border-radius:4px;padding:4px 10px;font-size:10px;color:#1a2e5e">${l}</span>`).join('')}
+      ${symptomLabels.map(l => `<span style="background:#f5f7ee;border:1px solid #b8d08a;border-radius:4px;padding:4px 10px;font-size:10px;color:#1e2d0e">${l}</span>`).join('')}
     </div>` : '';
 
   const sec03 = romRows.length ? `
@@ -921,20 +921,20 @@ function generarInformeCervical() {
     <div class="intro-box">Evaluación de los flexores cervicales profundos (CCFT), endurance (NFE), myotomas C4–T1 y reflejos osteotendinosos. El CCFT es el gold standard para detectar disfunción neuromuscular en dolor cervical (Blomgren 2018). NFE normal: >39 s varones / >29 s mujeres.</div>
     ${(hasCCFT || hasNFE) ? `
     <div style="display:grid;grid-template-columns:${hasCCFT&&hasNFE?'1fr 1fr':'1fr'};gap:12px;margin-bottom:12px">
-      ${hasCCFT ? `<div style="background:#f0f5fd;border-radius:6px;padding:10px;border:1px solid #ddeaf8;text-align:center">
-        <div style="font-size:9px;text-transform:uppercase;color:#2a4a7f;font-weight:700;margin-bottom:4px">CCFT</div>
-        <div style="font-size:14px;font-weight:900;color:#2a4a7f">${ccftText}</div>
+      ${hasCCFT ? `<div style="background:#f5f7ee;border-radius:6px;padding:10px;border:1px solid #e8f0d4;text-align:center">
+        <div style="font-size:9px;text-transform:uppercase;color:#8fa845;font-weight:700;margin-bottom:4px">CCFT</div>
+        <div style="font-size:14px;font-weight:900;color:#8fa845">${ccftText}</div>
       </div>` : ''}
-      ${hasNFE ? `<div style="background:#f0f5fd;border-radius:6px;padding:10px;border:1px solid #ddeaf8;text-align:center">
-        <div style="font-size:9px;text-transform:uppercase;color:#2a4a7f;font-weight:700;margin-bottom:4px">NFE</div>
-        <div style="font-size:13px;font-weight:700;color:#2a4a7f">${nfeText}</div>
+      ${hasNFE ? `<div style="background:#f5f7ee;border-radius:6px;padding:10px;border:1px solid #e8f0d4;text-align:center">
+        <div style="font-size:9px;text-transform:uppercase;color:#8fa845;font-weight:700;margin-bottom:4px">NFE</div>
+        <div style="font-size:13px;font-weight:700;color:#8fa845">${nfeText}</div>
       </div>` : ''}
     </div>` : ''}
     ${myoRows.length ? `
     <table style="margin-bottom:10px">
       <tr><th>Nivel</th><th>Movimiento</th><th>D</th><th>I</th><th>Asimetría</th></tr>
       ${myoRows.map(m=>`<tr>
-        <td style="font-family:monospace;font-weight:700;color:#2a4a7f">${m.nivel}</td>
+        <td style="font-family:monospace;font-weight:700;color:#8fa845">${m.nivel}</td>
         <td>${m.mov}</td><td>${m.d||'—'}</td><td>${m.i||'—'}</td>
         <td class="${m.asym?'asym':''}">${m.asym?'⚠️ Asimetría':'—'}</td>
       </tr>`).join('')}
@@ -944,7 +944,7 @@ function generarInformeCervical() {
       <tr><th>Reflejo</th><th>Nivel</th><th>Derecha</th><th>Izquierda</th></tr>
       ${refRows.map(r=>`<tr>
         <td><strong>${r.nombre}</strong></td>
-        <td style="font-family:monospace;font-size:10px;color:#2a4a7f">${r.nivel}</td>
+        <td style="font-family:monospace;font-size:10px;color:#8fa845">${r.nivel}</td>
         <td>${r.d||'—'}</td><td>${r.i||'—'}</td>
       </tr>`).join('')}
     </table>` : ''}` : '';
@@ -953,14 +953,14 @@ function generarInformeCervical() {
     ${_sec('06','Escalas funcionales')}
     <div class="intro-box">El NDI (Neck Disability Index) es el gold standard para medir discapacidad cervical (Blanpied 2017 Rec. A). MCID = 7.5 pts · MDC = 5 pts · ICC 0.90. El PSFS evalúa actividades limitadas específicas del paciente (MCID 2 pts, mayor sensibilidad al cambio que NDI).</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div style="background:#f0f5fd;border-radius:6px;padding:10px;border:1px solid #ddeaf8;text-align:center">
-        <div style="font-size:9px;text-transform:uppercase;color:#2a4a7f;font-weight:700;margin-bottom:4px">NDI Total (0–50)</div>
-        <div style="font-size:22px;font-weight:900;color:#2a4a7f">${ndiScore}</div>
+      <div style="background:#f5f7ee;border-radius:6px;padding:10px;border:1px solid #e8f0d4;text-align:center">
+        <div style="font-size:9px;text-transform:uppercase;color:#8fa845;font-weight:700;margin-bottom:4px">NDI Total (0–50)</div>
+        <div style="font-size:22px;font-weight:900;color:#8fa845">${ndiScore}</div>
         <div style="font-size:10px;color:#888;margin-top:4px">MCID 7.5 pts · ${+ndiScore<=4?'Sin discapacidad':+ndiScore<=14?'Discapacidad leve':+ndiScore<=24?'Discapacidad moderada':'Discapacidad severa'}</div>
       </div>
-      <div style="background:#f0f5fd;border-radius:6px;padding:10px;border:1px solid #ddeaf8">
-        <div style="font-size:9px;text-transform:uppercase;color:#2a4a7f;font-weight:700;margin-bottom:4px">PSFS</div>
-        <div style="font-size:11px;color:#2a4a7f">${psfsRes || '—'}</div>
+      <div style="background:#f5f7ee;border-radius:6px;padding:10px;border:1px solid #e8f0d4">
+        <div style="font-size:9px;text-transform:uppercase;color:#8fa845;font-weight:700;margin-bottom:4px">PSFS</div>
+        <div style="font-size:11px;color:#8fa845">${psfsRes || '—'}</div>
         <div style="font-size:9px;color:#888;margin-top:4px">MCID 2 pts promedio</div>
       </div>
     </div>` : '';
@@ -970,7 +970,7 @@ function generarInformeCervical() {
     <div class="intro-box">Motor de inferencia EBM basado en CPG Blanpied 2017 (JOSPT) + meta-análisis recientes. Pondera tests ortopédicos (55%), tests de apoyo (15%) y presentación clínica (30%) para calcular probabilidad diagnóstica. Mielopatía siempre prioridad si hay 1 test UMN positivo.</div>
     ${dxResult.diagnosticos.map((dx, i) => {
       const colorMap = { red:'#cc3333', neon:'#2d7a2d', amber:'#b87a00', orange:'#b05a00' };
-      const c = colorMap[dx.colorKey] || '#2a4a7f';
+      const c = colorMap[dx.colorKey] || '#8fa845';
       const cls = `dx-${dx.id === 'mielopatia-cx' ? 'miel' : dx.categoria.toLowerCase()}`;
       const allTests2 = [
         ...(typeof CERVICAL_TESTS_RADICULAR   !== 'undefined' ? CERVICAL_TESTS_RADICULAR   : []),
@@ -985,7 +985,7 @@ function generarInformeCervical() {
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
           <div>
             <span style="font-size:12px;font-weight:800;color:${c}">${i===0&&dx.id!=='mielopatia-cx'?'🏆 ':''}${dx.id==='mielopatia-cx'?'🚨 ':''}${dx.nombre}</span>
-            <span style="font-size:9px;background:#ddeaf8;color:#2a4a7f;padding:1px 6px;border-radius:3px;margin-left:6px">${dx.categoria}</span>
+            <span style="font-size:9px;background:#e8f0d4;color:#8fa845;padding:1px 6px;border-radius:3px;margin-left:6px">${dx.categoria}</span>
           </div>
           <span style="font-size:10px;font-weight:700;color:${c}">${dx.confianzaLabel}</span>
         </div>
@@ -995,7 +995,7 @@ function generarInformeCervical() {
         <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">
           ${dx.mainHits.map(t=>`<span style="background:#ffd0d0;color:#cc3333;padding:2px 6px;border-radius:3px;font-size:9px">✚ ${nm(t)}</span>`).join('')}
           ${dx.supportHits.map(t=>`<span style="background:#fff3cd;color:#b87a00;padding:2px 6px;border-radius:3px;font-size:9px">+ ${nm(t)}</span>`).join('')}
-          ${dx.symptomHits.map(s=>`<span style="background:#ddeaf8;color:#2a4a7f;padding:2px 6px;border-radius:3px;font-size:9px">Sx: ${ns(s)}</span>`).join('')}
+          ${dx.symptomHits.map(s=>`<span style="background:#e8f0d4;color:#8fa845;padding:2px 6px;border-radius:3px;font-size:9px">Sx: ${ns(s)}</span>`).join('')}
         </div>` : ''}
         <div style="font-size:10px;line-height:1.4;color:#1a1a1a;padding-top:4px;border-top:1px solid #e8e8e8"><strong>Tratamiento CPG:</strong> ${dx.tratamiento.replace(/\n/g,' · ')}</div>
         <div style="font-size:9px;color:#888;margin-top:4px;font-style:italic">${dx.ref}</div>
@@ -1008,16 +1008,16 @@ function generarInformeCervical() {
   <title>Informe Cervical — ${nombre}</title>
   <style>${css}</style></head><body>
   <div style="max-width:900px;margin:0 auto;padding:24px">
-    <div style="text-align:center;border-bottom:3px solid #2a4a7f;margin-bottom:24px;padding-bottom:16px">
-      <div style="font-size:24px;font-weight:900;letter-spacing:2px;color:#2a4a7f">🦴 INFORME CERVICAL</div>
+    <div style="text-align:center;border-bottom:3px solid #8fa845;margin-bottom:24px;padding-bottom:16px">
+      <div style="font-size:24px;font-weight:900;letter-spacing:2px;color:#8fa845">🦴 INFORME CERVICAL</div>
       <div style="font-size:11px;color:#888;margin-top:4px">MoveMetrics · Evaluación EBM · CPG 2017 · ${fecha}</div>
     </div>
     ${sec01}${sec02}${sec03}${sec04}${sec05}${sec06}${sec07}
-    <div style="margin-top:24px;padding-top:12px;border-top:1px solid #ddeaf8;font-size:9px;color:#aaa;text-align:center">
+    <div style="margin-top:24px;padding-top:12px;border-top:1px solid #e8f0d4;font-size:9px;color:#aaa;text-align:center">
       CPG Blanpied et al. JOSPT 2017 · Lin et al. Am J PMR 2025 · Thoomes et al. BMC MSK 2026 · Rubio-Ochoa et al. Manual Therapy 2015 · Blomgren et al. BMC MSK 2018 · No reemplaza el juicio clínico
     </div>
     <div class="no-print" style="text-align:center;margin-top:20px">
-      <button onclick="window.print()" style="background:#2a4a7f;color:#fff;border:none;padding:10px 24px;border-radius:6px;font-size:13px;cursor:pointer">🖨️ Imprimir / Guardar PDF</button>
+      <button onclick="window.print()" style="background:#8fa845;color:#fff;border:none;padding:10px 24px;border-radius:6px;font-size:13px;cursor:pointer">🖨️ Imprimir / Guardar PDF</button>
     </div>
   </div>
   </body></html>`);
