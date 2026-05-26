@@ -314,8 +314,8 @@
         <button class="btn btn-ghost btn-sm" onclick="showKinePanel('codo','Codo')" style="font-size:10px">Codo</button>
         <button class="btn btn-ghost btn-sm" onclick="showKinePanel('cervical','Cervical')" style="font-size:10px">Cervical</button>
         <button class="btn btn-ghost btn-sm" onclick="showKinePanel('lumbar','Lumbar')" style="font-size:10px">Lumbar</button>
-        <button class="btn btn-ghost btn-sm" onclick="showKinePanel('cadera','Cadera')" style="font-size:10px">Cadera</button>
-        <button class="btn btn-sm" onclick="showKinePanel('cadera','Cadera');setTimeout(()=>{document.getElementById('cadera-doha-section')?.scrollIntoView({behavior:'smooth',block:'start'})},300)" style="font-size:10px;background:rgba(255,176,32,.08);border:1px solid rgba(255,176,32,.2);color:#FFB020">Ingle/Doha</button>
+        <button class="btn btn-ghost btn-sm" onclick="openModal('sheet-cadera');initCaderaSheet();showCaderaTab('obs',null)" style="font-size:10px">Cadera</button>
+        <button class="btn btn-sm" onclick="openModal('sheet-cadera');initCaderaSheet();setTimeout(()=>showCaderaTab('ingle',document.querySelectorAll('#sheet-cadera .cad-tab-btn')[3]),80)" style="font-size:10px;background:rgba(255,176,32,.08);border:1px solid rgba(255,176,32,.2);color:#FFB020">Ingle/Doha</button>
         <button class="btn btn-ghost btn-sm" onclick="showKinePanel('rodilla','Rodilla')" style="font-size:10px">Rodilla</button>
         <button class="btn btn-ghost btn-sm" onclick="showKinePanel('patelo','Patelofemoral')" style="font-size:10px">Patelofemoral</button>
         <button class="btn btn-ghost btn-sm" onclick="showKinePanel('tobillo','Tobillo')" style="font-size:10px">Tobillo</button>
