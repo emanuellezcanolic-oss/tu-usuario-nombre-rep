@@ -34,22 +34,32 @@ function initLumbarSheet() {
 function buildLBPROM() {
   const c = document.getElementById('lbp-rom-fields'); if (!c || c.innerHTML) return;
   c.innerHTML = `
-    <div style="display:grid;grid-template-columns:28px 1fr 54px 54px 54px;gap:4px 8px;align-items:center;padding:4px 0 8px;border-bottom:1px solid var(--border)">
+    <div style="display:grid;grid-template-columns:28px 1fr 50px 62px 52px;gap:4px 8px;align-items:center;padding:4px 0 8px;border-bottom:1px solid var(--border)">
       <span></span>
       <span style="font-size:9px;color:var(--text3)">Movimiento</span>
       <span style="font-size:9px;color:var(--text3);text-align:center">Ref.</span>
-      <span style="font-size:9px;color:var(--text3);text-align:center">Activo</span>
-      <span style="font-size:9px;color:var(--text3);text-align:center">Pasivo</span>
+      <span style="font-size:9px;color:var(--text3);text-align:center">AROM°</span>
+      <span style="font-size:9px;color:var(--text3);text-align:center">Dolor</span>
     </div>` +
   (typeof LUMBAR_ROM !== 'undefined' ? LUMBAR_ROM : []).map(r => `
-    <div style="display:grid;grid-template-columns:28px 1fr 54px 54px 54px;gap:4px 8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)">
+    <div style="display:grid;grid-template-columns:28px 1fr 50px 62px 52px;gap:4px 8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)">
       <div></div>
       <div style="font-size:11px;color:var(--text2)">${r.label}</div>
       <div style="font-size:9px;color:var(--text3);text-align:center">${r.ref}</div>
       <input class="inp inp-mono" type="number" id="lbp-rom-${r.id}-act" placeholder="°" style="padding:3px 4px;font-size:11px;text-align:center">
-      <input class="inp inp-mono" type="number" id="lbp-rom-${r.id}-pas" placeholder="°" style="padding:3px 4px;font-size:11px;text-align:center">
+      <button id="lbp-rom-${r.id}-dolor"
+        onclick="this.classList.toggle('lbp-rom-dolor-on');this.textContent=this.classList.contains('lbp-rom-dolor-on')?'▲ repro':'Dolor'"
+        style="font-size:9px;padding:2px 5px;border:1px solid var(--border);border-radius:4px;background:transparent;cursor:pointer;color:var(--text3);transition:all .15s"
+        class="lbp-rom-dolor-btn">Dolor</button>
     </div>
   `).join('');
+  // inject active style once
+  if (!document.getElementById('lbp-rom-dolor-style')) {
+    const s = document.createElement('style');
+    s.id = 'lbp-rom-dolor-style';
+    s.textContent = '.lbp-rom-dolor-on{background:var(--red,#cc3333)!important;color:#fff!important;border-color:var(--red,#cc3333)!important;font-weight:700}';
+    document.head.appendChild(s);
+  }
 }
 
 // ── Test builder (D/I EVA per column) ─────────────────────────────────────────
@@ -372,7 +382,11 @@ function _readLBPSessionData() {
 
   const rom = {};
   (typeof LUMBAR_ROM !== 'undefined' ? LUMBAR_ROM : []).forEach(r => {
-    rom[r.id] = { act: gv(`lbp-rom-${r.id}-act`), pas: gv(`lbp-rom-${r.id}-pas`) };
+    const dolorBtn = document.getElementById(`lbp-rom-${r.id}-dolor`);
+    rom[r.id] = {
+      act:   gv(`lbp-rom-${r.id}-act`),
+      dolor: dolorBtn ? dolorBtn.classList.contains('lbp-rom-dolor-on') : false,
+    };
   });
 
   const myotomas = (typeof LBP_MYOTOMAS !== 'undefined' ? LBP_MYOTOMAS : []).map(m => ({
@@ -449,7 +463,14 @@ function loadLBPSession(idx) {
   const nprsEl = document.getElementById('lbp-nprs');
   if (nprsEl) nprsEl.nextElementSibling.textContent = nprsEl.value;
 
-  if (s.rom) Object.entries(s.rom).forEach(([id, vals]) => { sv(`lbp-rom-${id}-act`, vals.act); sv(`lbp-rom-${id}-pas`, vals.pas); });
+  if (s.rom) Object.entries(s.rom).forEach(([id, vals]) => {
+    sv(`lbp-rom-${id}-act`, vals.act);
+    const dolorBtn = document.getElementById(`lbp-rom-${id}-dolor`);
+    if (dolorBtn && vals.dolor) {
+      dolorBtn.classList.add('lbp-rom-dolor-on');
+      dolorBtn.textContent = '▲ repro';
+    }
+  });
 
   if (s.tests) {
     Object.entries(s.tests).forEach(([testId, data]) => {
@@ -599,10 +620,11 @@ function generarInformeLumbar() {
     .filter(s => selSymptoms.includes(s.id)).map(s => s.label);
 
   const romRows = (typeof LUMBAR_ROM !== 'undefined' ? LUMBAR_ROM : []).map(r => {
-    const act = gv(`lbp-rom-${r.id}-act`);
-    const pas = gv(`lbp-rom-${r.id}-pas`);
-    if (!act && !pas) return null;
-    return { label: r.label, ref: r.ref, mdc: r.mdc, act, pas };
+    const act      = gv(`lbp-rom-${r.id}-act`);
+    const dolorBtn = document.getElementById(`lbp-rom-${r.id}-dolor`);
+    const dolor    = dolorBtn ? dolorBtn.classList.contains('lbp-rom-dolor-on') : false;
+    if (!act && !dolor) return null;
+    return { label: r.label, ref: r.ref, mdc: r.mdc, act, dolor };
   }).filter(Boolean);
 
   const allTestDefs = [
@@ -699,18 +721,23 @@ function generarInformeLumbar() {
       ${symptomLabels.map(l => `<span style="background:#f5f7ee;border:1px solid #b8d08a;border-radius:4px;padding:4px 10px;font-size:10px;color:#1e2d0e">${l}</span>`).join('')}
     </div>` : '';
 
+  const dolorosos = romRows.filter(r => r.dolor).map(r => r.label);
   const sec03 = (romRows.length || schober) ? `
     ${_sec('03','Rango de movimiento lumbar (ROM)')}
-    <div class="intro-box">Medición con inclinómetro o goniómetro. MDC extensión/flexión: ~5°. Schober normal ≥ 5 cm de expansión. Referencia: Blanpied 2017 / Prushansky 2008.</div>
+    <div class="intro-box">AROM con inclinómetro/goniómetro. MDC flexión/extensión ≈ 5°. Schober modificado: normal ≥ 5 cm de expansión (ICC 0.83–0.97). Dolor = movimiento que reproduce síntomas del paciente. Ref: Blanpied 2017 · Prussansky 2008.</div>
     ${romRows.length ? `
     <table>
-      <tr><th>Movimiento</th><th>Referencia</th><th>MDC</th><th>Activo</th><th>Pasivo</th></tr>
+      <tr><th>Movimiento</th><th>Ref.</th><th>MDC</th><th>AROM°</th><th>Repro dolor</th></tr>
       ${romRows.map(r => `<tr>
-        <td><strong>${r.label}</strong></td><td style="color:#888">${r.ref}</td><td style="color:#888">${r.mdc}</td>
-        <td>${r.act?r.act+'°':'—'}</td><td>${r.pas?r.pas+'°':'—'}</td>
+        <td><strong>${r.label}</strong></td>
+        <td style="color:#888">${r.ref}</td>
+        <td style="color:#888">${r.mdc}</td>
+        <td>${r.act ? r.act+'°' : '—'}</td>
+        <td style="text-align:center">${r.dolor ? '<span style="color:#cc3333;font-weight:700">▲ Sí</span>' : '<span style="color:#888">No</span>'}</td>
       </tr>`).join('')}
     </table>` : ''}
-    ${schober ? `<div style="margin-top:8px;padding:8px;background:#f8f8f0;border:1px solid #e0d8a0;border-radius:5px;font-size:10px"><strong>Schober:</strong> ${schober} cm (normal ≥ 15 cm en flexión desde marca inicial de 10 cm)</div>` : ''}` : '';
+    ${dolorosos.length ? `<div style="margin-top:6px;padding:7px 10px;background:#fff5f5;border:1px solid #ffc0c0;border-radius:5px;font-size:10px"><strong style="color:#cc3333">Movimientos que reproducen síntomas:</strong> ${dolorosos.join(', ')}</div>` : ''}
+    ${schober ? `<div style="margin-top:8px;padding:8px;background:#f8f8f0;border:1px solid #e0d8a0;border-radius:5px;font-size:10px"><strong>Schober modificado:</strong> ${schober} cm (normal ≥ 5 cm · ICC 0.83–0.97)</div>` : ''}` : '';
 
   const posTests = tests.filter(t => t.dR==='POS' || t.iR==='POS');
   const negTests = tests.filter(t => (t.dR==='NEG'||t.iR==='NEG') && t.dR!=='POS' && t.iR!=='POS');
