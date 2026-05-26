@@ -99,7 +99,64 @@ function toggleOTHombro(btn, type) {
   // Run EBM diagnostic engine with current modal test state
   setTimeout(() => {
     if (typeof renderDiagnosticosHombro === 'function') renderDiagnosticosHombro(_getHombroModalPositivos());
+    _renderHombroMissingAlerts();
   }, 0);
+}
+
+// Live in-modal notification: key tests not yet performed that would change the diagnosis
+function _renderHombroMissingAlerts() {
+  const panel = document.getElementById('hombro-missing-alerts-panel');
+  if (!panel) return;
+  const positivos = _getHombroModalPositivos();
+  const doneIds   = _getDoneHombroTestIds();
+  if (!positivos.length || typeof HOMBRO_RULES === 'undefined') { panel.innerHTML = ''; return; }
+
+  const htl   = [...(typeof HOMBRO_TESTS !== 'undefined' ? HOMBRO_TESTS : []), { id: 'painful-arc', name: 'Arco Doloroso' }];
+  const tnOf  = id => (htl.find(t => t.id === id)?.name || id);
+  const tnSub = id => (htl.find(t => t.id === id)?.sub  || '');
+
+  const alerts = [];
+  HOMBRO_RULES.diagnosticos.forEach(dx => {
+    const ph = dx.testsKey.filter(t => positivos.includes(t));
+    const nd = dx.testsKey.filter(t => !doneIds.has(t));
+    if (ph.length >= 1 && nd.length > 0) {
+      alerts.push({
+        dxNombre: dx.nombre, categoria: dx.categoria,
+        missing: nd, imagingRec: dx.imagingRec || null,
+        reason: ph.length >= dx.umbral ? 'confirmar hallazgo' : 'descartar diagnóstico'
+      });
+    }
+  });
+
+  if (!alerts.length) { panel.innerHTML = ''; return; }
+
+  let h = `<div style="background:rgba(255,193,7,.08);border:1px solid var(--amber);border-radius:var(--r);padding:12px 14px;margin-top:10px">
+    <div style="font-size:11px;font-weight:800;color:var(--amber);margin-bottom:6px;display:flex;align-items:center;gap:8px">
+      ⚠️ Tests complementarios recomendados
+      <span style="font-size:9px;font-weight:500;color:var(--text3)">${alerts.length} diagnóstico${alerts.length > 1 ? 's' : ''} sin confirmar</span>
+    </div>
+    <div style="font-size:10px;color:var(--text2);margin-bottom:10px;line-height:1.5">
+      Tests clave no realizados que cambiarían la certeza diagnóstica. Realizarlos antes de concluir la evaluación:
+    </div>`;
+
+  alerts.forEach(al => {
+    const missingHTML = al.missing.map(id => {
+      const sub = tnSub(id);
+      return `<span style="background:rgba(255,193,7,.15);border:1px solid var(--amber);color:var(--text);font-size:9px;padding:2px 8px;border-radius:3px;font-weight:600">${tnOf(id)}${sub ? ` <span style="opacity:.65;font-size:8px">(${sub})</span>` : ''}</span>`;
+    }).join(' ');
+    h += `<div style="margin-bottom:8px;padding:9px 11px;background:var(--bg2);border-radius:5px;border-left:3px solid var(--amber)">
+      <div style="font-size:10px;font-weight:700;color:var(--text);margin-bottom:5px">
+        ${al.dxNombre} <span class="tag tag-y" style="font-size:8px">${al.reason}</span>
+      </div>
+      <div style="font-size:10px;color:var(--text2);margin-bottom:6px">→ Realizar: ${missingHTML}</div>`;
+    if (al.imagingRec) {
+      h += `<div style="font-size:9px;color:var(--text3);line-height:1.5;padding:5px 8px;background:var(--bg3);border-radius:3px">📷 ${al.imagingRec}</div>`;
+    }
+    h += '</div>';
+  });
+
+  h += '</div>';
+  panel.innerHTML = h;
 }
 
 function buildHombroTests() {
@@ -1382,6 +1439,9 @@ function generarInformeHombro() {
   // 01 — Perfil & Screening
   const sec01 = `
     ${_infSecHead('01','Perfil del atleta & Screening')}
+    <div style="font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f8faf2;border-radius:5px;border-left:3px solid #8fa845">
+      Esta sección resume los datos de identificación del paciente y el screening inicial de señales de alerta (banderas rojas) realizado al inicio de la evaluación. Las banderas rojas son hallazgos que, si están presentes, requieren derivación médica inmediata y suspensión del tratamiento kinesiológico hasta su descarte. Se registra también el motivo de consulta, los objetivos del paciente y factores pronósticos que pueden influir en la evolución clínica.
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div style="background:#f5f7ee;border-radius:6px;padding:12px;border:1px solid #e8f0d4">
         <div style="font-size:9px;text-transform:uppercase;color:#8fa845;font-weight:700;letter-spacing:1px;margin-bottom:8px">Datos del Paciente</div>
@@ -1408,7 +1468,9 @@ function generarInformeHombro() {
   // 02 — ROM
   const sec02 = (secROM && romRows.length) ? `
     ${_infSecHead('02','Análisis de rango de movimiento (ROM)')}
-    <div style="font-size:10px;color:#888;margin-bottom:6px">Marco de referencia: CPG 2025 Rec.#6 · MDC activo: 8–23°</div>
+    <div style="font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f8faf2;border-radius:5px;border-left:3px solid #8fa845">
+      El rango de movimiento (ROM) cuantifica en grados la amplitud de cada movimiento del hombro. Se mide de forma <strong>activa</strong> (el paciente mueve el brazo por su cuenta) y <strong>pasiva</strong> (el kinesiólogo guía el movimiento sin esfuerzo del paciente). Comparar ambas modalidades permite identificar si la restricción tiene origen muscular, capsular o estructural. Se evalúan ambos miembros para detectar asimetrías. El <strong>TROM</strong> (Total Rotational Motion = Rotación Interna + Rotación Externa) es un indicador específico en deportistas de cabeza de húmero, donde déficits ≥18° (GIRD) se asocian a riesgo de lesión. Referencia: CPG 2025 Rec.#6 · MDC activo: 8–23°.
+    </div>
     <table>
       <tr><th>Movimiento</th><th>Referencia</th><th>Activo D</th><th>Activo I</th><th>Pasivo D</th><th>Pasivo I</th></tr>
       ${romRows.map(r=>`<tr>
@@ -1425,7 +1487,9 @@ function generarInformeHombro() {
   // 03 — Tests ortopédicos
   const sec03 = (secTests && tests.length) ? `
     ${_infSecHead('03','Mapeo ortopédico de provocación')}
-    <div style="font-size:10px;color:#888;margin-bottom:6px">Resultados basados en evidencia · Zhao 2024 meta-análisis · CPG 2025</div>
+    <div style="font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f8faf2;border-radius:5px;border-left:3px solid #8fa845">
+      Los tests ortopédicos de provocación son maniobras clínicas estandarizadas que el kinesiólogo aplica para reproducir de forma controlada los síntomas del paciente. Cada test está diseñado para evaluar una estructura específica del hombro (manguito rotador, labrum, bíceps, espacio subacromial). Un resultado <strong>POSITIVO</strong> indica que la maniobra reproduce el dolor o genera una respuesta anormal; un resultado <strong>NEGATIVO</strong> permite reducir la probabilidad de compromiso de esa estructura. La columna EVA registra la intensidad del dolor reproducido (0 = sin dolor · 10 = máximo dolor imaginable). El rendimiento diagnóstico de cada test (Sn/Sp/LR) proviene de meta-análisis internacionales de alto nivel de evidencia (Zhao 2024, CPG 2025).
+    </div>
     <table>
       <tr><th>Test</th><th>EBM</th><th>D</th><th>EVA D</th><th>I</th><th>EVA I</th></tr>
       ${tests.map(t=>`<tr>
@@ -1441,7 +1505,9 @@ function generarInformeHombro() {
   // 04 — Fuerza HHD
   const sec04 = (secFuerza && fuerzaRows.length) ? `
     ${_infSecHead('04','Perfil de fuerza dinamométrica (HHD)')}
-    <div style="font-size:10px;color:#888;margin-bottom:6px">Newtons (N) · MDC 15–20% · CPG 2025 Rec.#7</div>
+    <div style="font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f8faf2;border-radius:5px;border-left:3px solid #8fa845">
+      La dinamometría con handheld dynamometer (HHD) es la herramienta gold standard para cuantificar la fuerza muscular de forma objetiva y reproducible. Los valores se expresan en <strong>Newtons (N)</strong> y se comparan entre el miembro dominante y no dominante para calcular la <strong>asimetría</strong>. Una asimetría ≥15% supera el MDC (Mínima Diferencia Detectable) y es clínicamente relevante; asimetrías ≥20% son consideradas críticas y se asocian a mayor riesgo de re-lesión y rendimiento deportivo disminuido. Se evalúan los principales grupos musculares del manguito rotador y la cintura escapular. Referencia: CPG 2025 Rec.#7.
+    </div>
     <table>
       <tr><th>Movimiento</th><th>D (N)</th><th>I (N)</th><th>Asimetría</th><th>Interpretación</th></tr>
       ${fuerzaRows.map(r=>`<tr>
@@ -1455,6 +1521,9 @@ function generarInformeHombro() {
   // Dashboard metrics
   const dashboard = (hasEscalas || hasRTP) ? `
     ${_infSecHead('05','Dashboard — Indicadores clínicos clave')}
+    <div style="font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f8faf2;border-radius:5px;border-left:3px solid #8fa845">
+      Resumen visual de los scores clínicos más relevantes obtenidos en esta evaluación. Permite una lectura rápida del estado funcional del paciente y facilita la comparación longitudinal entre sesiones. El <strong>MCID</strong> (Mínima Diferencia Clínicamente Importante) indica el cambio mínimo en puntos que debe ocurrir para considerar que hubo una mejoría real percibida por el paciente, más allá del error de medición.
+    </div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
       ${ases&&ases!=='—'?`<div class="metric-box">
         <div class="metric-lbl">ASES Score</div>
@@ -1475,24 +1544,37 @@ function generarInformeHombro() {
     </div>` : '';
 
   // 06 — Escalas
+  const _scaleNameCell = (name, abbr, desc) =>
+    `<td><strong>${name}</strong><br><span style="font-size:9px;color:#888;font-weight:400;line-height:1.4">${abbr}</span><br><span style="font-size:9px;color:#666;line-height:1.45;display:block;margin-top:2px">${desc}</span></td>`;
   const sec06 = (secEsc && hasEscalas) ? `
     ${_infSecHead('06','Escalas funcionales (CPG 2025 Rec.#8)')}
+    <div style="font-size:10px;color:#666;margin-bottom:8px;line-height:1.5">Instrumentos validados de resultado reportado por el paciente (PRO). Los scores permiten monitorear progresión y detectar cambios clínicamente significativos (MCID) a lo largo del tratamiento.</div>
     <table>
       <tr><th>Escala</th><th>Score</th><th>MCID</th><th>Interpretación</th></tr>
-      ${ases&&ases!=='—'?`<tr><td>ASES Score</td><td><strong>${ases}/100</strong></td><td>6.4–21.9 pts</td>
+      ${ases&&ases!=='—'?`<tr>
+        ${_scaleNameCell('ASES Score','American Shoulder and Elbow Surgeons — Hawkins et al. 1985','Mide función del hombro en 10 actividades de la vida diaria + intensidad de dolor (EVA). Rango 0–100; mayor puntaje = mejor función.')}
+        <td><strong>${ases}/100</strong></td><td>6.4–21.9 pts</td>
         <td class="${+ases>=80?'ok':+ases>=60?'limite':'alerta'}">${+ases>=80?'Buena función':+ases>=60?'Función moderada':'Función severamente limitada'}</td></tr>`:''}
-      ${worc&&worc!=='—'?`<tr><td>WORC Index</td><td><strong>${worc}/2100</strong>${worcP?` (${worcP})`:''}</td><td>245.3 pts</td>
-        <td style="font-size:10px;color:#666">Menor = mejor</td></tr>`:''}
-      ${dash&&dash!=='—'?`<tr><td>DASH / QuickDASH</td><td><strong>${dash}/100</strong></td><td>10.2 pts</td>
+      ${worc&&worc!=='—'?`<tr>
+        ${_scaleNameCell('WORC Index','Western Ontario Rotator Cuff Index — Kirkley et al. 1998','Calidad de vida específica para patología de manguito rotador. 21 ítems VAS agrupados en 4 dominios: síntomas físicos, deportes/recreación, trabajo, estilo de vida. Rango 0–2100; menor = mejor.')}
+        <td><strong>${worc}/2100</strong>${worcP?` <span style="font-size:10px;color:#666">(${worcP})</span>`:''}</td><td>245.3 pts</td>
+        <td style="font-size:10px;color:#666">0 = función completa · 2100 = máxima afectación</td></tr>`:''}
+      ${dash&&dash!=='—'?`<tr>
+        ${_scaleNameCell('DASH / QuickDASH','Disabilities of the Arm, Shoulder and Hand — Hudak et al. 1996','Evalúa discapacidad del miembro superior en actividades cotidianas, laborales y recreativas. Rango 0–100; menor puntaje = menor discapacidad. QuickDASH usa 11 de los 30 ítems.')}
+        <td><strong>${dash}/100</strong></td><td>10.2 pts</td>
         <td class="${+dash<=30?'ok':+dash<=50?'limite':'alerta'}">${+dash<=30?'Discapacidad leve':+dash<=50?'Discapacidad moderada':'Discapacidad severa'}</td></tr>`:''}
-      ${spadi&&spadi!=='—'?`<tr><td>SPADI</td><td><strong>${spadi}/100</strong></td><td>8 pts</td>
+      ${spadi&&spadi!=='—'?`<tr>
+        ${_scaleNameCell('SPADI','Shoulder Pain and Disability Index — Roach et al. 1991','Evalúa dolor (5 ítems) e interferencia funcional (8 ítems) del hombro. Subescalas independientes + score total 0–100; mayor puntaje = mayor dolor y discapacidad.')}
+        <td><strong>${spadi}/100</strong></td><td>8 pts</td>
         <td class="${+spadi<=30?'ok':+spadi<=50?'limite':'alerta'}">${+spadi<=30?'Leve':+spadi<=50?'Moderado':'Severo'}</td></tr>`:''}
     </table>` : '';
 
   // 07 — RTP
   const sec07 = (secRTP && hasRTP) ? `
     ${_infSecHead('07','Criterios de retorno al juego (RTP)')}
-    <div style="font-size:10px;color:#888;margin-bottom:6px">Kurz BMJ Open 2023 · Otley et al. 2024</div>
+    <div style="font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f8faf2;border-radius:5px;border-left:3px solid #8fa845">
+      Los criterios de retorno deportivo (Return to Play / RTP) son indicadores objetivos que determinan si el paciente está en condiciones de reincorporarse de forma segura a la práctica o competencia. Se evalúan aspectos <strong>psicológicos</strong> (readiness, miedo a re-lesión vía SIRSI/KJOC) y <strong>funcionales</strong> (simetría de fuerza, dolor máximo tolerable, rendimiento en test de campo). El alta deportiva se otorga únicamente cuando todos los umbrales están cumplidos simultáneamente. Fuente: Kurz BMJ Open 2023 · Otley et al. 2024.
+    </div>
     <table>
       <tr><th>Indicador</th><th>Valor</th><th>Criterio</th><th>Estado</th></tr>
       ${wosiMod&&wosiMod!=='—'?`<tr><td>WOSI modificado</td><td><strong>${wosiMod}</strong></td><td>≥95 competencia / ≥90 práctica</td>
@@ -1511,25 +1593,10 @@ function generarInformeHombro() {
 
   // 08 — Diagnóstico kinesiológico presuntivo — narrative EBM block
   const _modalPos = _getHombroModalPositivos();
-  const _doneIds  = _getDoneHombroTestIds();
   const _posTests = tests.filter(t => t.dR==='POS' || t.iR==='POS');
   const _negTests = tests.filter(t => (t.dR==='NEG'||t.iR==='NEG') && t.dR!=='POS' && t.iR!=='POS');
   const _htl      = [...(typeof HOMBRO_TESTS!=='undefined'?HOMBRO_TESTS:[]), {id:'painful-arc',name:'Arco Doloroso'}];
   const _tnOf     = id => (_htl.find(t=>t.id===id)?.name||id);
-  const _tnSub    = id => (_htl.find(t=>t.id===id)?.sub||'');
-  // Compute missing test alerts: key tests that were NOT done but relevant (≥1 pos hit exists)
-  const _missingAlerts = [];
-  if (typeof HOMBRO_RULES !== 'undefined') {
-    HOMBRO_RULES.diagnosticos.forEach(dx => {
-      const _ph = dx.testsKey.filter(t => _modalPos.includes(t));
-      const _nd = dx.testsKey.filter(t => !_doneIds.has(t));
-      if (_ph.length >= 1 && _nd.length > 0) {
-        _missingAlerts.push({ dxNombre: dx.nombre, categoria: dx.categoria,
-          missing: _nd, imagingRec: dx.imagingRec||null,
-          reason: _ph.length >= dx.umbral ? 'confirmar hallazgo' : 'descartar diagnóstico' });
-      }
-    });
-  }
   let _dxC = '';
 
   if (dxManual) _dxC += '<div style="background:#f5f7ee;border-radius:6px;padding:10px;border:2px solid #8fa845;font-size:12px;font-weight:700;color:#1e2d0e;margin-bottom:12px">'+dxManual+'</div>';
@@ -1593,36 +1660,21 @@ function generarInformeHombro() {
       _dxC += '<div style="font-size:11px;color:#555;padding:10px;background:#f8f8f8;border-radius:5px;border-left:3px solid #ccc;line-height:1.7">Todos los tests ortopédicos resultaron negativos en la evaluación actual. Esto orienta a descartar patología estructural mayor del complejo glenohumeral. Se recomienda considerar origen referido cervical o torácico, síndrome de dolor miofascial, o factores contribuyentes psicosociales (kinesiofobia, catastrofización). Evaluación diferencial cervical recomendada.</div>';
     }
 
-    // ── Missing test alerts ──
-    if (_missingAlerts.length > 0) {
-      _dxC += '<div style="background:#fffbe6;border:1px solid #e8c030;border-radius:7px;padding:12px 14px;margin-top:14px">';
-      _dxC += '<div style="font-size:10px;font-weight:800;color:#7a5000;margin-bottom:6px;display:flex;align-items:center;gap:8px">⚠️ TESTS COMPLEMENTARIOS RECOMENDADOS — DECISIÓN CLÍNICA</div>';
-      _dxC += '<div style="font-size:10px;color:#666;margin-bottom:10px;line-height:1.6">Los siguientes tests no fueron realizados en la presente evaluación. Incorporarlos permitiría aumentar la certeza diagnóstica o descartar diagnósticos específicos con mayor precisión:</div>';
-      _missingAlerts.forEach(al => {
-        const _md = al.missing.map(id => {
-          const _sub = _tnSub(id);
-          return '<strong>'+_tnOf(id)+'</strong>'+(_sub?' <span style="color:#888;font-size:9px">('+_sub+')</span>':'');
-        }).join(' y/o ');
-        _dxC += '<div style="margin-bottom:8px;padding:9px 11px;background:#fff;border-radius:5px;border-left:3px solid #e8c030">';
-        _dxC += '<div style="font-size:10px;margin-bottom:5px">Para <strong style="color:#7a5000">'+al.reason+'</strong> de '+al.dxNombre+':</div>';
-        _dxC += '<div style="font-size:10px;color:#333;line-height:1.6">→ Realizar: '+_md+'</div>';
-        if (al.imagingRec) _dxC += '<div style="font-size:9px;color:#777;margin-top:5px;padding:5px 8px;background:#fffef0;border-radius:3px;line-height:1.5">📷 <strong>Imagen recomendada:</strong> '+al.imagingRec+'</div>';
-        _dxC += '</div>';
-      });
-      _dxC += '</div>';
-    }
-
     // Evidence footer
     _dxC += '<div style="font-size:9px;color:#bbb;text-align:right;margin-top:8px;font-style:italic">Algoritmo diagnóstico basado en: Zhao Y. et al. BMC Musculoskelet Disord 2024 · Desmeules F. et al. JOSPT 2025 (CPG Nivel I) · Beraldo M. et al. Cureus 2025 · Bruna González Rev AKD 2020</div>';
 
   } else if (!dxManual) {
     _dxC += '<div style="font-size:11px;color:#888;font-style:italic;padding:10px;background:#f8f8f8;border-radius:5px">No se registraron tests ortopédicos en esta evaluación. Complete el tab Tests del modal hombro para activar el diagnóstico diferencial automático basado en evidencia.</div>';
   }
-  const sec08 = _infSecHead('08','Diagnóstico kinesiológico presuntivo') + _dxC;
+  const _sec08Intro = '<div style="font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f8faf2;border-radius:5px;border-left:3px solid #8fa845">El diagnóstico kinesiológico es la conclusión clínica del kinesiólogo basada en la integración de todos los hallazgos de la evaluación: ROM, fuerza, tests ortopédicos y escalas funcionales. Es un diagnóstico <strong>presuntivo</strong>, ya que requiere correlación con imagen (ecografía, RMN) y juicio médico para confirmación definitiva. El motor de inferencia EBM pondera automáticamente los tests positivos según su razón de verosimilitud (LR+/LR−) proveniente de meta-análisis internacionales, calculando la probabilidad de cada diagnóstico diferencial.</div>';
+  const sec08 = _infSecHead('08','Diagnóstico kinesiológico presuntivo') + _sec08Intro + _dxC;
 
   // 09 — Plan de tratamiento
   const sec09 = secTrat ? `
     ${_infSecHead('09','Ruta de tratamiento basada en evidencia')}
+    <div style="font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f8faf2;border-radius:5px;border-left:3px solid #8fa845">
+      El plan de tratamiento se estructura en fases progresivas basadas en los lineamientos de la Guía de Práctica Clínica CPG 2025 para patología de hombro. Cada fase tiene objetivos específicos, duración estimada e intervenciones con respaldo de evidencia. La progresión entre fases depende del cumplimiento de criterios funcionales objetivos, no exclusivamente del tiempo transcurrido.
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
       ${[
         ['FASE 1 — Modulación analgésica', 'Sem. 1–3', 'Isometría pesada RE a 0° y 45° (5×45s, 70% MIVC). Protocolo capsular posterior (Sleeper Stretch). Reducción de inhibición artrogénica.'],

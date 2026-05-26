@@ -49,8 +49,7 @@ const CAT_LABELS = {
 const REGION_TO_SHEET = {
   hombro:'sheet-hombro', cervical:'sheet-cervical', lumbar:'sheet-lumbar',
   rodilla:'sheet-rodilla', tobillo:'sheet-tobillo', codo:'sheet-codo',
-  // cadera → no sheet modal, falls through to tests-panel-cadera via showKinePanel
-  // ingle  → falls through to cadera panel (Doha section inside cadera)
+  cadera:'sheet-cadera', gluteo:'sheet-cadera', ingle:'sheet-cadera',
 };
 
 const uuid = () => 'lx_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7);

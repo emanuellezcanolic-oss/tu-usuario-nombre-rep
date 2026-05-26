@@ -15,11 +15,11 @@ function initKlinicalSheet(panel) {
     initHombroSheet();
     if(typeof refreshHombroSessionBar==='function') refreshHombroSessionBar();
   }
-  if (panel === 'rodilla' || panel === 'cadera' || panel === 'gluteo') initRodillaSheet();
+  if (panel === 'cadera' || panel === 'gluteo' || panel === 'ingle') { initCaderaSheet(); return; }
+  if (panel === 'rodilla') initRodillaSheet();
   if (panel === 'tobillo' || panel === 'pantorrilla' || panel === 'pie') initTobilloSheet();
   if (panel === 'cervical') { initCervicalSheet(); return; }
   if (panel === 'lumbar' || panel === 'lumbar-post' || panel === 'dorsal') initLBPSheet();
-  if (panel === 'ingle') initGroinSheet();
 }
 
 function initHombroSheet() {
@@ -158,5 +158,6 @@ document.addEventListener('DOMContentLoaded', function() {
   try { initGroinSheet();    } catch(e) { console.error('initGroinSheet',e); }
   try { if(typeof initCodoSheet==='function')    initCodoSheet();    } catch(e) { console.error('initCodoSheet',e); }
   try { if(typeof initCervicalSheet==='function') initCervicalSheet(); } catch(e) { console.error('initCervicalSheet',e); }
+  try { if(typeof initCaderaSheet==='function')  initCaderaSheet();  } catch(e) { console.error('initCaderaSheet',e); }
 });
 

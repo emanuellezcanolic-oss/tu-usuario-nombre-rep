@@ -219,3 +219,12 @@ const CADERA_RULES = {
     }
   ]
 };
+
+const CADERA_ROM = [
+  { id:'flex',  label:'Flexión',           ref:'100–120°', mdc:'5°' },
+  { id:'ext',   label:'Extensión',          ref:'20–30°',  mdc:'4°' },
+  { id:'abd',   label:'Abducción',          ref:'40–50°',  mdc:'4°' },
+  { id:'add',   label:'Aducción',           ref:'20–30°',  mdc:'4°' },
+  { id:'ri',    label:'Rot. interna',       ref:'30–40°',  mdc:'5°' },
+  { id:'re',    label:'Rot. externa',       ref:'40–60°',  mdc:'5°' },
+];
