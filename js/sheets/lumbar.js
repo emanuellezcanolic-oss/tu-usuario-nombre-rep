@@ -34,32 +34,34 @@ function initLumbarSheet() {
 function buildLBPROM() {
   const c = document.getElementById('lbp-rom-fields'); if (!c || c.innerHTML) return;
   c.innerHTML = `
-    <div style="display:grid;grid-template-columns:28px 1fr 50px 62px 52px;gap:4px 8px;align-items:center;padding:4px 0 8px;border-bottom:1px solid var(--border)">
+    <div style="display:grid;grid-template-columns:28px 1fr 46px 52px 20px 90px;gap:4px 6px;align-items:center;padding:4px 0 8px;border-bottom:1px solid var(--border)">
       <span></span>
       <span style="font-size:9px;color:var(--text3)">Movimiento</span>
       <span style="font-size:9px;color:var(--text3);text-align:center">Ref.</span>
-      <span style="font-size:9px;color:var(--text3);text-align:center">AROM°</span>
-      <span style="font-size:9px;color:var(--text3);text-align:center">Dolor</span>
+      <span style="font-size:9px;color:var(--text3);text-align:center">AROM</span>
+      <span></span>
+      <span style="font-size:9px;color:var(--text3);text-align:center">EVA dolor repro</span>
     </div>` +
   (typeof LUMBAR_ROM !== 'undefined' ? LUMBAR_ROM : []).map(r => `
-    <div style="display:grid;grid-template-columns:28px 1fr 50px 62px 52px;gap:4px 8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)">
+    <div style="display:grid;grid-template-columns:28px 1fr 46px 52px 20px 90px;gap:4px 6px;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)">
       <div></div>
       <div style="font-size:11px;color:var(--text2)">${r.label}</div>
       <div style="font-size:9px;color:var(--text3);text-align:center">${r.ref}</div>
-      <input class="inp inp-mono" type="number" id="lbp-rom-${r.id}-act" placeholder="°" style="padding:3px 4px;font-size:11px;text-align:center">
-      <button id="lbp-rom-${r.id}-dolor"
-        onclick="this.classList.toggle('lbp-rom-dolor-on');this.textContent=this.classList.contains('lbp-rom-dolor-on')?'▲ repro':'Dolor'"
-        style="font-size:9px;padding:2px 5px;border:1px solid var(--border);border-radius:4px;background:transparent;cursor:pointer;color:var(--text3);transition:all .15s"
-        class="lbp-rom-dolor-btn">Dolor</button>
+      <input class="inp inp-mono lbp-rom-val" type="number" id="lbp-rom-${r.id}-act"
+        placeholder="—" step="any"
+        style="padding:3px 4px;font-size:11px;text-align:center">
+      <button id="lbp-rom-${r.id}-unit"
+        onclick="const u=this.textContent==='°'?'cm':'°';this.textContent=u;this.style.color=u==='cm'?'var(--neon,#7ec957)':'var(--text3)';document.getElementById('lbp-rom-${r.id}-act').placeholder=u==='cm'?'cm':'—'"
+        title="Cambiar unidad: grados ↔ centímetros"
+        style="font-size:9px;padding:1px 3px;border:1px solid var(--border);border-radius:3px;background:transparent;cursor:pointer;color:var(--text3);font-weight:600">°</button>
+      <div style="display:flex;align-items:center;gap:3px">
+        <input type="range" id="lbp-rom-${r.id}-eva" min="0" max="10" value="0"
+          oninput="const v=+this.value;const sp=this.nextElementSibling;sp.textContent=v||'0';sp.style.color=v>0?'var(--red,#cc3333)':'var(--text3)'"
+          style="flex:1;accent-color:#cc3333;height:3px">
+        <span style="font-family:var(--mono);font-size:11px;min-width:12px;color:var(--text3);text-align:right">0</span>
+      </div>
     </div>
   `).join('');
-  // inject active style once
-  if (!document.getElementById('lbp-rom-dolor-style')) {
-    const s = document.createElement('style');
-    s.id = 'lbp-rom-dolor-style';
-    s.textContent = '.lbp-rom-dolor-on{background:var(--red,#cc3333)!important;color:#fff!important;border-color:var(--red,#cc3333)!important;font-weight:700}';
-    document.head.appendChild(s);
-  }
 }
 
 // ── Test builder (D/I EVA per column) ─────────────────────────────────────────
@@ -382,10 +384,12 @@ function _readLBPSessionData() {
 
   const rom = {};
   (typeof LUMBAR_ROM !== 'undefined' ? LUMBAR_ROM : []).forEach(r => {
-    const dolorBtn = document.getElementById(`lbp-rom-${r.id}-dolor`);
+    const unitBtn = document.getElementById(`lbp-rom-${r.id}-unit`);
+    const evaEl   = document.getElementById(`lbp-rom-${r.id}-eva`);
     rom[r.id] = {
-      act:   gv(`lbp-rom-${r.id}-act`),
-      dolor: dolorBtn ? dolorBtn.classList.contains('lbp-rom-dolor-on') : false,
+      act:  gv(`lbp-rom-${r.id}-act`),
+      unit: unitBtn  ? unitBtn.textContent : '°',
+      eva:  evaEl    ? +evaEl.value        : 0,
     };
   });
 
@@ -465,10 +469,17 @@ function loadLBPSession(idx) {
 
   if (s.rom) Object.entries(s.rom).forEach(([id, vals]) => {
     sv(`lbp-rom-${id}-act`, vals.act);
-    const dolorBtn = document.getElementById(`lbp-rom-${id}-dolor`);
-    if (dolorBtn && vals.dolor) {
-      dolorBtn.classList.add('lbp-rom-dolor-on');
-      dolorBtn.textContent = '▲ repro';
+    const unitBtn = document.getElementById(`lbp-rom-${id}-unit`);
+    if (unitBtn && vals.unit) {
+      unitBtn.textContent = vals.unit;
+      unitBtn.style.color = vals.unit === 'cm' ? 'var(--neon,#7ec957)' : 'var(--text3)';
+      document.getElementById(`lbp-rom-${id}-act`).placeholder = vals.unit === 'cm' ? 'cm' : '—';
+    }
+    const evaEl = document.getElementById(`lbp-rom-${id}-eva`);
+    if (evaEl && vals.eva != null) {
+      evaEl.value = vals.eva;
+      const sp = evaEl.nextElementSibling;
+      if (sp) { sp.textContent = vals.eva || '0'; sp.style.color = vals.eva > 0 ? 'var(--red,#cc3333)' : 'var(--text3)'; }
     }
   });
 
@@ -620,11 +631,13 @@ function generarInformeLumbar() {
     .filter(s => selSymptoms.includes(s.id)).map(s => s.label);
 
   const romRows = (typeof LUMBAR_ROM !== 'undefined' ? LUMBAR_ROM : []).map(r => {
-    const act      = gv(`lbp-rom-${r.id}-act`);
-    const dolorBtn = document.getElementById(`lbp-rom-${r.id}-dolor`);
-    const dolor    = dolorBtn ? dolorBtn.classList.contains('lbp-rom-dolor-on') : false;
-    if (!act && !dolor) return null;
-    return { label: r.label, ref: r.ref, mdc: r.mdc, act, dolor };
+    const act     = gv(`lbp-rom-${r.id}-act`);
+    const unitBtn = document.getElementById(`lbp-rom-${r.id}-unit`);
+    const evaEl   = document.getElementById(`lbp-rom-${r.id}-eva`);
+    const unit    = unitBtn ? unitBtn.textContent : '°';
+    const eva     = evaEl   ? +evaEl.value : 0;
+    if (!act && eva === 0) return null;
+    return { label: r.label, ref: r.ref, mdc: r.mdc, act, unit, eva };
   }).filter(Boolean);
 
   const allTestDefs = [
@@ -721,22 +734,24 @@ function generarInformeLumbar() {
       ${symptomLabels.map(l => `<span style="background:#f5f7ee;border:1px solid #b8d08a;border-radius:4px;padding:4px 10px;font-size:10px;color:#1e2d0e">${l}</span>`).join('')}
     </div>` : '';
 
-  const dolorosos = romRows.filter(r => r.dolor).map(r => r.label);
+  const dolorosos = romRows.filter(r => r.eva > 0).map(r => `${r.label} (EVA ${r.eva}/10)`);
   const sec03 = (romRows.length || schober) ? `
     ${_sec('03','Rango de movimiento lumbar (ROM)')}
-    <div class="intro-box">AROM con inclinómetro/goniómetro. MDC flexión/extensión ≈ 5°. Schober modificado: normal ≥ 5 cm de expansión (ICC 0.83–0.97). Dolor = movimiento que reproduce síntomas del paciente. Ref: Blanpied 2017 · Prussansky 2008.</div>
+    <div class="intro-box">AROM con inclinómetro (°) o cinta métrica (cm: dedo-suelo, Schober por segmento). MDC ≈ 5° / 0.5 cm. EVA dolor = intensidad del dolor reproducido con ese movimiento (0 = sin repro). Schober modificado normal ≥ 5 cm (ICC 0.83–0.97). Ref: Blanpied 2017 · Tousignant 2005.</div>
     ${romRows.length ? `
     <table>
-      <tr><th>Movimiento</th><th>Ref.</th><th>MDC</th><th>AROM°</th><th>Repro dolor</th></tr>
+      <tr><th>Movimiento</th><th>Ref.</th><th>MDC</th><th>AROM</th><th>EVA repro</th></tr>
       ${romRows.map(r => `<tr>
         <td><strong>${r.label}</strong></td>
         <td style="color:#888">${r.ref}</td>
         <td style="color:#888">${r.mdc}</td>
-        <td>${r.act ? r.act+'°' : '—'}</td>
-        <td style="text-align:center">${r.dolor ? '<span style="color:#cc3333;font-weight:700">▲ Sí</span>' : '<span style="color:#888">No</span>'}</td>
+        <td>${r.act ? r.act + (r.unit || '°') : '—'}</td>
+        <td style="text-align:center">${r.eva > 0
+          ? `<span style="color:#cc3333;font-weight:700">${r.eva}/10</span>`
+          : '<span style="color:#aaa">0</span>'}</td>
       </tr>`).join('')}
     </table>` : ''}
-    ${dolorosos.length ? `<div style="margin-top:6px;padding:7px 10px;background:#fff5f5;border:1px solid #ffc0c0;border-radius:5px;font-size:10px"><strong style="color:#cc3333">Movimientos que reproducen síntomas:</strong> ${dolorosos.join(', ')}</div>` : ''}
+    ${dolorosos.length ? `<div style="margin-top:6px;padding:7px 10px;background:#fff5f5;border:1px solid #ffc0c0;border-radius:5px;font-size:10px"><strong style="color:#cc3333">Movimientos que reproducen síntomas:</strong> ${dolorosos.join(' · ')}</div>` : ''}
     ${schober ? `<div style="margin-top:8px;padding:8px;background:#f8f8f0;border:1px solid #e0d8a0;border-radius:5px;font-size:10px"><strong>Schober modificado:</strong> ${schober} cm (normal ≥ 5 cm · ICC 0.83–0.97)</div>` : ''}` : '';
 
   const posTests = tests.filter(t => t.dR==='POS' || t.iR==='POS');
