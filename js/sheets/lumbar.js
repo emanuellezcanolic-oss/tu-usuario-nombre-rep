@@ -55,30 +55,40 @@ function _lbpRomEvaUpdate(el) {
   if (sp) { sp.textContent = v || '0'; sp.style.color = v > 0 ? '#cc3333' : 'var(--text3)'; }
 }
 
+function _lbpRomSetUnit(unit) {
+  const btn = document.getElementById('lbp-rom-unit-global');
+  if (btn) { btn.textContent = unit; btn.style.background = unit === 'cm' ? 'var(--neon,#7ec957)' : 'transparent'; btn.style.color = unit === 'cm' ? '#000' : 'var(--text3)'; }
+  (typeof LUMBAR_ROM !== 'undefined' ? LUMBAR_ROM : []).forEach(r => {
+    const inp = document.getElementById(`lbp-rom-${r.id}-act`);
+    if (inp) inp.placeholder = unit === 'cm' ? '0.0' : '0';
+  });
+}
+
 // ── ROM ───────────────────────────────────────────────────────────────────────
 function buildLBPROM() {
   const c = document.getElementById('lbp-rom-fields'); if (!c || c.innerHTML) return;
   c.innerHTML = `
-    <div style="display:grid;grid-template-columns:28px 1fr 46px 52px 20px 90px;gap:4px 6px;align-items:center;padding:4px 0 8px;border-bottom:1px solid var(--border)">
+    <div style="display:grid;grid-template-columns:28px 1fr 46px 68px 90px;gap:4px 6px;align-items:center;padding:4px 0 8px;border-bottom:1px solid var(--border)">
       <span></span>
       <span style="font-size:9px;color:var(--text3)">Movimiento</span>
       <span style="font-size:9px;color:var(--text3);text-align:center">Ref.</span>
-      <span style="font-size:9px;color:var(--text3);text-align:center">AROM</span>
-      <span></span>
+      <span style="display:flex;align-items:center;justify-content:center;gap:4px">
+        <span style="font-size:9px;color:var(--text3)">AROM</span>
+        <button id="lbp-rom-unit-global"
+          onclick="const u=this.textContent==='°'?'cm':'°';_lbpRomSetUnit(u)"
+          title="Cambiar unidad para todos los movimientos"
+          style="font-size:9px;padding:1px 5px;border:1px solid var(--border);border-radius:10px;background:transparent;cursor:pointer;color:var(--text3);font-weight:700;transition:all .15s">°</button>
+      </span>
       <span style="font-size:9px;color:var(--text3);text-align:center">EVA dolor repro</span>
     </div>` +
   (typeof LUMBAR_ROM !== 'undefined' ? LUMBAR_ROM : []).map(r => `
-    <div style="display:grid;grid-template-columns:28px 1fr 46px 52px 20px 90px;gap:4px 6px;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)">
+    <div style="display:grid;grid-template-columns:28px 1fr 46px 68px 90px;gap:4px 6px;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)">
       <div></div>
       <div style="font-size:11px;color:var(--text2)">${r.label}</div>
       <div style="font-size:9px;color:var(--text3);text-align:center">${r.ref}</div>
       <input class="inp inp-mono lbp-rom-val" type="number" id="lbp-rom-${r.id}-act"
-        placeholder="—" step="any"
+        placeholder="0" step="any"
         style="padding:3px 4px;font-size:11px;text-align:center">
-      <button id="lbp-rom-${r.id}-unit"
-        onclick="const u=this.textContent==='°'?'cm':'°';this.textContent=u;this.style.color=u==='cm'?'var(--neon,#7ec957)':'var(--text3)';document.getElementById('lbp-rom-${r.id}-act').placeholder=u==='cm'?'cm':'—'"
-        title="Cambiar unidad: grados ↔ centímetros"
-        style="font-size:9px;padding:1px 3px;border:1px solid var(--border);border-radius:3px;background:transparent;cursor:pointer;color:var(--text3);font-weight:600">°</button>
       <div style="display:flex;align-items:center;gap:3px">
         <input type="range" id="lbp-rom-${r.id}-eva" min="0" max="10" value="0"
           oninput="_lbpRomEvaUpdate(this)"
@@ -407,16 +417,16 @@ function _readLBPSessionData() {
     });
   });
 
+  const romUnit = document.getElementById('lbp-rom-unit-global')?.textContent || '°';
   const rom = {};
   (typeof LUMBAR_ROM !== 'undefined' ? LUMBAR_ROM : []).forEach(r => {
-    const unitBtn = document.getElementById(`lbp-rom-${r.id}-unit`);
-    const evaEl   = document.getElementById(`lbp-rom-${r.id}-eva`);
+    const evaEl = document.getElementById(`lbp-rom-${r.id}-eva`);
     rom[r.id] = {
-      act:  gv(`lbp-rom-${r.id}-act`),
-      unit: unitBtn  ? unitBtn.textContent : '°',
-      eva:  evaEl    ? +evaEl.value        : 0,
+      act: gv(`lbp-rom-${r.id}-act`),
+      eva: evaEl ? +evaEl.value : 0,
     };
   });
+  rom._unit = romUnit;
 
   const myotomas = (typeof LBP_MYOTOMAS !== 'undefined' ? LBP_MYOTOMAS : []).map(m => ({
     id: m.id, d: gv(`${m.id}-d`), i: gv(`${m.id}-i`),
@@ -492,20 +502,15 @@ function loadLBPSession(idx) {
   const nprsEl = document.getElementById('lbp-nprs');
   if (nprsEl) nprsEl.nextElementSibling.textContent = nprsEl.value;
 
-  if (s.rom) Object.entries(s.rom).forEach(([id, vals]) => {
-    sv(`lbp-rom-${id}-act`, vals.act);
-    const unitBtn = document.getElementById(`lbp-rom-${id}-unit`);
-    if (unitBtn && vals.unit) {
-      unitBtn.textContent = vals.unit;
-      unitBtn.style.color = vals.unit === 'cm' ? 'var(--neon,#7ec957)' : 'var(--text3)';
-      document.getElementById(`lbp-rom-${id}-act`).placeholder = vals.unit === 'cm' ? 'cm' : '—';
-    }
-    const evaEl = document.getElementById(`lbp-rom-${id}-eva`);
-    if (evaEl && vals.eva != null) {
-      evaEl.value = vals.eva;
-      _lbpRomEvaUpdate(evaEl);
-    }
-  });
+  if (s.rom) {
+    if (s.rom._unit) _lbpRomSetUnit(s.rom._unit);
+    Object.entries(s.rom).forEach(([id, vals]) => {
+      if (id === '_unit') return;
+      sv(`lbp-rom-${id}-act`, vals.act);
+      const evaEl = document.getElementById(`lbp-rom-${id}-eva`);
+      if (evaEl && vals.eva != null) { evaEl.value = vals.eva; _lbpRomEvaUpdate(evaEl); }
+    });
+  }
 
   if (s.tests) {
     Object.entries(s.tests).forEach(([testId, data]) => {
@@ -654,14 +659,13 @@ function generarInformeLumbar() {
   const symptomLabels = (typeof LUMBAR_SYMPTOMS !== 'undefined' ? LUMBAR_SYMPTOMS : [])
     .filter(s => selSymptoms.includes(s.id)).map(s => s.label);
 
+  const romUnit = document.getElementById('lbp-rom-unit-global')?.textContent || '°';
   const romRows = (typeof LUMBAR_ROM !== 'undefined' ? LUMBAR_ROM : []).map(r => {
-    const act     = gv(`lbp-rom-${r.id}-act`);
-    const unitBtn = document.getElementById(`lbp-rom-${r.id}-unit`);
-    const evaEl   = document.getElementById(`lbp-rom-${r.id}-eva`);
-    const unit    = unitBtn ? unitBtn.textContent : '°';
-    const eva     = evaEl   ? +evaEl.value : 0;
+    const act   = gv(`lbp-rom-${r.id}-act`);
+    const evaEl = document.getElementById(`lbp-rom-${r.id}-eva`);
+    const eva   = evaEl ? +evaEl.value : 0;
     if (!act && eva === 0) return null;
-    return { label: r.label, ref: r.ref, mdc: r.mdc, act, unit, eva };
+    return { label: r.label, ref: r.ref, mdc: r.mdc, act, unit: romUnit, eva };
   }).filter(Boolean);
 
   const allTestDefs = [
