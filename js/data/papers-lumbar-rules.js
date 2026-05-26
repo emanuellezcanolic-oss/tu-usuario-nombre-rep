@@ -3,6 +3,8 @@
 // Sources: Delitto et al. JOSPT 2012 CPG · Cook et al. Spine 2006 (SIJ cluster)
 //          van der Windt 2010 Cochrane · Laslett EJSP 2005 · Hicks 2003
 //          Majlesi 2008 · Mens 2001 · O'Sullivan 2018 · Konno 2007
+//          George et al. JOSPT CPG 2021 (Rev.) · WHO 2023 non-surgical LBP
+//          Alqarni 2010 (PLE test) · Stuber et al. JCCA 2014 (Kemp)
 
 // ── Test definitions ─────────────────────────────────────────────────────────
 
@@ -27,6 +29,7 @@ const LUMBAR_TESTS_ESTABILIDAD = [
   { id:'aslr',        name:'ASLR',                        sub:'Dolor pélvico posterior · Sn 0.87 / Sp 0.94',         tag:'tag-b', ref:'Mens 2001 — elevación pierna extendida en supino · dificultad percibida = déficit transferencia de carga pélvica' },
   { id:'prone-instab',name:'Prone Instability Test',       sub:'Inestabilidad lumbar · Sn 0.72 / Sp 0.58',           tag:'tag-b', ref:'Hicks 2003 — PA en prono con pies en suelo: dolor → pies levantados: mejora = inestabilidad' },
   { id:'aberrant-mv', name:'Aberrant movement signs',      sub:'Gower sign / desvío / catch',                         tag:'tag-b', ref:'Hicks 2003 — movimientos aberrantes al volver de flexión: signo de inestabilidad segmentaria' },
+  { id:'passive-lumbar-ext', name:'Passive Lumbar Extension (PLE)', sub:'Inestabilidad estructural · Sn 0.84 / Sp 0.90 / LR+ 8.8', tag:'tag-b', ref:'Alqarni 2010 — decúbito prono, el examinador eleva ambas piernas extendidas · dolor / reproducción síntomas = inestabilidad estructural' },
 ];
 
 const LUMBAR_TESTS_ESTENOSIS = [
@@ -34,6 +37,12 @@ const LUMBAR_TESTS_ESTENOSIS = [
   { id:'two-stage-walk',   name:'Two-stage walk test',     sub:'Claudicación neurógena · distancia comparativa',      tag:'tag-y', ref:'Mayor distancia caminando inclinado vs erguido = estenosis (no vascular)' },
 ];
 
+
+// ── Tests facetarios / segmentarios ──────────────────────────────────────────
+const LUMBAR_TESTS_FACETA = [
+  { id:'kemp-test',    name:'Test de Kemp (extensión-rotación)', sub:'Faceta · NPV 56.8–59.9% · precisión POBRE — Stuber 2014',    tag:'tag-y', ref:'Extensión + rotación ipsilateral + carga axial → dolor local lumbar paravertebral. Diagnóstico clínico — no confirma faceta por sí solo' },
+  { id:'spring-test',  name:'Spring Test (PA lumbar)',           sub:'Hipomov. segmentaria · Sn 0.69 / Sp 0.54',                   tag:'tag-y', ref:'Compresión PA sobre proceso espinoso → rigidez / dolor = hipomovildad segmentaria (Spring & Maher 2003)' },
+];
 // ── ROM ──────────────────────────────────────────────────────────────────────
 const LUMBAR_ROM = [
   { id:'flex',  label:'Flexión lumbar',         ref:'40–60°', mdc:'5°',  schober: false },
@@ -85,6 +94,11 @@ const LUMBAR_SYMPTOMS = [
   { id:'esten-bilateral',    label:'Síntomas bilaterales en piernas',                           region:'estenosis', icon:'🟣' },
   { id:'esten-extension',    label:'Dolor que empeora con extensión / estar de pie',            region:'estenosis', icon:'🟣' },
 
+  // Facetario / articular segmentario
+  { id:'facet-extension',  label:'Dolor claramente peor con extensión e inclinación ipsilateral',       region:'facetario', icon:'🟤' },
+  { id:'facet-local',      label:'Dolor paravertebral lumbar localizado sin ciática distal a rodilla',  region:'facetario', icon:'🟤' },
+  { id:'facet-manana',     label:'Rigidez matutina breve (< 30 min) que mejora con movimiento',        region:'facetario', icon:'🟤' },
+
   // Inestabilidad / control motor
   { id:'instab-captura',     label:'Episodios de "fallar" o bloqueo lumbar con movimiento',    region:'inestabilidad', icon:'🔵' },
   { id:'instab-fatiga',      label:'Fatiga postural rápida al mantener posición',               region:'inestabilidad', icon:'🔵' },
@@ -115,7 +129,7 @@ const LUMBAR_RULES = {
       symptomUmbral: 2,
       criterio: 'SLR < 60° = alta sensibilidad (Sn 0.91). Cruzado = alta Sp (0.88) para hernia extruida. SLUMP: Sn 0.84 / Sp 0.83. Síntomas dermatomales + SLR positivo = sospecha alta sin imagen.',
       evidencia: 'SLR: Sn 0.91 / Sp 0.26 / LR+ 1.23 / LR- 0.12 (van der Windt 2010 Cochrane — 15 estudios).\nSLUMP: Sn 0.84 / Sp 0.83 — superior al SLR en subagudo/crónico (Majlesi 2008).\nCrossed SLR: Sn 0.29 / Sp 0.88 / LR+ 2.42 — confirma hernia masiva.\nFemoral Nerve Tension: L2-L4 — dolor cara anterior muslo.\nBowstring: Sn 0.38 / Sp 0.89 — alta Sp para compromiso neural.',
-      tratamiento: '• Educación en neurociencia del dolor (Rec. A)\n• Movilización neural progresiva + ejercicio activo\n• Tracción lumbar en agudo severo (Rec. C)\n• Evitar reposo en cama (Rec. A)\n• Derivar si déficit motor progresivo o cauda equina\n• RMN solo si no mejora en 4–6 sem o déficit neurológico',
+      tratamiento: '• Educación en neurociencia del dolor — primera línea (Rec. A — WHO 2023)\n• Movilización neural progresiva + ejercicio activo (Rec. A — CPG 2021)\n• Tracción lumbar en agudo severo (Rec. C — CPG 2021)\n• Evitar reposo absoluto en cama (Rec. A)\n• Terapia manual como coadyuvante en crónico (Rec. B — CPG 2021)\n• Enfoque biopsicosocial en dolor persistente > 12 sem (WHO 2023)\n• Derivar si déficit motor progresivo o cauda equina\n• RMN solo si no mejora en 4–6 sem o déficit neurológico',
       ref: 'Delitto et al. JOSPT 2012 CPG · van der Windt Cochrane 2010 · Majlesi 2008 · Airaksinen 2006',
     },
 
@@ -168,6 +182,23 @@ const LUMBAR_RULES = {
       evidencia: 'Stoop test: Sn 0.49 / Sp 0.84 — reprouce síntomas al caminar erguido, alivio al inclinarse.\nTwo-stage walk: mayor distancia inclinado = estenosis (no vascular).\nCluster Konno 2007: bilateral + mejoría flexión + > 60 años = LR+ 3.4.\nRMN confirma: área canal < 100mm² (cirugía si < 75mm²).',
       tratamiento: '• Ejercicio en flexión (bicicleta, Nordic walking inclinado)\n• Educación: evitar hiperlordosis, caminar apoyado\n• Aquatic therapy (descarga corporal efectiva)\n• Corsé lumbar en agudo sintomático\n• Derivar cirugía si síntomas graves / progresivos (descompresión)\n• TENS / calor como adjunto en crónico',
       ref: 'Delitto et al. JOSPT 2012 · Konno 2007 · Katz 2008 · Fritz 2000',
+    },
+
+    // 5. Síndrome facetario
+    {
+      id: 'dolor-facetario',
+      nombre: 'Síndrome facetario / dolor articular lumbar',
+      categoria: 'Faceta',
+      colorKey: 'text',
+      testsKey:        ['kemp-test'],
+      testsSupportKey: ['spring-test'],
+      symptomKeys: ['facet-extension','facet-local','facet-manana'],
+      umbral: 0,
+      symptomUmbral: 2,
+      criterio: '⚠️ Kemp test: precisión diagnóstica POBRE (NPV 57%, Stuber 2014 — 5 estudios). No confirma ni descarta dolor facetario de forma aislada. Diagnóstico por presentación: dolor paravertebral lumbar + extensión/rotación + sin ciática distal. Confirmar con bloqueo fluoroscópico si relevante.',
+      evidencia: 'Kemp test (Stuber 2014 — 5 estudios): NPV 56.8–59.9% — único valor diagnóstico > 50%. Sn y Sp pobres vs bloqueo anestésico con referencia. Ningún cluster clínico lumbar validado con LR+ significativo para faceta. Spring test: Sn 0.69 / Sp 0.54 (Spring & Maher 2003). Conclusión: diagnóstico clínico presuntivo — no confiar en test único.',
+      tratamiento: '• Movilización articular lumbar grados III-IV — evidencia moderada\n• Manipulación thrust sin contraindicaciones (Rec. B — CPG 2021)\n• Ejercicio activo general — no posición específica\n• Educación: no correlación imagen-dolor en artrosis facetaria (WHO 2023)\n• Calor local como adjunto (Rec. C)\n• Evitar reposo prolongado\n• Infiltración facetaria guiada si refractario > 3 meses',
+      ref: 'Stuber et al. JCCA 2014 · George et al. JOSPT CPG 2021 · WHO 2023 · Schwarzer 1994',
     },
   ],
 };

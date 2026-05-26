@@ -69,6 +69,7 @@ function _tagClassForCategoriaLBP(cat) {
     'SIJ':        'tag-y',
     'Estabilidad':'tag-b',
     'Estenosis':  'tag-y',
+    'Faceta':     'tag-y',
   };
   return map[cat] || '';
 }
@@ -111,6 +112,7 @@ function renderDiagnosticosLumbar(positivosOverride, symptomsOverride) {
     ...(typeof LUMBAR_TESTS_SIJ         !== 'undefined' ? LUMBAR_TESTS_SIJ         : []),
     ...(typeof LUMBAR_TESTS_ESTABILIDAD !== 'undefined' ? LUMBAR_TESTS_ESTABILIDAD : []),
     ...(typeof LUMBAR_TESTS_ESTENOSIS   !== 'undefined' ? LUMBAR_TESTS_ESTENOSIS   : []),
+    ...(typeof LUMBAR_TESTS_FACETA      !== 'undefined' ? LUMBAR_TESTS_FACETA      : []),
   ];
   const nameOfTest = id => (allTests.find(t => t.id === id)?.name || id);
   const nameOfSymp = id => ((typeof LUMBAR_SYMPTOMS !== 'undefined' ? LUMBAR_SYMPTOMS : []).find(s => s.id === id)?.label || id);
@@ -168,7 +170,7 @@ function renderDiagnosticosLumbar(positivosOverride, symptomsOverride) {
 
   html += `
       <div style="font-size:9px;color:var(--text3);text-align:center;margin-top:4px;padding-top:8px;border-top:1px solid var(--border)">
-        Algoritmo: CPG Delitto et al. JOSPT 2012 · Cook et al. Spine 2006 · van der Windt Cochrane 2010 · Laslett 2005 · Hicks 2003 · No reemplaza el juicio clínico
+        Algoritmo: CPG Delitto 2012 · George et al. CPG 2021 · WHO 2023 · Cook 2006 · Alqarni 2010 · Stuber 2014 · Laslett 2005 · Hicks 2003 · No reemplaza el juicio clínico
       </div>
     </div>
   </div>`;

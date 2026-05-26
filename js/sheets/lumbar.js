@@ -103,6 +103,7 @@ function buildLBPTests() {
   _buildLBPTestGroup('lbp-tests-sij',         typeof LUMBAR_TESTS_SIJ         !== 'undefined' ? LUMBAR_TESTS_SIJ         : []);
   _buildLBPTestGroup('lbp-tests-estabilidad', typeof LUMBAR_TESTS_ESTABILIDAD !== 'undefined' ? LUMBAR_TESTS_ESTABILIDAD : []);
   _buildLBPTestGroup('lbp-tests-estenosis',   typeof LUMBAR_TESTS_ESTENOSIS   !== 'undefined' ? LUMBAR_TESTS_ESTENOSIS   : []);
+  _buildLBPTestGroup('lbp-tests-faceta',     typeof LUMBAR_TESTS_FACETA      !== 'undefined' ? LUMBAR_TESTS_FACETA      : []);
 }
 
 // ── Toggle test POS/NEG ───────────────────────────────────────────────────────
@@ -126,6 +127,7 @@ function _getLBPModalPositivos() {
     ...(typeof LUMBAR_TESTS_SIJ         !== 'undefined' ? LUMBAR_TESTS_SIJ         : []),
     ...(typeof LUMBAR_TESTS_ESTABILIDAD !== 'undefined' ? LUMBAR_TESTS_ESTABILIDAD : []),
     ...(typeof LUMBAR_TESTS_ESTENOSIS   !== 'undefined' ? LUMBAR_TESTS_ESTENOSIS   : []),
+    ...(typeof LUMBAR_TESTS_FACETA      !== 'undefined' ? LUMBAR_TESTS_FACETA      : []),
   ];
   const pos = [];
   allTests.forEach(test => {
@@ -147,6 +149,7 @@ function _renderLBPMissingAlerts() {
     ...(typeof LUMBAR_TESTS_SIJ         !== 'undefined' ? LUMBAR_TESTS_SIJ         : []),
     ...(typeof LUMBAR_TESTS_ESTABILIDAD !== 'undefined' ? LUMBAR_TESTS_ESTABILIDAD : []),
     ...(typeof LUMBAR_TESTS_ESTENOSIS   !== 'undefined' ? LUMBAR_TESTS_ESTENOSIS   : []),
+    ...(typeof LUMBAR_TESTS_FACETA      !== 'undefined' ? LUMBAR_TESTS_FACETA      : []),
   ];
   allTests.forEach(test => {
     const card = document.querySelector(`[data-test-id="${test.id}"]`);
@@ -172,6 +175,7 @@ function buildLumbarSymptoms() {
     discal:        '🟡 Dolor discal / mecánico',
     estenosis:     '🟣 Estenosis neurógena',
     inestabilidad: '🔵 Inestabilidad / control motor',
+    facetario:     '🟤 Dolor facetario / articular',
   };
   c.innerHTML = Object.entries(regions).map(([region, title]) => {
     const items = syms.filter(s => s.region === region);
@@ -606,6 +610,7 @@ function generarInformeLumbar() {
     ...(typeof LUMBAR_TESTS_SIJ         !== 'undefined' ? LUMBAR_TESTS_SIJ         : []),
     ...(typeof LUMBAR_TESTS_ESTABILIDAD !== 'undefined' ? LUMBAR_TESTS_ESTABILIDAD : []),
     ...(typeof LUMBAR_TESTS_ESTENOSIS   !== 'undefined' ? LUMBAR_TESTS_ESTENOSIS   : []),
+    ...(typeof LUMBAR_TESTS_FACETA      !== 'undefined' ? LUMBAR_TESTS_FACETA      : []),
   ];
   const tests = [];
   allTestDefs.forEach(test => {
@@ -799,6 +804,85 @@ function generarInformeLumbar() {
       </div>`;
     }).join('')}` : '';
 
+
+  // ── Recomendaciones clínicas EBM ─────────────────────────────────────────────
+  const tiempoLabel = { agudo:'Agudo (< 4 semanas)', subagudo:'Subagudo (4–12 semanas)', cronico:'Crónico (> 12 semanas)' };
+  const sbGroup = sbResult ? sbResult.split(' ')[0].toLowerCase() : '';
+  const tiempoKey = tiempo || '';
+
+  const _sbRec = () => {
+    if (!sbResult) return '';
+    if (sbResult.toLowerCase().includes('bajo')) return `
+      <div style="padding:8px 12px;border-left:3px solid #2d7a2d;background:#f0fff4;border-radius:4px;margin-bottom:8px;font-size:10px">
+        <strong style="color:#2d7a2d">STarT Back BAJO RIESGO → Vía 1:</strong> Autogestión + educación activa + mantenerse activo.<br>
+        Rec: Educación en neurociencia del dolor · Actividad gradual · Evitar pasividad · 1–2 controles (WHO 2023 Gr. A).
+      </div>`;
+    if (sbResult.toLowerCase().includes('medio')) return `
+      <div style="padding:8px 12px;border-left:3px solid #b87a00;background:#fffbf0;border-radius:4px;margin-bottom:8px;font-size:10px">
+        <strong style="color:#b87a00">STarT Back RIESGO MEDIO → Vía 2:</strong> Programa de ejercicio dirigido + terapia manual.<br>
+        Rec: Ejercicio activo supervisado · Manipulación/movilización (Rec. B) · Educación psicosocial (WHO 2023).
+      </div>`;
+    return `
+      <div style="padding:8px 12px;border-left:3px solid #cc3333;background:#fff8f8;border-radius:4px;margin-bottom:8px;font-size:10px">
+        <strong style="color:#cc3333">STarT Back ALTO RIESGO → Vía 3:</strong> Enfoque biopsicosocial intensivo.<br>
+        Rec: Terapia cognitivo-conductual · Rehabilitación funcional intensiva · Psicología del dolor · Equipo interdisciplinario (WHO 2023 Gr. A).
+      </div>`;
+  };
+
+  const _timeRec = () => {
+    const recs = {
+      agudo: `<li>Ejercicio activo específico — Rec. C (CPG 2021 George et al.)</li>
+              <li>Terapia manual como coadyuvante — Rec. C agudo / Rec. B crónico</li>
+              <li>Educación: mantenerse activo, pronóstico favorable (Rec. A)</li>
+              <li>Evitar reposo absoluto en cama (Rec. A — WHO 2023)</li>
+              <li>Imagen solo si banderas rojas o no mejora en 4–6 semanas</li>`,
+      subagudo: `<li>Ejercicio activo + movilización articular (Rec. B)</li>
+                 <li>Identificar factores psicosociales (banderas amarillas)</li>
+                 <li>Prevenir cronificación: no catastrofizar, retorno gradual al trabajo</li>
+                 <li>Terapia manual + ejercicio combinados: mejor que monoterapia (CPG 2021)</li>`,
+      cronico: `<li>Ejercicio activo como tratamiento principal — múltiples modalidades (Rec. A — WHO 2023)</li>
+                <li>Terapia manual: recomendada como adjunto (Rec. B — CPG 2021)</li>
+                <li>Intervención psicológica / TCC si componente psicosocial (Rec. A — WHO 2023)</li>
+                <li>Programa multicomponente: ejercicio + educación + psicológico (WHO 2023 Gr. A)</li>
+                <li>Farmacología NO como primera línea en dolor primario crónico (WHO 2023)</li>`,
+    };
+    const r = recs[tiempoKey];
+    if (!r) return '';
+    return `
+      <div style="padding:8px 12px;background:#f5f7ee;border-radius:4px;margin-bottom:8px;font-size:10px">
+        <strong style="color:#1e2d0e">Por tiempo de evolución (${tiempoLabel[tiempoKey]||tiempoKey}):</strong>
+        <ul style="margin:6px 0 0;padding-left:16px;line-height:1.7">${r}</ul>
+      </div>`;
+  };
+
+  const _dxRec = () => {
+    if (!dxResult.diagnosticos.length) return '';
+    const top = dxResult.diagnosticos[0];
+    const recMap = {
+      'radiculopatia-lbp': 'Movilización neural progresiva · Ejercicio activo · Tracción si agudo severo · Evitar cirugía < 6–12 semanas salvo urgencia neurológica',
+      'sij-disfuncion':    'Manipulación SIJ en decúbito lateral · Estabilización lumbopélvica · Cinturón pélvico si inestabilidad · Infiltración SIJ guiada si refractaria',
+      'inestabilidad-lumbar': 'Motor control training: transverso + multífido · Estabilización local → global → funcional · Evitar manipulación en inestabilidad alta · CORE progresivo',
+      'estenosis-neuro':   'Ejercicio en flexión · Bicicleta stationary · Aquatic therapy · Corsé en agudo · Derivar cirugía si progresivo (descompresión)',
+      'dolor-facetario':   'Movilización grados III-IV · Manipulación thrust (Rec. B) · Ejercicio activo general · Calor local · Infiltración si refractario > 3 meses',
+    };
+    const rec = recMap[top.id] || top.tratamiento?.split('\n')[0] || '';
+    return `
+      <div style="padding:8px 12px;border-left:3px solid #8fa845;background:#f5f7ee;border-radius:4px;margin-bottom:8px;font-size:10px">
+        <strong style="color:#1e2d0e">Por diagnóstico principal (${top.nombre}):</strong><br>
+        <span style="line-height:1.7">${rec}</span>
+      </div>`;
+  };
+
+  const sec08 = (_sbRec() || _timeRec() || _dxRec()) ? `
+    <div class="sec-head"><span class="sec-badge">08</span><span class="sec-title">Recomendaciones clínicas EBM</span></div>
+    <div class="intro-box">Basado en: STarT Back risk stratification · CPG 2021 George et al. JOSPT (Revisión AOPT) · WHO 2023 non-surgical chronic LBP guideline. No reemplaza juicio clínico individualizado.</div>
+    ${_sbRec()}
+    ${_timeRec()}
+    ${_dxRec()}
+    <div style="font-size:9px;color:#888;margin-top:8px;padding-top:6px;border-top:1px solid #e8f0d4">
+      Referencias: George et al. J Orthop Sports Phys Ther 2021;51(11):CPG1-CPG60 · WHO Guideline non-surgical LBP 2023 (ISBN 978-92-4-008178-9) · Keele STarT Back Tool (Hill 2008) · Delitto JOSPT 2012
+    </div>` : '';
+
   const win = window.open('', '_blank');
   win.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
     <title>Informe Lumbar — ${nombre}</title>
@@ -810,9 +894,9 @@ function generarInformeLumbar() {
       </div>
       <div style="text-align:right;font-size:10px;color:#888">${fecha}<br><span style="font-size:9px">MoveMetrics v12</span></div>
     </div>
-    ${sec01}${sec02}${sec03}${sec04}${sec05}${sec06}${sec07}
+    ${sec01}${sec02}${sec03}${sec04}${sec05}${sec06}${sec07}${sec08}
     <div style="margin-top:32px;padding-top:16px;border-top:1px solid #e8f0d4;font-size:9px;color:#aaa;text-align:center">
-      CPG Delitto et al. JOSPT 2012 · Cook et al. Spine 2006 · van der Windt Cochrane 2010 · Laslett 2005 · Hicks 2003 · No reemplaza el juicio clínico
+      CPG Delitto JOSPT 2012 · George et al. CPG 2021 · WHO 2023 · Cook Spine 2006 · Alqarni 2010 · Stuber JCCA 2014 · Laslett 2005 · Hicks 2003 · No reemplaza el juicio clínico
     </div>
     <script>setTimeout(()=>window.print(),400)</script>
     </body></html>`);
@@ -825,6 +909,8 @@ window.toggleOTLumbar       = toggleOTLumbar;
 window.checkLBPMyotomaAsym  = checkLBPMyotomaAsym;
 window.toggleReflejoLBP     = toggleReflejoLBP;
 window.buildStartBack       = buildStartBack;
+window._onLBPSymptomChange  = _onLBPSymptomChange;
+window.checkLBPRedFlags     = checkLBPRedFlags;
 window.calcStartBack2       = calcStartBack2;
 window.selectLBPPSFS        = selectLBPPSFS;
 window.checkLBPRedFlags     = checkLBPRedFlags;
