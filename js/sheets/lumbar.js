@@ -30,6 +30,31 @@ function initLumbarSheet() {
   if (typeof refreshLBPSessionBar === 'function') refreshLBPSessionBar();
 }
 
+// ── ROM helpers ───────────────────────────────────────────────────────────────
+(function _injectRomStyles() {
+  if (document.getElementById('lbp-rom-eva-style')) return;
+  const s = document.createElement('style');
+  s.id = 'lbp-rom-eva-style';
+  s.textContent = `
+    .lbp-eva-range::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#cc3333;cursor:pointer;border:2px solid #fff;box-shadow:0 0 3px rgba(0,0,0,.4)}
+    .lbp-eva-range::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#cc3333;cursor:pointer;border:2px solid #fff}
+    .lbp-eva-range::-webkit-slider-runnable-track{height:4px;border-radius:2px}
+    .lbp-eva-range::-moz-range-track{height:4px;border-radius:2px;background:var(--border,#333)}
+  `;
+  document.head.appendChild(s);
+})();
+
+function _lbpRomEvaUpdate(el) {
+  const v   = +el.value;
+  const pct = (v / 10) * 100;
+  el.style.background = v > 0
+    ? `linear-gradient(to right,#cc3333 ${pct}%,var(--border,#444) ${pct}%)`
+    : 'var(--border,#444)';
+  el.className = 'lbp-eva-range';
+  const sp = el.nextElementSibling;
+  if (sp) { sp.textContent = v || '0'; sp.style.color = v > 0 ? '#cc3333' : 'var(--text3)'; }
+}
+
 // ── ROM ───────────────────────────────────────────────────────────────────────
 function buildLBPROM() {
   const c = document.getElementById('lbp-rom-fields'); if (!c || c.innerHTML) return;
@@ -56,8 +81,8 @@ function buildLBPROM() {
         style="font-size:9px;padding:1px 3px;border:1px solid var(--border);border-radius:3px;background:transparent;cursor:pointer;color:var(--text3);font-weight:600">°</button>
       <div style="display:flex;align-items:center;gap:3px">
         <input type="range" id="lbp-rom-${r.id}-eva" min="0" max="10" value="0"
-          oninput="const v=+this.value;const sp=this.nextElementSibling;sp.textContent=v||'0';sp.style.color=v>0?'var(--red,#cc3333)':'var(--text3)'"
-          style="flex:1;accent-color:#cc3333;height:3px">
+          oninput="_lbpRomEvaUpdate(this)"
+          style="flex:1;height:4px;border-radius:2px;outline:none;cursor:pointer;background:var(--border,#333);-webkit-appearance:none;appearance:none">
         <span style="font-family:var(--mono);font-size:11px;min-width:12px;color:var(--text3);text-align:right">0</span>
       </div>
     </div>
@@ -478,8 +503,7 @@ function loadLBPSession(idx) {
     const evaEl = document.getElementById(`lbp-rom-${id}-eva`);
     if (evaEl && vals.eva != null) {
       evaEl.value = vals.eva;
-      const sp = evaEl.nextElementSibling;
-      if (sp) { sp.textContent = vals.eva || '0'; sp.style.color = vals.eva > 0 ? 'var(--red,#cc3333)' : 'var(--text3)'; }
+      _lbpRomEvaUpdate(evaEl);
     }
   });
 
