@@ -362,15 +362,23 @@ function showPage(id) {
 window.showPage = showPage;
 
 function showProfileTab(tab, btn) {
-  const tabs = ['dashboard','kinesio','fuerza','saltos','movilidad','velocidad','fms','fatiga','video','vmp','historial'];
+  const tabs = ['dashboard','kinesio','fuerza','saltos','movilidad','velocidad','fms','fatiga','video','vmp','historial','adultomayor'];
   tabs.forEach(t => document.getElementById('ptab-' + t)?.classList.toggle('hidden', t !== tab));
   document.querySelectorAll('#profile-tab-bar .ptab').forEach(b => b.classList.remove('active'));
   btn?.classList.add('active');
-  if (tab === 'dashboard')  renderDashboard();
-  if (tab === 'historial')  renderHistorial();
-  if (tab === 'kinesio')    initKinesio();
-  if (tab === 'fuerza')     renderFVHist();
-  if (tab === 'saltos')     renderSimetriasTabla();
+  if (tab === 'dashboard')    renderDashboard();
+  if (tab === 'historial')    renderHistorial();
+  if (tab === 'kinesio')      initKinesio();
+  if (tab === 'fuerza')       renderFVHist();
+  if (tab === 'saltos')       renderSimetriasTabla();
+  if (tab === 'adultomayor') {
+    if (typeof initAdultoMayorSheet === 'function') initAdultoMayorSheet();
+    // Show first tab (funcional) by default
+    if (typeof showAmTab === 'function') {
+      const firstBtn = document.querySelector('.am-tab-btn[data-tab="funcional"]');
+      showAmTab('funcional', firstBtn);
+    }
+  }
   if (tab === 'movilidad') {
     setTimeout(redrawGauges, 60);
     const amPanel = document.getElementById('adulto-mayor-tests');
@@ -386,8 +394,18 @@ function showProfileTab(tab, btn) {
   }
 }
 
-// Exponer showProfileTab globalmente
+// ── Show/hide tab-adultomayor based on patient age ──────────────
+function _updateAdultoMayorTabVisibility() {
+  const tabBtn = document.getElementById('tab-adultomayor');
+  if (!tabBtn) return;
+  const edad = cur ? (parseInt(cur.edad) || 0) : 0;
+  const esAM = cur && (edad >= 60 || cur.deporte === 'Adulto Mayor');
+  tabBtn.style.display = esAM ? '' : 'none';
+}
+
+// Exponer showProfileTab y helpers globalmente
 window.showProfileTab = showProfileTab;
+window._updateAdultoMayorTabVisibility = _updateAdultoMayorTabVisibility;
 
 function openModal(id)  { document.getElementById(id).classList.add('open');    document.body.style.overflow = 'hidden'; }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
@@ -569,6 +587,16 @@ function selectAtleta(id) {
   renderProfileHero();
   showPage('tests');
   showProfileTab('dashboard', document.querySelector('.ptab'));
+  _updateAdultoMayorTabVisibility();
+  // Reset AM state for new patient
+  if (typeof amState !== 'undefined') {
+    amState.ad8 = new Array(8).fill(null);
+    amState.gds = new Array(15).fill(null);
+    amState.bergItems = new Array(14).fill(null);
+    amState.minicogPalabras = 0;
+    amState.minicogReloj = null;
+    amState.cdtScore = null;
+  }
 }
 
 window.selectAtleta = selectAtleta;

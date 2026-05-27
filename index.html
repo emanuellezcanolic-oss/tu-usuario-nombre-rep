@@ -131,6 +131,7 @@
     <button class="ptab" onclick="showProfileTab('video',this)">🎬 Video</button>
     <button class="ptab" onclick="showProfileTab('vmp',this)">⚡ VMP</button>
     <button class="ptab" onclick="showProfileTab('historial',this)">Historial</button>
+    <button class="ptab" id="tab-adultomayor" onclick="showProfileTab('adultomayor',this)" style="display:none">👴 Adulto Mayor</button>
   </div>
 
   <!-- ══ TAB: DASHBOARD ══ -->
@@ -2480,6 +2481,40 @@
     </div>
   </div>
 
+  <!-- ══════════════════════════════════════════════════════════
+       TAB: 👴 ADULTO MAYOR — Evaluación funcional y cognitiva
+  ══════════════════════════════════════════════════════════════ -->
+  <div id="ptab-adultomayor" class="hidden">
+    <div class="flex-b mb-12">
+      <div>
+        <div style="font-size:15px;font-weight:700">👴 Adulto Mayor — Batería de Evaluación</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">Riesgo de caída · Mortalidad · Cognición · Estado afectivo — Basado en evidencia científica</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-neon btn-sm" onclick="renderAmSemaforo();showAmTab('semaforo',document.querySelector('.am-tab-btn[data-tab=semaforo]'))">🚦 Ver Semáforo</button>
+        <button class="btn btn-ghost btn-sm" onclick="saveAmData();showSaveToast()">💾 Guardar</button>
+      </div>
+    </div>
+
+    <!-- Sub-tab bar -->
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:10px">
+      <button class="am-tab-btn btn btn-neon btn-sm" data-tab="funcional"  onclick="showAmTab('funcional',this)">🏃 Funcional</button>
+      <button class="am-tab-btn btn btn-ghost btn-sm" data-tab="balance"   onclick="showAmTab('balance',this)">⚖️ Balance</button>
+      <button class="am-tab-btn btn btn-ghost btn-sm" data-tab="cognitivo" onclick="showAmTab('cognitivo',this)">🧠 Cognitivo</button>
+      <button class="am-tab-btn btn btn-ghost btn-sm" data-tab="afectivo"  onclick="showAmTab('afectivo',this)">😔 Afectivo</button>
+      <button class="am-tab-btn btn btn-ghost btn-sm" data-tab="semaforo"  onclick="showAmTab('semaforo',this)">🚦 Semáforo</button>
+      <button class="am-tab-btn btn btn-ghost btn-sm" data-tab="informe"   onclick="showAmTab('informe',this)">📋 Informe</button>
+    </div>
+
+    <!-- Sub-tab content panels -->
+    <div id="amtab-funcional"></div>
+    <div id="amtab-balance"   style="display:none"></div>
+    <div id="amtab-cognitivo" style="display:none"></div>
+    <div id="amtab-afectivo"  style="display:none"></div>
+    <div id="amtab-semaforo"  style="display:none"></div>
+    <div id="amtab-informe"   style="display:none"></div>
+  </div>
+
 </div><!-- /page-tests -->
 
 <!-- ────────────────────────────────────────
@@ -2722,6 +2757,7 @@
 
 <!-- ════════ SCRIPT ════════ -->
   <!-- ══ JS MODULAR — orden de carga ══ -->
+  <script src="js/data/papers-adulto-mayor-rules.js?v=1"></script>
   <script src="js/data/papers-cadera-rules.js?v=2"></script>
   <script src="js/data/papers-hombro-rules.js?v=2"></script>
   <script src="js/data/papers-codo-rules.js?v=1"></script>
@@ -2827,6 +2863,7 @@
   <script src="js/sheets/lumbar.js?v=9"></script>
   <script src="js/sheets/groin.js?v=1"></script>
   <script src="js/sheets/cadera.js?v=1"></script>
+  <script src="js/sheets/adulto-mayor.js?v=1"></script>
   <script src="js/sheets/codo.js?v=2"></script>
   <script src="js/sheets/cervical.js?v=3"></script>
   <script src="js/planillas.js?v=2"></script>
