@@ -845,148 +845,319 @@ function renderAmSemaforo() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// TAB 6: INFORME
+// TAB 6: INFORME — Dashboard infográfico profesional
 // ═══════════════════════════════════════════════════════════════
 function renderAmInforme() {
   const c = document.getElementById('amtab-informe'); if (!c) return;
 
-  const d = cur?.am || {};
+  const d      = cur?.am || {};
   const nombre = cur ? `${cur.nombre || ''} ${cur.apellido || ''}`.trim() : '—';
   const fecha  = d.fecha || new Date().toISOString().split('T')[0];
+  const [yy, mm, dd] = fecha.split('-');
+  const fechaFmt = dd && mm && yy ? `${dd} / ${mm} / ${yy}` : fecha;
 
-  const ad8Total  = amState.ad8.some(v=>v!==null) ? amState.ad8.reduce((s,v)=>s+(v||0),0) : null;
-  const mcTotal   = (amState.minicogReloj!==null && amState.minicogPalabras!==undefined)
-                    ? amState.minicogPalabras + (amState.minicogReloj||0) : null;
-  const gdsTotal  = amState.gds.some(v=>v!==null) ? amState.gds.reduce((s,v)=>s+(v||0),0) : null;
+  const ad8Total = amState.ad8.some(v=>v!==null) ? amState.ad8.reduce((s,v)=>s+(v||0),0) : null;
+  const mcTotal  = (amState.minicogReloj!==null && amState.minicogPalabras!==undefined)
+                   ? amState.minicogPalabras + (amState.minicogReloj||0) : null;
+  const gdsTotal = amState.gds.some(v=>v!==null) ? amState.gds.reduce((s,v)=>s+(v||0),0) : null;
+  const cdtV     = amState.cdtScore;
 
   const hallazgos = [
-    { test:'TUG',              val: d.tug      ? `${d.tug} s`          : '—', sem: AM_TUG.semaforo(d.tug),    lbl: AM_TUG.semaforo_label(d.tug),    ref:'Barry 2014 · Cheong 2021' },
-    { test:'Velocidad marcha', val: d.gaitSpeed ? `${d.gaitSpeed} m/s` : '—', sem: AM_GAIT.semaforo(d.gaitSpeed), lbl: AM_GAIT.semaforo_label(d.gaitSpeed), ref:'Cheong 2021' },
-    { test:'SPPB',            val: d.sppbTotal!==null&&d.sppbTotal!==undefined ? `${d.sppbTotal}/12` : '—', sem: AM_SPPB.semaforo(d.sppbTotal), lbl: AM_SPPB.semaforo_label(d.sppbTotal), ref:'Wanden-Berghe 2021' },
-    { test:'Berg Balance',    val: d.bergTotal!==null&&d.bergTotal!==undefined ? `${d.bergTotal}/56` : '—', sem: AM_BERG.semaforo(d.bergTotal), lbl: AM_BERG.semaforo_label(d.bergTotal), ref:'Park 2017 · Dengiz 2025' },
-    { test:'AD-8',            val: ad8Total!==null ? `${ad8Total}/8`  : '—', sem: AM_AD8.semaforo(ad8Total), lbl: AM_AD8.semaforo_label(ad8Total), ref:'Usarel 2019' },
-    { test:'Mini-Cog',        val: mcTotal!==null  ? `${mcTotal}/5`   : '—', sem: AM_MINICOG.semaforo(mcTotal), lbl: AM_MINICOG.semaforo_label(mcTotal), ref:'Borson 2000' },
-    { test:'CDT (Reloj)',     val: amState.cdtScore!==null ? `${amState.cdtScore}/5` : '—', sem: AM_CDT.semaforo(amState.cdtScore), lbl: AM_CDT.semaforo_label(amState.cdtScore), ref:'Shulman 2000 / Usarel 2019' },
-    { test:'GDS-15',          val: gdsTotal!==null ? `${gdsTotal}/15` : '—', sem: AM_GDS15.semaforo(gdsTotal), lbl: AM_GDS15.semaforo_label(gdsTotal), ref:'Yesavage / Wanden-Berghe 2021' },
+    { test:'TUG',             icon:'⏱', cat:'func', val: d.tug       ? `${d.tug} s`          : '—', rawVal: d.tug,       max:30,  unit:'s',   sem: AM_TUG.semaforo(d.tug),    lbl: AM_TUG.semaforo_label(d.tug),    ref:'Barry 2014 · Cheong 2021',        cut:'<9s ✓ · 9–13.4s ⚠ · ≥13.5s ✗' },
+    { test:'Vel. Marcha',     icon:'🚶', cat:'func', val: d.gaitSpeed ? `${d.gaitSpeed} m/s`  : '—', rawVal: d.gaitSpeed, max:2,   unit:'m/s', sem: AM_GAIT.semaforo(d.gaitSpeed), lbl: AM_GAIT.semaforo_label(d.gaitSpeed), ref:'Cheong 2021',              cut:'≥1.0 m/s ✓ · 0.8–0.99 ⚠ · <0.8 ✗' },
+    { test:'SPPB',            icon:'📊', cat:'func', val: d.sppbTotal!=null ? `${d.sppbTotal}/12` : '—', rawVal: d.sppbTotal, max:12, unit:'/12', sem: AM_SPPB.semaforo(d.sppbTotal), lbl: AM_SPPB.semaforo_label(d.sppbTotal), ref:'Wanden-Berghe 2021',   cut:'10–12 ✓ · 7–9 ⚠ · <7 ✗' },
+    { test:'Berg Balance',    icon:'⚖',  cat:'func', val: d.bergTotal!=null ? `${d.bergTotal}/56` : '—', rawVal: d.bergTotal, max:56, unit:'/56', sem: AM_BERG.semaforo(d.bergTotal), lbl: AM_BERG.semaforo_label(d.bergTotal), ref:'Park 2017 · Dengiz 2025', cut:'≥41 ✓ · 21–40 ⚠ · ≤20 ✗' },
+    { test:'AD-8',            icon:'🧠', cat:'cog',  val: ad8Total!=null ? `${ad8Total}/8`   : '—', rawVal: ad8Total,    max:8,   unit:'/8',  sem: AM_AD8.semaforo(ad8Total),   lbl: AM_AD8.semaforo_label(ad8Total),   ref:'Usarel 2019',              cut:'≤2 ✓ · 3–4 ⚠ · ≥5 ✗' },
+    { test:'Mini-Cog',        icon:'💡', cat:'cog',  val: mcTotal!=null  ? `${mcTotal}/5`    : '—', rawVal: mcTotal,     max:5,   unit:'/5',  sem: AM_MINICOG.semaforo(mcTotal), lbl: AM_MINICOG.semaforo_label(mcTotal), ref:'Borson 2000',             cut:'≥3 ✓ · ≤2 ✗' },
+    { test:'Test del Reloj',  icon:'🕐', cat:'cog',  val: cdtV!=null     ? `${cdtV}/5`       : '—', rawVal: cdtV,        max:5,   unit:'/5',  sem: AM_CDT.semaforo(cdtV),       lbl: AM_CDT.semaforo_label(cdtV),       ref:'Shulman 2000 / Usarel 2019', cut:'≥4 ✓ · 3 ⚠ · 1–2 ✗' },
+    { test:'GDS-15',          icon:'💬', cat:'afec', val: gdsTotal!=null ? `${gdsTotal}/15`  : '—', rawVal: gdsTotal,    max:15,  unit:'/15', sem: AM_GDS15.semaforo(gdsTotal), lbl: AM_GDS15.semaforo_label(gdsTotal), ref:'Yesavage / Wanden-Berghe 2021', cut:'≤5 ✓ · 6–9 ⚠ · ≥10 ✗' },
   ];
 
-  const semaforos = Object.fromEntries(hallazgos.map(h => [h.test, h.sem]));
-  const global = calcAmRiesgoGlobal(semaforos);
-
-  // Recommendations by risk level
-  const rojos = hallazgos.filter(h => h.sem === 'rojo');
+  const semObj = {};
+  hallazgos.forEach(h => { semObj[h.test] = h.sem; });
+  const global  = calcAmRiesgoGlobal(semObj);
+  const rojos   = hallazgos.filter(h => h.sem === 'rojo');
   const amarillos = hallazgos.filter(h => h.sem === 'amarillo');
-  let recomHtml = '';
-  if (rojos.length > 0) {
-    recomHtml += `<div style="margin-bottom:8px"><strong style="color:var(--red)">🔴 Dominios críticos (requieren acción inmediata):</strong><ul style="margin:4px 0 0 16px;font-size:11px;line-height:1.7">
-      ${rojos.map(h => `<li><strong>${h.test}:</strong> ${h.lbl}</li>`).join('')}</ul></div>`;
-  }
-  if (amarillos.length > 0) {
-    recomHtml += `<div style="margin-bottom:8px"><strong style="color:var(--amber)">🟡 Dominios de atención (seguimiento activo):</strong><ul style="margin:4px 0 0 16px;font-size:11px;line-height:1.7">
-      ${amarillos.map(h => `<li><strong>${h.test}:</strong> ${h.lbl}</li>`).join('')}</ul></div>`;
-  }
-  if (rojos.length === 0 && amarillos.length === 0) {
-    recomHtml = `<div style="color:var(--neon);font-size:12px">🟢 Todos los dominios evaluados dentro de rangos normales según los puntos de corte basados en evidencia.</div>`;
-  }
+  const verdes  = hallazgos.filter(h => h.sem === 'verde');
+  const totalEval = hallazgos.filter(h => h.rawVal != null).length;
+
+  // ── helpers ──────────────────────────────────────────────────
+  const COLORS = {
+    verde:   { bg:'rgba(57,255,122,.12)',  border:'#39ff7a', text:'#39ff7a' },
+    amarillo:{ bg:'rgba(255,190,0,.12)',   border:'#ffbe00', text:'#ffbe00' },
+    rojo:    { bg:'rgba(255,70,70,.12)',   border:'#ff4646', text:'#ff4646' },
+    none:    { bg:'rgba(255,255,255,.04)', border:'rgba(255,255,255,.15)', text:'rgba(255,255,255,.4)' },
+  };
+  const col = s => COLORS[s] || COLORS.none;
+
+  // Badge inline
+  const badge = (s, txt) => {
+    const c2 = col(s);
+    return `<span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:${c2.bg};border:1px solid ${c2.border};color:${c2.text}">${txt}</span>`;
+  };
+
+  // Section header (numbered, like THE MOVE CLUB PDF)
+  const secHeader = (num, title) =>
+    `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;margin-bottom:14px;background:rgba(255,255,255,.03);border-left:3px solid var(--neon);border-radius:0 6px 6px 0">
+       <span style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--neon);letter-spacing:.1em;opacity:.7">${num}</span>
+       <span style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#fff">${title}</span>
+     </div>`;
+
+  // Visual progress bar
+  const barHtml = (rawVal, max, sem, invertido) => {
+    if (rawVal == null) return `<div style="height:6px;background:rgba(255,255,255,.07);border-radius:3px"></div>`;
+    let pct = Math.min(100, Math.max(2, (parseFloat(rawVal) / max) * 100));
+    if (invertido) pct = 100 - pct; // For TUG: lower is better, fill bar inversely
+    const c2 = col(sem);
+    return `<div style="height:6px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden">
+      <div style="height:100%;width:${pct}%;background:${c2.border};border-radius:3px;transition:width .3s"></div>
+    </div>`;
+  };
+
+  // Metric row (for tabular sections)
+  const metricRow = (h, i) => {
+    const c2 = col(h.sem);
+    const bg = i % 2 === 0 ? 'rgba(255,255,255,.02)' : 'transparent';
+    return `<tr style="background:${bg}">
+      <td style="padding:8px 10px;font-size:11px;font-weight:600;color:rgba(255,255,255,.85);white-space:nowrap">${h.icon} ${h.test}</td>
+      <td style="padding:8px 10px;text-align:center;font-family:var(--mono);font-size:13px;font-weight:800;color:#fff">${h.val}</td>
+      <td style="padding:8px 10px">${barHtml(h.rawVal, h.max, h.sem, h.test==='TUG'||h.test==='AD-8'||h.test==='GDS-15')}</td>
+      <td style="padding:8px 10px;white-space:nowrap">${badge(h.sem, h.lbl)}</td>
+      <td style="padding:8px 10px;font-size:8px;color:rgba(255,255,255,.3)">${h.cut}</td>
+    </tr>`;
+  };
+
+  // Intervention phases
+  const phases = global.nivel === 'rojo' ? [
+    { num:'FASE 1', title:'PRIORIDAD INMEDIATA', sub:'DERIVACIÓN Y SEGURIDAD', color:'#ff4646',
+      items:['Derivación a valoración geriátrica multidisciplinar',
+             'Evaluación domiciliaria de riesgos de caída y adaptaciones ambientales',
+             'Revisión de polifarmacia y medicación psicotrópica',
+             ...(rojos.some(h=>['AD-8','Mini-Cog','Test del Reloj'].includes(h.test)) ? ['Derivación neurológica / psicogeriatría para evaluación cognitiva formal (MoCA, MMSE)'] : []),
+             ...(rojos.some(h=>h.test==='GDS-15') ? ['Evaluación psiquiátrica — considerar tratamiento antidepresivo según criterio médico'] : [])] },
+    { num:'FASE 2', title:'PROGRAMA TERAPÉUTICO', sub:'EJERCICIO MULTICOMPONENTE SUPERVISADO', color:'#ffbe00',
+      items:['Programa Otago u equivalente: fuerza + equilibrio + marcha (≥3×/sem)',
+             'Entrenamiento de fuerza con énfasis en MMII: extensores de rodilla y tobillo',
+             'Entrenamiento de equilibrio estático y dinámico (superficie inestable progresiva)',
+             'Aeróbico de baja intensidad: caminata progresiva o bicicleta estática'] },
+    { num:'FASE 3', title:'SEGUIMIENTO', sub:'RE-EVALUACIÓN A 3–6 MESES', color:'rgba(255,255,255,.4)',
+      items:['Re-evaluación completa de batería geriátrica (TUG · SPPB · Berg)',
+             'Monitorización cognitiva periódica si dominio cognitivo fue alterado',
+             'Ajuste del programa según respuesta clínica y funcional'] },
+  ] : global.nivel === 'amarillo' ? [
+    { num:'FASE 1', title:'INTERVENCIÓN PREVENTIVA', sub:'EJERCICIO MULTICOMPONENTE', color:'#ffbe00',
+      items:['Programa Otago o Fall Prevention Exercise (FPE) 3×/sem',
+             'Entrenamiento de fuerza funcional: sentadilla, bipedestación unipodal, escalones',
+             'Evaluación ambiental domiciliaria: eliminación de obstáculos, iluminación, barandas',
+             ...(amarillos.some(h=>['AD-8','Mini-Cog'].includes(h.test)) ? ['Monitorización cognitiva — repetir Mini-Cog en 6 meses'] : [])] },
+    { num:'FASE 2', title:'SEGUIMIENTO', sub:'RE-EVALUACIÓN A 6 MESES', color:'rgba(255,255,255,.4)',
+      items:['Re-evaluación de TUG y velocidad de marcha',
+             'Actualizar dominio cognitivo y afectivo si valores límite',
+             'Ajuste progresivo de intensidad de ejercicio (FITT)'] },
+  ] : [
+    { num:'FASE 1', title:'MANTENIMIENTO', sub:'ACTIVIDAD FÍSICA REGULAR', color:'#39ff7a',
+      items:['Continuar con actividad física ≥150 min/semana a intensidad moderada (OMS)',
+             'Incluir ejercicios de fuerza ≥2×/sem y equilibrio como prevención primaria',
+             'Dieta equilibrada con aporte proteico adecuado (≥1.2 g/kg/día en adulto mayor)'] },
+    { num:'FASE 2', title:'SEGUIMIENTO ANUAL', sub:'RE-EVALUACIÓN PREVENTIVA', color:'rgba(255,255,255,.4)',
+      items:['Re-evaluación completa anual o ante cualquier cambio funcional significativo',
+             'Control de factores de riesgo cardiovascular y metabólico',
+             'Revisión de visión, audición y calzado como factores de caída'] },
+  ];
+
+  // Global risk colors
+  const gc = col(global.nivel);
 
   c.innerHTML = `
-  <div class="card" style="margin-bottom:16px">
-    <div class="card-header" style="background:rgba(57,255,122,.06)">
-      <h3 style="display:flex;align-items:center;gap:8px">
-        <span>📋</span> Informe de Evaluación Funcional y Cognitiva — Adulto Mayor
-      </h3>
-      <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ Imprimir</button>
-    </div>
-    <div class="card-body" id="am-informe-body">
+  <div style="font-family:'Segoe UI',system-ui,sans-serif;color:#fff;max-width:860px;margin:0 auto">
 
-      <!-- HEADER -->
-      <div style="border-bottom:2px solid var(--neon);padding-bottom:12px;margin-bottom:16px">
-        <div style="font-size:16px;font-weight:700">${nombre || 'Paciente'}</div>
-        <div style="font-size:11px;color:var(--text2);margin-top:2px">
-          Fecha evaluación: ${fecha} &nbsp;·&nbsp;
-          ${cur?.edad ? `Edad: ${cur.edad} años` : ''} &nbsp;·&nbsp;
-          Evaluador: ${cur?.kine || '—'}
+    <!-- ══ TOOLBAR ══════════════════════════════════════════════ -->
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:14px">
+      <button class="btn btn-ghost btn-sm" onclick="window.print()" style="font-size:11px">🖨️ Imprimir / PDF</button>
+    </div>
+
+    <!-- ══ PORTADA ═══════════════════════════════════════════════ -->
+    <div style="padding:20px 22px 16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;margin-bottom:16px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="font-size:22px;font-weight:900;letter-spacing:-.5px;line-height:1">MOVEMETRICS</div>
+          <div style="font-size:9px;letter-spacing:.22em;color:var(--neon);text-transform:uppercase;margin-top:3px;font-weight:600">REPORTE INFOGRÁFICO · VALORACIÓN GERIÁTRICA</div>
+        </div>
+        <div style="text-align:right;font-size:10px;color:rgba(255,255,255,.45);line-height:1.8">
+          <div>FECHA</div>
+          <div style="font-size:14px;font-weight:700;color:#fff;font-family:var(--mono)">${fechaFmt}</div>
+          <div style="margin-top:4px">EVALUADOR: <span style="color:rgba(255,255,255,.7)">${cur?.kine || '—'}</span></div>
         </div>
       </div>
+      <div style="margin-top:14px;height:1px;background:linear-gradient(90deg,var(--neon),transparent)"></div>
+    </div>
 
-      <!-- RIESGO GLOBAL -->
-      <div style="border:2px solid;border-radius:var(--r);padding:14px;margin-bottom:16px;${_amSemColorStyle(global.nivel)}">
-        <div style="font-size:16px;font-weight:700;margin-bottom:4px">${global.label}</div>
-        <div style="font-size:12px;opacity:.85">${global.descripcion}</div>
+    <!-- ══ 01. PERFIL DEL PACIENTE ════════════════════════════════ -->
+    <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:18px 22px;margin-bottom:14px">
+      ${secHeader('01.','PERFIL DEL PACIENTE')}
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+        <div>
+          <div style="font-size:9px;font-weight:700;letter-spacing:.12em;color:var(--neon);opacity:.7;text-transform:uppercase;margin-bottom:4px">PACIENTE</div>
+          <div style="font-size:15px;font-weight:800;color:#fff">${nombre}</div>
+        </div>
+        <div>
+          <div style="font-size:9px;font-weight:700;letter-spacing:.12em;color:var(--neon);opacity:.7;text-transform:uppercase;margin-bottom:4px">EDAD / DISCIPLINA</div>
+          <div style="font-size:15px;font-weight:800;color:#fff">${cur?.edad ? cur.edad + ' A' : '—'} <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,.5)">/ ${cur?.deporte || '—'}</span></div>
+        </div>
+        <div>
+          <div style="font-size:9px;font-weight:700;letter-spacing:.12em;color:var(--neon);opacity:.7;text-transform:uppercase;margin-bottom:4px">MORFOLOGÍA</div>
+          <div style="font-size:15px;font-weight:800;color:#fff">${cur?.peso ? cur.peso+' kg' : '—'} <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,.5)">/ ${cur?.talla ? cur.talla+' cm' : '—'}</span></div>
+        </div>
       </div>
+    </div>
 
-      <!-- TABLA HALLAZGOS -->
-      <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--text)">1. Hallazgos por dominio</div>
-      <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px">
+    <!-- ══ 02. RIESGO GLOBAL ══════════════════════════════════════ -->
+    <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:18px 22px;margin-bottom:14px">
+      ${secHeader('02.','RIESGO GLOBAL INTEGRADO')}
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center">
+        <!-- Big badge -->
+        <div style="text-align:center;padding:18px 28px;background:${gc.bg};border:2px solid ${gc.border};border-radius:8px;min-width:160px">
+          <div style="font-size:26px;font-weight:900;color:${gc.text};letter-spacing:-.5px;line-height:1.1">${global.label}</div>
+          <div style="font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:${gc.text};opacity:.7;margin-top:4px">${global.descripcion}</div>
+        </div>
+        <!-- Mini grid -->
+        <div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+            ${hallazgos.map(h => {
+              const c2 = col(h.sem);
+              return `<div style="text-align:center;padding:8px 6px;background:${c2.bg};border:1px solid ${c2.border};border-radius:6px">
+                <div style="font-size:16px;margin-bottom:3px">${h.icon}</div>
+                <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,.7);letter-spacing:.04em">${h.test}</div>
+                <div style="font-family:var(--mono);font-size:12px;font-weight:800;color:${c2.text};margin-top:3px">${h.val}</div>
+              </div>`;
+            }).join('')}
+          </div>
+          <div style="margin-top:10px;font-size:9px;color:rgba(255,255,255,.3);text-align:right">
+            ${totalEval} / ${hallazgos.length} dominios evaluados · ${verdes.length} normales · ${amarillos.length} alertas · ${rojos.length} críticos
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 03. ANÁLISIS FUNCIONAL & BALANCE ══════════════════════ -->
+    <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:18px 22px;margin-bottom:14px">
+      ${secHeader('03.','ANÁLISIS FUNCIONAL Y BALANCE')}
+      <table style="width:100%;border-collapse:collapse">
         <thead>
-          <tr style="background:var(--bg3);font-size:10px;color:var(--text3)">
-            <th style="text-align:left;padding:6px 8px;border:1px solid var(--border)">Test</th>
-            <th style="text-align:center;padding:6px 8px;border:1px solid var(--border)">Resultado</th>
-            <th style="text-align:left;padding:6px 8px;border:1px solid var(--border)">Interpretación</th>
-            <th style="text-align:left;padding:6px 8px;border:1px solid var(--border)">Referencia</th>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.08)">
+            <th style="text-align:left;padding:6px 10px;font-size:9px;letter-spacing:.1em;color:rgba(255,255,255,.35);font-weight:700;text-transform:uppercase">TEST</th>
+            <th style="text-align:center;padding:6px 10px;font-size:9px;letter-spacing:.1em;color:rgba(255,255,255,.35);font-weight:700;text-transform:uppercase">RESULTADO</th>
+            <th style="padding:6px 10px;font-size:9px;letter-spacing:.1em;color:rgba(255,255,255,.35);font-weight:700;text-transform:uppercase;width:30%">PERFIL</th>
+            <th style="padding:6px 10px;font-size:9px;letter-spacing:.1em;color:rgba(255,255,255,.35);font-weight:700;text-transform:uppercase">INTERPRETACIÓN</th>
+            <th style="text-align:left;padding:6px 10px;font-size:9px;letter-spacing:.1em;color:rgba(255,255,255,.35);font-weight:700;text-transform:uppercase">PUNTO DE CORTE</th>
           </tr>
         </thead>
         <tbody>
-          ${hallazgos.map(h => `
-            <tr>
-              <td style="padding:6px 8px;border:1px solid var(--border);font-weight:600">${h.test}</td>
-              <td style="padding:6px 8px;border:1px solid var(--border);text-align:center;font-family:var(--mono);font-weight:700">${h.val}</td>
-              <td style="padding:6px 8px;border:1px solid var(--border)">${_amSemEmoji(h.sem)} ${h.lbl}</td>
-              <td style="padding:6px 8px;border:1px solid var(--border);color:var(--text3);font-size:9px">${h.ref}</td>
-            </tr>`).join('')}
+          ${hallazgos.filter(h=>h.cat==='func').map((h,i) => metricRow(h,i)).join('')}
         </tbody>
       </table>
-
-      <!-- RECOMENDACIONES -->
-      <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--text)">2. Hallazgos clínicos relevantes</div>
-      <div style="border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:16px;font-size:11px">
-        ${recomHtml}
-      </div>
-
-      <!-- INTERVENCIÓN -->
-      <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--text)">3. Intervención sugerida (según evidencia)</div>
-      <div style="border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:16px;font-size:11px;line-height:1.7">
-        ${global.nivel === 'rojo' ? `
-          <div style="color:var(--red);font-weight:700;margin-bottom:6px">⚠️ PRIORIDAD ALTA:</div>
-          <ul style="margin:0 0 0 16px">
-            <li>Derivar a valoración geriátrica multidisciplinar</li>
-            <li>Evaluación de riesgo de caída con intervención domiciliaria</li>
-            <li>Revisión de polifarmacia y psicotrópicos</li>
-            ${rojos.some(h=>['AD-8','Mini-Cog','CDT (Reloj)'].includes(h.test)) ? '<li>Derivación neurológica / psicogeriatría para evaluación cognitiva formal</li>' : ''}
-            ${rojos.some(h=>['GDS-15'].includes(h.test)) ? '<li>Evaluación psiquiátrica / tratamiento antidepresivo según criterio médico</li>' : ''}
-            <li>Programa de ejercicio multicomponente supervisado (fuerza + equilibrio + aeróbico)</li>
-          </ul>` :
-          global.nivel === 'amarillo' ? `
-          <div style="color:var(--amber);font-weight:700;margin-bottom:6px">⚡ ACCIÓN PREVENTIVA:</div>
-          <ul style="margin:0 0 0 16px">
-            <li>Programa de ejercicio multicomponente (Otago / Fall Prevention Exercise)</li>
-            <li>Evaluación ambiental domiciliaria de riesgos de caída</li>
-            <li>Seguimiento en 3–6 meses con re-evaluación</li>
-            ${amarillos.some(h=>['AD-8','Mini-Cog'].includes(h.test)) ? '<li>Monitorización cognitiva periódica — Mini-Cog en próxima visita</li>' : ''}
-          </ul>` : `
-          <div style="color:var(--neon);font-weight:700;margin-bottom:6px">✅ MANTENIMIENTO:</div>
-          <ul style="margin:0 0 0 16px">
-            <li>Continuar con actividad física regular (≥150 min/semana intensidad moderada)</li>
-            <li>Re-evaluación anual o ante cualquier cambio funcional significativo</li>
-          </ul>`}
-      </div>
-
-      <!-- REFERENCIAS -->
-      <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--text)">4. Bibliografía</div>
-      <div style="font-size:9px;color:var(--text3);line-height:1.8;border-top:1px solid var(--border);padding-top:8px">
-        <div>• ${AM_REFS.barry2014}</div>
-        <div>• ${AM_REFS.cheong2021}</div>
-        <div>• ${AM_REFS.dengiz2025}</div>
-        <div>• ${AM_REFS.park2017}</div>
-        <div>• ${AM_REFS.usarel2019}</div>
-        <div>• ${AM_REFS.wanden2021}</div>
-      </div>
-
-      <div style="font-size:9px;color:var(--text3);text-align:center;margin-top:12px;padding-top:8px;border-top:1px solid var(--border)">
-        Informe generado por MoveMetrics v12 · Valores 100% basados en evidencia científica ·
-        Este informe no reemplaza el juicio clínico del profesional tratante.
+      <div style="margin-top:10px;padding:10px 12px;background:rgba(255,255,255,.02);border-radius:6px;font-size:10px;color:rgba(255,255,255,.45);line-height:1.8">
+        <strong style="color:rgba(255,255,255,.6)">Nota clínica:</strong>
+        TUG ≥13.5s indica riesgo de caída elevado (Barry 2014: Sn 0.31, Sp 0.74). Velocidad de marcha &lt;0.8 m/s predictor independiente de mortalidad (HR 2.66 — Cheong 2021). SPPB &lt;7 asociado a pérdida de funcionalidad (Wanden-Berghe 2021). Berg ≤20 riesgo caída inminente (Park 2017: Sn 0.73, Sp 0.90).
       </div>
     </div>
+
+    <!-- ══ 04. ANÁLISIS COGNITIVO ════════════════════════════════ -->
+    <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:18px 22px;margin-bottom:14px">
+      ${secHeader('04.','ANÁLISIS COGNITIVO')}
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.08)">
+            <th style="text-align:left;padding:6px 10px;font-size:9px;letter-spacing:.1em;color:rgba(255,255,255,.35);font-weight:700;text-transform:uppercase">ESCALA</th>
+            <th style="text-align:center;padding:6px 10px;font-size:9px;letter-spacing:.1em;color:rgba(255,255,255,.35);font-weight:700;text-transform:uppercase">PUNTUACIÓN</th>
+            <th style="padding:6px 10px;font-size:9px;letter-spacing:.1em;color:rgba(255,255,255,.35);font-weight:700;text-transform:uppercase;width:30%">PERFIL</th>
+            <th style="padding:6px 10px;font-size:9px;letter-spacing:.1em;color:rgba(255,255,255,.35);font-weight:700;text-transform:uppercase">RESULTADO</th>
+            <th style="text-align:left;padding:6px 10px;font-size:9px;letter-spacing:.1em;color:rgba(255,255,255,.35);font-weight:700;text-transform:uppercase">PUNTO DE CORTE</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${hallazgos.filter(h=>h.cat==='cog').map((h,i) => metricRow(h,i)).join('')}
+        </tbody>
+      </table>
+      <div style="margin-top:10px;padding:10px 12px;background:rgba(255,255,255,.02);border-radius:6px;font-size:10px;color:rgba(255,255,255,.45);line-height:1.8">
+        <strong style="color:rgba(255,255,255,.6)">Nota clínica:</strong>
+        AD-8 ≥2 puntos sugiere deterioro cognitivo (Usarel 2019: Sn 100% demencia / Sn 81.67% MCI). Mini-Cog ≤2 screena positivo (Borson 2000: Sn 0.76–0.99, Sp 0.89). CDT &lt;4 Shulman correlaciona con deterioro leve-moderado (media control=4.7 vs demencia=1.2).
+      </div>
+    </div>
+
+    <!-- ══ 05. ESTADO AFECTIVO ════════════════════════════════════ -->
+    <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:18px 22px;margin-bottom:14px">
+      ${secHeader('05.','ESTADO AFECTIVO — ESCALA DE DEPRESIÓN GERIÁTRICA (GDS-15)')}
+      ${(() => {
+        const h = hallazgos.find(x=>x.test==='GDS-15');
+        const c2 = col(h.sem);
+        return `<div style="display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center">
+          <div style="text-align:center;padding:16px 22px;background:${c2.bg};border:2px solid ${c2.border};border-radius:8px;min-width:120px">
+            <div style="font-size:28px;font-weight:900;color:${c2.text};font-family:var(--mono)">${h.val}</div>
+            <div style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:${c2.text};opacity:.7;margin-top:4px">GDS-15</div>
+          </div>
+          <div>
+            ${badge(h.sem, h.lbl)}
+            <div style="margin-top:10px;font-size:10px;color:rgba(255,255,255,.5);line-height:1.8">
+              <strong style="color:rgba(255,255,255,.65)">Escala:</strong> 0–5 Sin depresión &nbsp;·&nbsp; 6–9 Depresión leve &nbsp;·&nbsp; ≥10 Depresión establecida
+              <br>Punto de corte validado en población hispanohablante (Wanden-Berghe 2021).
+            </div>
+          </div>
+        </div>`;
+      })()}
+    </div>
+
+    <!-- ══ 06. PLAN DE INTERVENCIÓN ══════════════════════════════ -->
+    <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:18px 22px;margin-bottom:14px">
+      ${secHeader('06.','PLAN DE INTERVENCIÓN BASADO EN EVIDENCIA')}
+      <div style="display:grid;grid-template-columns:${phases.length === 3 ? '1fr 1fr 1fr' : '1fr 1fr'};gap:12px">
+        ${phases.map(p => `
+          <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-top:3px solid ${p.color};border-radius:6px;padding:14px">
+            <div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:${p.color};text-transform:uppercase;margin-bottom:3px">${p.num}</div>
+            <div style="font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.06em;line-height:1.3;margin-bottom:3px">${p.title}</div>
+            <div style="font-size:9px;font-weight:600;letter-spacing:.08em;color:rgba(255,255,255,.35);text-transform:uppercase;margin-bottom:10px">${p.sub}</div>
+            <ul style="margin:0;padding:0 0 0 14px;font-size:10px;color:rgba(255,255,255,.65);line-height:1.9">
+              ${p.items.map(i => `<li>${i}</li>`).join('')}
+            </ul>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- ══ 07. MARCADORES DE RE-EVALUACIÓN ══════════════════════ -->
+    <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:18px 22px;margin-bottom:14px">
+      ${secHeader('07.','CRITERIOS DE SEGUIMIENTO')}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        ${[
+          { icon:'⏱', text:'TUG: mejoría ≥3.5s respecto al basal (MCID Dengiz 2025)' },
+          { icon:'🚶', text:'Velocidad marcha: superar umbral ≥1.0 m/s (Cheong 2021)' },
+          { icon:'📊', text:'SPPB: puntuación ≥10 como objetivo funcional (Wanden-Berghe 2021)' },
+          { icon:'⚖', text:'Berg Balance: ≥41 pts — zona de bajo riesgo de caída (Park 2017)' },
+          { icon:'🧠', text:'AD-8: mantener ≤2 — repetir si síntomas nuevos o cambio conductual' },
+          { icon:'💬', text:'GDS-15: ≤5 — re-evaluar en 3 meses si puntaje 6–9' },
+        ].map(m => `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 10px;background:rgba(255,255,255,.02);border-radius:5px;border:1px solid rgba(255,255,255,.05)">
+          <span style="font-size:14px;margin-top:1px">${m.icon}</span>
+          <span style="font-size:10px;color:rgba(255,255,255,.6);line-height:1.6">${m.text}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- ══ 08. BIBLIOGRAFÍA ══════════════════════════════════════ -->
+    <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:18px 22px;margin-bottom:14px">
+      ${secHeader('08.','BIBLIOGRAFÍA CIENTÍFICA')}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        ${[AM_REFS.barry2014, AM_REFS.cheong2021, AM_REFS.dengiz2025, AM_REFS.park2017, AM_REFS.usarel2019, AM_REFS.wanden2021].map(r =>
+          `<div style="font-size:8.5px;color:rgba(255,255,255,.35);padding:6px 8px;background:rgba(255,255,255,.02);border-radius:4px;line-height:1.6;border-left:2px solid rgba(57,255,122,.25)">• ${r}</div>`
+        ).join('')}
+      </div>
+    </div>
+
+    <!-- ══ FOOTER ════════════════════════════════════════════════ -->
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid rgba(255,255,255,.08);font-size:9px;color:rgba(255,255,255,.25);letter-spacing:.06em">
+      <span>MOVEMETRICS · DEPARTAMENTO DE EVALUACIÓN CLÍNICA</span>
+      <span>Basado en evidencia científica · No reemplaza el juicio clínico</span>
+      <span>REPORTE GERIÁTRICO · v12.0</span>
+    </div>
+
   </div>`;
 }
 
