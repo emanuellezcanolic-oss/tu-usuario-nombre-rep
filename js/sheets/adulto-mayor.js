@@ -845,6 +845,375 @@ function renderAmSemaforo() {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// PRINT WINDOW — documento HTML A4 independiente (3 páginas)
+// ═══════════════════════════════════════════════════════════════
+function _amOpenPrintWindow() {
+  const d      = cur?.am || {};
+  const nombre = cur ? `${cur.nombre || ''} ${cur.apellido || ''}`.trim() : '—';
+  const fecha  = d.fecha || new Date().toISOString().split('T')[0];
+  const [yy, mm, dd] = fecha.split('-');
+  const fechaFmt = dd && mm && yy ? `${dd} / ${mm} / ${yy}` : fecha;
+
+  const ad8Total = amState.ad8.some(v=>v!==null) ? amState.ad8.reduce((s,v)=>s+(v||0),0) : null;
+  const mcTotal  = (amState.minicogReloj!==null && amState.minicogPalabras!==undefined)
+                   ? amState.minicogPalabras + (amState.minicogReloj||0) : null;
+  const gdsTotal = amState.gds.some(v=>v!==null) ? amState.gds.reduce((s,v)=>s+(v||0),0) : null;
+  const cdtV     = amState.cdtScore;
+
+  const hallazgos = [
+    { test:'TUG',            icon:'⏱', cat:'func', val: d.tug       ? `${d.tug} s`         : '—', rawVal: d.tug,       max:30,  sem: AM_TUG.semaforo(d.tug),    lbl: AM_TUG.semaforo_label(d.tug),    ref:'Barry 2014 · Cheong 2021',       cut:'<9 s ✓  ·  9–13.4 s ⚠  ·  ≥13.5 s ✗', inv:true  },
+    { test:'Vel. Marcha',    icon:'🚶', cat:'func', val: d.gaitSpeed ? `${d.gaitSpeed} m/s` : '—', rawVal: d.gaitSpeed, max:2,   sem: AM_GAIT.semaforo(d.gaitSpeed), lbl: AM_GAIT.semaforo_label(d.gaitSpeed), ref:'Cheong 2021',             cut:'≥1.0 ✓  ·  0.8–0.99 ⚠  ·  <0.8 ✗',    inv:false },
+    { test:'SPPB',           icon:'📊', cat:'func', val: d.sppbTotal!=null ? `${d.sppbTotal}/12` : '—', rawVal: d.sppbTotal, max:12, sem: AM_SPPB.semaforo(d.sppbTotal), lbl: AM_SPPB.semaforo_label(d.sppbTotal), ref:'Wanden-Berghe 2021', cut:'10–12 ✓  ·  7–9 ⚠  ·  <7 ✗',          inv:false },
+    { test:'Berg Balance',   icon:'⚖',  cat:'func', val: d.bergTotal!=null ? `${d.bergTotal}/56` : '—', rawVal: d.bergTotal, max:56, sem: AM_BERG.semaforo(d.bergTotal), lbl: AM_BERG.semaforo_label(d.bergTotal), ref:'Park 2017 · Dengiz 2025', cut:'≥41 ✓  ·  21–40 ⚠  ·  ≤20 ✗',        inv:false },
+    { test:'AD-8',           icon:'🧠', cat:'cog',  val: ad8Total!=null ? `${ad8Total}/8`  : '—', rawVal: ad8Total,    max:8,  sem: AM_AD8.semaforo(ad8Total),   lbl: AM_AD8.semaforo_label(ad8Total),   ref:'Usarel 2019',             cut:'≤2 ✓  ·  3–4 ⚠  ·  ≥5 ✗',             inv:true  },
+    { test:'Mini-Cog',       icon:'💡', cat:'cog',  val: mcTotal!=null  ? `${mcTotal}/5`   : '—', rawVal: mcTotal,     max:5,  sem: AM_MINICOG.semaforo(mcTotal), lbl: AM_MINICOG.semaforo_label(mcTotal), ref:'Borson 2000',            cut:'≥3 ✓  ·  ≤2 ✗',                        inv:false },
+    { test:'Test del Reloj', icon:'🕐', cat:'cog',  val: cdtV!=null     ? `${cdtV}/5`      : '—', rawVal: cdtV,        max:5,  sem: AM_CDT.semaforo(cdtV),       lbl: AM_CDT.semaforo_label(cdtV),       ref:'Shulman 2000',            cut:'≥4 ✓  ·  3 ⚠  ·  1–2 ✗',              inv:false },
+    { test:'GDS-15',         icon:'💬', cat:'afec', val: gdsTotal!=null ? `${gdsTotal}/15` : '—', rawVal: gdsTotal,    max:15, sem: AM_GDS15.semaforo(gdsTotal), lbl: AM_GDS15.semaforo_label(gdsTotal), ref:'Yesavage / Wanden-Berghe 2021', cut:'≤5 ✓  ·  6–9 ⚠  ·  ≥10 ✗',         inv:true  },
+  ];
+
+  const semObj = {}; hallazgos.forEach(h => { semObj[h.test] = h.sem; });
+  const global    = calcAmRiesgoGlobal(semObj);
+  const rojos     = hallazgos.filter(h => h.sem === 'rojo');
+  const amarillos = hallazgos.filter(h => h.sem === 'amarillo');
+  const totalEval = hallazgos.filter(h => h.rawVal != null).length;
+
+  // ── Color palette (explicit hex — sin CSS vars para que funcione en print) ──
+  const C = {
+    verde:    { bg:'#1a3a25', border:'#39ff7a', text:'#39ff7a' },
+    amarillo: { bg:'#332a00', border:'#ffbe00', text:'#ffbe00' },
+    rojo:     { bg:'#331515', border:'#ff4646', text:'#ff4646' },
+    none:     { bg:'#252827', border:'#4a4d4a', text:'#888888' },
+  };
+  const col = s => C[s] || C.none;
+
+  // Badge
+  const badge = (s, txt) => {
+    const c = col(s);
+    return `<span style="display:inline-block;padding:1.5pt 6pt;border:1pt solid ${c.border};border-radius:2pt;font-size:6.5pt;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:${c.bg};color:${c.text}">${txt}</span>`;
+  };
+
+  // Bar (print-safe absolute positioning)
+  const bar = (rawVal, max, sem, inv) => {
+    const c = col(sem);
+    if (rawVal == null) return `<div style="height:5pt;background:#2a2d2a;border-radius:2pt;width:100%"></div>`;
+    let pct = Math.min(94, Math.max(4, (parseFloat(rawVal)/max)*100));
+    if (inv) pct = 100 - pct;
+    return `<div style="height:5pt;background:#2a2d2a;border-radius:2pt;width:100%;position:relative"><div style="position:absolute;top:0;left:0;height:100%;width:${pct.toFixed(1)}%;background:${c.border};border-radius:2pt"></div></div>`;
+  };
+
+  // Section header
+  const sec = (n, t) => `<div style="display:flex;align-items:center;gap:9pt;padding:6pt 9pt;margin-bottom:9pt;background:#2a2e2b;border-left:3pt solid #39ff7a;border-radius:0 3pt 3pt 0"><span style="font-family:monospace;font-size:6pt;font-weight:700;color:#39ff7a;letter-spacing:.1em;opacity:.75">${n}</span><span style="font-size:7.5pt;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#ffffff">${t}</span></div>`;
+
+  // Table header row
+  const thRow = (...cols) => `<tr style="background:#2a2e2b">${cols.map(c => `<th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;text-align:left;border-bottom:1pt solid #3a3d3a">${c}</th>`).join('')}</tr>`;
+
+  // Metric table row
+  const metRow = (h, i) => {
+    const c = col(h.sem);
+    const bg = i%2===0 ? '#242725' : '#1f2220';
+    return `<tr style="background:${bg}"><td style="padding:5pt 6pt;font-size:7.5pt;font-weight:700;color:#ddd;white-space:nowrap">${h.icon} ${h.test}</td><td style="padding:5pt 6pt;text-align:center;font-family:monospace;font-size:10pt;font-weight:800;color:#fff;white-space:nowrap">${h.val}</td><td style="padding:5pt 6pt;width:26%">${bar(h.rawVal,h.max,h.sem,h.inv)}</td><td style="padding:5pt 6pt;white-space:nowrap">${badge(h.sem,h.lbl)}</td><td style="padding:5pt 6pt;font-size:5.5pt;color:#555;white-space:nowrap">${h.ref}</td><td style="padding:5pt 6pt;font-size:5.5pt;color:#555;white-space:nowrap">${h.cut}</td></tr>`;
+  };
+
+  // Phases
+  const gcol = col(global.nivel);
+  const phColors = { rojo:'#ff4646', amarillo:'#ffbe00', verde:'#39ff7a' };
+  const phC = phColors[global.nivel] || '#39ff7a';
+
+  const phases = global.nivel === 'rojo' ? [
+    { num:'FASE 1', title:'PRIORIDAD INMEDIATA', sub:'DERIVACIÓN Y SEGURIDAD', accent:phC,
+      items:['Derivación a valoración geriátrica multidisciplinar urgente',
+             'Evaluación domiciliaria de riesgos de caída y adaptaciones',
+             'Revisión de polifarmacia y medicación psicotrópica',
+             ...(rojos.some(h=>['AD-8','Mini-Cog','Test del Reloj'].includes(h.test)) ? ['Derivación neurológica / psicogeriatría: MoCA formal'] : []),
+             ...(rojos.some(h=>h.test==='GDS-15') ? ['Evaluación psiquiátrica: antidepresivo según criterio médico'] : [])] },
+    { num:'FASE 2', title:'PROGRAMA TERAPÉUTICO', sub:'EJERCICIO MULTICOMPONENTE SUPERVISADO', accent:'#888',
+      items:['Programa Otago: fuerza + equilibrio + marcha (≥3×/sem)',
+             'Entrenamiento de fuerza MMII: extensores rodilla y tobillo',
+             'Equilibrio: superficie inestable progresiva (tabla → espuma)',
+             'Aeróbico baja intensidad: caminata o bicicleta ergométrica'] },
+    { num:'FASE 3', title:'SEGUIMIENTO', sub:'RE-EVALUACIÓN A 3–6 MESES', accent:'#555',
+      items:['Re-evaluar batería completa: TUG · SPPB · Berg · AD-8 · GDS-15',
+             'Monitorización cognitiva periódica si dominio alterado',
+             'Ajuste del programa según respuesta funcional observada'] },
+  ] : global.nivel === 'amarillo' ? [
+    { num:'FASE 1', title:'INTERVENCIÓN PREVENTIVA', sub:'EJERCICIO MULTICOMPONENTE', accent:phC,
+      items:['Programa Otago o Fall Prevention Exercise (3×/sem)',
+             'Fuerza funcional: sentadilla, monopodal, escalones',
+             'Evaluación ambiental domiciliaria de riesgos de caída',
+             ...(amarillos.some(h=>['AD-8','Mini-Cog'].includes(h.test)) ? ['Monitorización cognitiva — Mini-Cog en 6 meses'] : [])] },
+    { num:'FASE 2', title:'SEGUIMIENTO ACTIVO', sub:'RE-EVALUACIÓN A 6 MESES', accent:'#888',
+      items:['Re-evaluar TUG, velocidad de marcha y dominio cognitivo',
+             'Ajuste progresivo de intensidad según FITT',
+             'Control de factores de riesgo asociados'] },
+  ] : [
+    { num:'FASE 1', title:'MANTENIMIENTO ACTIVO', sub:'ACTIVIDAD FÍSICA REGULAR', accent:phC,
+      items:['Actividad física ≥150 min/sem intensidad moderada (OMS 2020)',
+             'Fuerza ≥2×/sem + equilibrio como prevención primaria de caídas',
+             'Aporte proteico adecuado: ≥1.2 g/kg/día en adulto mayor'] },
+    { num:'FASE 2', title:'SEGUIMIENTO ANUAL', sub:'RE-EVALUACIÓN PREVENTIVA', accent:'#888',
+      items:['Re-evaluación anual completa o ante cambio funcional significativo',
+             'Control de riesgo cardiovascular, metabólico y sarcopenia',
+             'Revisión de visión, audición y calzado como factores de caída'] },
+  ];
+
+  const criterios = [
+    { icon:'⏱', text:'TUG: mejoría ≥3.5 s respecto basal (MCID — Dengiz 2025)' },
+    { icon:'🚶', text:'Velocidad marcha: superar umbral ≥1.0 m/s (Cheong 2021)' },
+    { icon:'📊', text:'SPPB: puntuación ≥10 como objetivo funcional (Wanden-Berghe 2021)' },
+    { icon:'⚖', text:'Berg Balance: ≥41 pts — zona bajo riesgo de caída (Park 2017)' },
+    { icon:'🧠', text:'AD-8: mantener ≤2 — repetir si síntomas nuevos o cambio conductual' },
+    { icon:'💬', text:'GDS-15: ≤5 — re-evaluar en 3 meses si puntaje 6–9' },
+  ];
+
+  const refs = [AM_REFS.barry2014, AM_REFS.cheong2021, AM_REFS.dengiz2025, AM_REFS.park2017, AM_REFS.usarel2019, AM_REFS.wanden2021];
+
+  // ════════════════════════════════════════════════════════════
+  // HTML DOCUMENT COMPLETO (3 páginas A4)
+  // ════════════════════════════════════════════════════════════
+  const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Valoración Geriátrica — ${nombre}</title>
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 13mm 16mm 15mm 16mm;
+  }
+  @page :first        { margin-top: 13mm; }
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  html {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+  body {
+    background: #1a1c1b;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+    font-size: 8pt;
+    line-height: 1.45;
+  }
+  .page { width:100%; }
+  .page-break { page-break-before: always; }
+  .section {
+    background: #1f2220;
+    border: 1pt solid #2e312e;
+    border-radius: 5pt;
+    padding: 11pt 13pt;
+    margin-bottom: 9pt;
+    page-break-inside: avoid;
+  }
+  table { width:100%; border-collapse:collapse; }
+  th, td { text-align:left; }
+  .col-2 { display:grid; grid-template-columns:1fr 1fr; gap:8pt; }
+  .col-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8pt; }
+  .col-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:6pt; }
+  .hdr { display:flex; justify-content:space-between; align-items:center; padding-bottom:8pt; margin-bottom:10pt; border-bottom:1pt solid #2e312e; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════ PÁGINA 1 ═══════════════════════════ -->
+<div class="page">
+
+  <!-- PORTADA -->
+  <div style="padding-bottom:10pt;margin-bottom:12pt;border-bottom:1.5pt solid #39ff7a">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div style="font-size:24pt;font-weight:900;letter-spacing:-.5pt;color:#ffffff;line-height:1">MOVEMETRICS</div>
+        <div style="font-size:6.5pt;letter-spacing:.26em;color:#39ff7a;font-weight:600;text-transform:uppercase;margin-top:3pt">REPORTE INFOGRÁFICO · VALORACIÓN GERIÁTRICA INTEGRAL · BASADO EN EVIDENCIA</div>
+      </div>
+      <div style="text-align:right;line-height:1.8">
+        <div style="font-size:5.5pt;letter-spacing:.12em;text-transform:uppercase;color:#555">FECHA DE EVALUACIÓN</div>
+        <div style="font-size:13pt;font-weight:800;color:#e8e8e8;font-family:monospace;letter-spacing:.04em">${fechaFmt}</div>
+        <div style="font-size:6.5pt;color:#666">Evaluador: <span style="color:#999">${cur?.kine || '—'}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 01 PERFIL -->
+  <div class="section">
+    <div style="display:flex;align-items:center;gap:9pt;padding:6pt 9pt;margin-bottom:10pt;background:#2a2e2b;border-left:3pt solid #39ff7a;border-radius:0 3pt 3pt 0"><span style="font-family:monospace;font-size:6pt;font-weight:700;color:#39ff7a;letter-spacing:.1em;opacity:.7">01.</span><span style="font-size:7.5pt;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#fff">PERFIL DEL PACIENTE</span></div>
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:14pt">
+      <div>
+        <div style="font-size:5.5pt;font-weight:700;letter-spacing:.12em;color:#39ff7a;text-transform:uppercase;margin-bottom:3pt;opacity:.75">PACIENTE</div>
+        <div style="font-size:15pt;font-weight:900;color:#ffffff;line-height:1.1">${nombre}</div>
+      </div>
+      <div>
+        <div style="font-size:5.5pt;font-weight:700;letter-spacing:.12em;color:#39ff7a;text-transform:uppercase;margin-bottom:3pt;opacity:.75">EDAD / SERVICIO</div>
+        <div style="font-size:13pt;font-weight:900;color:#fff;line-height:1">${cur?.edad || '?'}<span style="font-size:7.5pt;font-weight:400;color:#666"> A</span></div>
+        <div style="font-size:7pt;color:#888;margin-top:2pt">${cur?.deporte || '—'}</div>
+      </div>
+      <div>
+        <div style="font-size:5.5pt;font-weight:700;letter-spacing:.12em;color:#39ff7a;text-transform:uppercase;margin-bottom:3pt;opacity:.75">MORFOLOGÍA</div>
+        <div style="font-size:10pt;font-weight:800;color:#fff">${cur?.peso || '?'}<span style="font-size:7pt;font-weight:400;color:#666"> kg</span></div>
+        <div style="font-size:9pt;font-weight:700;color:#ccc;margin-top:1pt">${cur?.talla || '?'}<span style="font-size:7pt;font-weight:400;color:#666"> cm</span></div>
+      </div>
+      <div>
+        <div style="font-size:5.5pt;font-weight:700;letter-spacing:.12em;color:#39ff7a;text-transform:uppercase;margin-bottom:3pt;opacity:.75">EVALUACIÓN</div>
+        <div style="font-size:8pt;font-weight:700;color:#fff;font-family:monospace">${fechaFmt}</div>
+        <div style="font-size:6.5pt;color:#666;margin-top:3pt">${totalEval}/8 dominios evaluados</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 02 RIESGO GLOBAL -->
+  <div class="section">
+    <div style="display:flex;align-items:center;gap:9pt;padding:6pt 9pt;margin-bottom:10pt;background:#2a2e2b;border-left:3pt solid #39ff7a;border-radius:0 3pt 3pt 0"><span style="font-family:monospace;font-size:6pt;font-weight:700;color:#39ff7a;letter-spacing:.1em;opacity:.7">02.</span><span style="font-size:7.5pt;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#fff">RIESGO GLOBAL INTEGRADO</span></div>
+    <div style="display:grid;grid-template-columns:148pt 1fr;gap:14pt;align-items:center">
+      <div style="text-align:center;padding:14pt 12pt;background:${gcol.bg};border:2pt solid ${gcol.border};border-radius:6pt">
+        <div style="font-size:20pt;font-weight:900;color:${gcol.text};letter-spacing:-.5pt;line-height:1.1">${global.label}</div>
+        <div style="font-size:6.5pt;letter-spacing:.08em;text-transform:uppercase;color:${gcol.text};opacity:.75;margin-top:3pt">${global.descripcion}</div>
+        <div style="height:1pt;background:${gcol.border};opacity:.2;margin:7pt 0"></div>
+        <div style="display:flex;justify-content:space-around">
+          <div style="text-align:center"><div style="font-size:11pt;font-weight:900;color:#39ff7a">${hallazgos.filter(x=>x.sem==='verde').length}</div><div style="font-size:5pt;color:#555;letter-spacing:.06em;text-transform:uppercase">Normal</div></div>
+          <div style="text-align:center"><div style="font-size:11pt;font-weight:900;color:#ffbe00">${hallazgos.filter(x=>x.sem==='amarillo').length}</div><div style="font-size:5pt;color:#555;letter-spacing:.06em;text-transform:uppercase">Alerta</div></div>
+          <div style="text-align:center"><div style="font-size:11pt;font-weight:900;color:#ff4646">${hallazgos.filter(x=>x.sem==='rojo').length}</div><div style="font-size:5pt;color:#555;letter-spacing:.06em;text-transform:uppercase">Crítico</div></div>
+        </div>
+      </div>
+      <div class="col-4">
+        ${hallazgos.map(h => {
+          const c = col(h.sem);
+          return `<div style="text-align:center;padding:7pt 3pt;background:${c.bg};border:1pt solid ${c.border};border-radius:4pt"><div style="font-size:10pt;margin-bottom:2pt">${h.icon}</div><div style="font-size:5.5pt;font-weight:700;color:#ccc;letter-spacing:.03em;line-height:1.2">${h.test}</div><div style="font-family:monospace;font-size:8pt;font-weight:800;color:${c.text};margin-top:3pt">${h.val}</div></div>`;
+        }).join('')}
+      </div>
+    </div>
+  </div>
+
+  <!-- 03 FUNCIONAL -->
+  <div class="section">
+    <div style="display:flex;align-items:center;gap:9pt;padding:6pt 9pt;margin-bottom:9pt;background:#2a2e2b;border-left:3pt solid #39ff7a;border-radius:0 3pt 3pt 0"><span style="font-family:monospace;font-size:6pt;font-weight:700;color:#39ff7a;letter-spacing:.1em;opacity:.7">03.</span><span style="font-size:7.5pt;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#fff">ANÁLISIS FUNCIONAL Y BALANCE</span></div>
+    <table>
+      <thead><tr style="background:#2a2e2b"><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a">TEST</th><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a;text-align:center">RESULTADO</th><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a;width:24%">PERFIL VISUAL</th><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a">INTERPRETACIÓN</th><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a">REFERENCIA</th><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a">CORTE</th></tr></thead>
+      <tbody>${hallazgos.filter(h=>h.cat==='func').map(metRow).join('')}</tbody>
+    </table>
+    <div style="margin-top:8pt;padding:6pt 8pt;background:#1a1c1b;border-radius:3pt;border-left:2pt solid #2a5c3a"><span style="font-size:6.5pt;font-weight:700;color:#aaa">Nota clínica (evidencia cuantitativa): </span><span style="font-size:6.5pt;color:#666">TUG ≥13.5s = caída (Barry 2014 Sn 0.31, Sp 0.74). Vel. marcha &lt;0.8 m/s = mortalidad HR 2.66 (Cheong 2021 AUC 0.737). SPPB &lt;7 = fragilidad severa (Wanden-Berghe 2021). Berg ≤20 = caída inminente (Park 2017 Sn 0.73, Sp 0.90, AUC 0.97).</span></div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════ PÁGINA 2 ═══════════════════════════ -->
+<div class="page page-break">
+  <div class="hdr">
+    <div style="font-size:9pt;font-weight:900;color:#fff">MOVEMETRICS <span style="font-weight:400;color:#444">·</span> <span style="font-size:6.5pt;font-weight:600;letter-spacing:.1em;color:#39ff7a;text-transform:uppercase">VALORACIÓN GERIÁTRICA</span></div>
+    <div style="font-size:6.5pt;color:#555">${nombre} &nbsp;·&nbsp; ${cur?.edad || '?'} años &nbsp;·&nbsp; ${fechaFmt}</div>
+  </div>
+
+  <!-- 04 COGNITIVO -->
+  <div class="section">
+    <div style="display:flex;align-items:center;gap:9pt;padding:6pt 9pt;margin-bottom:9pt;background:#2a2e2b;border-left:3pt solid #39ff7a;border-radius:0 3pt 3pt 0"><span style="font-family:monospace;font-size:6pt;font-weight:700;color:#39ff7a;letter-spacing:.1em;opacity:.7">04.</span><span style="font-size:7.5pt;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#fff">ANÁLISIS COGNITIVO</span></div>
+    <table>
+      <thead><tr style="background:#2a2e2b"><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a">ESCALA</th><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a;text-align:center">PUNTUACIÓN</th><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a;width:24%">PERFIL VISUAL</th><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a">RESULTADO</th><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a">REFERENCIA</th><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a">CORTE</th></tr></thead>
+      <tbody>${hallazgos.filter(h=>h.cat==='cog').map(metRow).join('')}</tbody>
+    </table>
+    <div style="margin-top:8pt;padding:6pt 8pt;background:#1a1c1b;border-radius:3pt;border-left:2pt solid #2a5c3a"><span style="font-size:6.5pt;font-weight:700;color:#aaa">Nota clínica: </span><span style="font-size:6.5pt;color:#666">AD-8 ≥2 = deterioro cognitivo (Usarel 2019: Sn 100% demencia, Sn 81.67% MCI, Sp 93.59%). Mini-Cog ≤2 = screening positivo (Borson 2000: Sn 0.76–0.99, Sp 0.89). CDT Shulman: controles 4.7 ± 0.5 vs demencia 1.2 ± 0.7 (Usarel 2019).</span></div>
+  </div>
+
+  <!-- 05 AFECTIVO -->
+  <div class="section">
+    <div style="display:flex;align-items:center;gap:9pt;padding:6pt 9pt;margin-bottom:9pt;background:#2a2e2b;border-left:3pt solid #39ff7a;border-radius:0 3pt 3pt 0"><span style="font-family:monospace;font-size:6pt;font-weight:700;color:#39ff7a;letter-spacing:.1em;opacity:.7">05.</span><span style="font-size:7.5pt;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#fff">ESTADO AFECTIVO — ESCALA DE DEPRESIÓN GERIÁTRICA (GDS-15)</span></div>
+    ${(() => {
+      const h = hallazgos.find(x => x.test==='GDS-15');
+      const c = col(h.sem);
+      return `<div style="display:grid;grid-template-columns:100pt 1fr;gap:14pt;align-items:center">
+        <div style="text-align:center;padding:12pt 10pt;background:${c.bg};border:2pt solid ${c.border};border-radius:5pt">
+          <div style="font-size:26pt;font-weight:900;color:${c.text};font-family:monospace;letter-spacing:-.5pt">${h.val}</div>
+          <div style="font-size:6pt;letter-spacing:.08em;text-transform:uppercase;color:${c.text};opacity:.7;margin-top:3pt">GDS-15</div>
+          <div style="margin-top:6pt">${badge(h.sem, h.lbl)}</div>
+        </div>
+        <div>
+          <div style="margin-bottom:8pt">${bar(h.rawVal, h.max, h.sem, true)}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6pt;margin-bottom:8pt">
+            <div style="padding:5pt;background:#1a3a25;border:1pt solid #39ff7a;border-radius:3pt;text-align:center"><div style="font-size:7.5pt;font-weight:800;color:#39ff7a">0 – 5</div><div style="font-size:5.5pt;color:#888;margin-top:1pt">SIN DEPRESIÓN</div></div>
+            <div style="padding:5pt;background:#332a00;border:1pt solid #ffbe00;border-radius:3pt;text-align:center"><div style="font-size:7.5pt;font-weight:800;color:#ffbe00">6 – 9</div><div style="font-size:5.5pt;color:#888;margin-top:1pt">DEPRESIÓN LEVE</div></div>
+            <div style="padding:5pt;background:#331515;border:1pt solid #ff4646;border-radius:3pt;text-align:center"><div style="font-size:7.5pt;font-weight:800;color:#ff4646">≥ 10</div><div style="font-size:5.5pt;color:#888;margin-top:1pt">DEPRESIÓN ESTAB.</div></div>
+          </div>
+          <div style="font-size:6.5pt;color:#666;line-height:1.7">Punto de corte validado en población hispanohablante · Yesavage 1983 / Wanden-Berghe 2021. Sensibilidad 92% · Especificidad 81% para detección de depresión geriátrica.</div>
+        </div>
+      </div>`;
+    })()}
+  </div>
+
+  <!-- 06 PLAN -->
+  <div class="section">
+    <div style="display:flex;align-items:center;gap:9pt;padding:6pt 9pt;margin-bottom:9pt;background:#2a2e2b;border-left:3pt solid #39ff7a;border-radius:0 3pt 3pt 0"><span style="font-family:monospace;font-size:6pt;font-weight:700;color:#39ff7a;letter-spacing:.1em;opacity:.7">06.</span><span style="font-size:7.5pt;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#fff">PLAN DE INTERVENCIÓN BASADO EN EVIDENCIA</span></div>
+    <div class="${phases.length===3 ? 'col-3' : 'col-2'}">
+      ${phases.map(p => `<div style="background:#1a1c1b;border:1pt solid #2e312e;border-top:3pt solid ${p.accent};border-radius:3pt;padding:10pt"><div style="font-size:7pt;font-weight:800;letter-spacing:.12em;color:${p.accent};text-transform:uppercase;margin-bottom:2pt">${p.num}</div><div style="font-size:8pt;font-weight:800;color:#e0e0e0;text-transform:uppercase;letter-spacing:.05em;line-height:1.2;margin-bottom:2pt">${p.title}</div><div style="font-size:5.5pt;font-weight:600;letter-spacing:.08em;color:#555;text-transform:uppercase;margin-bottom:8pt">${p.sub}</div><ul style="padding-left:10pt;font-size:7pt;color:#aaa;line-height:1.9">${p.items.map(i => `<li>${i}</li>`).join('')}</ul></div>`).join('')}
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════ PÁGINA 3 ═══════════════════════════ -->
+<div class="page page-break">
+  <div class="hdr">
+    <div style="font-size:9pt;font-weight:900;color:#fff">MOVEMETRICS <span style="font-weight:400;color:#444">·</span> <span style="font-size:6.5pt;font-weight:600;letter-spacing:.1em;color:#39ff7a;text-transform:uppercase">VALORACIÓN GERIÁTRICA</span></div>
+    <div style="font-size:6.5pt;color:#555">${nombre} &nbsp;·&nbsp; ${cur?.edad || '?'} años &nbsp;·&nbsp; ${fechaFmt}</div>
+  </div>
+
+  <!-- 07 CRITERIOS DE SEGUIMIENTO -->
+  <div class="section">
+    <div style="display:flex;align-items:center;gap:9pt;padding:6pt 9pt;margin-bottom:9pt;background:#2a2e2b;border-left:3pt solid #39ff7a;border-radius:0 3pt 3pt 0"><span style="font-family:monospace;font-size:6pt;font-weight:700;color:#39ff7a;letter-spacing:.1em;opacity:.7">07.</span><span style="font-size:7.5pt;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#fff">CRITERIOS DE SEGUIMIENTO Y ALTA FUNCIONAL</span></div>
+    <div class="col-2">
+      ${criterios.map(cr => `<div style="display:flex;align-items:flex-start;gap:8pt;padding:7pt 8pt;background:#1a1c1b;border:1pt solid #2e312e;border-radius:3pt"><span style="font-size:10pt;flex-shrink:0">${cr.icon}</span><span style="font-size:7.5pt;color:#aaa;line-height:1.6">${cr.text}</span></div>`).join('')}
+    </div>
+  </div>
+
+  <!-- 08 JUICIO CLÍNICO INTEGRADOR -->
+  <div class="section">
+    <div style="display:flex;align-items:center;gap:9pt;padding:6pt 9pt;margin-bottom:9pt;background:#2a2e2b;border-left:3pt solid #39ff7a;border-radius:0 3pt 3pt 0"><span style="font-family:monospace;font-size:6pt;font-weight:700;color:#39ff7a;letter-spacing:.1em;opacity:.7">08.</span><span style="font-size:7.5pt;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#fff">JUICIO CLÍNICO INTEGRADOR</span></div>
+    <div style="padding:10pt 12pt;background:#1a1c1b;border:1pt solid ${gcol.border};border-radius:4pt;margin-bottom:9pt">
+      <div style="font-size:6.5pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:${gcol.text};margin-bottom:5pt">RESUMEN EJECUTIVO — ${global.label}</div>
+      <div style="font-size:7.5pt;color:#bbb;line-height:1.8">
+        ${nombre} presenta una valoración geriátrica con <strong style="color:${C.rojo.text}">${rojos.length} dominio${rojos.length!==1?'s':''} crítico${rojos.length!==1?'s':''}</strong>${rojos.length>0?` (${rojos.map(h=>h.test).join(' · ')})`:''}, <strong style="color:${C.amarillo.text}">${amarillos.length} alerta${amarillos.length!==1?'s':''}</strong>${amarillos.length>0?` (${amarillos.map(h=>h.test).join(' · ')})`:''} y <strong style="color:${C.verde.text}">${hallazgos.filter(h=>h.sem==='verde').length} en rango normal</strong> sobre ${totalEval} dominios evaluados.<br>
+        ${global.nivel === 'rojo' ? 'La multiplicidad de dominios críticos indica perfil de fragilidad avanzada. Se requiere intervención multidisciplinar urgente con prioridad en seguridad inmediata y prevención de caídas.' : global.nivel === 'amarillo' ? 'El perfil indica vulnerabilidad funcional con riesgo moderado. La intervención preventiva estructurada puede revertir la progresión hacia fragilidad establecida.' : 'El perfil funcional se encuentra dentro de parámetros de independencia. Mantener programa de actividad física regular y re-evaluar anualmente.'}
+      </div>
+    </div>
+    <div style="font-size:6.5pt;color:#666;font-style:italic;padding:5pt 8pt;background:#1a1c1b;border-radius:3pt">
+      ⚠ Este informe no reemplaza el juicio clínico del profesional tratante. Los valores de corte presentados corresponden a evidencia científica publicada en los estudios referenciados. La interpretación debe considerar el contexto clínico integral del paciente.
+    </div>
+  </div>
+
+  <!-- 09 BIBLIOGRAFÍA -->
+  <div class="section">
+    <div style="display:flex;align-items:center;gap:9pt;padding:6pt 9pt;margin-bottom:9pt;background:#2a2e2b;border-left:3pt solid #39ff7a;border-radius:0 3pt 3pt 0"><span style="font-family:monospace;font-size:6pt;font-weight:700;color:#39ff7a;letter-spacing:.1em;opacity:.7">09.</span><span style="font-size:7.5pt;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#fff">BIBLIOGRAFÍA CIENTÍFICA</span></div>
+    <div class="col-2">
+      ${refs.map(r => `<div style="padding:5pt 8pt;background:#1a1c1b;border-radius:3pt;border-left:2pt solid #2a5c3a;font-size:6.5pt;color:#666;line-height:1.6">${r}</div>`).join('')}
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div style="position:fixed;bottom:8mm;left:16mm;right:16mm;display:flex;justify-content:space-between;align-items:center;padding-top:6pt;border-top:1pt solid #2e312e">
+    <div>
+      <div style="font-size:7pt;font-weight:900;color:#ccc;letter-spacing:.02em">MOVEMETRICS</div>
+      <div style="font-size:5.5pt;letter-spacing:.06em;color:#555;text-transform:uppercase;margin-top:1pt">Departamento de Evaluación Clínica · Valoración Geriátrica Integral</div>
+    </div>
+    <div style="text-align:center;font-size:5.5pt;color:#555;line-height:1.7">
+      Basado en evidencia científica (6 publicaciones peer-reviewed) · MoveMetrics v12.0
+    </div>
+    <div style="text-align:right;font-size:5.5pt;color:#555">${fechaFmt}</div>
+  </div>
+
+</div>
+
+<script>
+  window.addEventListener('load', function() {
+    setTimeout(function() { window.print(); }, 600);
+  });
+<\/script>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank', 'width=960,height=780,scrollbars=yes,menubar=yes');
+  if (!win) { alert('Popup bloqueado. Permití popups para este sitio e intentá de nuevo.'); return; }
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+}
+window._amOpenPrintWindow = _amOpenPrintWindow;
+
+// ═══════════════════════════════════════════════════════════════
 // TAB 6: INFORME — Dashboard infográfico profesional
 // ═══════════════════════════════════════════════════════════════
 function renderAmInforme() {
@@ -973,7 +1342,7 @@ function renderAmInforme() {
 
     <!-- ══ TOOLBAR ══════════════════════════════════════════════ -->
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:14px">
-      <button class="btn btn-ghost btn-sm" onclick="window.print()" style="font-size:11px">🖨️ Imprimir / PDF</button>
+      <button class="btn btn-ghost btn-sm" onclick="window._amOpenPrintWindow()" style="font-size:11px">🖨️ Imprimir / PDF</button>
     </div>
 
     <!-- ══ PORTADA ═══════════════════════════════════════════════ -->
