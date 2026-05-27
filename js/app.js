@@ -184,7 +184,7 @@ function showPage(id) {
 }
 
 function showProfileTab(tab, btn) {
-  const tabs = ['dashboard','kinesio','fuerza','saltos','movilidad','velocidad','fms','fatiga','video','vmp','historial'];
+  const tabs = ['dashboard','kinesio','fuerza','saltos','movilidad','velocidad','fms','fatiga','video','vmp','historial','adultomayor'];
   tabs.forEach(t => document.getElementById('ptab-' + t)?.classList.toggle('hidden', t !== tab));
   document.querySelectorAll('#profile-tab-bar .ptab').forEach(b => b.classList.remove('active'));
   btn?.classList.add('active');
@@ -197,6 +197,13 @@ function showProfileTab(tab, btn) {
   if (tab === 'saltos')     { initPlanillas(); }
   if (tab === 'velocidad')  { initTrineo(); buildIFTRefTable(); }
   if (tab === 'fatiga')     { }
+  if (tab === 'adultomayor') {
+    if (typeof initAdultoMayorSheet === 'function') initAdultoMayorSheet();
+    if (typeof showAmTab === 'function') {
+      const firstBtn = document.querySelector('.am-tab-btn[data-tab="funcional"]');
+      showAmTab('funcional', firstBtn);
+    }
+  }
   if (tab === 'movilidad') {
     setTimeout(redrawGauges, 60);
     const amPanel = document.getElementById('adulto-mayor-tests');
