@@ -217,7 +217,7 @@ function buildAmFuncional() {
       <div style="margin-top:8px;font-size:9px;color:var(--text3);line-height:1.4">
         <strong>Puntos de corte:</strong>
         &lt;9 s = bajo riesgo (Cheong 2021) ·
-        9–13.4 s = riesgo de mortalidad HR 2.66 (Cheong 2021, Sn 0.66, Sp 0.70) ·
+        9–13.4 s = indicador de vitalidad funcional reducida HR 2.66 (Cheong 2021, Sn 0.66, Sp 0.70) ·
         ≥13.5 s = riesgo de caída (Barry 2014, Sn 0.31, Sp 0.74) ·
         Cada 1 s extra = +72% prob. de caída (Dengiz 2025)
       </div>
@@ -250,7 +250,7 @@ function buildAmFuncional() {
       </div>
       <div style="margin-top:8px;font-size:9px;color:var(--text3);line-height:1.4">
         ≥1.0 m/s = bajo riesgo ·
-        0.8–0.99 m/s = riesgo mortalidad HR 1.69 (Sn 0.378, Sp 0.822) ·
+        0.8–0.99 m/s = indicador de vitalidad funcional reducida HR 1.69 (Sn 0.378, Sp 0.822) ·
         &lt;0.8 m/s = riesgo muy elevado (Sn 0.189, Sp 0.933) — Cheong 2021
       </div>
     </div>
@@ -1088,7 +1088,7 @@ function _amOpenPrintWindow() {
       <thead><tr style="background:#2a2e2b"><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a">TEST</th><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a;text-align:center">RESULTADO</th><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a;width:24%">PERFIL VISUAL</th><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a">INTERPRETACIÓN</th><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a">REFERENCIA</th><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a">CORTE</th></tr></thead>
       <tbody>${hallazgos.filter(h=>h.cat==='func').map(metRow).join('')}</tbody>
     </table>
-    <div style="margin-top:8pt;padding:6pt 8pt;background:#1a1c1b;border-radius:3pt;border-left:2pt solid #2a5c3a"><span style="font-size:6.5pt;font-weight:700;color:#aaa">Nota clínica (evidencia cuantitativa): </span><span style="font-size:6.5pt;color:#666">TUG ≥13.5s = caída (Barry 2014 Sn 0.31, Sp 0.74). Vel. marcha &lt;0.8 m/s = mortalidad HR 2.66 (Cheong 2021 AUC 0.737). SPPB &lt;7 = fragilidad severa (Wanden-Berghe 2021). Berg ≤20 = caída inminente (Park 2017 Sn 0.73, Sp 0.90, AUC 0.97).</span></div>
+    <div style="margin-top:8pt;padding:6pt 8pt;background:#1a1c1b;border-radius:3pt;border-left:2pt solid #2a5c3a"><span style="font-size:6.5pt;font-weight:700;color:#aaa">Nota clínica (evidencia cuantitativa): </span><span style="font-size:6.5pt;color:#666">TUG ≥13.5s = riesgo caída (Barry 2014 Sn 0.31, Sp 0.74). Vel. marcha &lt;0.8 m/s = indicador pronóstico funcional HR 2.66 (Cheong 2021 AUC 0.737). SPPB &lt;7 = fragilidad severa (Wanden-Berghe 2021). Berg ≤20 = caída inminente (Park 2017 Sn 0.73, Sp 0.90, AUC 0.97).</span></div>
   </div>
 
 </div>
@@ -1427,7 +1427,7 @@ function renderAmInforme() {
       </table>
       <div style="margin-top:10px;padding:10px 12px;background:rgba(255,255,255,.02);border-radius:6px;font-size:10px;color:rgba(255,255,255,.45);line-height:1.8">
         <strong style="color:rgba(255,255,255,.6)">Nota clínica:</strong>
-        TUG ≥13.5s indica riesgo de caída elevado (Barry 2014: Sn 0.31, Sp 0.74). Velocidad de marcha &lt;0.8 m/s predictor independiente de mortalidad (HR 2.66 — Cheong 2021). SPPB &lt;7 asociado a pérdida de funcionalidad (Wanden-Berghe 2021). Berg ≤20 riesgo caída inminente (Park 2017: Sn 0.73, Sp 0.90).
+        TUG ≥13.5s indica riesgo de caída elevado (Barry 2014: Sn 0.31, Sp 0.74). Velocidad de marcha &lt;0.8 m/s indicador de vitalidad y pronóstico funcional (HR 2.66 — Cheong 2021). SPPB &lt;7 asociado a pérdida de funcionalidad (Wanden-Berghe 2021). Berg ≤20 riesgo caída inminente (Park 2017: Sn 0.73, Sp 0.90).
       </div>
     </div>
 

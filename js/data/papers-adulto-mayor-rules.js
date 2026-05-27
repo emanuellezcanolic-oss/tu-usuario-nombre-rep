@@ -31,7 +31,7 @@ const AM_TUG = {
     mortalidad: {
       valor: 9,
       op: '>=',
-      label: '≥9 s → riesgo de mortalidad elevado',
+      label: '≥9 s → indicador de vitalidad y pronóstico funcional reducido',
       sn: 0.656, sp: 0.696, auc: 0.737,
       hr: 2.66, hr_ci: [1.67, 4.23],
       ref: 'Cheong 2021 — Singapore Longitudinal Ageing Study (N=2906, seguimiento 9 años)'
@@ -60,8 +60,8 @@ const AM_TUG = {
     if (s === null || s === '' || isNaN(s)) return '—';
     const v = +s;
     if (v < 9)    return `${v}s — Normal / Bajo riesgo`;
-    if (v < 13.5) return `${v}s — Riesgo mortalidad (HR 2.66)`;
-    return `${v}s — Riesgo caída + mortalidad`;
+    if (v < 13.5) return `${v}s — Indicador de vitalidad (HR 2.66)`;
+    return `${v}s — Riesgo caída · vitalidad comprometida`;
   },
 };
 
@@ -75,7 +75,7 @@ const AM_GAIT = {
   unidad: 'm/s',
   cortes: [
     { valor: 0.8, op: '<', label: '<0.8 m/s → riesgo muy elevado', sn: 0.189, sp: 0.933, ref: 'Cheong 2021' },
-    { valor: 1.0, op: '<', label: '<1.0 m/s → riesgo mortalidad (HR 1.69)', sn: 0.378, sp: 0.822, hr: 1.69, hr_ci: [1.08, 2.63], ref: 'Cheong 2021' },
+    { valor: 1.0, op: '<', label: '<1.0 m/s → indicador de vitalidad funcional (HR 1.69)', sn: 0.378, sp: 0.822, hr: 1.69, hr_ci: [1.08, 2.63], ref: 'Cheong 2021' },
   ],
   semaforo: (v) => {
     if (v === null || v === '' || isNaN(v)) return 'nd';
@@ -89,7 +89,7 @@ const AM_GAIT = {
     const n = +v;
     if (n >= 1.0) return `${n} m/s — Normal`;
     if (n >= 0.8) return `${n} m/s — Riesgo moderado`;
-    return `${n} m/s — Riesgo alto mortalidad`;
+    return `${n} m/s — Vitalidad y pronóstico comprometido`;
   },
 };
 
