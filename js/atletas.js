@@ -118,6 +118,15 @@ function deleteAtleta(id, ev) {
   saveData(); renderAtletas();
 }
 
+function _updateAdultoMayorTabVisibility() {
+  const tabBtn = document.getElementById('tab-adultomayor');
+  if (!tabBtn) return;
+  const edad = cur ? (parseInt(cur.edad) || 0) : 0;
+  const esAM = cur && (edad >= 60 || cur.deporte === 'Adulto Mayor');
+  tabBtn.style.display = esAM ? '' : 'none';
+}
+window._updateAdultoMayorTabVisibility = _updateAdultoMayorTabVisibility;
+
 function selectAtleta(id) {
   cur = atletas.find(a => a.id === id);
   if (!cur) return;
@@ -127,6 +136,15 @@ function selectAtleta(id) {
   renderProfileHero();
   showPage('tests');
   showProfileTab('dashboard', document.querySelector('.ptab'));
+  _updateAdultoMayorTabVisibility();
+  if (typeof amState !== 'undefined') {
+    amState.ad8 = new Array(8).fill(null);
+    amState.gds = new Array(15).fill(null);
+    amState.bergItems = new Array(14).fill(null);
+    amState.minicogPalabras = 0;
+    amState.minicogReloj = null;
+    amState.cdtScore = null;
+  }
 }
 
 function renderAtletas() {
