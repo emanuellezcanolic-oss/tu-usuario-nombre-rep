@@ -967,6 +967,14 @@ function _amOpenPrintWindow() {
 
   const refs = [AM_REFS.barry2014, AM_REFS.cheong2021, AM_REFS.dengiz2025, AM_REFS.park2017, AM_REFS.usarel2019, AM_REFS.wanden2021];
 
+  // ── Flags: omitir sección si ningún test completado ─────────
+  const hasFuncData = hallazgos.some(h => h.cat === 'func' && h.rawVal != null);
+  const hasCogData  = hallazgos.some(h => h.cat === 'cog'  && h.rawVal != null);
+  const hasAfecData = hallazgos.find(x => x.test === 'GDS-15')?.rawVal != null;
+  const hideFunc = hasFuncData ? '' : 'display:none';
+  const hideCog  = hasCogData  ? '' : 'display:none';
+  const hideAfec = hasAfecData ? '' : 'display:none';
+
   // ════════════════════════════════════════════════════════════
   // HTML DOCUMENT COMPLETO (3 páginas A4)
   // ════════════════════════════════════════════════════════════
@@ -1082,7 +1090,7 @@ function _amOpenPrintWindow() {
   </div>
 
   <!-- 03 FUNCIONAL -->
-  <div class="section">
+  <div class="section" style="${hideFunc}">
     <div style="display:flex;align-items:center;gap:9pt;padding:6pt 9pt;margin-bottom:9pt;background:#2a2e2b;border-left:3pt solid #39ff7a;border-radius:0 3pt 3pt 0"><span style="font-family:monospace;font-size:6pt;font-weight:700;color:#39ff7a;letter-spacing:.1em;opacity:.7">03.</span><span style="font-size:7.5pt;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#fff">ANÁLISIS FUNCIONAL Y BALANCE</span></div>
     <table>
       <thead><tr style="background:#2a2e2b"><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a">TEST</th><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a;text-align:center">RESULTADO</th><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a;width:24%">PERFIL VISUAL</th><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a">INTERPRETACIÓN</th><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a">REFERENCIA</th><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a">CORTE</th></tr></thead>
@@ -1101,7 +1109,7 @@ function _amOpenPrintWindow() {
   </div>
 
   <!-- 04 COGNITIVO -->
-  <div class="section">
+  <div class="section" style="${hideCog}">
     <div style="display:flex;align-items:center;gap:9pt;padding:6pt 9pt;margin-bottom:9pt;background:#2a2e2b;border-left:3pt solid #39ff7a;border-radius:0 3pt 3pt 0"><span style="font-family:monospace;font-size:6pt;font-weight:700;color:#39ff7a;letter-spacing:.1em;opacity:.7">04.</span><span style="font-size:7.5pt;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#fff">ANÁLISIS COGNITIVO</span></div>
     <table>
       <thead><tr style="background:#2a2e2b"><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a">ESCALA</th><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a;text-align:center">PUNTUACIÓN</th><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a;width:24%">PERFIL VISUAL</th><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a">RESULTADO</th><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a">REFERENCIA</th><th style="padding:4.5pt 6pt;font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#777;text-transform:uppercase;border-bottom:1pt solid #3a3d3a">CORTE</th></tr></thead>
@@ -1111,7 +1119,7 @@ function _amOpenPrintWindow() {
   </div>
 
   <!-- 05 AFECTIVO -->
-  <div class="section">
+  <div class="section" style="${hideAfec}">
     <div style="display:flex;align-items:center;gap:9pt;padding:6pt 9pt;margin-bottom:9pt;background:#2a2e2b;border-left:3pt solid #39ff7a;border-radius:0 3pt 3pt 0"><span style="font-family:monospace;font-size:6pt;font-weight:700;color:#39ff7a;letter-spacing:.1em;opacity:.7">05.</span><span style="font-size:7.5pt;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#fff">ESTADO AFECTIVO — ESCALA DE DEPRESIÓN GERIÁTRICA (GDS-15)</span></div>
     ${(() => {
       const h = hallazgos.find(x => x.test==='GDS-15');
