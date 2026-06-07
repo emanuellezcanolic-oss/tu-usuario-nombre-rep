@@ -42,6 +42,10 @@ function initRodillaSheet() {
   buildRodillaCondral();
   buildHopRTP();
   buildVISAP();
+  buildKOOS();
+  buildLysholm();
+  buildTegner();
+  buildMarx();
 }
 
 function initTobilloSheet() {

@@ -4,16 +4,17 @@
 // TODAS las Sn/Sp provienen de papers indexados en PubMed.
 // ═══════════════════════════════════════════════════════════════
 
-// ── VISA-P items (Visentini 1998 / Logerstedt 2012) ──────────
+// ── VISA-P items (Visentini 1998 / Hernandez-Sanchez 2011 validación española) ──
+// Escala 0–100 · <80 = sintomático · MCID: 13 pts · EVA 0–10 (0=peor, 10=mejor)
 const VISAP_ITEMS = [
-  { q: 'Dolor al caminar (EVA 0–10; 0=sin dolor)' },
-  { q: 'Dolor al correr (EVA 0–10; 0=sin dolor)' },
-  { q: 'Dolor durante o después de 10 sentadillas monopodal (EVA 0–10)' },
-  { q: 'Dolor durante o después de 10 declinaciones monopodal (EVA 0–10)' },
-  { q: '¿Podés entrenar en forma completa? (EVA 0–10; 0=imposible)' },
-  { q: '¿Podés jugar / competir sin dolor? (EVA 0–10; 0=imposible)' },
-  { q: 'Si no tenés dolor al practicar deporte: ¿cuánto entrenaste esta semana? (EVA 0–10)' },
-  { q: 'Puntuación global de la última semana (EVA 0–10)' },
+  { q: '¿Cuánta rigidez o dolor tenés en el tendón rotuliano al despertar por la mañana? (0=ninguno, 10=muy severo)' },
+  { q: 'Durante o después del entrenamiento, ¿tenés dolor en el tendón rotuliano? (0=ninguno, 10=muy severo)' },
+  { q: 'Al bajar escaleras con paso normal, ¿cuánto dolor sentís? (0=ninguno, 10=muy severo)' },
+  { q: 'Al saltar o aterrizar de un salto, ¿cuánto dolor sentís? (0=ninguno, 10=muy severo)' },
+  { q: '¿Podés realizar sentadillas monopodales en plano inclinado sin dolor? (0=imposible, 10=sin problema)' },
+  { q: '¿Podés entrenar a tu nivel habitual? (0=imposible, 10=sin restricción)' },
+  { q: '¿Podés practicar tu deporte sin modificar el rendimiento? (0=imposible, 10=sin limitación)' },
+  { q: '¿Por cuánto tiempo podés practicar tu deporte sin dolor? (0=ninguno, 10=sin límite de tiempo)' },
 ];
 
 // ═══════════════════════════════════════════════════════════════
@@ -502,34 +503,42 @@ const RODILLA_DIAG_LOGIC = {
   menisco: {
     label: 'Desgarro Meniscal',
     evaluar(tests) {
-      const mcm   = tests['mcmurray'];
-      const thes  = tests['thessaly'];
-      const jlt   = tests['jlt'];
-      const hyper = tests['hyperext_forzada'];
-      const flex  = tests['flexion_max'];
-      const stein = tests['steinmann'];
-      const completados = [mcm, thes, jlt, hyper, flex, stein].filter(v => v !== undefined).length;
+      const mcm    = tests['mcmurray'];
+      const thes   = tests['thessaly'];
+      const jlt    = tests['jlt'];
+      const hyper  = tests['hyperext_forzada'];
+      const flex   = tests['flexion_max'];
+      const stein  = tests['steinmann'];
+      const catch_ = tests['catching_locking'];
+      const completados = [mcm, thes, jlt, hyper, flex, stein, catch_].filter(v => v !== undefined).length;
       if (completados === 0) return null;
 
-      // Composite JOSPT 2018: mcmurray + hyperext + flexmax + jlt
-      const compPos = [mcm, hyper, flex, jlt].filter(v => v === true).length;
+      // Composite JOSPT 2018 — 5 elementos exactos del paper:
+      // 1) antecedente locking/catching, 2) hiperext forzada, 3) flexión máx, 4) JLT, 5) McMurray
+      // >3 positivos → Sp 90.2% · >1 positivo → Sn 76.6%
+      const compPos = [catch_, hyper, flex, jlt, mcm].filter(v => v === true).length;
+      const compTotal = [catch_, hyper, flex, jlt, mcm].filter(v => v !== undefined).length;
 
-      if (compPos >= 3) {
+      if (compPos >= 4) {
         return { nivel: 'alto', pct: 88,
-          msg: `Composite Score: ${compPos}/4 positivos (Sp 90.2%, Logerstedt JOSPT 2018). Alta probabilidad desgarro meniscal. Indicar RMN.` };
+          msg: `Composite Score: ${compPos}/5 positivos (>3 pos → Sp 90.2%, Logerstedt JOSPT 2018). Alta probabilidad desgarro meniscal. Indicar RMN.` };
       }
-      const totalPos = [mcm,thes,jlt,hyper,flex,stein].filter(v=>v===true).length;
-      if (compPos >= 1 && totalPos >= 3) {
-        return { nivel: 'moderado', pct: 72,
-          msg: `${totalPos} tests positivos. Sospecha moderada–alta. Composite score ${compPos}/4.` };
+      if (compPos >= 2) {
+        const totalPos = [mcm,thes,jlt,hyper,flex,stein,catch_].filter(v=>v===true).length;
+        if (totalPos >= 3) {
+          return { nivel: 'moderado', pct: 72,
+            msg: `${totalPos} tests positivos. Sospecha moderada–alta. Composite score ${compPos}/5 (>1 pos → Sn 76.6%).` };
+        }
+        return { nivel: 'moderado', pct: 55,
+          msg: `Composite score ${compPos}/5 (>1 positivo → Sn 76.6%). Sospecha moderada. Completar McMurray, Thessaly, JLT, hiperextensión, flexión máxima, antecedente locking.` };
       }
-      if (compPos >= 1) {
-        return { nivel: 'moderado', pct: 50,
-          msg: `Composite score ${compPos}/4. Sospecha moderada. Completar: McMurray, Thessaly, JLT, hiperextensión, flexión máxima.` };
+      if (compPos === 1) {
+        return { nivel: 'moderado', pct: 40,
+          msg: `Composite score ${compPos}/5. Sospecha baja-moderada. Ampliar evaluación y correlacionar con imagen.` };
       }
-      if ([mcm,thes,jlt,hyper,flex].filter(v=>v===false).length >= 3) {
-        return { nivel: 'bajo', pct: 12,
-          msg: 'Múltiples tests negativos. Sospecha de desgarro meniscal baja.' };
+      if ([mcm,thes,jlt,hyper,flex,catch_].filter(v=>v===false).length >= 4) {
+        return { nivel: 'bajo', pct: 10,
+          msg: 'Múltiples tests negativos incluyendo composite score. Sospecha de desgarro meniscal baja.' };
       }
       return null;
     },
@@ -576,6 +585,155 @@ const RODILLA_DIAG_LOGIC = {
 };
 
 // ═══════════════════════════════════════════════════════════════
+// LYSHOLM KNEE SCALE (Lysholm 1982 / Tegner 1985)
+// 7 ítems — sin "swelling" (removido per JOSPT 2018 Rasch analysis)
+// Máx 90 puntos → normalizar ×100/90 → 0–100
+// ≥95: excelente · 84–94: bueno · 65–83: regular · <65: malo
+// MCID: 10 pts · Logerstedt JOSPT 2018 Grado B
+// ═══════════════════════════════════════════════════════════════
+const LYSHOLM_ITEMS = [
+  {
+    id: 'cojera',
+    label: 'Cojera',
+    max: 5,
+    opciones: [
+      { val: 5, txt: 'Ninguna' },
+      { val: 3, txt: 'Leve / periódica' },
+      { val: 0, txt: 'Severa / constante' },
+    ],
+  },
+  {
+    id: 'apoyo',
+    label: 'Apoyo (bastón/muleta)',
+    max: 5,
+    opciones: [
+      { val: 5, txt: 'Sin apoyo' },
+      { val: 3, txt: 'Bastón o muleta necesaria' },
+      { val: 0, txt: 'Sin soporte de peso imposible' },
+    ],
+  },
+  {
+    id: 'bloqueo',
+    label: 'Bloqueo articular',
+    max: 15,
+    opciones: [
+      { val: 15, txt: 'Sin bloqueo ni sensación de chasquido' },
+      { val: 10, txt: 'Sensación de chasquido sin bloqueo' },
+      { val:  6, txt: 'Bloqueo ocasional' },
+      { val:  2, txt: 'Bloqueo frecuente' },
+      { val:  0, txt: 'Bloqueo articular al examen' },
+    ],
+  },
+  {
+    id: 'inestabilidad',
+    label: 'Inestabilidad ("giving way")',
+    max: 25,
+    opciones: [
+      { val: 25, txt: 'Nunca cede' },
+      { val: 20, txt: 'Raramente en deportes intensos' },
+      { val: 15, txt: 'Frecuentemente en deportes intensos' },
+      { val: 10, txt: 'Ocasionalmente en actividades diarias' },
+      { val:  5, txt: 'Frecuentemente en actividades diarias' },
+      { val:  0, txt: 'Con cada paso' },
+    ],
+  },
+  {
+    id: 'dolor',
+    label: 'Dolor',
+    max: 25,
+    opciones: [
+      { val: 25, txt: 'Sin dolor' },
+      { val: 20, txt: 'Leve inconstante en ejercicio intenso' },
+      { val: 15, txt: 'Marcado en ejercicio intenso' },
+      { val: 10, txt: 'Marcado al caminar >2 km' },
+      { val:  5, txt: 'Marcado al caminar <2 km' },
+      { val:  0, txt: 'Constante' },
+    ],
+  },
+  {
+    id: 'escaleras',
+    label: 'Subir escaleras',
+    max: 10,
+    opciones: [
+      { val: 10, txt: 'Sin problemas' },
+      { val:  6, txt: 'Ligeramente limitado' },
+      { val:  2, txt: 'Un escalón a la vez' },
+      { val:  0, txt: 'Imposible' },
+    ],
+  },
+  {
+    id: 'cuclillas',
+    label: 'Cuclillas',
+    max: 5,
+    opciones: [
+      { val: 5, txt: 'Sin problemas' },
+      { val: 4, txt: 'Ligeramente limitado' },
+      { val: 2, txt: 'No más de 90°' },
+      { val: 0, txt: 'Imposible' },
+    ],
+  },
+];
+const LYSHOLM_MAX = LYSHOLM_ITEMS.reduce((s, i) => s + i.max, 0); // 90
+
+// ═══════════════════════════════════════════════════════════════
+// TEGNER ACTIVITY LEVEL SCALE
+// Tegner Y, Lysholm J. AJSM 1985 / Actividad 0–10
+// Logerstedt 2018 JOSPT CPG Grado C
+// ═══════════════════════════════════════════════════════════════
+const TEGNER_NIVELES = [
+  { val: 0, txt: 'Incapacidad laboral o pensión por rodilla' },
+  { val: 1, txt: 'Trabajo sedentario · Caminar en piso plano' },
+  { val: 2, txt: 'Trabajo liviano (enfermería) · Caminar en terreno irregular, no escaleras ni colinas' },
+  { val: 3, txt: 'Trabajo liviano · Caminata en bosque · Natación' },
+  { val: 4, txt: 'Trabajo moderado-pesado · Bicicleta · Esquí de fondo · Trote en piso plano ≥2×/semana' },
+  { val: 5, txt: 'Trabajo pesado (construcción, forestación) · Bicicleta competitiva · Trote en terreno irregular ≥2×/semana' },
+  { val: 6, txt: 'Deportes recreativos: tenis, handball, básquet, ski alpino · Trote ≥5×/semana' },
+  { val: 7, txt: 'Deporte competitivo: tenis, atletismo, motocross, handball, básquet · Trote ≥5×/semana en piso plano' },
+  { val: 8, txt: 'Deportes competitivos: raqueta, atletismo, hockey sobre hielo, lucha, gimnasia, básquet' },
+  { val: 9, txt: 'Fútbol (divisiones inferiores), hockey, lucha, gimnasia, básquet competitivo' },
+  { val:10, txt: 'Fútbol a nivel nacional/internacional · Raqueta a nivel internacional' },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// MARX ACTIVITY RATING SCALE (Marx RG et al. AJSM 2001)
+// 4 ítems · frecuencia último año · 0=nunca … 4=diario · Total 0–16
+// ≥14 = alta demanda · ≥8 = actividad moderada · <8 = baja demanda
+// Logerstedt 2018 JOSPT CPG Grado C
+// ═══════════════════════════════════════════════════════════════
+const MARX_ITEMS = [
+  { id: 'correr',   label: 'Correr en línea recta a máxima velocidad' },
+  { id: 'cortar',  label: 'Cambiar de dirección rápidamente (cutting)' },
+  { id: 'decelerar', label: 'Desacelerar bruscamente para detenerse' },
+  { id: 'pivotar',  label: 'Pivotar sobre la rodilla afectada' },
+];
+const MARX_FREC = [
+  { val: 0, txt: 'Nunca' },
+  { val: 1, txt: 'Menos de 1 vez/mes' },
+  { val: 2, txt: 'Mensualmente' },
+  { val: 3, txt: 'Semanalmente' },
+  { val: 4, txt: 'Diariamente' },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// KOOS — Knee injury and Osteoarthritis Outcome Score
+// Roos EM et al. JOSPT 1998 · 5 subescalas · cada una 0–100
+// 0 = problemas extremos · 100 = sin problemas
+// MCID: 8–15 pts por subescala · Logerstedt 2018 JOSPT CPG Grado B
+// ═══════════════════════════════════════════════════════════════
+const KOOS_SUBSCALAS = [
+  { id: 'dolor',   label: 'Dolor', items: 9, mcid: 14,
+    desc: '9 ítems sobre frecuencia de dolor en distintas actividades. 0=extremo, 100=sin dolor.' },
+  { id: 'sintomas', label: 'Síntomas', items: 7, mcid: 12,
+    desc: '7 ítems: rigidez, inflamación, crepitación, bloqueo, rango de movimiento.' },
+  { id: 'adl',     label: 'Actividades diarias (AVD)', items: 17, mcid: 10,
+    desc: '17 ítems: bajar escaleras, pararse de una silla, ponerse de cuclillas, etc.' },
+  { id: 'sport',   label: 'Deporte / Recreación', items: 5, mcid: 12,
+    desc: '5 ítems: agacharse, correr, saltar, girar, arrodillarse.' },
+  { id: 'qol',     label: 'Calidad de vida (QoL)', items: 4, mcid: 8,
+    desc: '4 ítems: conciencia del problema, estilo de vida, confianza en rodilla, dificultades generales.' },
+];
+
+// ═══════════════════════════════════════════════════════════════
 // BIBLIOGRAFÍA
 // ═══════════════════════════════════════════════════════════════
 const RODILLA_REFS = {
@@ -589,4 +747,10 @@ const RODILLA_REFS = {
   stiell1995:      'Stiell IG, Greenberg GH, Wells GA, et al. Prospective validation of a decision rule for the use of radiography in acute knee injuries. JAMA. 1996;275(8):611-615.',
   hegedus2007:     'Hegedus EJ, Cook C, Hasselblad V, Goode A, McCrory DC. Physical examination tests for assessing a torn meniscus in the knee: a systematic review with meta-analysis. J Orthop Sports Phys Ther. 2007;37(9):541-550.',
   wilk2006:        'Wilk KE, Briem K, Reinold MM, Devine KM, Dugas J, Andrews JR. Rehabilitation of articular lesions in the athlete\'s knee. J Orthop Sports Phys Ther. 2006;36(10):815-827.',
+  lysholm1982:     'Lysholm J, Gillquist J. Evaluation of knee ligament surgery results with special emphasis on use of a scoring scale. Am J Sports Med. 1982;10(3):150-154.',
+  tegner1985:      'Tegner Y, Lysholm J. Rating systems in the evaluation of knee ligament injuries. Clin Orthop Relat Res. 1985;(198):43-49.',
+  marx2001:        'Marx RG, Stump TJ, Jones EC, Wickiewicz TL, Warren RF. Development and evaluation of an activity rating scale for disorders of the knee. Am J Sports Med. 2001;29(2):213-218.',
+  roos1998:        'Roos EM, Roos HP, Lohmander LS, Ekdahl C, Beynnon BD. Knee injury and Osteoarthritis Outcome Score (KOOS)—development of a self-administered outcome measure. J Orthop Sports Phys Ther. 1998;28(2):88-96.',
+  visentini1998:   'Visentini PJ, Khan KM, Cook JL, Kiss ZS, Harcourt PR, Wark JD. The VISA score: an index of severity of symptoms in patients with jumper\'s knee (patellar tendinosis). J Sci Med Sport. 1998;1(1):22-28.',
+  hernandez2011:   'Hernandez-Sanchez S, Hidalgo MD, Gomez A. Cross-cultural adaptation of VISA-P score for patellar tendinopathy in Spanish population. J Orthop Sports Phys Ther. 2011;41(8):581-591.',
 };

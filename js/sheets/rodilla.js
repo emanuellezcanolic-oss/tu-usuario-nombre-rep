@@ -98,13 +98,23 @@ function buildRodillaMenisco() {
   const c = document.getElementById('rodilla-menisco-fields');
   if (!c || c.innerHTML) return;
 
-  // Composite score info
+  // Composite score info — 5 elementos exactos JOSPT 2018
   const compositeInfo = `<div class="card mb-10" style="border-color:rgba(255,190,0,.3);background:rgba(255,190,0,.04)">
     <div class="card-body">
-      <div style="font-size:12px;font-weight:700;color:var(--amber);margin-bottom:4px">Composite Score Meniscal (JOSPT 2018)</div>
-      <div style="font-size:11px;color:var(--text2)">McMurray + Hiperextensión forzada + Flexión máxima + JLT (línea articular)</div>
-      <div style="font-size:11px;color:var(--text2);margin-top:4px">≥3 positivos → <strong style="color:var(--neon)">Sp 90.2%</strong> · ≥1 positivo → Sn 76.6% · Logerstedt 2018 JOSPT CPG</div>
-      <div id="rod-composite-score" style="font-family:var(--mono);font-size:20px;font-weight:800;color:var(--neon);margin-top:6px">0/4</div>
+      <div style="font-size:12px;font-weight:700;color:var(--amber);margin-bottom:4px">Composite Score Meniscal (Logerstedt, JOSPT 2018)</div>
+      <div style="font-size:11px;color:var(--text2)">5 elementos: antecedente locking/catching ⭐ + hiperextensión forzada ⭐ + flexión máxima ⭐ + JLT ⭐ + McMurray ⭐</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:4px">>3 positivos → <strong style="color:var(--neon)">Sp 90.2%</strong> · >1 positivo → Sn 76.6% · 0 positivos → Sn 23.4% / Sp 56.9%</div>
+      <div id="rod-composite-score" style="font-family:var(--mono);font-size:20px;font-weight:800;color:var(--neon);margin-top:6px">0/5</div>
+      <!-- Antecedente locking/catching — elemento 1 del composite -->
+      <div style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,190,0,.2)">
+        <div style="font-size:11px;font-weight:700;margin-bottom:6px">① Antecedente de locking / catching (historia clínica)</div>
+        <div style="font-size:10px;color:var(--text2);margin-bottom:6px;font-style:italic">¿El paciente refiere sensación de bloqueo articular o "catching" (traba momentánea) en la rodilla?</div>
+        <div style="display:flex;gap:6px">
+          <button class="ot-btn" onclick="toggleOT(this,'pos');_rodSetTest('men','catching_locking',true);_updateComposite()">+ SÍ</button>
+          <button class="ot-btn" onclick="toggleOT(this,'neg');_rodSetTest('men','catching_locking',false);_updateComposite()">– NO</button>
+        </div>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px">📚 Logerstedt DS et al. JOSPT 2018;48(2):A1-A50. Elemento 1 del Composite Score.</div>
+      </div>
     </div>
   </div>`;
 
@@ -152,13 +162,18 @@ function buildRodillaMenisco() {
 }
 
 function _updateComposite() {
-  const keys = ['mcmurray','hyperext_forzada','flexion_max','jlt'];
+  // Composite JOSPT 2018: 5 elementos exactos del paper
+  // 1) catching/locking, 2) hiperext forzada, 3) flexión máx, 4) JLT, 5) McMurray
+  const keys = ['catching_locking','hyperext_forzada','flexion_max','jlt','mcmurray'];
   const score = keys.filter(k => rodState.men[k] === true).length;
   const el = document.getElementById('rod-composite-score');
   if (!el) return;
-  const c = score >= 3 ? 'var(--neon)' : score >= 1 ? 'var(--amber)' : 'var(--text3)';
+  const c = score >= 4 ? 'var(--neon)' : score >= 2 ? 'var(--amber)' : 'var(--text3)';
   el.style.color = c;
-  el.textContent = `${score}/4 ${score >= 3 ? '— Sp 90.2%' : score >= 1 ? '— Sn 76.6%' : ''}`;
+  let label = '';
+  if (score >= 4) label = '— Sp 90.2%';
+  else if (score >= 2) label = '— Sn 76.6%';
+  el.textContent = `${score}/5 ${label}`;
 }
 
 // ── BUILDER: Condral ─────────────────────────────────────────
@@ -307,28 +322,221 @@ function calcCadencia() {
   el.innerHTML = `<span style="font-family:var(--mono);color:${c};font-size:14px;font-weight:700">${v} pasos/min</span> — ${v >= 170 ? '✓ Rango óptimo (170–180)' : `⚠️ ${delta} pasos/min por debajo del óptimo. Progresión: +5% = <strong>${plus5}</strong> · +10% = <strong>${plus10}</strong>`}`;
 }
 
-// ── VISA-P ────────────────────────────────────────────────────
-let visapVals = new Array(8).fill(null);
+// ── ROM RODILLA ───────────────────────────────────────────────
+// Essential Data Element per Logerstedt JOSPT 2018
+// Extensión: 0°=normal · positivo=déficit · negativo=hiperext
+// Flexión: normal 130–150°
+function calcRodROM() {
+  const extD = document.getElementById('rom-ext-d')?.value;
+  const extI = document.getElementById('rom-ext-i')?.value;
+  const flxD = document.getElementById('rom-flex-d')?.value;
+  const flxI = document.getElementById('rom-flex-i')?.value;
+  const el   = document.getElementById('rod-rom-result');
+  if (!el) return;
+
+  const msgs = [];
+
+  if (extD !== '' && extI !== '') {
+    const ed = +extD, ei = +extI;
+    const diff = Math.abs(ed - ei);
+    // Déficit de extensión: ≥5° vs contralateral → clínicamente relevante (Logerstedt 2018)
+    if (ed > 0) msgs.push(`<span style="color:var(--amber)">⚠️ Déficit extensión D: ${ed}° — Clínicamente relevante si ≥5°</span>`);
+    if (ei > 0) msgs.push(`<span style="color:var(--amber)">⚠️ Déficit extensión I: ${ei}° — Clínicamente relevante si ≥5°</span>`);
+    if (diff >= 5) msgs.push(`<span style="color:var(--red)">⚠️ Asimetría extensión: ${diff}° (D vs I)</span>`);
+    if (ed <= 0 && ei <= 0) msgs.push(`<span style="color:var(--neon)">✓ Extensión bilateral dentro de rango normal</span>`);
+  }
+
+  if (flxD !== '' && flxI !== '') {
+    const fd = +flxD, fi = +flxI;
+    const diffF = Math.abs(fd - fi);
+    const normalFlx = 130;
+    if (fd < normalFlx) msgs.push(`<span style="color:var(--amber)">⚠️ Flexión D: ${fd}° — Reducida (normal ≥130°)</span>`);
+    if (fi < normalFlx) msgs.push(`<span style="color:var(--amber)">⚠️ Flexión I: ${fi}° — Reducida (normal ≥130°)</span>`);
+    if (diffF >= 10) msgs.push(`<span style="color:var(--red)">⚠️ Asimetría flexión: ${diffF}° (D vs I)</span>`);
+    if (fd >= normalFlx && fi >= normalFlx && diffF < 10) msgs.push(`<span style="color:var(--neon)">✓ Flexión bilateral dentro de rango normal</span>`);
+  }
+
+  el.innerHTML = msgs.length
+    ? msgs.join('<br>')
+    : '<span style="color:var(--text3)">Completá los datos de ROM para ver el análisis bilateral</span>';
+}
+
+// ── VISA-P (Visentini 1998 / Hernandez-Sanchez 2011 validación española) ─────
+// 8 ítems × 0–10: suma max 80 → escalado ×1.25 = 0–100
+// 0=peor síntoma / 10=sin síntoma · <80 = sintomático · MCID: 13 pts
+let visapVals = new Array(8).fill(0);
 function buildVISAP() {
   const c = document.getElementById('visap-fields');
   if (!c || c.innerHTML) return;
-  visapVals = new Array(8).fill(null);
+  visapVals = new Array(8).fill(0);
   c.innerHTML = VISAP_ITEMS.map((item, i) => `
-    <div style="padding:8px 0;border-bottom:1px solid var(--border)">
-      <div style="font-size:12px;margin-bottom:6px">${i + 1}. ${item.q}</div>
-      <input type="range" class="eva-slider" min="0" max="10" value="0"
-        oninput="visapVals[${i}]=+this.value;this.nextElementSibling.textContent=this.value;calcVISAP()">
-      <div style="font-family:var(--mono);font-size:14px;text-align:center;color:var(--neon)">0</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:11px;font-weight:600;margin-bottom:5px;color:var(--text1)">${i + 1}. ${item.q}</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:10px;color:var(--red);min-width:30px">0</span>
+        <input type="range" class="eva-slider" min="0" max="10" value="0" style="flex:1"
+          oninput="visapVals[${i}]=+this.value;document.getElementById('vp-val-${i}').textContent=this.value;calcVISAP()">
+        <span style="font-size:10px;color:var(--neon);min-width:30px;text-align:right">10</span>
+        <div id="vp-val-${i}" style="font-family:var(--mono);font-size:16px;font-weight:800;color:var(--neon);min-width:24px;text-align:center">0</div>
+      </div>
     </div>
   `).join('');
 }
 
 function calcVISAP() {
-  const total = visapVals.reduce((a, b) => a + (b || 0), 0);
-  const el = document.getElementById('visap-total');
+  const raw   = visapVals.reduce((a, b) => a + (b || 0), 0); // 0-80
+  const total = Math.round(raw * 1.25); // escalado 0-100
+  const el    = document.getElementById('visap-total');
   if (el) {
     el.textContent = total;
     el.style.color = total >= 80 ? 'var(--neon)' : total >= 60 ? 'var(--amber)' : 'var(--red)';
+  }
+  const label = document.getElementById('visap-label');
+  if (label) {
+    label.textContent = total >= 80 ? 'Asintomático / Normal' :
+                        total >= 60 ? 'Síntomas moderados' : 'Síntomas severos';
+    label.style.color = total >= 80 ? 'var(--neon)' : total >= 60 ? 'var(--amber)' : 'var(--red)';
+  }
+}
+
+// ── LYSHOLM (Lysholm 1982 / Tegner 1985) ─────────────────────
+// 7 ítems (sin swelling per JOSPT 2018 Rasch) · Max 90 → ×100/90
+// ≥95: excelente · 84–94: bueno · 65–83: regular · <65: malo
+let lysholmVals = {};
+function buildLysholm() {
+  const c = document.getElementById('lysholm-fields');
+  if (!c || c.innerHTML) return;
+  lysholmVals = {};
+  c.innerHTML = LYSHOLM_ITEMS.map(item => `
+    <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:11px;font-weight:600;margin-bottom:5px">${item.label} <span style="font-size:9px;color:var(--text3)">(max ${item.max} pts)</span></div>
+      <select class="inp" style="font-size:11px" id="lys-${item.id}" onchange="lysholmVals['${item.id}']=+this.value;calcLysholm()">
+        <option value="">— Seleccionar —</option>
+        ${item.opciones.map(o => `<option value="${o.val}">${o.txt} (${o.val} pts)</option>`).join('')}
+      </select>
+    </div>
+  `).join('');
+}
+
+function calcLysholm() {
+  const vals = Object.values(lysholmVals);
+  if (vals.length < LYSHOLM_ITEMS.length) return;
+  const raw   = vals.reduce((a, b) => a + b, 0); // 0-90
+  const total = Math.round(raw / LYSHOLM_MAX * 100);
+  const el    = document.getElementById('lysholm-total');
+  if (!el) return;
+  el.textContent = total;
+  el.style.color = total >= 95 ? 'var(--neon)' : total >= 84 ? '#7cd' : total >= 65 ? 'var(--amber)' : 'var(--red)';
+  const label = document.getElementById('lysholm-label');
+  if (label) {
+    const txt = total >= 95 ? 'Excelente' : total >= 84 ? 'Bueno' : total >= 65 ? 'Regular' : 'Malo';
+    label.textContent = txt;
+    label.style.color = total >= 95 ? 'var(--neon)' : total >= 84 ? '#7cd' : total >= 65 ? 'var(--amber)' : 'var(--red)';
+  }
+}
+
+// ── TEGNER ACTIVITY LEVEL ─────────────────────────────────────
+function buildTegner() {
+  const c = document.getElementById('tegner-fields');
+  if (!c || c.innerHTML) return;
+  const opts = TEGNER_NIVELES.map(n => `<option value="${n.val}">${n.val} — ${n.txt}</option>`).join('');
+  c.innerHTML = `
+    <div style="padding:8px 0">
+      <div style="font-size:10px;color:var(--text3);margin-bottom:6px">📚 Tegner Y & Lysholm J. Clin Orthop 1985. JOSPT 2018 CPG Grado C.</div>
+      <select class="inp" style="font-size:11px" id="tegner-sel" onchange="calcTegner(this.value)">
+        <option value="">— Seleccionar nivel —</option>
+        ${opts}
+      </select>
+      <div id="tegner-result" style="margin-top:8px;font-size:12px;color:var(--text2)"></div>
+    </div>
+  `;
+  // También llenar el select de nivel pre-lesión
+  const pre = document.getElementById('tegner-pre');
+  if (pre && pre.options.length <= 1) {
+    TEGNER_NIVELES.forEach(n => {
+      const o = document.createElement('option');
+      o.value = n.val; o.textContent = `${n.val} — ${n.txt}`;
+      pre.appendChild(o);
+    });
+  }
+}
+
+function calcTegner(val) {
+  const el = document.getElementById('tegner-result');
+  if (!el) return;
+  const v = +val;
+  const c = v >= 8 ? 'var(--neon)' : v >= 5 ? 'var(--amber)' : 'var(--red)';
+  el.innerHTML = `Nivel Tegner: <strong style="font-family:var(--mono);font-size:16px;color:${c}">${v}</strong> ${v >= 8 ? '— Deporte competitivo' : v >= 5 ? '— Deporte recreativo / trabajo pesado' : '— Actividad limitada'}`;
+}
+
+// ── MARX ACTIVITY RATING SCALE (Marx RG et al. AJSM 2001) ────
+// 4 ítems · cada uno 0–4 · Total 0–16
+// ≥14 = alta demanda · ≥8 = moderado · <8 = baja demanda
+let marxVals = {};
+function buildMarx() {
+  const c = document.getElementById('marx-fields');
+  if (!c || c.innerHTML) return;
+  marxVals = {};
+  c.innerHTML = MARX_ITEMS.map(item => `
+    <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:11px;font-weight:600;margin-bottom:5px">${item.label}</div>
+      <select class="inp" style="font-size:11px" id="marx-${item.id}" onchange="marxVals['${item.id}']=+this.value;calcMarx()">
+        <option value="">— Seleccionar —</option>
+        ${MARX_FREC.map(f => `<option value="${f.val}">${f.txt} (${f.val})</option>`).join('')}
+      </select>
+    </div>
+  `).join('');
+}
+
+function calcMarx() {
+  const vals = Object.values(marxVals);
+  if (vals.length < MARX_ITEMS.length) return;
+  const total = vals.reduce((a, b) => a + b, 0);
+  const el    = document.getElementById('marx-total');
+  if (!el) return;
+  el.textContent = total;
+  el.style.color = total >= 14 ? 'var(--neon)' : total >= 8 ? 'var(--amber)' : 'var(--red)';
+  const label = document.getElementById('marx-label');
+  if (label) {
+    const txt = total >= 14 ? 'Alta demanda deportiva' : total >= 8 ? 'Actividad moderada' : 'Baja demanda';
+    label.textContent = txt;
+    label.style.color = total >= 14 ? 'var(--neon)' : total >= 8 ? 'var(--amber)' : 'var(--red)';
+  }
+}
+
+// ── KOOS — inputs de subescalas (0–100 por subescala) ─────────
+function buildKOOS() {
+  const c = document.getElementById('koos-fields');
+  if (!c || c.innerHTML) return;
+  c.innerHTML = KOOS_SUBSCALAS.map(s => `
+    <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:11px;font-weight:600;margin-bottom:3px">${s.label}</div>
+      <div style="font-size:10px;color:var(--text3);margin-bottom:5px">${s.desc} · MCID: ≥${s.mcid} pts</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input class="inp inp-mono" type="number" min="0" max="100" placeholder="0–100"
+          id="koos-${s.id}" style="width:80px"
+          oninput="calcKOOS('${s.id}',+this.value)">
+        <div id="koos-badge-${s.id}" style="font-size:12px;color:var(--text3)">—</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function calcKOOS(id, val) {
+  const el = document.getElementById('koos-badge-' + id);
+  if (!el || isNaN(val)) return;
+  const c   = val >= 75 ? 'var(--neon)' : val >= 50 ? 'var(--amber)' : 'var(--red)';
+  const txt = val >= 75 ? 'Buena función' : val >= 50 ? 'Disfunción moderada' : 'Disfunción severa';
+  el.innerHTML = `<span style="color:${c};font-weight:700;font-family:var(--mono)">${val}</span> — <span style="color:${c}">${txt}</span>`;
+  // Actualizar total visual si existe
+  const subs = KOOS_SUBSCALAS.map(s => {
+    const inp = document.getElementById('koos-' + s.id);
+    return inp && inp.value !== '' ? +inp.value : null;
+  }).filter(v => v !== null);
+  if (subs.length === KOOS_SUBSCALAS.length) {
+    const prom = Math.round(subs.reduce((a,b)=>a+b,0) / subs.length);
+    const tot = document.getElementById('koos-total');
+    if (tot) { tot.textContent = prom; tot.style.color = prom >= 75 ? 'var(--neon)' : prom >= 50 ? 'var(--amber)' : 'var(--red)'; }
   }
 }
 
@@ -428,8 +636,8 @@ function _rodillaPrintInforme() {
   const hasMen     = menResults.length > 0;
   const hasCond    = condResults.length > 0;
 
-  // Composite score menisco
-  const compKeys = ['mcmurray','hyperext_forzada','flexion_max','jlt'];
+  // Composite score menisco — 5 elementos JOSPT 2018 (Logerstedt)
+  const compKeys = ['catching_locking','mcmurray','hyperext_forzada','flexion_max','jlt'];
   const compScore = compKeys.filter(k => rodState.men[k] === true).length;
 
   const html = `<!DOCTYPE html>
@@ -539,7 +747,7 @@ ${hasSPF || hasMen ? `
   ${testTable(secHeader('05.', 'MENISCO'), menResults, hasMen)}
   ${hasMen ? `<div style="margin-top:-4pt;margin-bottom:9pt;padding:6pt 8pt;background:#1a1c1b;border-radius:3pt;border-left:2pt solid #2a5c3a">
     <span style="font-size:6.5pt;font-weight:700;color:#aaa">Composite Score JOSPT 2018: </span>
-    <span style="font-size:6.5pt;color:#666">McMurray + Hiperextensión forzada + Flexión máxima + JLT. ≥3 positivos → Sp 90.2% · ≥1 positivo → Sn 76.6%. Presente: <strong style="color:#ffbe00">${compScore}/4</strong>.</span>
+    <span style="font-size:6.5pt;color:#666">Catching/locking + McMurray + Hiperextensión forzada + Flexión máxima + JLT. ≥4 positivos → Sp 90.2% · ≥2 positivos → Sn 76.6%. Presente: <strong style="color:#ffbe00">${compScore}/5</strong>.</span>
   </div>` : ''}
 
 </div>` : ''}
