@@ -98,43 +98,65 @@ function buildRodillaMenisco() {
   const c = document.getElementById('rodilla-menisco-fields');
   if (!c || c.innerHTML) return;
 
-  // Composite score info — 5 elementos exactos JOSPT 2018
-  const compositeInfo = `<div class="card mb-10" style="border-color:rgba(255,190,0,.3);background:rgba(255,190,0,.04)">
+  // ── Composite Score Lowery 2006 (citado JOSPT 2018 CPG)
+  // 5 elementos exactos del paper (Lowery DJ et al. AJSM 2006):
+  //   1) Antecedente mecanismo meniscal → 'mecanismo_men'  (historia)
+  //   2) Dolor en línea articular (JLT) → 'jlt'           (test)
+  //   3) McMurray positivo              → 'mcmurray'       (test)
+  //   4) Derrame articular              → 'derrame'        (test)
+  //   5) Dolor con squat completo       → 'squat_dolor'    (test)
+  // ≥3/5 → Sn 0.92 · Sp 0.75 · LR+ 3.68 · LR- 0.11
+  const LOWERY_KEYS = ['mecanismo_men','jlt','mcmurray','derrame','squat_dolor'];
+  const LOWERY_LABELS = [
+    '① Antecedente de mecanismo meniscal (historia clínica)',
+    '② JLT — Dolor en línea articular',
+    '③ McMurray positivo',
+    '④ Derrame articular presente',
+    '⑤ Dolor con squat completo (flexión máxima)',
+  ];
+
+  const compositeInfo = `
+  <div class="card mb-10" style="border-color:rgba(255,190,0,.3);background:rgba(255,190,0,.04)">
     <div class="card-body">
-      <div style="font-size:12px;font-weight:700;color:var(--amber);margin-bottom:4px">Composite Score Meniscal (Logerstedt, JOSPT 2018)</div>
-      <div style="font-size:11px;color:var(--text2)">5 elementos: antecedente locking/catching ⭐ + hiperextensión forzada ⭐ + flexión máxima ⭐ + JLT ⭐ + McMurray ⭐</div>
-      <div style="font-size:11px;color:var(--text2);margin-top:4px">>3 positivos → <strong style="color:var(--neon)">Sp 90.2%</strong> · >1 positivo → Sn 76.6% · 0 positivos → Sn 23.4% / Sp 56.9%</div>
-      <div id="rod-composite-score" style="font-family:var(--mono);font-size:20px;font-weight:800;color:var(--neon);margin-top:6px">0/5</div>
-      <!-- Antecedente locking/catching — elemento 1 del composite -->
-      <div style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,190,0,.2)">
-        <div style="font-size:11px;font-weight:700;margin-bottom:6px">① Antecedente de locking / catching (historia clínica)</div>
-        <div style="font-size:10px;color:var(--text2);margin-bottom:6px;font-style:italic">¿El paciente refiere sensación de bloqueo articular o "catching" (traba momentánea) en la rodilla?</div>
-        <div style="display:flex;gap:6px">
-          <button class="ot-btn" onclick="toggleOT(this,'pos');_rodSetTest('men','catching_locking',true);_updateComposite()">+ SÍ</button>
-          <button class="ot-btn" onclick="toggleOT(this,'neg');_rodSetTest('men','catching_locking',false);_updateComposite()">– NO</button>
-        </div>
-        <div style="font-size:10px;color:var(--text3);margin-top:4px">📚 Logerstedt DS et al. JOSPT 2018;48(2):A1-A50. Elemento 1 del Composite Score.</div>
+      <div style="font-size:12px;font-weight:700;color:var(--amber);margin-bottom:4px">Composite Score Meniscal — Lowery 2006 / JOSPT 2018 CPG</div>
+      <div style="font-size:10px;color:var(--text2);margin-bottom:6px">Lowery DJ et al. Am J Sports Med 2006 — 5 elementos. ≥3/5 positivos → Sn <strong>0.92</strong> · Sp <strong>0.75</strong> · LR+ <strong>3.68</strong> · LR– <strong>0.11</strong> (útil para DESCARTE).</div>
+      <div id="rod-composite-score" style="font-family:var(--mono);font-size:20px;font-weight:800;color:var(--text3);margin-bottom:10px">0/5</div>
+      <div style="display:grid;grid-template-columns:1fr;gap:6px">
+        ${LOWERY_KEYS.map((k,i) => `
+        <div style="padding:6px 8px;background:rgba(255,255,255,.03);border-radius:6px;border:1px solid rgba(255,190,0,.15)">
+          <div style="font-size:10px;font-weight:700;color:var(--amber);margin-bottom:4px">${LOWERY_LABELS[i]}</div>
+          <div style="display:flex;gap:6px">
+            <button class="ot-btn" onclick="toggleOT(this,'pos');_rodSetTest('men','${k}',true);_updateComposite()">+ SÍ/POS</button>
+            <button class="ot-btn" onclick="toggleOT(this,'neg');_rodSetTest('men','${k}',false);_updateComposite()">– NO/NEG</button>
+          </div>
+        </div>`).join('')}
       </div>
     </div>
   </div>`;
 
-  c.innerHTML = compositeInfo + RODILLA_MENISCO_TESTS.map(t => {
+  // Tests adicionales (fuera del composite Lowery)
+  const COMPOSITE_IDS = new Set(LOWERY_KEYS);
+  const testsAdicionales = RODILLA_MENISCO_TESTS.filter(t => !COMPOSITE_IDS.has(t.id));
+  const testsComposite   = RODILLA_MENISCO_TESTS.filter(t =>  COMPOSITE_IDS.has(t.id));
+
+  function renderTest(t, isComp) {
     const snInfo = t.sn_med
-      ? `Sn med ${t.sn_med} · Sp med ${t.sp_med} · Sn lat ${t.sn_lat}`
-      : (t.sn ? `Sn ${t.sn} · Sp ${t.sp}` : 'Elemento composite score');
-    const isComposite = ['mcmurray','hyperext_forzada','flexion_max','jlt'].includes(t.id);
+      ? `Sn med ${t.sn_med} · Sp med ${t.sp_med}`
+      : (t.sn ? `Sn ${t.sn} · Sp ${t.sp}` : 'Sin Sn/Sp pooled');
+    const borderStyle = isComp ? ' style="border-color:rgba(255,190,0,.3)"' : '';
+    const isBilateral = ['mcmurray','apley','thessaly','ege'].includes(t.id);
     return `
-    <div class="card mb-8${isComposite ? '" style="border-color:rgba(255,190,0,.3)' : ''}">
+    <div class="card mb-8"${borderStyle}>
       <div class="card-header">
         <div>
-          <h3>${t.nombre}${isComposite ? ' ⭐' : ''}</h3>
-          <div style="font-size:10px;color:var(--text3);margin-top:2px">${isComposite ? 'Elemento composite score' : ''}</div>
+          <h3>${t.nombre}${isComp ? ' ⭐' : ''}</h3>
+          ${isComp ? '<div style="font-size:9px;color:var(--amber)">Elemento Composite Lowery</div>' : ''}
         </div>
         <span class="tag tag-y" style="font-size:9px;white-space:nowrap">${snInfo}</span>
       </div>
       <div class="card-body">
         <div style="font-size:10px;color:var(--text2);margin-bottom:8px;font-style:italic">${t.protocolo}</div>
-        ${t.id === 'mcmurray' || t.id === 'apley' || t.id === 'thessaly' ? `
+        ${isBilateral ? `
         <div class="grid-2" style="gap:8px;margin-bottom:6px">
           <div>
             <div class="il mb-4">Medial</div>
@@ -155,24 +177,34 @@ function buildRodillaMenisco() {
           <button class="ot-btn" onclick="toggleOT(this,'pos');_rodSetTest('men','${t.id}',true);_updateComposite()">+ POS</button>
           <button class="ot-btn" onclick="toggleOT(this,'neg');_rodSetTest('men','${t.id}',false);_updateComposite()">– NEG</button>
         </div>`}
-        <div style="font-size:10px;color:var(--text3)">📚 ${t.ref}${t.nota ? '<br>⚠️ ' + t.nota : ''}</div>
+        <div style="font-size:10px;color:var(--text3)">📚 ${t.ref}${t.nota ? '<br><span style="color:var(--amber)">⚠️ ' + t.nota + '</span>' : ''}</div>
       </div>
     </div>`;
-  }).join('');
+  }
+
+  // Los tests del composite que tienen su propio entry en RODILLA_MENISCO_TESTS
+  // los mostramos primero con border amber; el resto van debajo
+  const compositeInTests  = RODILLA_MENISCO_TESTS.filter(t => COMPOSITE_IDS.has(t.id));
+  const adicionales       = RODILLA_MENISCO_TESTS.filter(t => !COMPOSITE_IDS.has(t.id));
+
+  c.innerHTML = compositeInfo
+    + compositeInTests.map(t => renderTest(t, true)).join('')
+    + `<div style="margin:12px 0 8px;font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.1em;text-transform:uppercase">Tests adicionales (fuera del composite)</div>`
+    + adicionales.map(t => renderTest(t, false)).join('');
 }
 
 function _updateComposite() {
-  // Composite JOSPT 2018: 5 elementos exactos del paper
-  // 1) catching/locking, 2) hiperext forzada, 3) flexión máx, 4) JLT, 5) McMurray
-  const keys = ['catching_locking','hyperext_forzada','flexion_max','jlt','mcmurray'];
+  // Composite Lowery 2006 — 5 elementos exactos
+  // 1) mecanismo_men  2) jlt  3) mcmurray  4) derrame  5) squat_dolor
+  const keys = ['mecanismo_men','jlt','mcmurray','derrame','squat_dolor'];
   const score = keys.filter(k => rodState.men[k] === true).length;
   const el = document.getElementById('rod-composite-score');
   if (!el) return;
-  const c = score >= 4 ? 'var(--neon)' : score >= 2 ? 'var(--amber)' : 'var(--text3)';
+  const c = score >= 3 ? 'var(--neon)' : score >= 2 ? 'var(--amber)' : 'var(--text3)';
   el.style.color = c;
   let label = '';
-  if (score >= 4) label = '— Sp 90.2%';
-  else if (score >= 2) label = '— Sn 76.6%';
+  if (score >= 3) label = '— ≥3 pos → Sp 0.75 · LR– 0.11';
+  else if (score >= 1) label = '— incompleto';
   el.textContent = `${score}/5 ${label}`;
 }
 
@@ -504,39 +536,134 @@ function calcMarx() {
   }
 }
 
-// ── KOOS — inputs de subescalas (0–100 por subescala) ─────────
+// ── KOOS — 42 preguntas completas ─────────────────────────────
+// Roos EM et al. JOSPT 1998 · Versión española: Izquierdo-Avino 2010
+// Scoring por subescala: (maxPts - suma) / maxPts × 100 → 0–100 (100=mejor)
+let koosVals = {};  // { sectionId: { itemId: val } }
+
 function buildKOOS() {
   const c = document.getElementById('koos-fields');
   if (!c || c.innerHTML) return;
-  c.innerHTML = KOOS_SUBSCALAS.map(s => `
-    <div style="padding:8px 0;border-bottom:1px solid var(--border)">
-      <div style="font-size:11px;font-weight:600;margin-bottom:3px">${s.label}</div>
-      <div style="font-size:10px;color:var(--text3);margin-bottom:5px">${s.desc} · MCID: ≥${s.mcid} pts</div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <input class="inp inp-mono" type="number" min="0" max="100" placeholder="0–100"
-          id="koos-${s.id}" style="width:80px"
-          oninput="calcKOOS('${s.id}',+this.value)">
-        <div id="koos-badge-${s.id}" style="font-size:12px;color:var(--text3)">—</div>
+  koosVals = {};
+  KOOS_SECTIONS.forEach(s => { koosVals[s.id] = {}; });
+
+  c.innerHTML = KOOS_SECTIONS.map(sec => `
+    <div style="margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:var(--neon);padding:6px 0;margin-bottom:4px;border-bottom:1px solid var(--border)">${sec.label}</div>
+      <div style="font-size:10px;color:var(--text3);margin-bottom:8px;font-style:italic">${sec.instruccion}</div>
+      ${sec.items.map((item, idx) => `
+        <div style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+          <div style="font-size:10px;font-weight:600;margin-bottom:4px;color:var(--text1)">${item.id}. ${item.q}</div>
+          <select class="inp" style="font-size:10px;padding:3px 6px"
+            id="koos-${sec.id}-${item.id}"
+            onchange="koosVals['${sec.id}']['${item.id}']=+this.value;calcKOOS()">
+            <option value="">— Seleccioná —</option>
+            ${item.opts.map(o => `<option value="${o.v}">${o.t}</option>`).join('')}
+          </select>
+        </div>
+      `).join('')}
+      <div style="display:flex;justify-content:flex-end;align-items:center;padding:6px 0;margin-top:4px">
+        <div style="font-size:10px;color:var(--text3);margin-right:8px">${sec.label.split(' ').pop()}</div>
+        <div id="koos-sub-${sec.id}" style="font-family:var(--mono);font-size:16px;font-weight:800;color:var(--text3)">—</div>
       </div>
     </div>
   `).join('');
 }
 
-function calcKOOS(id, val) {
-  const el = document.getElementById('koos-badge-' + id);
-  if (!el || isNaN(val)) return;
-  const c   = val >= 75 ? 'var(--neon)' : val >= 50 ? 'var(--amber)' : 'var(--red)';
-  const txt = val >= 75 ? 'Buena función' : val >= 50 ? 'Disfunción moderada' : 'Disfunción severa';
-  el.innerHTML = `<span style="color:${c};font-weight:700;font-family:var(--mono)">${val}</span> — <span style="color:${c}">${txt}</span>`;
-  // Actualizar total visual si existe
-  const subs = KOOS_SUBSCALAS.map(s => {
-    const inp = document.getElementById('koos-' + s.id);
-    return inp && inp.value !== '' ? +inp.value : null;
-  }).filter(v => v !== null);
-  if (subs.length === KOOS_SUBSCALAS.length) {
-    const prom = Math.round(subs.reduce((a,b)=>a+b,0) / subs.length);
-    const tot = document.getElementById('koos-total');
-    if (tot) { tot.textContent = prom; tot.style.color = prom >= 75 ? 'var(--neon)' : prom >= 50 ? 'var(--amber)' : 'var(--red)'; }
+function calcKOOS() {
+  let allComplete = true;
+  KOOS_SECTIONS.forEach(sec => {
+    const vals = sec.items.map(item => {
+      const v = koosVals[sec.id]?.[item.id];
+      return v !== undefined && v !== '' ? +v : null;
+    });
+    const completedCount = vals.filter(v => v !== null).length;
+    if (completedCount < sec.items.length) { allComplete = false; }
+    if (completedCount === 0) return;
+
+    const sum = vals.filter(v => v !== null).reduce((a,b) => a+b, 0);
+    const maxForCompleted = completedCount * 4;
+    const subScore = Math.round((maxForCompleted - sum) / maxForCompleted * 100);
+
+    const el = document.getElementById('koos-sub-' + sec.id);
+    if (el) {
+      const c = subScore >= 75 ? 'var(--neon)' : subScore >= 50 ? 'var(--amber)' : 'var(--red)';
+      el.textContent = subScore;
+      el.style.color = c;
+    }
+    // Actualizar badge de subescala si existe
+    const badge = document.getElementById('koos-badge-' + sec.id);
+    if (badge) {
+      const c = subScore >= 75 ? 'var(--neon)' : subScore >= 50 ? 'var(--amber)' : 'var(--red)';
+      const txt = subScore >= 75 ? 'Buena función' : subScore >= 50 ? 'Disfunción moderada' : 'Disfunción severa';
+      badge.innerHTML = `<span style="color:${c};font-weight:700;font-family:var(--mono)">${subScore}</span> <span style="font-size:9px;color:${c}">${txt}</span>`;
+    }
+  });
+
+  // Total promedio si todas completas
+  const tot = document.getElementById('koos-total');
+  if (tot && allComplete) {
+    const subScores = KOOS_SECTIONS.map(sec => {
+      const vals = sec.items.map(item => +koosVals[sec.id]?.[item.id] || 0);
+      const sum  = vals.reduce((a,b)=>a+b,0);
+      return Math.round((sec.maxPts - sum) / sec.maxPts * 100);
+    });
+    const prom = Math.round(subScores.reduce((a,b)=>a+b,0) / subScores.length);
+    tot.textContent = prom;
+    tot.style.color = prom >= 75 ? 'var(--neon)' : prom >= 50 ? 'var(--amber)' : 'var(--red)';
+  }
+}
+
+// ── WOMET — Western Ontario Meniscal Evaluation Tool ──────────
+// Kirkley A et al. Clin J Sport Med 2007;17(5):349-356
+// 16 ítems VAS 0–100 · 0=sin problema / 100=problema máximo
+// Score total: 100 - (suma/1600×100) → 0–100 (100=mejor)
+// MCID: 11.1 pts · JOSPT 2018 Grado A — específico para menisco
+let wometVals = new Array(16).fill(null);
+function buildWOMET() {
+  const c = document.getElementById('womet-fields');
+  if (!c || c.innerHTML) return;
+  wometVals = new Array(16).fill(null);
+  let idx = 0;
+  c.innerHTML = WOMET_SECTIONS.map(sec => `
+    <div style="margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--neon);padding:6px 0;margin-bottom:4px;border-bottom:1px solid var(--border)">${sec.label}</div>
+      <div style="font-size:10px;color:var(--text3);margin-bottom:8px;font-style:italic">${sec.instruccion}</div>
+      ${sec.items.map(item => {
+        const i = idx++;
+        return `
+        <div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+          <div style="font-size:10px;font-weight:600;margin-bottom:5px;color:var(--text1)">${item.id}. ${item.q}</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:9px;color:var(--neon);min-width:24px">0</span>
+            <input type="range" class="eva-slider" min="0" max="100" value="0" style="flex:1"
+              oninput="wometVals[${i}]=+this.value;document.getElementById('wv-${i}').textContent=this.value;calcWOMET()">
+            <span style="font-size:9px;color:var(--red);min-width:36px;text-align:right">100</span>
+            <div id="wv-${i}" style="font-family:var(--mono);font-size:14px;font-weight:800;color:var(--neon);min-width:28px;text-align:right">0</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3);margin-top:2px"><span>sin problema</span><span>problema máximo</span></div>
+        </div>`;
+      }).join('')}
+    </div>
+  `).join('');
+}
+
+function calcWOMET() {
+  const vals = wometVals.filter(v => v !== null && v >= 0);
+  if (vals.length === 0) return;
+  const sum   = vals.reduce((a,b) => a+b, 0);
+  const maxPts = vals.length * 100;
+  const total = Math.round(100 - (sum / maxPts * 100));
+  const el = document.getElementById('womet-total');
+  if (el) {
+    el.textContent = total;
+    el.style.color = total >= 75 ? 'var(--neon)' : total >= 50 ? 'var(--amber)' : 'var(--red)';
+  }
+  const label = document.getElementById('womet-label');
+  if (label) {
+    const txt = total >= 75 ? 'Función meniscal buena' : total >= 50 ? 'Disfunción moderada' : 'Disfunción severa';
+    label.textContent = `${vals.length}/16 completados${vals.length === 16 ? '' : ' (parcial)'}  · ${txt}`;
+    label.style.color = total >= 75 ? 'var(--neon)' : total >= 50 ? 'var(--amber)' : 'var(--red)';
   }
 }
 

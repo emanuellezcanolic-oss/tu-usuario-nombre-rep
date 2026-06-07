@@ -43,6 +43,7 @@ function initRodillaSheet() {
   buildHopRTP();
   buildVISAP();
   buildKOOS();
+  buildWOMET();
   buildLysholm();
   buildTegner();
   buildMarx();
