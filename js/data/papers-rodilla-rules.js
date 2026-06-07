@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// papers-rodilla-rules.js v2
+// papers-rodilla-rules.js v3
 // Base de evidencia: LCA · LCP · SPF · Menisco · Condral
 // Fuentes principales:
 //   Logerstedt DS et al. JOSPT 2018;48(2):A1-A50 (CPG Revision)
@@ -365,6 +365,202 @@ const RODILLA_SPF_TESTS = [
     interpreta(val) {
       if (val === true)  return 'Sp 0.80: positivo confirma zona dolorosa patelofemoral. LR+ 2.60.';
       if (val === false) return 'Sn 0.52: resultado negativo no descarta.';
+      return '—';
+    },
+  },
+
+  // ── Nuevos tests — Willy RW et al. JOSPT 2019 CPG ──────────────
+  {
+    id: 'dolor_arrodillarse',
+    nombre: 'Dolor al arrodillarse',
+    protocolo: 'Paciente se arrodilla sobre ambas rodillas sobre superficie firme. Positivo: reproducción de dolor anterior o peripatelar de rodilla. Criterio diagnóstico de inclusión (Grado B).',
+    sn: '0.84',
+    sp: '0.50',
+    lr_pos: '1.7',
+    lr_neg: '0.3',
+    ref: 'Willy RW et al. JOSPT 2019;49(9):CPG1-CPG95 — Nivel evidencia I. Criterio diagnóstico Grado B.',
+    criterio_diag: true,
+    interpreta(val) {
+      if (val === true)  return 'Sn 0.84: alta sensibilidad. Positivo confirma dolor PFJ por carga directa sobre rótula. LR+ 1.7. Criterio diagnóstico.';
+      if (val === false) return 'LR– 0.3: negativo reduce sospecha. Sn 0.84 → su ausencia tiene peso diagnóstico.';
+      return '—';
+    },
+  },
+  {
+    id: 'eccentric_step_down',
+    nombre: 'Eccentric Step-Down (Descenso excéntrico)',
+    protocolo: 'De pie sobre escalón (~20 cm). Descender el pie contralateral excéntricamente hasta casi tocar el suelo, sin perder control. Positivo: dolor anterior de rodilla reproducible durante el descenso.',
+    sn: '0.42',
+    sp: '0.82',
+    lr_pos: '2.3',
+    lr_neg: '0.7',
+    ref: 'Willy RW et al. JOSPT 2019 CPG — Nivel I. Sp 0.82 mayor que sentadilla bilateral.',
+    interpreta(val) {
+      if (val === true)  return 'Sp 0.82: positivo confirma dolor PFJ en carga excéntrica. LR+ 2.3. Útil para confirmar.';
+      if (val === false) return 'Sn 0.42: negativo no descarta SPF. Complementar con otros tests de mayor Sn.';
+      return '—';
+    },
+  },
+  {
+    id: 'waldron',
+    nombre: 'Waldron Test',
+    protocolo: 'Supino, rodilla extendida. El evaluador aplica compresión directa sobre la rótula mientras lleva la rodilla a flexión pasiva de 0° a 130°. Positivo: dolor y/o crepitación reproducible en algún arco del movimiento.',
+    sn: '0.45',
+    sp: '0.68',
+    lr_pos: '1.4',
+    lr_neg: '0.8',
+    ref: 'Willy RW et al. JOSPT 2019 CPG. Cook C et al. PM&R 2010.',
+    interpreta(val) {
+      if (val === true)  return 'LR+ 1.4: positivo contribuye moderadamente. Útil combinado con otros tests.';
+      if (val === false) return 'Sn/Sp moderadas. Resultado negativo no es determinante de forma aislada.';
+      return '—';
+    },
+  },
+  {
+    id: 'patella_alta',
+    nombre: 'Evaluación Rótula Alta (Patella Alta)',
+    protocolo: 'Inspección visual + medición: índice Insall-Salvati (TL/PL >1.2) o Caton-Deschamps por imagen. Clínico: rótula palpablemente elevada en extensión, "ojos de rana" a 30° flexión. Positivo: rótula anormalmente alta.',
+    sn: '0.49',
+    sp: '0.72',
+    lr_pos: '1.75',
+    lr_neg: '0.71',
+    ref: 'Willy RW et al. JOSPT 2019 CPG. Lankhorst NE et al. BJSM 2012 (Insall-Salvati MD 0.04 en SPF).',
+    interpreta(val) {
+      if (val === true)  return 'Positivo: rótula alta → menor área de contacto PFJ a baja flexión → mayor estrés cartilaginoso. LR+ 1.75.';
+      if (val === false) return 'No descarta SPF. Confirmar con hallazgos clínicos y funcionales.';
+      return '—';
+    },
+  },
+  {
+    id: 'lateral_pull',
+    nombre: 'Lateral Pull Test',
+    protocolo: 'Rodilla en extensión. Deslizar la rótula lateralmente observando la facilidad de desplazamiento. Positivo: desplazamiento lateral >75% del ancho patelar o signo telescopio (rótula "salta" lateralmente sin resistencia muscular).',
+    sn: '0.25',
+    sp: '1.00',
+    lr_pos: '∞',
+    lr_neg: '0.80',
+    ref: 'Willy RW et al. JOSPT 2019 CPG — Sp 1.00. ICC intratester k=0.39–0.47.',
+    nota: 'Sp 1.00: positivo CONFIRMA hipermobilidad patelar lateral. Sn 0.25: muy baja, falsos negativos frecuentes.',
+    interpreta(val) {
+      if (val === true)  return 'Sp 1.00: positivo CONFIRMA hipermobilidad lateral patelar / riesgo de inestabilidad. LR+ incalculable (muy alto).';
+      if (val === false) return 'Sn 0.25 muy baja: negativo NO descarta SPF. Solo el 25% de casos reales son detectados.';
+      return '—';
+    },
+  },
+  {
+    id: 'deslizamiento_patelar_ml',
+    nombre: 'Deslizamiento Patelar Medial/Lateral',
+    protocolo: 'Rodilla en extensión, cuádriceps relajado. Desplazar rótula pasivamente en sentido medial y lateral. Registrar: dolor, hipomobilidad (retináculo retraído) o hipermobilidad (laxitud). Normal: deslizamiento 2-3 cuadrantes en cada dirección.',
+    sn: '0.54',
+    sp: '0.69',
+    lr_pos: '1.8',
+    lr_neg: '0.7',
+    ref: 'Willy RW et al. JOSPT 2019 CPG — ICC intertester k=0.59. Nivel III.',
+    interpreta(val) {
+      if (val === true)  return 'LR+ 1.8: positivo apoya restricción/exceso de movilidad patelar. Orienta hacia terapia manual o taping.';
+      if (val === false) return 'Sn/Sp moderadas. Interpretar en contexto clínico completo.';
+      return '—';
+    },
+  },
+  {
+    id: 'vmo_coordination',
+    nombre: 'Test de Coordinación VMO',
+    protocolo: 'Evaluar activación relativa VMO vs VL durante extensión activa de rodilla (palpación bimanual o EMG). Positivo: activación retrasada o inhibición evidente del VMO respecto al VL, o fallo en contracción inicial del VMO.',
+    sn: '0.16',
+    sp: '0.93',
+    lr_pos: '2.26',
+    lr_neg: '0.90',
+    ref: 'Willy RW et al. JOSPT 2019 CPG — Nivel II. LR+ 2.26 (IC 1.9–2.9). Cowan SH et al. PTJ 2001.',
+    nota: 'Sn muy baja (0.16). Positivo confirma déficit VMO pero negativo NO descarta SPF (mayoría de casos SPF son negativos).',
+    interpreta(val) {
+      if (val === true)  return 'Sp 0.93 + LR+ 2.26: positivo confirma déficit de coordinación VMO. Indica ejercicio selectivo y biofeedback.';
+      if (val === false) return 'Sn 0.16: negativo no descarta SPF. La mayoría de pacientes SPF no son detectados con este test.';
+      return '—';
+    },
+  },
+
+  // ── Evaluaciones funcionales de clasificación (subgrupos SPF) ──
+  {
+    id: 'lateral_step_down',
+    nombre: 'Lateral Step-Down (Calidad de movimiento)',
+    protocolo: 'Pie en escalón (~20 cm). Descender lentamente el pie contralateral sin tocarlo. Observar 6 ítems: 1)inclinación de tronco, 2)manos en cadera, 3)valgo de rodilla, 4)rótula medial al pie, 5)ondulación de rodilla, 6)golpe de pie. 0-2=Bueno; 3-4=Moderado; 5-6=Pobre (déficit de coordinación).',
+    tipo: 'assessment',
+    ref: 'Willy RW et al. JOSPT 2019 CPG — ICC intratester 0.67–0.81. Grado C: clasificación subgrupos SPF. Lankhorst BJSM 2012. Powers BJSM 2017.',
+    interpreta(val) {
+      if (val === true)  return 'Déficit de coordinación (≥3/6 criterios): indica déficit de control motor de cadera/rodilla. Valgo dinámico presente. Priorizar fortalecimiento de cadera.';
+      if (val === false) return 'Calidad de movimiento aceptable (≤2/6 criterios). Bajo riesgo de déficit neuromuscular en esta tarea.';
+      return '—';
+    },
+  },
+  {
+    id: 'single_leg_squat',
+    nombre: 'Squat Unipodal + FPPA',
+    protocolo: 'Sentadilla monopodal lenta (~5 seg bajada, manos en cadera). Observar FPPA (ángulo proyección frontal): eje muslo vs tibia. Positivo: cambio ≥10° en valgo (aducción de cadera excesiva), lean ipsilateral de tronco, o rodilla cae medial al pie.',
+    tipo: 'assessment',
+    ref: 'Willy RW et al. JOSPT 2019 CPG — ICC FPPA 0.72–0.88. Lankhorst BJSM 2012. Powers BJSM 2017 (consenso internacional).',
+    interpreta(val) {
+      if (val === true)  return 'Valgo dinámico ≥10° o aducción cadera excesiva: indica déficit de control motor. Evaluar fuerza abductores y rotadores externos de cadera.';
+      if (val === false) return 'Control motor adecuado en plano frontal durante carga monopodal. No descarta SPF.';
+      return '—';
+    },
+  },
+  {
+    id: 'navicular_drop',
+    nombre: 'Navicular Drop Test (Pronación)',
+    protocolo: 'Marcar posición del navicular en bipedestación con subtalar en posición neutra. Medir descenso al apoyar completamente. Positivo: caída ≥10 mm. FPI-6 complementario: >6 puntos = pronación excesiva.',
+    tipo: 'assessment',
+    ref: 'Willy RW et al. JOSPT 2019 CPG — ICC intratester 0.87–0.93. Lankhorst BJSM 2012 (SMD 0.33, factor prospectivo JUMP-ACL). Powers BJSM 2017.',
+    interpreta(val) {
+      if (val === true)  return 'Caída ≥10 mm: hiperpronación subtalar. Factor asociado a SPF (prospectivo). Evaluar indicación de ortesis plantares.';
+      if (val === false) return 'Caída <10 mm: postura de pie normal. No se justifica ortesis por este hallazgo aislado.';
+      return '—';
+    },
+  },
+  {
+    id: 'ober_test',
+    nombre: 'Ober Test (Banda Iliotibial)',
+    protocolo: 'Decúbito lateral, pierna superior. Extender y abducir la cadera (rodilla a 90°), luego soltar. Normal: la pierna puede adducir por debajo de neutral. Positivo (acortamiento IT): no puede bajar a 0° o menos (aducción <11°).',
+    tipo: 'assessment',
+    ref: 'Willy RW et al. JOSPT 2019 CPG — ICC intratester 0.97. MDC95=5.82°. Umbral: <11° = retracción. Lankhorst BJSM 2012. Powers BJSM 2017.',
+    interpreta(val) {
+      if (val === true)  return 'Retracción IT (<11° aducción): asociado a tilt patelar lateral y dolor PFJ. Indica estiramiento IT y ejercicio de cadera.';
+      if (val === false) return 'Longitud IT normal (≥11°). Otros factores predominan en este caso.';
+      return '—';
+    },
+  },
+  {
+    id: 'cuadriceps_length',
+    nombre: 'Longitud Cuádriceps (Flexión en prono)',
+    protocolo: 'Decúbito prono, pelvis estabilizada. Flexión pasiva de rodilla medida con goniómetro o inclinómetro. Positivo (acortamiento): flexión <134° (inclinómetro) o <120° (goniómetro estándar).',
+    tipo: 'assessment',
+    ref: 'Willy RW et al. JOSPT 2019 CPG — ICC intratester 0.91. MDC95=10.53°. Lankhorst BJSM 2012 (MD −11.4°, predictor prospectivo Witvrouw 2000).',
+    interpreta(val) {
+      if (val === true)  return 'Acortamiento cuádriceps (<134°): aumenta compresión PFJ. Predictor prospectivo de SPF (Witvrouw 2000). Priorizar estiramiento de cuádriceps.';
+      if (val === false) return 'Longitud normal del cuádriceps (≥134°). Evaluar otros factores musculares.';
+      return '—';
+    },
+  },
+  {
+    id: 'hamstring_length',
+    nombre: 'Longitud Isquiotibiales (SLR/Extensión activa)',
+    protocolo: 'SLR pasivo con cadera a 90° o extensión activa de rodilla con cadera fija a 90°. Positivo (acortamiento): déficit de extensión >20° o SLR <79°.',
+    tipo: 'assessment',
+    ref: 'Willy RW et al. JOSPT 2019 CPG — ICC intratester 0.94–0.99. Lankhorst BJSM 2012 (MD −9.5° en SPF, p<0.001).',
+    interpreta(val) {
+      if (val === true)  return 'Acortamiento isquiotibiales: aumenta tensión posterior de rodilla. Asociado a SPF. Incluir estiramiento isquiotibial.';
+      if (val === false) return 'Longitud normal de isquiotibiales.';
+      return '—';
+    },
+  },
+  {
+    id: 'hip_strength',
+    nombre: 'Fuerza Cadera — Abductores y Rotadores Externos',
+    protocolo: 'Decúbito lateral, cadera 45° flexión, rodilla 90°. Dinamómetro de mano en cara lateral del muslo distal. MVIC combinado abductores + RE. Umbrales déficit: Hombres <37%PC (ABD) o <13%PC (RE); Mujeres <30%PC (ABD) o <17%PC (RE).',
+    tipo: 'assessment',
+    ref: 'Willy RW et al. JOSPT 2019 CPG — ICC intratester 0.98–0.99. HipSIT. Lankhorst BJSM 2012 (ABD WMD −3.30%PC; RE WMD −1.43%PC). Powers BJSM 2017.',
+    interpreta(val) {
+      if (val === true)  return 'Déficit de fuerza de cadera: factor clasificatorio SPF. Priorizar fortalecimiento de abductores y rotadores externos de cadera en el programa de rehabilitación.';
+      if (val === false) return 'Fuerza de cadera dentro de umbrales. Evaluar otros factores (cuádriceps, tejidos blandos, pie).';
       return '—';
     },
   },

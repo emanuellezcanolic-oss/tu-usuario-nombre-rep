@@ -22,26 +22,77 @@ function buildRodillaSPF() {
   const c = document.getElementById('rodilla-spf-fields');
   if (!c || c.innerHTML) return;
 
-  c.innerHTML = RODILLA_SPF_TESTS.map(t => `
+  const diagTests       = RODILLA_SPF_TESTS.filter(t => !t.tipo);
+  const assessmentTests = RODILLA_SPF_TESTS.filter(t => t.tipo === 'assessment');
+
+  const renderTest = t => {
+    const tagLabel = t.sn
+      ? `Sn ${t.sn} · Sp ${t.sp}`
+      : (t.tipo === 'assessment' ? 'Evaluación funcional' : 'Criterio clínico');
+    const tagClass = t.tipo === 'assessment' ? 'tag-g' : 'tag-b';
+    const lrInfo   = t.lr_pos ? `<div style="font-size:10px;color:var(--text3);margin-top:2px">LR+ ${t.lr_pos} · LR– ${t.lr_neg}</div>` : '';
+    return `
     <div class="card mb-8">
       <div class="card-header">
         <div>
           <h3>${t.nombre}</h3>
-          <div style="font-size:10px;color:var(--text3);margin-top:2px">${t.protocolo.slice(0,90)}…</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px">${t.protocolo.slice(0,85)}…</div>
         </div>
-        <span class="tag tag-b" style="font-size:9px;white-space:nowrap">${t.sn ? `Sn ${t.sn} · Sp ${t.sp}` : 'Criterio clínico'}</span>
+        <span class="tag ${tagClass}" style="font-size:9px;white-space:nowrap">${tagLabel}</span>
       </div>
       <div class="card-body">
         <div style="font-size:10px;color:var(--text2);margin-bottom:8px;font-style:italic">${t.protocolo}</div>
         <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
           <button class="ot-btn" onclick="toggleOT(this,'pos');_rodSetTest('spf','${t.id}',true)">+ POS</button>
           <button class="ot-btn" onclick="toggleOT(this,'neg');_rodSetTest('spf','${t.id}',false)">– NEG</button>
-          <span style="font-size:10px;color:var(--text3);margin-left:6px">${t.criterio_diag ? '⭐ Criterio diagnóstico principal' : ''}</span>
+          <span style="font-size:10px;color:var(--text3);margin-left:6px">${t.criterio_diag ? '⭐ Criterio diagnóstico' : ''}</span>
         </div>
-        <div style="font-size:10px;color:var(--text3)">📚 ${t.ref}${t.nota ? '<br>⚠️ ' + t.nota : ''}</div>
+        ${lrInfo}
+        <div style="font-size:10px;color:var(--text3);margin-top:4px">📚 ${t.ref}${t.nota ? '<br><span style="color:var(--amber)">⚠️ ' + t.nota + '</span>' : ''}</div>
+      </div>
+    </div>`;
+  };
+
+  // Cluster diagnóstico Decary 2017 — LR+ 8.70 / LR– 0.12
+  const clusterDecary = `
+  <div class="card mb-10" style="border-color:rgba(99,179,255,.3);background:rgba(99,179,255,.04)">
+    <div class="card-body">
+      <div style="font-size:12px;font-weight:700;color:#63b3ff;margin-bottom:4px">Cluster Diagnóstico SPF — Décary 2017 / Willy 2019 CPG</div>
+      <div style="font-size:10px;color:var(--text2);margin-bottom:8px">
+        Décary S et al. — 2 clusters combinados: <strong>LR+ 8.70</strong> (IC 5.20–14.58) · <strong>LR– 0.12</strong> (IC 0.06–0.27) · NPV 0.96.<br>
+        <em>Cluster POSITIVO</em> (confirmar): Edad &lt;40 + dolor anterior + sensibilidad faceta patelar medial → Sn 0.64 · Sp 0.93.<br>
+        <em>Cluster NEGATIVO</em> (descartar): Edad &lt;58 + dolor medial/lateral/posterior + sin sensibilidad facetas → -LR 0.12.
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div style="padding:6px 8px;border-radius:6px;border:1px solid rgba(99,179,255,.2);background:rgba(99,179,255,.03)">
+          <div style="font-size:10px;font-weight:700;color:#63b3ff;margin-bottom:4px">① Confirmación diagnóstica</div>
+          <div style="display:flex;gap:6px">
+            <button class="ot-btn" onclick="toggleOT(this,'pos');_rodSetTest('spf','cluster_pos',true)">+ CUMPLE</button>
+            <button class="ot-btn" onclick="toggleOT(this,'neg');_rodSetTest('spf','cluster_pos',false)">– NO</button>
+          </div>
+          <div style="font-size:9px;color:var(--text3);margin-top:4px">Edad &lt;40 · dolor anterior · sensibilidad faceta medial</div>
+        </div>
+        <div style="padding:6px 8px;border-radius:6px;border:1px solid rgba(99,179,255,.2);background:rgba(99,179,255,.03)">
+          <div style="font-size:10px;font-weight:700;color:#63b3ff;margin-bottom:4px">② Exclusión diagnóstica</div>
+          <div style="display:flex;gap:6px">
+            <button class="ot-btn" onclick="toggleOT(this,'pos');_rodSetTest('spf','cluster_neg',true)">+ CUMPLE</button>
+            <button class="ot-btn" onclick="toggleOT(this,'neg');_rodSetTest('spf','cluster_neg',false)">– NO</button>
+          </div>
+          <div style="font-size:9px;color:var(--text3);margin-top:4px">Edad &lt;58 · dolor no anterior · sin sensibilidad facetas</div>
+        </div>
       </div>
     </div>
-  `).join('');
+  </div>`;
+
+  const sectionHeader = (titulo, subtitulo) =>
+    `<div style="margin:14px 0 8px;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:4px">${titulo}<span style="font-size:10px;font-weight:400;color:var(--text3);margin-left:6px;text-transform:none">${subtitulo}</span></div>`;
+
+  c.innerHTML =
+    clusterDecary +
+    sectionHeader('Tests Diagnósticos', 'con Sensibilidad / Especificidad') +
+    diagTests.map(renderTest).join('') +
+    sectionHeader('Evaluaciones Funcionales', 'clasificación por subgrupos · Willy 2019 CPG') +
+    assessmentTests.map(renderTest).join('');
 }
 
 // ── BUILDER: LCA ─────────────────────────────────────────────
