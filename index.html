@@ -2858,7 +2858,8 @@
   <!-- Clinical sheets split por articulación (originalmente klinical.js 1163 LOC) -->
   <script src="js/sheets/_common.js?v=9"></script>
   <script src="js/sheets/hombro.js?v=11"></script>
-  <script src="js/sheets/rodilla.js?v=1"></script>
+  <script src="js/data/papers-rodilla-rules.js?v=1"></script>
+  <script src="js/sheets/rodilla.js?v=2"></script>
   <script src="js/sheets/tobillo.js?v=1"></script>
   <script src="js/sheets/lumbar.js?v=9"></script>
   <script src="js/sheets/groin.js?v=1"></script>
@@ -3910,6 +3911,7 @@
       <button class="btn btn-ghost btn-sm" id="rtab-men-btn" onclick="showRTab('men',this)" style="white-space:nowrap;font-size:10px">Menisco</button>
       <button class="btn btn-ghost btn-sm" id="rtab-cuest-btn" onclick="showRTab('cuest',this)" style="white-space:nowrap;font-size:10px">Escalas</button>
       <button class="btn btn-ghost btn-sm" id="rtab-rtp-btn" onclick="showRTab('rtp',this)" style="white-space:nowrap;font-size:10px">RTP</button>
+      <button class="btn btn-ghost btn-sm" id="rtab-cond-btn" onclick="showRTab('cond',this)" style="white-space:nowrap;font-size:10px">Condral</button>
     </div>
 
     <!-- SPF -->
@@ -4060,8 +4062,31 @@
       </div>
     </div>
 
+    <!-- Condral -->
+    <div id="rtab-cond" style="display:none">
+      <div id="rodilla-condral-fields"></div>
+    </div>
+
+    <!-- Panel diagnóstico algoritmo -->
+    <div class="card mb-10" style="border-color:rgba(57,255,122,.2);background:rgba(57,255,122,.04)">
+      <div class="card-header">
+        <div>
+          <h3 style="color:var(--neon)">🔍 Análisis Diagnóstico</h3>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px">Actualización en tiempo real según tests completados</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="rod-diag-panel" style="min-height:40px">
+          <div style="font-size:11px;color:var(--text3);text-align:center;padding:12px">Completá tests para ver el análisis diagnóstico</div>
+        </div>
+      </div>
+    </div>
+
     <div class="divider"></div>
-    <button class="btn btn-neon btn-full" onclick="saveKlinicalSheet('rodilla');closeModal('sheet-rodilla')">💾 Guardar evaluación rodilla</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-neon btn-full" onclick="saveKlinicalSheet('rodilla');closeModal('sheet-rodilla')">💾 Guardar evaluación rodilla</button>
+      <button class="btn btn-ghost btn-sm" onclick="window._rodillaPrintInforme()" style="white-space:nowrap">🖨 Imprimir informe</button>
+    </div>
   </div>
 </div>
 

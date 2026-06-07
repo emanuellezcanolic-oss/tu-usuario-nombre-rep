@@ -39,6 +39,7 @@ function initRodillaSheet() {
   buildRodillaSPF();
   buildRodillaLCA();
   buildRodillaMenisco();
+  buildRodillaCondral();
   buildHopRTP();
   buildVISAP();
 }
@@ -74,7 +75,7 @@ function showHTab(tab, btn) {
   if(btn) { btn.className = 'btn btn-neon btn-sm'; btn.style.whiteSpace='nowrap'; btn.style.fontSize='10px'; }
 }
 function showRTab(tab, btn) {
-  ['spf','lca','lig','men','cuest','rtp'].forEach(t => {
+  ['spf','lca','lig','men','cuest','rtp','cond'].forEach(t => {
     const el = document.getElementById('rtab-' + t); if(el) el.style.display = t === tab ? 'block' : 'none';
   });
   document.querySelectorAll('#sheet-rodilla .btn').forEach(b => {
