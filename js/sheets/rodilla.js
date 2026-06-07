@@ -724,8 +724,8 @@ function _rodillaPrintInforme() {
   if (!cur) { alert('Seleccioná un atleta primero'); return; }
 
   const nombre   = `${cur.nombre || ''} ${cur.apellido || ''}`.trim();
-  const fecha    = new Date().toLocaleDateString('es-AR');
-  const kine     = cur.kine || '—';
+  const fecha    = new Date().toLocaleDateString('es-AR', {day:'2-digit',month:'long',year:'numeric'});
+  const kine     = cur.kine || 'Lic. Emanuel Lezcano';
 
   // ── Reunir resultados ──
   const lcaResults  = RODILLA_LCA_TESTS.map(t => ({
@@ -753,6 +753,31 @@ function _rodillaPrintInforme() {
 
   const totalCompletados = lcaResults.length + spfResults.length + menResults.length + condResults.length;
 
+  // ── Escalas desde DOM ──
+  const gt = id => { const el = document.getElementById(id); return (el?.textContent?.trim() || '').replace(/[^0-9.\-]/g,'') || '—'; };
+  const gv = id => (document.getElementById(id)?.value || '').trim() || '—';
+
+  const visapRaw    = gt('visap-total');
+  const kujalaRaw   = gv('kujala-input');
+  const koosDolor   = gt('koos-sub-dolor');
+  const koosSint    = gt('koos-sub-sintomas');
+  const koosAvd     = gt('koos-sub-avd');
+  const koosDeporte = gt('koos-sub-deporte');
+  const koosQol     = gt('koos-sub-qol');
+  const koosTotal   = gt('koos-total');
+  const lysholmRaw  = gt('lysholm-total');
+  const marxRaw     = gt('marx-total');
+  const wometRaw    = gt('womet-total');
+  const tegnerVal   = gv('tegner-sel');
+
+  // ── ROM desde DOM ──
+  const romExtD  = gv('rom-ext-d');
+  const romExtI  = gv('rom-ext-i');
+  const romFlexD = gv('rom-flex-d');
+  const romFlexI = gv('rom-flex-i');
+  const hasROM   = [romExtD, romExtI, romFlexD, romFlexI].some(v => v !== '—');
+  const hasScales = [visapRaw, kujalaRaw, lysholmRaw, marxRaw, wometRaw].some(v => v !== '—');
+
   // ── Paleta de colores (print-safe, hex) ──
   const C = {
     verde:    { bg: '#1a3a25', border: '#39ff7a', text: '#39ff7a' },
@@ -778,7 +803,6 @@ function _rodillaPrintInforme() {
 
   function testRow(t, i) {
     const pos = t.resultado === true;
-    const c   = pos ? C.rojo : C.verde;
     const bg  = i % 2 === 0 ? '#242725' : '#1f2220';
     const snTxt = t.sn ? `Sn ${t.sn} · Sp ${t.sp}` : '—';
     return `<tr style="background:${bg}">
@@ -806,39 +830,66 @@ function _rodillaPrintInforme() {
     </div>`;
   }
 
+  function scaleRow(label, value, ref, mcid) {
+    const isDash = value === '—';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5pt 7pt;border-bottom:1pt solid #252827">
+      <div>
+        <div style="font-size:7pt;font-weight:700;color:#ccc">${label}</div>
+        ${ref ? `<div style="font-size:5pt;color:#444">${ref}${mcid ? ' · MCID ' + mcid : ''}</div>` : ''}
+      </div>
+      <div style="font-family:monospace;font-size:${isDash?'9':'13'}pt;font-weight:900;color:${isDash?'#333':'#39ff7a'}">${value}</div>
+    </div>`;
+  }
+
   const refs = Object.values(RODILLA_REFS);
-  const hasDiag    = diagResults.length > 0;
-  const hasLCA     = lcaResults.length > 0;
-  const hasSPF     = spfResults.length > 0;
-  const hasMen     = menResults.length > 0;
-  const hasCond    = condResults.length > 0;
+  const hasDiag = diagResults.length > 0;
+  const hasLCA  = lcaResults.length > 0;
+  const hasSPF  = spfResults.length > 0;
+  const hasMen  = menResults.length > 0;
+  const hasCond = condResults.length > 0;
 
   // Composite score menisco — 5 elementos JOSPT 2018 (Logerstedt)
   const compKeys = ['catching_locking','mcmurray','hyperext_forzada','flexion_max','jlt'];
   const compScore = compKeys.filter(k => rodState.men[k] === true).length;
 
+  const pageHdr = `<div class="hdr">
+    <div style="font-size:9pt;font-weight:900;color:#fff">MOVEMETRICS <span style="font-weight:400;color:#444">·</span> <span style="font-size:6.5pt;font-weight:600;letter-spacing:.1em;color:#39ff7a;text-transform:uppercase">EVALUACIÓN RODILLA</span></div>
+    <div style="font-size:6.5pt;color:#555">${nombre} · ${fecha}</div>
+  </div>`;
+
   const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Evaluación Rodilla — ${nombre}</title>
 <style>
   @page { size: A4 portrait; margin: 13mm 16mm 15mm 16mm; }
   *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
   html { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; color-adjust:exact !important; }
   body { background:#1a1c1b; color:#e0e0e0; font-family:'Segoe UI',Arial,sans-serif; font-size:8pt; line-height:1.45; }
-  .page { width:100%; }
+  .page { width:100%; padding:16pt; }
   .page-break { page-break-before:always; }
   .section { background:#1f2220; border:1pt solid #2e312e; border-radius:5pt; padding:11pt 13pt; margin-bottom:9pt; page-break-inside:avoid; }
   table { width:100%; border-collapse:collapse; }
   th, td { text-align:left; }
   .hdr { display:flex; justify-content:space-between; align-items:center; padding-bottom:8pt; margin-bottom:10pt; border-bottom:1pt solid #2e312e; }
-  .col-2 { display:grid; grid-template-columns:1fr 1fr; gap:8pt; }
+  .no-print { display:flex; }
+  @media print { .no-print { display:none !important; } }
 </style>
 </head>
 <body>
 
-<!-- PÁGINA 1 -->
+<!-- ── TOOLBAR ────────────────────────────────────────────────── -->
+<div class="no-print" style="background:#111312;border-bottom:1pt solid #2e312e;padding:10pt 20pt;gap:8pt;align-items:center;position:sticky;top:0;z-index:100">
+  <button onclick="window.print()" style="background:#39ff7a;color:#000;border:none;border-radius:4pt;padding:8pt 18pt;font-weight:800;cursor:pointer;font-size:9pt">🖨 Imprimir / Guardar PDF</button>
+  <button onclick="toggleEditMode()" id="edit-btn" style="background:#2a2e2b;color:#aaa;border:1pt solid #3a3d3a;border-radius:4pt;padding:8pt 13pt;cursor:pointer;font-size:9pt">✏ Editar</button>
+  <span style="font-size:7.5pt;color:rgba(255,255,255,.3);margin-left:8pt">Al imprimir elegí "Guardar como PDF"</span>
+</div>
+
+<div id="report-body">
+
+<!-- ── PÁGINA 1 ───────────────────────────────────────────────── -->
 <div class="page">
 
   <!-- PORTADA -->
@@ -882,10 +933,33 @@ function _rodillaPrintInforme() {
     </div>
   </div>
 
-  <!-- 02 ANÁLISIS DIAGNÓSTICO -->
+  <!-- 02 ROM -->
+  ${hasROM ? `<div class="section">
+    ${secHeader('02.', 'RANGO DE MOVIMIENTO ARTICULAR')}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12pt">
+      <div>
+        <div style="font-size:6pt;font-weight:700;letter-spacing:.1em;color:#555;text-transform:uppercase;margin-bottom:5pt">EXTENSIÓN ACTIVA</div>
+        <div style="display:flex;gap:18pt;align-items:baseline">
+          <div><span style="font-size:5.5pt;color:#555">DERECHA </span><span style="font-size:14pt;font-weight:900;font-family:monospace;color:#e8e8e8">${romExtD !== '—' ? romExtD : '—'}</span><span style="font-size:7pt;color:#444">°</span></div>
+          <div><span style="font-size:5.5pt;color:#555">IZQUIERDA </span><span style="font-size:14pt;font-weight:900;font-family:monospace;color:#e8e8e8">${romExtI !== '—' ? romExtI : '—'}</span><span style="font-size:7pt;color:#444">°</span></div>
+        </div>
+        <div style="font-size:5.5pt;color:#3a3d3a;margin-top:2pt">0°=normal · negativo=hiperext · positivo=déficit</div>
+      </div>
+      <div>
+        <div style="font-size:6pt;font-weight:700;letter-spacing:.1em;color:#555;text-transform:uppercase;margin-bottom:5pt">FLEXIÓN ACTIVA</div>
+        <div style="display:flex;gap:18pt;align-items:baseline">
+          <div><span style="font-size:5.5pt;color:#555">DERECHA </span><span style="font-size:14pt;font-weight:900;font-family:monospace;color:#e8e8e8">${romFlexD !== '—' ? romFlexD : '—'}</span><span style="font-size:7pt;color:#444">°</span></div>
+          <div><span style="font-size:5.5pt;color:#555">IZQUIERDA </span><span style="font-size:14pt;font-weight:900;font-family:monospace;color:#e8e8e8">${romFlexI !== '—' ? romFlexI : '—'}</span><span style="font-size:7pt;color:#444">°</span></div>
+        </div>
+        <div style="font-size:5.5pt;color:#3a3d3a;margin-top:2pt">Normal: 130–150° · JOSPT 2018 dato esencial</div>
+      </div>
+    </div>
+  </div>` : ''}
+
+  <!-- 03 ANÁLISIS DIAGNÓSTICO -->
   ${hasDiag ? `<div class="section">
-    ${secHeader('02.', 'ANÁLISIS DIAGNÓSTICO — PROBABILIDAD POR PATOLOGÍA')}
-    <div style="font-size:6.5pt;color:#666;margin-bottom:8pt">Basado en likelihood ratios (LR+/LR–) y criterios CPG. Probabilidad estimada según tests completados. No reemplaza juicio clínico.</div>
+    ${secHeader('03.', 'ANÁLISIS DIAGNÓSTICO — PROBABILIDAD POR PATOLOGÍA')}
+    <div style="font-size:6.5pt;color:#555;margin-bottom:8pt">Basado en likelihood ratios (LR+/LR–) y criterios CPG. Probabilidad estimada según tests completados. No reemplaza juicio clínico.</div>
     ${diagResults.map(r => {
       const cm = nivelColor(r.nivel);
       const barW = Math.min(r.pct, 100);
@@ -903,85 +977,159 @@ function _rodillaPrintInforme() {
     }).join('')}
   </div>` : ''}
 
-  <!-- 03 LCA -->
-  ${testTable(secHeader('03.', 'TESTS LIGAMENTO CRUZADO ANTERIOR (LCA / LCP)'), lcaResults, hasLCA)}
+  <!-- 04 LCA -->
+  ${testTable(secHeader('04.', 'TESTS LIGAMENTO CRUZADO ANTERIOR (LCA / LCP)'), lcaResults, hasLCA)}
 
 </div>
 
 ${hasSPF || hasMen ? `
-<!-- PÁGINA 2 -->
+<!-- ── PÁGINA 2 ───────────────────────────────────────────────── -->
 <div class="page page-break">
-  <div class="hdr">
-    <div style="font-size:9pt;font-weight:900;color:#fff">MOVEMETRICS <span style="font-weight:400;color:#444">·</span> <span style="font-size:6.5pt;font-weight:600;letter-spacing:.1em;color:#39ff7a;text-transform:uppercase">EVALUACIÓN RODILLA</span></div>
-    <div style="font-size:6.5pt;color:#555">${nombre} · ${fecha}</div>
-  </div>
+  ${pageHdr}
 
-  <!-- 04 SPF -->
-  ${testTable(secHeader('04.', 'SÍNDROME DOLOR PATELOFEMORAL (SPF / PFP)'), spfResults, hasSPF)}
-  ${hasSPF ? `<div style="margin-top:-4pt;margin-bottom:9pt;padding:6pt 8pt;background:#1a1c1b;border-radius:3pt;border-left:2pt solid #2a5c3a"><span style="font-size:6.5pt;font-weight:700;color:#aaa">Criterios diagnósticos (Willy 2019 JOSPT, Grado A/B): </span><span style="font-size:6.5pt;color:#666">(1) Dolor retro/peripatelar · (2) Reproducción con cuclillas, escaleras o sedentación prolongada · (3) Exclusión patología tibiofemoral. Test de inclinación patelar: Grado C. Clarke y aprensión: baja utilidad aislados.</span></div>` : ''}
+  <!-- 05 SPF -->
+  ${testTable(secHeader('05.', 'SÍNDROME DOLOR PATELOFEMORAL (SPF / PFP)'), spfResults, hasSPF)}
+  ${hasSPF ? `<div style="margin-top:-4pt;margin-bottom:9pt;padding:6pt 8pt;background:#1a1c1b;border-radius:3pt;border-left:2pt solid #2a5c3a"><span style="font-size:6.5pt;font-weight:700;color:#aaa">Criterios diagnósticos (Willy 2019 JOSPT, Grado A/B): </span><span style="font-size:6.5pt;color:#555">(1) Dolor retro/peripatelar · (2) Reproducción con cuclillas, escaleras o sedentación prolongada · (3) Exclusión patología tibiofemoral.</span></div>` : ''}
 
-  <!-- 05 MENISCO -->
-  ${testTable(secHeader('05.', 'MENISCO'), menResults, hasMen)}
+  <!-- 06 MENISCO -->
+  ${testTable(secHeader('06.', 'MENISCO'), menResults, hasMen)}
   ${hasMen ? `<div style="margin-top:-4pt;margin-bottom:9pt;padding:6pt 8pt;background:#1a1c1b;border-radius:3pt;border-left:2pt solid #2a5c3a">
     <span style="font-size:6.5pt;font-weight:700;color:#aaa">Composite Score JOSPT 2018: </span>
-    <span style="font-size:6.5pt;color:#666">Catching/locking + McMurray + Hiperextensión forzada + Flexión máxima + JLT. ≥4 positivos → Sp 90.2% · ≥2 positivos → Sn 76.6%. Presente: <strong style="color:#ffbe00">${compScore}/5</strong>.</span>
+    <span style="font-size:6.5pt;color:#555">Catching/locking + McMurray + Hiperextensión forzada + Flexión máxima + JLT. ≥4 positivos → Sp 90.2% · ≥2 positivos → Sn 76.6%. Presente: <strong style="color:#ffbe00">${compScore}/5</strong>.</span>
   </div>` : ''}
 
 </div>` : ''}
 
 ${hasCond ? `
-<!-- PÁGINA CONDRAL -->
-<div class="page ${hasSPF || hasMen ? '' : 'page-break'}">
-  ${(hasSPF || hasMen) ? `<div class="hdr">
-    <div style="font-size:9pt;font-weight:900;color:#fff">MOVEMETRICS <span style="font-weight:400;color:#444">·</span> <span style="font-size:6.5pt;font-weight:600;letter-spacing:.1em;color:#39ff7a;text-transform:uppercase">EVALUACIÓN RODILLA</span></div>
-    <div style="font-size:6.5pt;color:#555">${nombre} · ${fecha}</div>
-  </div>` : ''}
+<!-- ── PÁGINA CONDRAL ─────────────────────────────────────────── -->
+<div class="page page-break">
+  ${pageHdr}
 
-  <!-- 06 CONDRAL -->
-  ${testTable(secHeader('06.', 'LESIÓN CONDRAL / OSTEOCONDRAL'), condResults, true)}
+  <!-- 07 CONDRAL -->
+  ${testTable(secHeader('07.', 'LESIÓN CONDRAL / OSTEOCONDRAL'), condResults, true)}
   <div style="margin-top:-4pt;margin-bottom:9pt;padding:6pt 8pt;background:#331515;border-radius:3pt;border-left:2pt solid #ff4646">
     <span style="font-size:6.5pt;font-weight:700;color:#ff8888">Nota clínica (Wilk 2006 / Logerstedt 2018): </span>
-    <span style="font-size:6.5pt;color:#888">No existen pruebas físicas de alta Sn/Sp para lesión condral focal. Diagnóstico definitivo por RMN (Sn >80% para lesiones ≥1cm²). Hemarthrosis <2h post-trauma = alta sospecha fractura osteocondral. Ottawa Knee Rules: Sn 0.99, Sp 0.49 (Stiell 1995) — si positivo, indicar Rx antes de RMN.</span>
+    <span style="font-size:6.5pt;color:#888">No existen pruebas físicas de alta Sn/Sp para lesión condral focal. Diagnóstico definitivo por RMN (Sn &gt;80% para lesiones ≥1cm²). Hemarthrosis &lt;2h post-trauma = alta sospecha fractura osteocondral. Ottawa Knee Rules: Sn 0.99, Sp 0.49 (Stiell 1995).</span>
   </div>
 
 </div>` : ''}
 
-<!-- BIBLIOGRAFÍA -->
+${hasScales ? `
+<!-- ── PÁGINA ESCALAS ─────────────────────────────────────────── -->
 <div class="page page-break">
-  <div class="hdr">
-    <div style="font-size:9pt;font-weight:900;color:#fff">MOVEMETRICS <span style="font-weight:400;color:#444">·</span> <span style="font-size:6.5pt;font-weight:600;letter-spacing:.1em;color:#39ff7a;text-transform:uppercase">EVALUACIÓN RODILLA</span></div>
-    <div style="font-size:6.5pt;color:#555">${nombre} · ${fecha}</div>
+  ${pageHdr}
+
+  <!-- 08 ESCALAS -->
+  <div class="section">
+    ${secHeader('08.', 'ESCALAS AUTORREPORTADAS Y FUNCIONALES')}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14pt">
+
+      <div>
+        <div style="font-size:5.5pt;font-weight:700;letter-spacing:.12em;color:#39ff7a;text-transform:uppercase;margin-bottom:5pt;opacity:.75">PATELOFEMORAL / SPF</div>
+        ${scaleRow('VISA-P Score', visapRaw !== '—' ? visapRaw + '/100' : '—', 'Hernandez-Sanchez 2014', '12 pts')}
+        ${scaleRow('Kujala / AKPS', kujalaRaw !== '—' ? kujalaRaw + '/100' : '—', 'Kujala 1993 · función patelofemoral', '8–10 pts')}
+      </div>
+
+      <div>
+        <div style="font-size:5.5pt;font-weight:700;letter-spacing:.12em;color:#39ff7a;text-transform:uppercase;margin-bottom:5pt;opacity:.75">FUNCIÓN / ACTIVIDAD</div>
+        ${scaleRow('Lysholm Score', lysholmRaw !== '—' ? lysholmRaw + '/100' : '—', 'Lysholm 1982 · LCA / menisco', '10 pts')}
+        ${scaleRow('Tegner Activity', tegnerVal !== '—' ? 'Nivel ' + tegnerVal + ' / 10' : '—', 'Tegner & Lysholm 1985', '1 nivel')}
+        ${scaleRow('Marx Activity Rating', marxRaw !== '—' ? marxRaw + '/16' : '—', 'Marx et al. AJSM 2001 · RTP', '4 pts')}
+      </div>
+
+      <div>
+        <div style="font-size:5.5pt;font-weight:700;letter-spacing:.12em;color:#39ff7a;text-transform:uppercase;margin-bottom:5pt;opacity:.75">KOOS — SUBESCALAS (0–100 mejor)</div>
+        ${scaleRow('Dolor (Pain)', koosDolor !== '—' ? koosDolor + '/100' : '—', 'Roos 1998', '10')}
+        ${scaleRow('Síntomas', koosSint !== '—' ? koosSint + '/100' : '—', '', '')}
+        ${scaleRow('AVD', koosAvd !== '—' ? koosAvd + '/100' : '—', 'Actividades de la vida diaria', '9')}
+        ${scaleRow('Deporte / Recreación', koosDeporte !== '—' ? koosDeporte + '/100' : '—', '', '12')}
+        ${scaleRow('Calidad de Vida (QoL)', koosQol !== '—' ? koosQol + '/100' : '—', '', '10')}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:7pt 7pt;background:#2a2e2b;border-radius:3pt;margin-top:4pt">
+          <span style="font-size:7pt;font-weight:700;color:#aaa">KOOS Promedio Total</span>
+          <span style="font-family:monospace;font-size:16pt;font-weight:900;color:${koosTotal !== '—' ? '#39ff7a' : '#333'}">${koosTotal !== '—' ? koosTotal : '—'}</span>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size:5.5pt;font-weight:700;letter-spacing:.12em;color:#39ff7a;text-transform:uppercase;margin-bottom:5pt;opacity:.75">MENISCO</div>
+        ${scaleRow('WOMET Score', wometRaw !== '—' ? wometRaw + '/100' : '—', 'Kirkley 1998 · Western Ontario', '11–15 pts')}
+
+        ${(diagResults.length > 0 || totalCompletados > 0) ? `
+        <div style="margin-top:12pt">
+          <div style="font-size:5.5pt;font-weight:700;letter-spacing:.12em;color:#39ff7a;text-transform:uppercase;margin-bottom:5pt;opacity:.75">RESUMEN DE EVALUACIÓN</div>
+          <div style="font-size:7pt;color:#888;line-height:1.7;padding:7pt;background:#1f2220;border-radius:3pt;border:1pt solid #2e312e">
+            Tests completados: <strong style="color:#ccc">${totalCompletados}</strong><br>
+            ${diagResults.length > 0 ? `Hallazgos principales: <strong style="color:#ccc">${diagResults.slice(0,2).map(r => r.label + ' ' + r.pct + '%').join(' · ')}</strong>` : 'Sin hallazgos diagnósticos registrados.'}
+          </div>
+        </div>` : ''}
+      </div>
+
+    </div>
   </div>
 
-  <!-- JUICIO CLÍNICO -->
+</div>` : ''}
+
+<!-- ── PÁGINA FINAL ────────────────────────────────────────────── -->
+<div class="page page-break">
+  ${pageHdr}
+
+  <!-- 09 JUICIO CLÍNICO -->
   <div class="section">
-    ${secHeader('07.', 'JUICIO CLÍNICO INTEGRADOR')}
-    <div style="padding:10pt 12pt;background:#1a1c1b;border:1pt solid #2e312e;border-radius:4pt;margin-bottom:9pt">
-      <div style="font-size:7.5pt;color:#bbb;line-height:1.8">
+    ${secHeader('09.', 'JUICIO CLÍNICO INTEGRADOR')}
+    <div style="padding:10pt 12pt;background:#1a1c1b;border:1pt solid #2e312e;border-radius:4pt;margin-bottom:9pt;min-height:50pt">
+      <div style="font-size:7.5pt;color:#bbb;line-height:1.9">
         ${nombre} presenta una evaluación de rodilla con ${totalCompletados} tests completados.
-        ${diagResults.length > 0 ? `Las patologías con mayor probabilidad según los tests realizados son: <strong style="color:#fff">${diagResults.slice(0, 2).map(r => r.label + ' (' + r.pct + '%)').join(', ')}</strong>.` : ''}
-        ${diagResults.find(r => r.urgente) ? '<strong style="color:#ff4646"> ⚠ Se detecta hallazgo urgente — derivar inmediatamente.</strong>' : ''}
+        ${diagResults.length > 0 ? `Los hallazgos de mayor probabilidad diagnóstica son: <strong style="color:#fff">${diagResults.slice(0, 3).map(r => r.label + ' (' + r.pct + '%)').join(', ')}</strong>.` : 'Sin tests diagnósticos registrados.'}
+        ${diagResults.find(r => r.urgente) ? ' <strong style="color:#ff4646">⚠ Se detecta hallazgo urgente — derivar inmediatamente.</strong>' : ''}
       </div>
     </div>
-    <div style="font-size:6.5pt;color:#666;font-style:italic;padding:5pt 8pt;background:#1a1c1b;border-radius:3pt">
-      ⚠ Este informe no reemplaza el juicio clínico del profesional tratante. Los valores de corte (Sn/Sp/LR) provienen de los estudios referenciados. La probabilidad es una estimación basada en likelihood ratios pre-test/post-test y no constituye diagnóstico definitivo. Para lesiones condrales, la confirmación requiere RMN.
+    <div style="font-size:6pt;color:#555;font-style:italic;padding:5pt 8pt;background:#1a1c1b;border-radius:3pt;line-height:1.6">
+      ⚠ Este informe no reemplaza el juicio clínico del profesional tratante. Los valores de corte (Sn/Sp/LR) provienen de los estudios referenciados. La probabilidad es una estimación basada en likelihood ratios y no constituye diagnóstico definitivo. Lesiones condrales requieren confirmación por RMN.
     </div>
   </div>
 
-  <!-- BIBLIOGRAFÍA -->
+  <!-- 10 BIBLIOGRAFÍA -->
   <div class="section">
-    ${secHeader('08.', 'BIBLIOGRAFÍA')}
-    <div style="display:grid;grid-template-columns:1fr;gap:4pt">
-      ${refs.map((r, i) => `<div style="font-size:6pt;color:#555;padding:3pt 0;border-bottom:1pt solid #252827">[${i + 1}] ${r}</div>`).join('')}
+    ${secHeader('10.', 'BIBLIOGRAFÍA')}
+    <div>
+      ${refs.map((r, i) => `<div style="font-size:5.5pt;color:#555;padding:2.5pt 0;border-bottom:1pt solid #222">[${i + 1}] ${r}</div>`).join('')}
+    </div>
+  </div>
+
+  <!-- FIRMA -->
+  <div style="margin-top:20pt;padding-top:10pt;border-top:1pt solid #2e312e;display:flex;justify-content:space-between;align-items:flex-end">
+    <div style="font-size:6pt;color:#3a3d3a">
+      <div>MOVEMETRICS · Kinesiología basada en evidencia</div>
+      <div>CPG: Willy 2019 JOSPT · Logerstedt 2018 · Stiell 1995</div>
+    </div>
+    <div style="text-align:right">
+      <div style="width:130pt;border-top:1pt solid #3a3d3a;margin-bottom:4pt"></div>
+      <div style="font-size:8pt;font-weight:700;color:#ccc">${kine}</div>
+      <div style="font-size:6pt;color:#444">Kinesiólogo/a · Fecha: ${fecha}</div>
     </div>
   </div>
 
 </div>
 
+</div><!-- /report-body -->
+
+<script>
+function toggleEditMode() {
+  const body = document.getElementById('report-body');
+  const btn  = document.getElementById('edit-btn');
+  const editing = body.contentEditable === 'true';
+  body.contentEditable = editing ? 'false' : 'true';
+  body.style.outline   = editing ? 'none' : '2px dashed rgba(57,255,122,.35)';
+  btn.textContent      = editing ? '✏ Editar' : '✓ Listo';
+  btn.style.background = editing ? '#2a2e2b' : '#1a3a25';
+  btn.style.color      = editing ? '#aaa' : '#39ff7a';
+}
+</script>
+
 </body>
 </html>`;
 
-  const win = window.open('', '_blank', 'width=960,height=780,scrollbars=yes,menubar=yes');
+  const win = window.open('', '_blank', 'width=960,height=860,resizable=yes,scrollbars=yes');
   if (!win) { alert('Popup bloqueado. Habilitá popups para este sitio.'); return; }
   win.document.open();
   win.document.write(html);
