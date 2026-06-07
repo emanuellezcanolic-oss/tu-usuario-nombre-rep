@@ -160,7 +160,7 @@ const WOMET_SECTIONS = [
 // 8 ítems · 0–10 por ítem · suma ×1.25 = 0–100
 // <80 = sintomático · MCID: 13 pts
 // ══════════════════════════════════════════════════════
-const VISAP_ITEMS = [
+const VISAP_P_ITEMS = [
   { q: '¿Cuánto dolor tenés en el tendón rotuliano al despertar por la mañana? (0=muy severo · 10=ninguno)' },
   { q: 'Durante o después del entrenamiento, ¿cuánto dolor tenés en el tendón rotuliano? (0=muy severo · 10=ninguno)' },
   { q: 'Al bajar escaleras con paso normal, ¿cuánto dolor sentís? (0=muy severo · 10=ninguno)' },

@@ -447,12 +447,11 @@ function calcRodROM() {
 // ── VISA-P (Visentini 1998 / Hernandez-Sanchez 2011 validación española) ─────
 // 8 ítems × 0–10: suma max 80 → escalado ×1.25 = 0–100
 // 0=peor síntoma / 10=sin síntoma · <80 = sintomático · MCID: 13 pts
-let visapVals = new Array(8).fill(0);
 function buildVISAP() {
   const c = document.getElementById('visap-fields');
   if (!c || c.innerHTML) return;
   visapVals = new Array(8).fill(0);
-  c.innerHTML = VISAP_ITEMS.map((item, i) => `
+  c.innerHTML = VISAP_P_ITEMS.map((item, i) => `
     <div style="padding:10px 0;border-bottom:1px solid var(--border)">
       <div style="font-size:11px;font-weight:600;margin-bottom:5px;color:var(--text1)">${i + 1}. ${item.q}</div>
       <div style="display:flex;align-items:center;gap:10px">
