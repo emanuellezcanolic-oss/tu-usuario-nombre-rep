@@ -2241,10 +2241,33 @@ function toggleEstudio(e){
 }
 
 function restoreKineForm(){
+  // 1. Limpiar todos los campos primero (evita que queden datos del atleta anterior)
+  ['kine-motivo','kine-mecanismo','kine-medico','kine-dx','kine-trat-cual',
+   'kine-deporte-prev','kine-act-actual','kine-frec','kine-horas',
+   'kine-obj-det','kine-antec-obs','kine-dolor-mov',
+   'kine-fecha-lesion','kine-fecha-cx'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  const evaEl=document.getElementById('kine-eva'); if(evaEl){evaEl.value=0;}
+  ['est-resonancia','est-radiografia','est-ecografia','est-tomografia'].forEach(id=>{
+    const btn=document.getElementById(id); if(btn) btn.classList.remove('yes');
+  });
+  ['kine-trat-si','kine-trat-no'].forEach(id=>{
+    const btn=document.getElementById(id); if(btn) btn.classList.remove('yes');
+  });
+  document.querySelectorAll('.kine-antec').forEach(cb=>cb.checked=false);
+  document.querySelectorAll('.kine-objetivo').forEach(cb=>cb.checked=false);
+
+  // 2. Restaurar datos del atleta actual
   const f=kineState.form||{};
-  const fields={'kine-motivo':'motivo','kine-mecanismo':'mecanismo','kine-medico':'medico','kine-dx':'dx','kine-trat-cual':'trat_cual','kine-deporte-prev':'deporte_prev','kine-act-actual':'act_actual','kine-frec':'frec','kine-horas':'horas','kine-obj-det':'obj_det','kine-antec-obs':'antec_obs','kine-dolor-mov':'dolor_mov'};
+  const fields={'kine-motivo':'motivo','kine-mecanismo':'mecanismo','kine-medico':'medico',
+    'kine-dx':'dx','kine-trat-cual':'trat_cual','kine-deporte-prev':'deporte_prev',
+    'kine-act-actual':'act_actual','kine-frec':'frec','kine-horas':'horas',
+    'kine-obj-det':'obj_det','kine-antec-obs':'antec_obs','kine-dolor-mov':'dolor_mov',
+    'kine-fecha-lesion':'fecha_lesion','kine-fecha-cx':'fecha_cx'};
   Object.entries(fields).forEach(([id,key])=>{const el=document.getElementById(id);if(el&&f[key])el.value=f[key];});
   if(f.eva!==undefined){const e=document.getElementById('kine-eva');if(e){e.value=f.eva;updateEVA();}}
+  else updateEVA();
   if(f.estudios)f.estudios.forEach(e=>{const btn=document.getElementById('est-'+e);if(btn)btn.classList.add('yes');});
   if(f.tratPrevio)setKineTrat(f.tratPrevio);
   if(f.antecedentes)f.antecedentes.forEach(a=>{const cb=document.querySelector(`.kine-antec[value="${a}"]`);if(cb)cb.checked=true;});
@@ -2254,7 +2277,7 @@ function restoreKineForm(){
 function saveKinesio(){
   if(!cur){alert('Seleccioná un atleta');return;}
   const form=kineState.form||{};
-  const textFields={'kine-motivo':'motivo','kine-mecanismo':'mecanismo','kine-medico':'medico','kine-dx':'dx','kine-trat-cual':'trat_cual','kine-deporte-prev':'deporte_prev','kine-act-actual':'act_actual','kine-frec':'frec','kine-horas':'horas','kine-obj-det':'obj_det','kine-antec-obs':'antec_obs','kine-dolor-mov':'dolor_mov'};
+  const textFields={'kine-motivo':'motivo','kine-mecanismo':'mecanismo','kine-medico':'medico','kine-dx':'dx','kine-trat-cual':'trat_cual','kine-deporte-prev':'deporte_prev','kine-act-actual':'act_actual','kine-frec':'frec','kine-horas':'horas','kine-obj-det':'obj_det','kine-antec-obs':'antec_obs','kine-dolor-mov':'dolor_mov','kine-fecha-lesion':'fecha_lesion','kine-fecha-cx':'fecha_cx'};
   Object.entries(textFields).forEach(([id,key])=>{const el=document.getElementById(id);if(el)form[key]=el.value;});
   form.eva=+document.getElementById('kine-eva')?.value||0;
   form.antecedentes=[...document.querySelectorAll('.kine-antec:checked')].map(cb=>cb.value);
