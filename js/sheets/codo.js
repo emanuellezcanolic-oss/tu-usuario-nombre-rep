@@ -381,6 +381,127 @@ function _readCodoSessionData() {
   };
 }
 
+function _writeCodoSessionData(data) {
+  if (!data) return;
+  const sv = (id, val) => { const el = document.getElementById(id); if(el && val !== undefined && val !== null && val !== '') el.value = val; };
+
+  // Inputs básicos
+  sv('codo-nprs-reposo', data.nprsReposo); sv('codo-nprs-mov', data.nprsMov); sv('codo-nprs-func', data.nprsFunc);
+  sv('codo-dominancia', data.dominancia); sv('codo-lado', data.lado);
+  sv('codo-tiempo', data.tiempo); sv('codo-actividad', data.actividad); sv('codo-obs-text', data.obsText);
+  sv('pfgs-d', data.pfgsD); sv('pfgs-i', data.pfgsI);
+  sv('grip-max-d', data.gripD); sv('grip-max-i', data.gripI);
+  sv('ppt-d', data.pptD); sv('ppt-i', data.pptI);
+  // Actualizar span displays de sliders NPRS
+  ['codo-nprs-reposo','codo-nprs-mov','codo-nprs-func'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el && el.nextElementSibling) el.nextElementSibling.textContent = el.value;
+  });
+
+  // Síntomas
+  if (data.symptomsChecked) {
+    document.querySelectorAll('#codo-symptoms-list input[type=checkbox]').forEach(cb => {
+      cb.checked = data.symptomsChecked.includes(cb.value);
+    });
+  }
+
+  // Tests ortopédicos (estados pos/neg + EVA sliders)
+  if (data.tests) {
+    const allTests = [
+      ...(typeof CODO_TESTS_LATERAL !== 'undefined' ? CODO_TESTS_LATERAL : []),
+      ...(typeof CODO_TESTS_MEDIAL  !== 'undefined' ? CODO_TESTS_MEDIAL  : []),
+      ...(typeof CODO_TESTS_NEURAL  !== 'undefined' ? CODO_TESTS_NEURAL  : []),
+    ];
+    allTests.forEach(test => {
+      const td = data.tests[test.id]; if (!td) return;
+      const card = document.querySelector(`[data-test-id="${test.id}"]`); if (!card) return;
+      const cols = card.querySelectorAll('.codo-test-col');
+      [cols[0], cols[1]].forEach((col, idx) => {
+        if (!col) return;
+        const state = idx === 0 ? td.d : td.i;
+        const btns  = col.querySelectorAll('.ot-btn');
+        btns.forEach(b => b.classList.remove('pos','neg'));
+        if (state === 'pos' && btns[0]) btns[0].classList.add('pos');
+        if (state === 'neg' && btns[1]) btns[1].classList.add('neg');
+        const slider = col.querySelector('.eva-slider');
+        const valEl  = col.querySelector('span');
+        const evaVal = idx === 0 ? td.evaD : td.evaI;
+        if (slider && evaVal !== undefined) {
+          slider.value = evaVal;
+          slider.disabled = state === 'neg';
+          slider.style.opacity = state === 'neg' ? '0.25' : '1';
+          if (valEl) valEl.textContent = evaVal;
+        }
+      });
+    });
+  }
+
+  // ROM
+  if (data.rom) {
+    (typeof CODO_ROM !== 'undefined' ? CODO_ROM : []).forEach(m => {
+      const r = data.rom[m.id]; if (!r) return;
+      sv(`crom-${m.id}-act-d`, r.actD); sv(`crom-${m.id}-act-i`, r.actI);
+      sv(`crom-${m.id}-pas-d`, r.pasD); sv(`crom-${m.id}-pas-i`, r.pasI);
+    });
+  }
+
+  // PRTEE — restaurar arrays y botones
+  const restorePrteeList = (listId, savedVals, prefix) => {
+    if (!savedVals?.length) return;
+    const items = document.querySelectorAll(`#${listId} > div`);
+    items.forEach((item, i) => {
+      const v = savedVals[i];
+      if (v === null || v === undefined) return;
+      item.querySelectorAll('.ot-btn').forEach(b => {
+        b.className = 'ot-btn'; b.style.minWidth='24px'; b.style.fontSize='10px'; b.style.padding='2px 4px';
+      });
+      const btn = item.querySelectorAll('.ot-btn')[v]; // v = 0–10
+      if (btn) btn.classList.add('pos');
+      if (prefix === 'dolor') prteeDolorVals[i] = v;
+      else if (prefix === 'activ') prteeActivVals[i] = v;
+      else if (prefix === 'usual') prteeUsualVals[i] = v;
+    });
+  };
+  if (data.prteeDolorVals || data.prteeActivVals || data.prteeUsualVals) {
+    prteeDolorVals = new Array(5).fill(null);
+    prteeActivVals = new Array(6).fill(null);
+    prteeUsualVals = new Array(4).fill(null);
+    restorePrteeList('prtee-dolor-list', data.prteeDolorVals, 'dolor');
+    restorePrteeList('prtee-activ-list', data.prteeActivVals, 'activ');
+    restorePrteeList('prtee-usual-list', data.prteeUsualVals, 'usual');
+    try {
+      const sc = calcPRTEEScore();
+      const el = document.getElementById('prtee-total');
+      if (el && sc !== null) { el.textContent = sc; el.style.color = sc<=20?'var(--neon)':sc<=50?'var(--amber)':'var(--red)'; }
+    } catch(e){}
+  }
+
+  // QuickDASH
+  if (data.codoQDashVals) {
+    codoQDashVals = new Array(11).fill(null);
+    const qItems = document.querySelectorAll('#codo-qdash-list > div');
+    data.codoQDashVals.forEach((v, i) => {
+      if (v === null || v === undefined) return;
+      const item = qItems[i]; if (!item) return;
+      item.querySelectorAll('.ot-btn').forEach(b => { b.className='ot-btn'; b.style.minWidth='22px'; b.style.fontSize='10px'; b.style.padding='3px'; });
+      const btn = item.querySelectorAll('.ot-btn')[v - 1]; // v = 1–5
+      if (btn) btn.classList.add('pos');
+      codoQDashVals[i] = v;
+    });
+    try {
+      const sc = calcCodoQDASH();
+      const el = document.getElementById('codo-qdash-total');
+      if (el && sc !== null) { el.textContent = sc; el.style.color = sc<=20?'var(--neon)':sc<=50?'var(--amber)':'var(--red)'; }
+    } catch(e){}
+  }
+
+  // Re-renderizar diagnósticos
+  try {
+    if(typeof renderDiagnosticosCodo === 'function')
+      renderDiagnosticosCodo(_getCodoModalPositivos(), _getCodoSelectedSymptoms());
+  } catch(e){}
+}
+
 function saveCodoSession() {
   if (!cur) { alert('Abrí la ficha del paciente primero'); return; }
   const name = prompt('Nombre para esta evaluación (ej. "Sesión 1 — inicial"):', `Sesión ${(cur.klinical?.codo?.sessions||[]).length + 1}`);

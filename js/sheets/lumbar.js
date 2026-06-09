@@ -463,6 +463,17 @@ function _readLBPSessionData() {
   };
 }
 
+// Restaura un snapshot completo en el formulario (usado por draft restore)
+function _writeLBPSessionData(data) {
+  if (!data) return;
+  const _tmp = cur?.klinical?.lbp?.sessions;
+  if (!cur.klinical) cur.klinical = {};
+  if (!cur.klinical.lbp) cur.klinical.lbp = {};
+  cur.klinical.lbp.sessions = [data];
+  loadLBPSession(0);
+  cur.klinical.lbp.sessions = _tmp || [];
+}
+
 function saveLBPSession() {
   if (!cur) { alert('Abrí la ficha del paciente primero'); return; }
   const name = prompt('Nombre para esta evaluación:', `Sesión ${(cur.klinical?.lbp?.sessions||[]).length + 1}`);

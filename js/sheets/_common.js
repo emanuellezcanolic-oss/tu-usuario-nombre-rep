@@ -10,16 +10,40 @@ function toggleSheetSection(id) {
 
 function initKlinicalSheet(panel) {
   // Build content based on which sheet opened
-  if (panel === 'codo') { initCodoSheet(); return; }
+  if (panel === 'codo') {
+    initCodoSheet();
+    // Restaurar draft
+    if(cur?.klinical?.codo?.draft && typeof _writeCodoSessionData === 'function') {
+      setTimeout(() => _writeCodoSessionData(cur.klinical.codo.draft), 60);
+    }
+    return;
+  }
   if (panel === 'hombro' || panel === 'munieca') {
     initHombroSheet();
     if(typeof refreshHombroSessionBar==='function') refreshHombroSessionBar();
+    // Restaurar draft guardado con "Guardar evaluación hombro"
+    if(cur?.klinical?.hombro?.draft && typeof _writeHombroSessionData === 'function') {
+      setTimeout(() => _writeHombroSessionData(cur.klinical.hombro.draft), 60);
+    }
   }
   if (panel === 'cadera' || panel === 'gluteo' || panel === 'ingle') { initCaderaSheet(); return; }
   if (panel === 'rodilla') initRodillaSheet();
   if (panel === 'tobillo' || panel === 'pantorrilla' || panel === 'pie') initTobilloSheet();
-  if (panel === 'cervical') { initCervicalSheet(); return; }
-  if (panel === 'lumbar' || panel === 'lumbar-post' || panel === 'dorsal') initLBPSheet();
+  if (panel === 'cervical') {
+    initCervicalSheet();
+    // Restaurar draft
+    if(cur?.klinical?.cervical?.draft && typeof _writeCervicalSessionData === 'function') {
+      setTimeout(() => _writeCervicalSessionData(cur.klinical.cervical.draft), 60);
+    }
+    return;
+  }
+  if (panel === 'lumbar' || panel === 'lumbar-post' || panel === 'dorsal') {
+    initLBPSheet();
+    // Restaurar draft
+    if(cur?.klinical?.lbp?.draft && typeof _writeLBPSessionData === 'function') {
+      setTimeout(() => _writeLBPSessionData(cur.klinical.lbp.draft), 60);
+    }
+  }
 }
 
 function initHombroSheet() {
@@ -147,6 +171,30 @@ function saveKlinicalSheet(type) {
     const cfrtI = +document.getElementById('cfrt-i')?.value || null;
     cur.klinical.cervical.cfrtD = cfrtD;
     cur.klinical.cervical.cfrtI = cfrtI;
+    // Draft completo (para restaurar al reabrir modal)
+    if(typeof _readCervicalSessionData === 'function') {
+      cur.klinical.cervical.draft = _readCervicalSessionData();
+    }
+  }
+  if(type==='hombro') {
+    // Guardar snapshot completo del formulario (tests, ROM, escalas, RTP, obs)
+    if(typeof _readHombroSessionData === 'function') {
+      if(!cur.klinical.hombro) cur.klinical.hombro = {};
+      cur.klinical.hombro.draft = _readHombroSessionData();
+    }
+  }
+  if(type==='codo') {
+    // Guardar snapshot completo del formulario codo
+    if(typeof _readCodoSessionData === 'function') {
+      if(!cur.klinical.codo) cur.klinical.codo = {};
+      cur.klinical.codo.draft = _readCodoSessionData();
+    }
+  }
+  if(type==='lbp') {
+    if(typeof _readLBPSessionData === 'function') {
+      if(!cur.klinical.lbp) cur.klinical.lbp = {};
+      cur.klinical.lbp.draft = _readLBPSessionData();
+    }
   }
   atletas = atletas.map(a => a.id===cur.id ? cur : a);
   saveData();

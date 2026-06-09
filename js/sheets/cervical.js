@@ -520,6 +520,19 @@ function _readCervicalSessionData() {
   };
 }
 
+// Restaura un snapshot completo en el formulario (usado por draft restore)
+function _writeCervicalSessionData(data) {
+  if (!data) return;
+  // Reutiliza la lógica de loadCervicalSession enviando data como sesión directa
+  // Guardamos temporalmente y llamamos a loadCervicalSession
+  const _tmpSessions = cur?.klinical?.cervical?.sessions;
+  if (!cur.klinical) cur.klinical = {};
+  if (!cur.klinical.cervical) cur.klinical.cervical = {};
+  cur.klinical.cervical.sessions = [data];
+  loadCervicalSession(0);
+  cur.klinical.cervical.sessions = _tmpSessions || [];
+}
+
 function saveCervicalSession() {
   if (!cur) { alert('Abrí la ficha del paciente primero'); return; }
   const name = prompt('Nombre para esta evaluación:', `Sesión ${(cur.klinical?.cervical?.sessions||[]).length + 1}`);
