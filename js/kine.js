@@ -409,6 +409,12 @@ function restoreKineForm(){
   });
   document.querySelectorAll('.kine-antec').forEach(cb=>cb.checked=false);
   document.querySelectorAll('.kine-objetivo').forEach(cb=>cb.checked=false);
+  document.querySelectorAll('[name="kine-star-irritabilidad"]').forEach(r=>r.checked=false);
+  ['kine-star-card-alta','kine-star-card-moderada','kine-star-card-baja'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){const v=id.replace('kine-star-card-','');const dim={alta:'rgba(255,68,68,.15)',moderada:'rgba(255,176,32,.15)',baja:'rgba(0,200,100,.15)'};el.style.border='2px solid '+dim[v];el.style.background='';}
+  });
+  const starFocoEl=document.getElementById('kine-star-foco');if(starFocoEl)starFocoEl.style.display='none';
 
   // 2. Restaurar datos del atleta actual
   const f=kineState.form||{};
@@ -424,6 +430,7 @@ function restoreKineForm(){
   if(f.tratPrevio)setKineTrat(f.tratPrevio);
   if(f.antecedentes)f.antecedentes.forEach(a=>{const cb=document.querySelector(`.kine-antec[value="${a}"]`);if(cb)cb.checked=true;});
   if(f.objetivos)f.objetivos.forEach(o=>{const cb=document.querySelector(`.kine-objetivo[value="${o}"]`);if(cb)cb.checked=true;});
+  if(f.starIrritabilidad)try{updateKineSTAR(f.starIrritabilidad);}catch(e){}
 }
 
 function saveKinesio(){
@@ -434,6 +441,7 @@ function saveKinesio(){
   form.eva=+document.getElementById('kine-eva')?.value||0;
   form.antecedentes=[...document.querySelectorAll('.kine-antec:checked')].map(cb=>cb.value);
   form.objetivos=[...document.querySelectorAll('.kine-objetivo:checked')].map(cb=>cb.value);
+  form.starIrritabilidad=document.querySelector('[name="kine-star-irritabilidad"]:checked')?.value||'';
   form.fecha=document.getElementById('kine-fecha')?.value;
   kineState.form=form;
   cur.kinesio=JSON.parse(JSON.stringify(kineState));
@@ -697,6 +705,35 @@ Respondé ÚNICAMENTE con JSON válido, sin texto adicional:
 }
 
 window.anamnesisIA = anamnesisIA;
+
+// STAR-Hombro Nivel 3 — Clasificación irritabilidad (kinesio module compact version)
+function updateKineSTAR(val) {
+  ['alta','moderada','baja'].forEach(v => {
+    const card = document.getElementById('kine-star-card-'+v);
+    if (!card) return;
+    const colors = {alta:'rgba(255,68,68,.3)',moderada:'rgba(255,176,32,.3)',baja:'rgba(0,200,100,.3)'};
+    const dim    = {alta:'rgba(255,68,68,.15)',moderada:'rgba(255,176,32,.15)',baja:'rgba(0,200,100,.15)'};
+    card.style.border = '2px solid '+(v===val?colors[v]:dim[v]);
+    card.style.background = v===val?colors[v].replace('.3','.07'):'';
+  });
+  const radio = document.querySelector(`[name="kine-star-irritabilidad"][value="${val}"]`);
+  if (radio) radio.checked = true;
+  const foco = document.getElementById('kine-star-foco');
+  if (!foco) return;
+  const focos = {
+    alta:     {color:'var(--red)',    bg:'rgba(255,68,68,.07)',   border:'rgba(255,68,68,.2)',   txt:'Minimizar estrés físico — Modulación del dolor · Modificación de actividad · Monitoreo de deterioro'},
+    moderada: {color:'var(--amber)',  bg:'rgba(255,176,32,.07)',  border:'rgba(255,176,32,.2)',  txt:'Estrés físico leve-moderado — Abordar deterioros · Restaurar actividad funcional básica'},
+    baja:     {color:'var(--neon)',   bg:'rgba(0,200,100,.07)',   border:'rgba(0,200,100,.2)',   txt:'Estrés físico moderado-alto — Abordar deterioros · Restaurar actividad funcional de alta demanda'},
+  };
+  const c = focos[val];
+  if (!c) { foco.style.display='none'; return; }
+  foco.style.display = 'block';
+  foco.style.background = c.bg;
+  foco.style.border = '1px solid '+c.border;
+  foco.style.color = c.color;
+  foco.innerHTML = `<b>Foco terapéutico:</b> ${c.txt}`;
+}
+window.updateKineSTAR = updateKineSTAR;
 
 // ══════════════════════════════════════════════════════
 //  INFORME IA + PDF

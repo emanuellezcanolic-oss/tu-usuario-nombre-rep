@@ -296,6 +296,40 @@
               <textarea class="inp" id="kine-obj-det" rows="2" placeholder="Objetivos específicos adicionales..."></textarea></div>
           </div>
         </div>
+
+        <!-- STAR-Hombro Nivel 3: Irritabilidad tisular (McClure & Michener 2015) -->
+        <div class="card" style="border-color:rgba(77,158,255,.25)" id="kine-star-card">
+          <div class="card-header">
+            <h3 style="color:var(--neon);font-size:12px">⚡ Clasificación STAR — Irritabilidad tisular</h3>
+            <span style="font-size:9px;color:var(--text3)">McClure &amp; Michener 2015 · Orienta intensidad de tratamiento</span>
+          </div>
+          <div class="card-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px">
+              <label style="cursor:pointer" onclick="updateKineSTAR('alta')">
+                <input type="radio" name="kine-star-irritabilidad" value="alta" id="kine-star-alta" style="display:none">
+                <div id="kine-star-card-alta" style="border:2px solid rgba(255,68,68,.2);border-radius:8px;padding:8px;text-align:center;transition:all .2s">
+                  <div style="font-weight:700;font-size:11px;color:var(--red)">🔴 ALTA</div>
+                  <div style="font-size:9px;color:var(--text3);margin-top:3px">EVA ≥7 · Dolor en reposo<br>AROM &lt; PROM</div>
+                </div>
+              </label>
+              <label style="cursor:pointer" onclick="updateKineSTAR('moderada')">
+                <input type="radio" name="kine-star-irritabilidad" value="moderada" id="kine-star-moderada" style="display:none">
+                <div id="kine-star-card-moderada" style="border:2px solid rgba(255,176,32,.2);border-radius:8px;padding:8px;text-align:center;transition:all .2s">
+                  <div style="font-weight:700;font-size:11px;color:var(--amber)">🟡 MODERADA</div>
+                  <div style="font-size:9px;color:var(--text3);margin-top:3px">EVA 4–6 · Dolor al final<br>AROM ≈ PROM</div>
+                </div>
+              </label>
+              <label style="cursor:pointer" onclick="updateKineSTAR('baja')">
+                <input type="radio" name="kine-star-irritabilidad" value="baja" id="kine-star-baja" style="display:none">
+                <div id="kine-star-card-baja" style="border:2px solid rgba(0,200,100,.2);border-radius:8px;padding:8px;text-align:center;transition:all .2s">
+                  <div style="font-weight:700;font-size:11px;color:var(--neon)">🟢 BAJA</div>
+                  <div style="font-size:9px;color:var(--text3);margin-top:3px">EVA ≤3 · Sin dolor reposo<br>AROM = PROM</div>
+                </div>
+              </label>
+            </div>
+            <div id="kine-star-foco" style="display:none;font-size:10px;padding:6px 8px;border-radius:6px;line-height:1.5"></div>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -2839,7 +2873,7 @@
   <script src="js/informe/sections/cierre.js?v=2"></script>
   <script src="js/informe/template-filler.js?v=1"></script>
   <script src="js/informe/generators/movilidad-tobillo.js?v=1"></script>
-  <script src="js/kine.js?v=11"></script>
+  <script src="js/kine.js?v=12"></script>
   <script src="js/diagnostico-cadera.js?v=2"></script>
   <script src="js/diagnostico-hombro.js?v=2"></script>
   <script src="js/diagnostico-codo.js?v=1"></script>
@@ -2856,7 +2890,7 @@
   <script src="js/lesion.js?v=6"></script>
   <!-- Clinical sheets split por articulación (originalmente klinical.js 1163 LOC) -->
   <script src="js/sheets/_common.js?v=10"></script>
-  <script src="js/sheets/hombro.js?v=11"></script>
+  <script src="js/sheets/hombro.js?v=12"></script>
   <script src="js/data/papers-rodilla-rules.js?v=4"></script>
   <script src="js/sheets/rodilla.js?v=7"></script>
   <script src="js/sheets/tobillo.js?v=1"></script>
@@ -3220,18 +3254,23 @@
 
     <!-- TAB: OBSERVACIÓN -->
     <div id="htab-obs">
-      <!-- Banderas rojas CPG 2025 -->
+      <!-- Banderas rojas STAR-Hombro (McClure & Michener 2015) + CPG 2025 Rec.#3 -->
       <div class="card card-danger mb-12">
-        <div class="card-header"><h3 style="color:var(--red)">🚨 Banderas rojas (CPG 2025 Rec.#3)</h3></div>
+        <div class="card-header"><h3 style="color:var(--red)">🚨 Banderas rojas — Nivel 1 STAR (McClure 2015 · CPG 2025)</h3></div>
         <div class="card-body">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:8px">Presencia → derivar médico ANTES de continuar tratamiento kinesiológico</div>
           <div style="display:flex;flex-direction:column;gap:8px">
-            <label style="display:flex;align-items:center;justify-content:space-between;font-size:12px">Deformidad sospechosa<input type="checkbox" class="hombro-redflag" style="accent-color:var(--red);width:18px;height:18px" onchange="checkHombroRedFlags()"></label>
-            <label style="display:flex;align-items:center;justify-content:space-between;font-size:12px">Fiebre / escalofríos<input type="checkbox" class="hombro-redflag" style="accent-color:var(--red);width:18px;height:18px" onchange="checkHombroRedFlags()"></label>
-            <label style="display:flex;align-items:center;justify-content:space-between;font-size:12px">Síntomas cardiovasculares / viscerales<input type="checkbox" class="hombro-redflag" style="accent-color:var(--red);width:18px;height:18px" onchange="checkHombroRedFlags()"></label>
-            <label style="display:flex;align-items:center;justify-content:space-between;font-size:12px">Antecedentes o sospecha de cáncer<input type="checkbox" class="hombro-redflag" style="accent-color:var(--red);width:18px;height:18px" onchange="checkHombroRedFlags()"></label>
+            <label style="display:flex;align-items:center;justify-content:space-between;font-size:12px">Fractura / luxación — trauma + deformidad o imposibilidad de AROM<input type="checkbox" class="hombro-redflag" style="accent-color:var(--red);width:18px;height:18px" onchange="checkHombroRedFlags()"></label>
+            <label style="display:flex;align-items:center;justify-content:space-between;font-size:12px">Infección — fiebre/escalofríos + articulación eritematosa/caliente<input type="checkbox" class="hombro-redflag" style="accent-color:var(--red);width:18px;height:18px" onchange="checkHombroRedFlags()"></label>
+            <label style="display:flex;align-items:center;justify-content:space-between;font-size:12px">Patología visceral/cardiovascular — dolor no reproducible con estrés GH (referido)<input type="checkbox" class="hombro-redflag" style="accent-color:var(--red);width:18px;height:18px" onchange="checkHombroRedFlags()"></label>
+            <label style="display:flex;align-items:center;justify-content:space-between;font-size:12px">Tumor / Neoplasia — antecedentes oncológicos + pérdida de peso / dolor nocturno intenso<input type="checkbox" class="hombro-redflag" style="accent-color:var(--red);width:18px;height:18px" onchange="checkHombroRedFlags()"></label>
+            <label style="display:flex;align-items:center;justify-content:space-between;font-size:12px">Lesión neurológica — debilidad progresiva + parestesias en distribución dermatomal<input type="checkbox" class="hombro-redflag" style="accent-color:var(--red);width:18px;height:18px" onchange="checkHombroRedFlags()"></label>
+          </div>
+          <div style="margin-top:8px;padding:6px 8px;background:rgba(255,68,68,.07);border-radius:6px;font-size:10px;color:var(--text3)">
+            <b style="color:var(--text2)">Criterios viscerales específicos (STAR):</b> síntomas GI · dolor escapular con comidas grasas · síntomas con esfuerzo/respiración · signos cardiovasculares
           </div>
           <div id="hombro-redflag-alert" style="display:none;margin-top:10px;padding:10px;background:var(--red);border-radius:8px;color:#000;font-weight:700;font-size:12px">
-            ⚠️ BANDERA ROJA ACTIVA — Derivar a especialista médico
+            ⚠️ BANDERA ROJA ACTIVA — Derivar a especialista médico antes de continuar
           </div>
         </div>
       </div>
@@ -3258,6 +3297,63 @@
           </div>
           <div class="ig mt-8"><label class="il">Observaciones</label>
             <textarea class="inp" rows="2" placeholder="Postura escapular, alineación, asimetría..."></textarea></div>
+        </div>
+      </div>
+
+      <!-- STAR-Hombro Nivel 3: Clasificación por irritabilidad tisular -->
+      <div class="card mt-12" style="border-color:rgba(77,158,255,.3)" id="htab-obs-star">
+        <div class="card-header">
+          <h3 style="color:var(--neon)">⚡ Clasificación STAR — Nivel 3: Irritabilidad tisular</h3>
+          <span class="tag tag-b" style="font-size:9px">McClure &amp; Michener 2015</span>
+        </div>
+        <div class="card-body">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:12px">Determina la intensidad de estrés físico aplicable. Reevaluar en cada sesión — cambia durante el proceso rehabilitador.</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+            <!-- ALTA -->
+            <label style="cursor:pointer" onclick="updateHombroSTAR('alta')">
+              <input type="radio" name="hombro-star-irritabilidad" value="alta" style="display:none" onchange="updateHombroSTAR('alta')">
+              <div id="star-card-alta" style="border:2px solid rgba(255,68,68,.25);border-radius:10px;padding:10px;transition:all .2s">
+                <div style="font-weight:700;font-size:12px;color:var(--red);margin-bottom:6px">🔴 ALTA</div>
+                <div style="font-size:10px;color:var(--text2);line-height:1.5">
+                  Dolor ≥7/10<br>
+                  Dolor nocturno/reposo constante<br>
+                  Dolor ANTES del final del ROM<br>
+                  AROM &lt; PROM<br>
+                  Alta discapacidad funcional
+                </div>
+              </div>
+            </label>
+            <!-- MODERADA -->
+            <label style="cursor:pointer" onclick="updateHombroSTAR('moderada')">
+              <input type="radio" name="hombro-star-irritabilidad" value="moderada" style="display:none" onchange="updateHombroSTAR('moderada')">
+              <div id="star-card-moderada" style="border:2px solid rgba(255,176,32,.25);border-radius:10px;padding:10px;transition:all .2s">
+                <div style="font-weight:700;font-size:12px;color:var(--amber);margin-bottom:6px">🟡 MODERADA</div>
+                <div style="font-size:10px;color:var(--text2);line-height:1.5">
+                  Dolor 4–6/10<br>
+                  Dolor nocturno/reposo intermitente<br>
+                  Dolor AL FINAL del ROM<br>
+                  AROM ≈ PROM<br>
+                  Discapacidad moderada
+                </div>
+              </div>
+            </label>
+            <!-- BAJA -->
+            <label style="cursor:pointer" onclick="updateHombroSTAR('baja')">
+              <input type="radio" name="hombro-star-irritabilidad" value="baja" style="display:none" onchange="updateHombroSTAR('baja')">
+              <div id="star-card-baja" style="border:2px solid rgba(0,200,100,.25);border-radius:10px;padding:10px;transition:all .2s">
+                <div style="font-weight:700;font-size:12px;color:var(--neon);margin-bottom:6px">🟢 BAJA</div>
+                <div style="font-size:10px;color:var(--text2);line-height:1.5">
+                  Dolor ≤3/10<br>
+                  Sin dolor nocturno/reposo<br>
+                  Dolor mínimo con sobrepresión<br>
+                  AROM = PROM<br>
+                  Baja discapacidad funcional
+                </div>
+              </div>
+            </label>
+          </div>
+          <!-- Panel de intervenciones por nivel -->
+          <div id="star-intervenciones" style="display:none;padding:10px;border-radius:8px;font-size:11px;line-height:1.6"></div>
         </div>
       </div>
     </div>

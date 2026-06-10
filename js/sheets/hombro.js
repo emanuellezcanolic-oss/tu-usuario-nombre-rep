@@ -302,6 +302,94 @@ function checkHombroRedFlags() {
   const el = document.getElementById('hombro-redflag-alert'); if(el) el.style.display=any?'block':'none';
 }
 
+// STAR-Hombro Nivel 3 — Irritabilidad tisular (McClure & Michener 2015)
+function updateHombroSTAR(val) {
+  // Highlight selected card
+  ['alta','moderada','baja'].forEach(v => {
+    const card = document.getElementById('star-card-'+v);
+    if (!card) return;
+    if (v === val) {
+      const colors = {alta:'rgba(255,68,68,.35)',moderada:'rgba(255,176,32,.35)',baja:'rgba(0,200,100,.35)'};
+      card.style.border = '2px solid '+colors[v];
+      card.style.background = colors[v].replace('.35','.08');
+    } else {
+      const dimColors = {alta:'rgba(255,68,68,.15)',moderada:'rgba(255,176,32,.15)',baja:'rgba(0,200,100,.15)'};
+      card.style.border = '2px solid '+dimColors[v];
+      card.style.background = '';
+    }
+  });
+  // Check the radio
+  const radio = document.querySelector(`[name="hombro-star-irritabilidad"][value="${val}"]`);
+  if (radio) radio.checked = true;
+
+  const panel = document.getElementById('star-intervenciones');
+  if (!panel) return;
+
+  const contenidos = {
+    alta: {
+      color: 'var(--red)', bg: 'rgba(255,68,68,.07)', border: 'rgba(255,68,68,.2)',
+      titulo: '🔴 Irritabilidad ALTA — Minimizar estrés físico',
+      foco: 'Modulación del dolor · Modificación de actividad · Monitoreo de deterioro',
+      intervenciones: [
+        ['Dolor / tejido local', 'Modificación de actividad + terapia manual + modalidades analgésicas'],
+        ['Sensibilización central', 'Exposición progresiva controlada + manejo médico si corresponde'],
+        ['Movilidad pasiva limitada', 'ROM libre de dolor · Stretching suave en rango NO terminal'],
+        ['Hiperlaxitud pasiva', 'Proteger de rango terminal · Actividad cardiovascular region no afectada'],
+        ['Debilidad neuromuscular', 'AROM en rangos libres de dolor · Biofeedback / NMES si inhibición'],
+        ['Intolerancia funcional', 'Proteger de rangos terminales · Movilizar regiones no afectadas'],
+        ['Educación', 'Educación en neurociencia del dolor · Estrategias de autogestión'],
+      ]
+    },
+    moderada: {
+      color: 'var(--amber)', bg: 'rgba(255,176,32,.07)', border: 'rgba(255,176,32,.2)',
+      titulo: '🟡 Irritabilidad MODERADA — Estrés físico leve-moderado',
+      foco: 'Abordar deterioros · Restaurar actividad funcional básica',
+      intervenciones: [
+        ['Dolor / tejido local', 'Modificación de actividad + terapia manual + modalidades limitadas'],
+        ['Sensibilización central', 'Exposición progresiva + abordaje médico interdisciplinario'],
+        ['Movilidad pasiva limitada', 'Stretching intermitente en rango terminal cómodo'],
+        ['Hiperlaxitud pasiva', 'Control activo en rango medio · Abordar hipmovilidades adyacentes'],
+        ['Debilidad neuromuscular', 'Resistencia leve-moderada hasta fatiga · Rangos medios'],
+        ['Control motor deficiente', 'Entrenamiento básico de movimiento con énfasis en calidad'],
+        ['Intolerancia funcional', 'Progresión gradual en actividades funcionales básicas'],
+        ['Educación', 'Expectativas de recuperación · Adherencia al programa'],
+      ]
+    },
+    baja: {
+      color: 'var(--neon)', bg: 'rgba(0,200,100,.07)', border: 'rgba(0,200,100,.2)',
+      titulo: '🟢 Irritabilidad BAJA — Estrés físico moderado-alto',
+      foco: 'Abordar deterioros · Restaurar actividad funcional de alta demanda',
+      intervenciones: [
+        ['Dolor / tejido local', 'Sin modalidades analgésicas · Carga progresiva bien tolerada'],
+        ['Sensibilización central', 'Exposición progresiva a actividad de alta demanda'],
+        ['Movilidad pasiva limitada', 'Stretching tolerable en rango terminal · Mayor duración y frecuencia'],
+        ['Hiperlaxitud pasiva', 'Control activo en rango completo · Actividad funcional de alta demanda'],
+        ['Debilidad neuromuscular', 'Resistencia moderada-alta hasta fatiga · Incluir rangos terminales'],
+        ['Control motor deficiente', 'Entrenamiento de alta demanda con énfasis en calidad de movimiento'],
+        ['Intolerancia funcional', 'Progresión a actividades funcionales de alta demanda / deporte'],
+        ['Educación', 'Criterios de RTP · Prevención de recaídas · Carga de entrenamiento'],
+      ]
+    }
+  };
+
+  const c = contenidos[val];
+  if (!c) { panel.style.display='none'; return; }
+
+  panel.style.display = 'block';
+  panel.style.background = c.bg;
+  panel.style.border = '1px solid '+c.border;
+  panel.innerHTML = `
+    <div style="font-weight:700;font-size:12px;color:${c.color};margin-bottom:4px">${c.titulo}</div>
+    <div style="font-size:10px;color:var(--text3);margin-bottom:10px">Foco: ${c.foco}</div>
+    <div style="display:flex;flex-direction:column;gap:4px">
+      ${c.intervenciones.map(([imp,int]) => `
+        <div style="display:grid;grid-template-columns:160px 1fr;gap:6px;padding:4px 0;border-top:1px solid rgba(255,255,255,.05)">
+          <span style="font-size:10px;color:var(--text3);font-weight:600">${imp}</span>
+          <span style="font-size:10px;color:var(--text2)">${int}</span>
+        </div>`).join('')}
+    </div>`;
+}
+
 // ── RTP: RETORNO AL JUEGO ─────────────────────────────────────────────────────
 // Kurz et al. BMJ Open 2023 (Delphi) · Otley et al. 2024 · Olds 2019 (SARTS) · Reddy JSES 2023
 
@@ -1037,6 +1125,7 @@ function _readHombroSessionData() {
   data.obs.atrofiaD = atSelects[0]?.value || '';
   data.obs.atrofiaI = atSelects[1]?.value || '';
   data.obs.obsText  = document.querySelector('#htab-obs textarea')?.value || '';
+  data.obs.starIrritabilidad = document.querySelector('[name="hombro-star-irritabilidad"]:checked')?.value || '';
 
   return data;
 }
@@ -1163,6 +1252,7 @@ function _writeHombroSessionData(data) {
   if (atSelects[1] && data.obs?.atrofiaI) atSelects[1].value = data.obs.atrofiaI;
   const obsTextEl = document.querySelector('#htab-obs textarea');
   if (obsTextEl) obsTextEl.value = data.obs?.obsText || '';
+  if (data.obs?.starIrritabilidad) try { updateHombroSTAR(data.obs.starIrritabilidad); } catch(e){}
 }
 
 function saveHombroSession() {
@@ -1339,9 +1429,13 @@ function generarInformeHombro() {
 
   // Red flags & prognostic factors
   const redflags = [...document.querySelectorAll('.hombro-redflag:checked')].length > 0;
+  const redflagLabels = [...document.querySelectorAll('.hombro-redflag:checked')].map(c => c.closest('label')?.textContent?.trim().replace(/\s+/g,' ') || '').filter(Boolean);
   const progCbs  = [...document.querySelectorAll('#htab-obs .card:nth-child(2) input[type=checkbox]:checked')];
   const progList = progCbs.map(el => el.closest('label')?.textContent?.trim() || '').filter(Boolean);
   const obsNotes = document.querySelector('#htab-obs textarea')?.value || '';
+  const starIrrit = document.querySelector('[name="hombro-star-irritabilidad"]:checked')?.value || '';
+  const starLabels = {alta:'ALTA — Minimizar estrés físico', moderada:'MODERADA — Estrés físico leve-moderado', baja:'BAJA — Estrés físico moderado-alto'};
+  const starFoco   = {alta:'Modulación del dolor · Modificación de actividad', moderada:'Abordar deterioros · Actividad funcional básica', baja:'Abordar deterioros · Actividad funcional de alta demanda'};
 
   // ROM
   const romRows = (ROM_HOMBRO||[]).map(m => ({
@@ -1454,13 +1548,20 @@ function generarInformeHombro() {
         ${_infRow('Fecha de evaluación', fecha)}
       </div>
       <div style="background:#f5f7ee;border-radius:6px;padding:12px;border:1px solid #e8f0d4">
-        <div style="font-size:9px;text-transform:uppercase;color:#8fa845;font-weight:700;letter-spacing:1px;margin-bottom:8px">Screening CPG 2025</div>
+        <div style="font-size:9px;text-transform:uppercase;color:#8fa845;font-weight:700;letter-spacing:1px;margin-bottom:8px">Screening STAR-Hombro (Nivel 1–3)</div>
         <div style="font-size:11px;font-weight:700;margin-bottom:8px;color:${redflags?'#cc3333':'#2d7a2d'}">
-          ${redflags ? '⚠ BANDERAS ROJAS DETECTADAS — DERIVAR' : '✓ Sin banderas rojas'}
+          ${redflags ? '⚠ BANDERAS ROJAS DETECTADAS — DERIVAR' : '✓ Nivel 1: Sin banderas rojas'}
         </div>
-        ${progList.length ? `<div style="font-size:10px;color:#c65a00;font-weight:600;margin-bottom:4px">Factores pronósticos activos:</div>
+        ${redflagLabels.length ? redflagLabels.map(l=>`<div style="font-size:10px;color:#cc3333">⚠ ${l}</div>`).join('') : ''}
+        ${progList.length ? `<div style="font-size:10px;color:#c65a00;font-weight:600;margin-top:6px;margin-bottom:4px">Factores pronósticos activos:</div>
           ${progList.map(f=>`<div style="font-size:10px;color:#c65a00">• ${f}</div>`).join('')}`
-        : `<div style="font-size:10px;color:#666">Sin factores pronósticos relevantes</div>`}
+        : `<div style="font-size:10px;color:#666;margin-top:6px">Sin factores pronósticos relevantes</div>`}
+        ${starIrrit ? `
+          <div style="margin-top:10px;padding:8px;background:${starIrrit==='alta'?'#fff0f0':starIrrit==='moderada'?'#fff8e8':'#f0fff6'};border-radius:5px;border-left:3px solid ${starIrrit==='alta'?'#cc3333':starIrrit==='moderada'?'#c07000':'#2d7a2d'}">
+            <div style="font-size:9px;text-transform:uppercase;font-weight:700;color:${starIrrit==='alta'?'#cc3333':starIrrit==='moderada'?'#c07000':'#2d7a2d'};letter-spacing:.5px;margin-bottom:2px">STAR Nivel 3 — Irritabilidad tisular</div>
+            <div style="font-size:11px;font-weight:700">${starLabels[starIrrit]||starIrrit.toUpperCase()}</div>
+            <div style="font-size:10px;color:#555;margin-top:2px">Foco: ${starFoco[starIrrit]||''}</div>
+          </div>` : ''}
         ${obsNotes ? `<div style="font-size:10px;color:#444;margin-top:8px;font-style:italic">${obsNotes}</div>` : ''}
       </div>
     </div>`;
