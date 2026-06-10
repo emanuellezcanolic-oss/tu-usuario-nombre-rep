@@ -570,8 +570,8 @@ Respondé ÚNICAMENTE con JSON válido, sin texto adicional:
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + API_KEY },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        max_tokens: 800,
+        model: 'llama-3.1-8b-instant',
+        max_tokens: 600,
         temperature: 0,
         messages: [
           { role: 'system', content: 'Sos un asistente clínico de kinesiología deportiva. Respondés SOLO con JSON válido, sin markdown, sin explicaciones.' },

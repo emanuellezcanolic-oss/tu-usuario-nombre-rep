@@ -13,7 +13,7 @@ const KD = { W:297, H:210, M:12 };
 let _kCtx = {};
 
 function _kToast(msg, type) {
-  if (typeof showToast === 'function') _kToast(msg, type);
+  if (typeof showToast === 'function') showToast(msg, type);
   else { const t=type==='error'?'❌':type==='ok'?'✓':'ℹ'; console.log(t,msg); }
 }
 

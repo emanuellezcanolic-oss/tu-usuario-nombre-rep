@@ -221,11 +221,6 @@ function showProfileTab(tab, btn) {
 
 function openModal(id)  { document.getElementById(id).classList.add('open');    document.body.style.overflow = 'hidden'; }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.modal').forEach(m =>
-    m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); })
-  );
-});
 
 // ══════════════════════════════════════════════════════
 //  PERSISTENCIA
@@ -245,14 +240,13 @@ function showSaveToast() {
 }
 
 // ══════════════════════════════════════════════════════
-//  ATLETAS CRUD
-// ══════════════════════════════════════════════════════
-
-// ══════════════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════════════
 
 document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.modal').forEach(m =>
+    m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); })
+  );
   renderAtletas();
   buildSaltosGrid();
   buildHooperFields();
@@ -263,7 +257,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const el = document.getElementById(id); if (el) el.value = today;
   });
   ['g-ld','g-li','g-tcd','g-tci'].forEach(id => drawGauge(id, 0, 0, 100, 'lunge'));
-  // Ctrl+S
   document.addEventListener('keydown', e => {
     if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); if (cur) saveData(); }
   });
