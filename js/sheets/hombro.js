@@ -289,11 +289,38 @@ function selectDASH(btn, idx, val) {
 
 function calcSPADI() {
   const sliders = document.querySelectorAll('#spadi-body .eva-slider');
-  if(sliders.length>=2){
-    const d=+sliders[0].value, dis=+sliders[1].value;
-    const total=((d+dis)/2).toFixed(1);
-    const el=document.getElementById('spadi-total');if(el)el.textContent=total;
+  if (sliders.length < 2) return;
+  const d = +sliders[0].value, dis = +sliders[1].value;
+  const total = ((d + dis) / 2).toFixed(1);
+  const el = document.getElementById('spadi-total');
+  if (el) el.textContent = total;
+
+  // Interpretation thresholds — Porollan et al. JSES International 2025 (SPADI-Ar)
+  // MDC=6.05 · MCID=18.46 · SCB=27.69 · PASS=21.35
+  const interp = document.getElementById('spadi-interp');
+  if (!interp) return;
+  const t = parseFloat(total);
+  let label, color, detail;
+  if (t <= 21.35) {
+    label = '✓ PASS — Estado aceptable para el paciente'; color = 'var(--neon)';
+    detail = 'Puntuación ≤21.35 = Estado sintomático aceptable (PASS). El paciente considera su estado como aceptable si persistiera.';
+  } else if (t <= 40) {
+    label = 'Moderado — Por encima del PASS'; color = 'var(--amber)';
+    detail = 'Supera el umbral PASS (21.35). Seguimiento recomendado.';
+  } else if (t <= 60) {
+    label = 'Alto — Dolor/discapacidad significativa'; color = 'var(--amber)';
+    detail = 'Puntuación elevada. Una mejoría ≥18.46 pts (MCID) indicará cambio clínicamente importante.';
+  } else {
+    label = '⚠ Muy alto — Compromiso severo'; color = 'var(--red)';
+    detail = 'Puntuación ≥60. Se espera mejoría sustancial ≥27.69 pts (SCB) para considerar beneficio clínico significativo.';
   }
+  interp.innerHTML = `
+    <div style="font-weight:700;font-size:11px;color:${color};margin-bottom:4px">${label}</div>
+    <div style="font-size:10px;color:var(--text3);line-height:1.5">${detail}</div>
+    <div style="font-size:9px;color:var(--text3);margin-top:6px;border-top:1px solid rgba(255,255,255,.05);padding-top:4px">
+      Umbrales SPADI-Ar (Porollan et al. 2025 · n=101 · Hospital Durand, Buenos Aires):
+      MDC <b>6.05</b> · MCID <b>18.46</b> · SCB <b>27.69</b> · PASS <b>21.35</b> · ICC 0.89 · SEM 2.18
+    </div>`;
 }
 
 function checkHombroRedFlags() {
@@ -1665,9 +1692,10 @@ function generarInformeHombro() {
         <td><strong>${dash}/100</strong></td><td>10.2 pts</td>
         <td class="${+dash<=30?'ok':+dash<=50?'limite':'alerta'}">${+dash<=30?'Discapacidad leve':+dash<=50?'Discapacidad moderada':'Discapacidad severa'}</td></tr>`:''}
       ${spadi&&spadi!=='—'?`<tr>
-        ${_scaleNameCell('SPADI','Shoulder Pain and Disability Index — Roach et al. 1991','Evalúa dolor (5 ítems) e interferencia funcional (8 ítems) del hombro. Subescalas independientes + score total 0–100; mayor puntaje = mayor dolor y discapacidad.')}
-        <td><strong>${spadi}/100</strong></td><td>8 pts</td>
-        <td class="${+spadi<=30?'ok':+spadi<=50?'limite':'alerta'}">${+spadi<=30?'Leve':+spadi<=50?'Moderado':'Severo'}</td></tr>`:''}
+        ${_scaleNameCell('SPADI-Ar','Shoulder Pain and Disability Index — Versión Argentina (Porollan et al. JSES Int. 2025)','Evalúa dolor (5 ítems) e interferencia funcional (8 ítems) del hombro. Score total 0–100; mayor = mayor discapacidad. Validado en Argentina (ICC 0.89, SEM 2.18, n=101 · H. Durand, Buenos Aires).')}
+        <td><strong>${spadi}/100</strong></td>
+        <td style="font-size:10px">MDC 6.05<br>MCID 18.46<br>SCB 27.69<br>PASS ≤21.35</td>
+        <td class="${+spadi<=21.35?'ok':+spadi<=40?'limite':'alerta'}" style="font-size:10px">${+spadi<=21.35?'✓ PASS — Estado aceptable':+spadi<=40?'Por encima del PASS':+spadi<=60?'Significativo — Objetivo MCID -18.46':'⚠ Severo — Objetivo SCB -27.69'}</td></tr>`:''}
     </table>` : '';
 
   // 07 — RTP

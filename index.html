@@ -2873,7 +2873,7 @@
   <script src="js/informe/sections/cierre.js?v=2"></script>
   <script src="js/informe/template-filler.js?v=1"></script>
   <script src="js/informe/generators/movilidad-tobillo.js?v=1"></script>
-  <script src="js/kine.js?v=12"></script>
+  <script src="js/kine.js?v=13"></script>
   <script src="js/diagnostico-cadera.js?v=2"></script>
   <script src="js/diagnostico-hombro.js?v=2"></script>
   <script src="js/diagnostico-codo.js?v=1"></script>
@@ -2890,7 +2890,7 @@
   <script src="js/lesion.js?v=6"></script>
   <!-- Clinical sheets split por articulación (originalmente klinical.js 1163 LOC) -->
   <script src="js/sheets/_common.js?v=10"></script>
-  <script src="js/sheets/hombro.js?v=12"></script>
+  <script src="js/sheets/hombro.js?v=13"></script>
   <script src="js/data/papers-rodilla-rules.js?v=4"></script>
   <script src="js/sheets/rodilla.js?v=7"></script>
   <script src="js/sheets/tobillo.js?v=1"></script>
@@ -3486,23 +3486,35 @@
           </div>
         </div>
       </div>
-      <!-- SPADI -->
+      <!-- SPADI — versión argentina (Porollan et al. JSES International 2025) -->
       <div class="card" style="border-color:rgba(167,139,250,.2)">
         <div class="card-header" style="cursor:pointer" onclick="toggleSheetSection('spadi-body')">
-          <h3>SPADI</h3><span class="tag" style="background:rgba(167,139,250,.15);color:#A78BFA">0–100 · MCID 8</span>
+          <h3>SPADI — Versión Argentina</h3><span class="tag" style="background:rgba(167,139,250,.15);color:#A78BFA">0–100 · MCID 18.46</span>
         </div>
         <div id="spadi-body" style="display:none">
           <div class="card-body">
-            <div class="ig"><label class="il">Dolor promedio 5 ítems (0–100)</label>
+            <div style="font-size:10px;color:var(--text3);margin-bottom:10px;padding:6px 8px;background:rgba(167,139,250,.06);border-radius:6px;line-height:1.5">
+              13 ítems: 5 dolor + 8 discapacidad. Cada subescala promedio → 0–100 (mayor = más discapacidad). Score total = promedio de ambas.<br>
+              <b style="color:#A78BFA">SPADI-Ar</b> — Porollan et al. JSES International 2025 · n=101 · Hospital Durand, Buenos Aires
+            </div>
+            <div class="ig"><label class="il">Subescala Dolor — promedio 5 ítems (0–100)</label>
               <input type="range" class="eva-slider" min="0" max="100" value="0" oninput="this.nextElementSibling.textContent=this.value;calcSPADI()">
               <div style="font-family:var(--mono);font-size:18px;text-align:center;color:var(--amber)">0</div></div>
-            <div class="ig"><label class="il">Discapacidad promedio 8 ítems (0–100)</label>
+            <div class="ig mt-8"><label class="il">Subescala Discapacidad — promedio 8 ítems (0–100)</label>
               <input type="range" class="eva-slider" min="0" max="100" value="0" oninput="this.nextElementSibling.textContent=this.value;calcSPADI()">
               <div style="font-family:var(--mono);font-size:18px;text-align:center;color:var(--amber)">0</div></div>
             <div class="card mt-10" style="border-color:rgba(167,139,250,.3)">
-              <div class="card-body" style="display:flex;justify-content:space-between;align-items:center">
-                <div><div style="font-size:12px;font-weight:600">SPADI total</div><div style="font-size:10px;color:var(--text2)">0 = mejor · MCID: 8 pts</div></div>
-                <div id="spadi-total" style="font-family:var(--mono);font-size:28px;font-weight:800;color:var(--neon)">—</div>
+              <div class="card-body">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                  <div>
+                    <div style="font-size:12px;font-weight:600">SPADI total</div>
+                    <div style="font-size:10px;color:var(--text3)">MDC 6.05 · MCID 18.46 · SCB 27.69 · PASS ≤21.35</div>
+                  </div>
+                  <div id="spadi-total" style="font-family:var(--mono);font-size:28px;font-weight:800;color:var(--neon)">—</div>
+                </div>
+                <div id="spadi-interp" style="font-size:10px;color:var(--text3);padding:8px;background:var(--bg4);border-radius:6px;line-height:1.5">
+                  Completá las subescalas para ver interpretación clínica
+                </div>
               </div>
             </div>
           </div>
@@ -3835,6 +3847,29 @@
         <div class="card-body">
           <div style="font-size:10px;color:var(--text3);margin-bottom:8px">Marcá los síntomas presentes. Combinados con los tests ortopédicos generan el diagnóstico diferencial.</div>
           <div id="cx-symptoms-list"></div>
+        </div>
+      </div>
+      <!-- Evidencia tratamiento: STONE trial -->
+      <div class="card mb-12" style="border-color:rgba(77,158,255,.3)">
+        <div class="card-header" style="background:rgba(77,158,255,.08)">
+          <h3 style="color:var(--blue,#4D9EFF)">📊 Evidencia de Tratamiento — Dolor Cervical Subagudo/Crónico</h3>
+          <span class="tag tag-b" style="font-size:9px">STONE Trial · RCT · n=183</span>
+        </div>
+        <div class="card-body" style="font-size:11px;line-height:1.5">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:8px">de Morton et al. · Musculoskelet Sci Pract 2020 · Análisis costo-efectividad</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+            <div style="padding:8px;background:rgba(77,158,255,.08);border-radius:6px;border:1px solid rgba(77,158,255,.2)">
+              <div style="font-size:10px;font-weight:700;color:var(--blue,#4D9EFF);margin-bottom:4px">✓ Ejercicios + Consejo</div>
+              <div style="font-size:10px;color:var(--text2)">Opción más costo-efectiva · Mejora EQ-5D-3L · Dominante vs masaje en umbral <strong>17.640 EUR/QALY</strong></div>
+            </div>
+            <div style="padding:8px;background:rgba(251,191,36,.08);border-radius:6px;border:1px solid rgba(251,191,36,.2)">
+              <div style="font-size:10px;font-weight:700;color:var(--amber);margin-bottom:4px">~ Masaje Tejido Profundo</div>
+              <div style="font-size:10px;color:var(--text2)">Efectos comparables pero mayor costo · Justificado si tolerancia baja a ejercicio activo</div>
+            </div>
+          </div>
+          <div style="font-size:10px;color:var(--text3);padding:6px 8px;background:var(--bg4);border-radius:6px">
+            💡 <strong>Recomendación:</strong> Iniciar con programa de ejercicios supervisados + educación/consejo. El masaje como coadyuvante si hay resistencia al ejercicio activo.
+          </div>
         </div>
       </div>
     </div>
