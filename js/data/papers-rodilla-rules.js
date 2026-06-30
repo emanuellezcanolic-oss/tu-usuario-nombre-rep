@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════
-// papers-rodilla-rules.js v3
-// Base de evidencia: LCA · LCP · SPF · Menisco · Condral
+// papers-rodilla-rules.js v5
+// Base de evidencia: LCA · LCP · SPF · Menisco · Condral · SFBI/ITBS
 // Fuentes principales:
 //   Logerstedt DS et al. JOSPT 2018;48(2):A1-A50 (CPG Revision)
 //   Logerstedt DS et al. JOSPT 2010;40(9):A1-A35 (Menisco CPG)
@@ -8,6 +8,9 @@
 //   Wilk KE et al. JOSPT 2006;36(10):815-827 (Condral)
 //   Willy RW et al. JOSPT 2019;49(9):CPG1-CPG95 (SPF)
 //   Logerstedt DS et al. Sports Med 2021 (Carga articular)
+//   Sanchez-Alvarado A et al. Front Sports Act Living 2024;6:1386456 (ITBS SR)
+//   Beals C & Flanigan D. J Sports Med 2013;367169 (ITBS tratamiento)
+//   McKay J et al. BMC Sports Sci Med Rehab 2020 (ITBS rehabilitación corredoras)
 // ═══════════════════════════════════════════════════════════════
 
 // ══════════════════════════════════════════════════════
@@ -1178,4 +1181,104 @@ const RODILLA_REFS = {
   kirkley2007:     'Kirkley A et al. The development and validation of a quality of life-measurement tool for patients with meniscal pathology: the Western Ontario Meniscal Evaluation Tool (WOMET). Clin J Sport Med. 2007;17(5):349-356.',
   visentini1998:   'Visentini PJ et al. The VISA score: an index of severity of symptoms in patients with jumper\'s knee. J Sci Med Sport. 1998;1(1):22-28.',
   hernandez2011:   'Hernandez-Sanchez S et al. Cross-cultural adaptation of VISA-P score for patellar tendinopathy in Spanish population. J Orthop Sports Phys Ther. 2011;41(8):581-591.',
+  noble1980:       'Noble CA. Iliotibial band friction syndrome in runners. Am J Sports Med. 1980;8(4):232-234.',
+  lavine2010:      'Lavine R. Iliotibial band friction syndrome. Curr Rev Musculoskelet Med. 2010;3(1-4):18-22.',
+  beals2013:       'Beals C & Flanigan D. A Review of Treatments for Iliotibial Band Syndrome in the Athletic Population. J Sports Med. 2013;367169.',
+  mckay2020:       'McKay J et al. Iliotibial band syndrome rehabilitation in female runners: a pilot randomized study. BMC Sports Sci Med Rehab. 2020;12:1.',
+  sanchezalvarado2024: 'Sanchez-Alvarado A et al. Effects of conservative treatment strategies for ITBS on pain and function in runners. Front Sports Act Living. 2024;6:1386456.',
+  kakouris2021:    'Kakouris N et al. A systematic review of running-related musculoskeletal injuries in runners. J Sport Health Sci. 2021;10(5):513-522.',
+  orchard1996:     'Orchard JW et al. Biomechanical analysis of iliotibial band friction syndrome in runners. Am J Sports Med. 1996;24(3):375-379.',
 };
+
+
+// ══════════════════════════════════════════════════════
+// SÍNDROME DE FRICCIÓN DE LA BANDA ILIOTIBIAL (SFBI / ITBS)
+// Sanchez-Alvarado A et al. Front Sports Act Living 2024;6:1386456
+// Beals C & Flanigan D. J Sports Med 2013;367169
+// McKay J et al. BMC Sports Sci Med Rehab 2020;12:1
+// Noble CA. Am J Sports Med 1980;8(4):232-234
+// Lavine R. Curr Rev Musculoskelet Med 2010;3:18-22
+// ══════════════════════════════════════════════════════
+
+const RODILLA_ITBS_TESTS = [
+  {
+    id: 'noble_compression',
+    nombre: 'Noble Compression Test',
+    categoria: 'test_diagnostico',
+    sn: 0.97, sp: null, lrPos: null, lrNeg: null,
+    referencia: 'Noble 1980 · Lavine 2010',
+    protocolo: 'Decúbito supino, rodilla a 30° flexión. Presión manual sobre epicóndilo femoral lateral (2-3 cm proximal). Positivo: dolor reproducido en zona de impingement.',
+    interpretacion: 'Alta sensibilidad (0.97). Test de elección para confirmar ITBS. Dolor a 30° = zona de impingement ITB.',
+    urgente: false,
+  },
+  {
+    id: 'renne_test',
+    nombre: 'Renne Test (Single-Leg Squat 30-40°)',
+    categoria: 'test_diagnostico',
+    sn: null, sp: null, lrPos: null, lrNeg: null,
+    referencia: 'Renne 1975 · Lavine 2010',
+    protocolo: 'De pie en apoyo monopodal. Flexionar rodilla a 30-40° (posición de impingement). Positivo: dolor en epicóndilo femoral lateral reproducido.',
+    interpretacion: 'Reproduce dolor en "zona de impingement" (30-40° flexión). Sin valores Sn/Sp establecidos, pero alta especificidad clínica.',
+    urgente: false,
+  },
+  {
+    id: 'ober_test',
+    nombre: 'Ober Test (Tensión ITB/TFL)',
+    categoria: 'test_flexibilidad',
+    sn: null, sp: null, lrPos: null, lrNeg: null,
+    referencia: 'Ober 1936 · Fredericson 2000',
+    protocolo: 'Decúbito lateral, cadera abducida y extendida. Soltar extremidad. Positivo: cadera no desciende bajo línea horizontal (aducción < 0°).',
+    interpretacion: 'Evalúa tensión TFL/ITB. Positivo = factor predisponente ITBS. No diagnóstico por sí solo pero orienta tratamiento.',
+    urgente: false,
+  },
+  {
+    id: 'thomas_test_tfl',
+    nombre: 'Thomas Test Modificado (TFL)',
+    categoria: 'test_flexibilidad',
+    sn: null, sp: null, lrPos: null, lrNeg: null,
+    referencia: 'Harvey 1998',
+    protocolo: 'Decúbito supino al borde de camilla. Flexionar cadera contralateral. Observar si muslo ipsilateral abducido/rotado externamente al soltar.',
+    interpretacion: 'Positivo con abducción-RE del muslo = retracción TFL. Factor predisponente ITBS.',
+    urgente: false,
+  },
+  {
+    id: 'slmd_30',
+    nombre: 'Single-Leg Mini Squat 30° (Control de Cadera)',
+    categoria: 'evaluacion_funcional',
+    sn: null, sp: null, lrPos: null, lrNeg: null,
+    referencia: 'McKay 2020 · Willy 2014',
+    protocolo: 'De pie unipodal. Sentadilla a 30° rodilla. Observar: aducción cadera, valgus rodilla (FPPA), tronco lateral.',
+    interpretacion: 'Aducción cadera >17° o FPPA >10° = déficit de control neuromuscular. Factor causal en ITBS corredores.',
+    urgente: false,
+  },
+  {
+    id: 'hip_abductor_strength',
+    nombre: 'Fuerza Abductores Cadera (Dinamometría)',
+    categoria: 'evaluacion_funcional',
+    sn: null, sp: null, lrPos: null, lrNeg: null,
+    referencia: 'Fredericson 2000 · Sanchez-Alvarado 2024',
+    protocolo: 'Dinamometría manual o isocinética. Abducción cadera en decúbito lateral. Comparar bilateral.',
+    interpretacion: 'Déficit >15% lado afectado = factor predisponente principal. HAS = primera línea de tratamiento (evidencia Nivel II).',
+    urgente: false,
+  },
+];
+
+// Factores de riesgo ITBS
+const ITBS_RISK_FACTORS = [
+  { id: 'weekly_km',      label: 'Kilómetros semanales elevados (>60 km/sem)', peso: 3 },
+  { id: 'downhill',       label: 'Entrenamiento en cuestas/descenso', peso: 3 },
+  { id: 'hip_weakness',   label: 'Debilidad abductores/glúteo medio', peso: 3 },
+  { id: 'itb_tension',    label: 'Tensión TFL/ITB (Ober positivo)', peso: 2 },
+  { id: 'volume_spike',   label: 'Aumento brusco de volumen (>10%/semana)', peso: 3 },
+  { id: 'interval',       label: 'Entrenamiento interválico repetitivo', peso: 2 },
+  { id: 'hard_surface',   label: 'Superficie dura/inclinada lateral', peso: 1 },
+  { id: 'hip_adduction',  label: 'Excesiva aducción/RI cadera en carrera', peso: 3 },
+];
+
+// Estadificación clínica ITBS (Orchard 1996 / Lavine 2010)
+const ITBS_STAGES = [
+  { grade: 1, label: 'Grado I',  desc: 'Dolor post-carrera. No durante.',                color: 'neon'  },
+  { grade: 2, label: 'Grado II', desc: 'Dolor durante carrera. No limita rendimiento.',   color: 'amber' },
+  { grade: 3, label: 'Grado III',desc: 'Dolor que limita la carrera. Presente en AVD.',  color: 'red'   },
+  { grade: 4, label: 'Grado IV', desc: 'Dolor en reposo y actividades cotidianas.',       color: 'red'   },
+];

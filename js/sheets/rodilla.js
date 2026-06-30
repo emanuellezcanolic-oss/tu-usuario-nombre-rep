@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// sheets/rodilla.js v2 — LCA · SPF · Menisco · Condral
+// sheets/rodilla.js v8 — LCA · SPF · Menisco · Condral · ITBS
 // Algoritmo diagnóstico + informe imprimible basado en evidencia
 // ═══════════════════════════════════════════════════════════════
 
@@ -9,6 +9,7 @@ const rodState = {
   spf:   {},
   men:   {},  // menisco
   cond:  {},  // condral
+  itbs:  {},  // síndrome de fricción banda iliotibial
 };
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -291,6 +292,169 @@ function buildRodillaCondral() {
       </div>
     </div>
   `).join('');
+}
+
+// ── BUILDER: ITBS ─────────────────────────────────────────────
+function buildRodillaITBS() {
+  const c = document.getElementById('rodilla-itbs-fields');
+  if (!c || c.innerHTML) return;
+
+  // Header evidencia
+  const header = `
+  <div class="card mb-10" style="border-color:rgba(255,190,0,.3);background:rgba(255,190,0,.04)">
+    <div class="card-body">
+      <div style="font-size:12px;font-weight:700;color:var(--amber);margin-bottom:4px">Síndrome de Fricción de la Banda Iliotibial (SFBI)</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.6">Diagnóstico clínico basado en historia y tests. Prevalencia 7.9-10% de lesiones en corredores. Ningún test único tiene alta Sn/Sp — la combinación de Noble Compression + anamnesis confirma el diagnóstico.</div>
+      <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap">
+        <span style="font-size:9px;color:var(--neon)">✓ 44% curación a 8 sem (Beals 2013)</span>
+        <span style="font-size:9px;color:var(--neon)">✓ 91.7% curación a 6 meses</span>
+        <span style="font-size:9px;color:var(--amber)">⚡ HAS = 1ª línea (Sanchez-Alvarado 2024)</span>
+      </div>
+    </div>
+  </div>`;
+
+  // Grado clínico selector
+  const gradoSection = `
+  <div class="card mb-8" style="border-color:rgba(255,190,0,.25)">
+    <div class="card-header"><h3>Estadificación Clínica (Orchard 1996)</h3></div>
+    <div class="card-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">
+        ${ITBS_STAGES.map(s => `
+        <button id="itbs-grade-${s.grade}" onclick="selectITBSGrade(${s.grade},this)"
+          style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);cursor:pointer;text-align:left">
+          <div style="font-size:10px;font-weight:700;color:var(--${s.color})">${s.label}</div>
+          <div style="font-size:9px;color:var(--text2);margin-top:2px;line-height:1.4">${s.desc}</div>
+        </button>`).join('')}
+      </div>
+      <div id="itbs-grade-display" style="font-size:10px;color:var(--text3);text-align:center">Sin grado seleccionado</div>
+    </div>
+  </div>`;
+
+  // Tests diagnósticos
+  const testsDiag = RODILLA_ITBS_TESTS.filter(t => t.categoria === 'test_diagnostico').map(t => `
+    <div class="card mb-8">
+      <div class="card-header">
+        <div>
+          <h3>${t.nombre}</h3>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px">${t.referencia}</div>
+        </div>
+        <span class="tag tag-a" style="font-size:9px;white-space:nowrap">${t.sn ? `Sn ${t.sn}` : 'Dx Clínico'}</span>
+      </div>
+      <div class="card-body">
+        <div style="font-size:10px;color:var(--text2);margin-bottom:8px;font-style:italic">${t.protocolo}</div>
+        <div style="display:flex;gap:6px;margin-bottom:6px">
+          <button class="ot-btn" onclick="toggleOT(this,'pos');_rodSetTest('itbs','${t.id}',true)">+ POS</button>
+          <button class="ot-btn" onclick="toggleOT(this,'neg');_rodSetTest('itbs','${t.id}',false)">– NEG</button>
+        </div>
+        <div style="font-size:10px;color:var(--neon);margin-top:4px">${t.interpretacion}</div>
+      </div>
+    </div>`).join('');
+
+  // Tests funcionales / flexibilidad
+  const testsFlex = RODILLA_ITBS_TESTS.filter(t => t.categoria !== 'test_diagnostico').map(t => `
+    <div class="card mb-8">
+      <div class="card-header">
+        <div>
+          <h3>${t.nombre}</h3>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px">${t.referencia}</div>
+        </div>
+        <span class="tag" style="font-size:9px;background:rgba(77,158,255,.12);color:var(--blue);border-color:rgba(77,158,255,.3)">${t.categoria === 'evaluacion_funcional' ? 'Funcional' : 'Flexibilidad'}</span>
+      </div>
+      <div class="card-body">
+        <div style="font-size:10px;color:var(--text2);margin-bottom:8px;font-style:italic">${t.protocolo}</div>
+        <div style="display:flex;gap:6px;margin-bottom:6px">
+          <button class="ot-btn" onclick="toggleOT(this,'pos');_rodSetTest('itbs','${t.id}',true)">+ POS</button>
+          <button class="ot-btn" onclick="toggleOT(this,'neg');_rodSetTest('itbs','${t.id}',false)">– NEG</button>
+        </div>
+        <div style="font-size:10px;color:var(--neon);margin-top:4px">${t.interpretacion}</div>
+      </div>
+    </div>`).join('');
+
+  // Factores de riesgo
+  const rfSection = `
+  <div class="card mb-8" style="border-color:rgba(255,190,0,.25)">
+    <div class="card-header"><h3>Factores de Riesgo (Sanchez-Alvarado 2024)</h3></div>
+    <div class="card-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        ${ITBS_RISK_FACTORS.map(rf => `
+        <label style="display:flex;align-items:flex-start;gap:7px;cursor:pointer;padding:5px 6px;border-radius:5px;border:1px solid var(--border);background:var(--bg2)">
+          <input type="checkbox" id="itbs-rf-${rf.id}" onchange="calcITBSRisk()" style="margin-top:2px;accent-color:var(--amber)">
+          <span style="font-size:10px;color:var(--text1);line-height:1.4">${rf.label}</span>
+        </label>`).join('')}
+      </div>
+      <div id="itbs-risk-display" style="margin-top:10px;padding:8px 10px;border-radius:6px;background:var(--bg3);border:1px solid var(--border);font-size:11px;color:var(--text2);text-align:center">
+        Seleccioná factores de riesgo para calcular perfil
+      </div>
+    </div>
+  </div>`;
+
+  // Plan de tratamiento referencial
+  const txSection = `
+  <div class="card mb-8" style="border-color:rgba(57,255,122,.2)">
+    <div class="card-header"><h3>Evidencia Tratamiento Conservador</h3><span class="tag tag-v" style="font-size:9px">Nivel II</span></div>
+    <div class="card-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:10px">
+        <div style="padding:8px;border-radius:5px;background:rgba(57,255,122,.05);border:1px solid rgba(57,255,122,.15)">
+          <div style="font-weight:700;color:var(--neon);margin-bottom:5px">Fase Aguda (0-2 sem)</div>
+          <div style="color:var(--text2);line-height:1.7">• Reposo relativo / carga modificada<br>• Hielo + AINE tópico/oral<br>• Evitar factores desencadenantes<br>• Análisis de carrera y calzado</div>
+        </div>
+        <div style="padding:8px;border-radius:5px;background:rgba(255,190,0,.05);border:1px solid rgba(255,190,0,.15)">
+          <div style="font-weight:700;color:var(--amber);margin-bottom:5px">Fase Subaguda (2-8 sem)</div>
+          <div style="color:var(--text2);line-height:1.7">• HAS: fortalecimiento abductores ⭐<br>• Estiramiento ITB/TFL<br>• Terapia manual EEII<br>• Shockwave focalizada (evidencia moderada)</div>
+        </div>
+        <div style="padding:8px;border-radius:5px;background:rgba(77,158,255,.05);border:1px solid rgba(77,158,255,.15)">
+          <div style="font-weight:700;color:var(--blue);margin-bottom:5px">Fase Funcional (6-12 sem)</div>
+          <div style="color:var(--text2);line-height:1.7">• Reeducación de carrera (cadencia +5-10%)<br>• Progresión de volumen gradual<br>• Retorno progresivo a pista<br>• Control de calidad de movimiento</div>
+        </div>
+        <div style="padding:8px;border-radius:5px;background:rgba(255,70,70,.05);border:1px solid rgba(255,70,70,.15)">
+          <div style="font-weight:700;color:var(--red);margin-bottom:5px">Cirugía (último recurso)</div>
+          <div style="color:var(--text2);line-height:1.7">• Solo si fracaso conservador >6 meses<br>• Bursectomía / liberación ITB<br>• 87% éxito en series quirúrgicas<br>• Baja tasa de recomendación CPG</div>
+        </div>
+      </div>
+      <div style="font-size:9px;color:var(--text3);margin-top:8px">📚 Sanchez-Alvarado 2024 · Beals & Flanigan 2013 · McKay 2020</div>
+    </div>
+  </div>`;
+
+  c.innerHTML = header + gradoSection +
+    `<div style="font-size:11px;font-weight:600;color:var(--text1);margin:10px 0 6px">Tests Diagnósticos</div>` +
+    testsDiag +
+    `<div style="font-size:11px;font-weight:600;color:var(--text1);margin:10px 0 6px">Evaluación Funcional y Flexibilidad</div>` +
+    testsFlex +
+    rfSection + txSection;
+}
+
+// ── Helpers ITBS ──────────────────────────────────────────────
+function selectITBSGrade(grade, el) {
+  ITBS_STAGES.forEach(s => {
+    const btn = document.getElementById('itbs-grade-' + s.grade);
+    if (btn) {
+      btn.style.borderColor = s.grade === grade ? 'var(--amber)' : 'var(--border)';
+      btn.style.background  = s.grade === grade ? 'rgba(255,190,0,.12)' : 'var(--bg2)';
+    }
+  });
+  rodState.itbs._grade = grade;
+  const stage = ITBS_STAGES.find(s => s.grade === grade);
+  const el2 = document.getElementById('itbs-grade-display');
+  if (el2 && stage) {
+    el2.textContent = `Seleccionado: ${stage.label} — ${stage.desc}`;
+    el2.style.color = `var(--${stage.color})`;
+  }
+}
+
+function calcITBSRisk() {
+  const checked = ITBS_RISK_FACTORS.filter(rf =>
+    document.getElementById('itbs-rf-' + rf.id)?.checked
+  );
+  const totalPeso   = checked.reduce((a, rf) => a + rf.peso, 0);
+  const maxPeso     = ITBS_RISK_FACTORS.reduce((a, rf) => a + rf.peso, 0);
+  const pct         = Math.round(totalPeso / maxPeso * 100);
+  const nivel       = pct >= 65 ? 'Alto' : pct >= 35 ? 'Moderado' : 'Bajo';
+  const color       = pct >= 65 ? 'var(--red)' : pct >= 35 ? 'var(--amber)' : 'var(--neon)';
+  const el = document.getElementById('itbs-risk-display');
+  if (el) {
+    el.innerHTML = `Perfil de riesgo: <strong style="color:${color}">${nivel} (${pct}%)</strong> · ${checked.length}/${ITBS_RISK_FACTORS.length} factores presentes`;
+    el.style.borderColor = color;
+  }
 }
 
 // ── ALGORITMO DIAGNÓSTICO ─────────────────────────────────────
@@ -744,6 +908,22 @@ function _rodillaPrintInforme() {
     ...t, resultado: rodState.cond[t.id],
   })).filter(t => t.resultado !== undefined);
 
+  const itbsResults = RODILLA_ITBS_TESTS.map(t => ({
+    ...t, resultado: rodState.itbs[t.id],
+  })).filter(t => t.resultado !== undefined);
+
+  // ── ITBS extras desde DOM ──
+  const itbsGrade = rodState.itbs._grade || null;
+  const itbsGradeInfo = itbsGrade ? ITBS_STAGES.find(s => s.grade === itbsGrade) : null;
+  const itbsRFs = typeof ITBS_RISK_FACTORS !== 'undefined'
+    ? ITBS_RISK_FACTORS.filter(rf => document.getElementById('itbs-rf-' + rf.id)?.checked)
+    : [];
+  const itbsRFPeso  = itbsRFs.reduce((a, rf) => a + rf.peso, 0);
+  const itbsMaxPeso = typeof ITBS_RISK_FACTORS !== 'undefined'
+    ? ITBS_RISK_FACTORS.reduce((a, rf) => a + rf.peso, 0) : 1;
+  const itbsRiskPct = Math.round(itbsRFPeso / itbsMaxPeso * 100);
+  const hasITBS = itbsResults.length > 0 || itbsGrade || itbsRFs.length > 0;
+
   // ── Diagnóstico ──
   const allTests = { ...rodState.lca, ...rodState.spf, ...rodState.men, ...rodState.cond };
   const diagResults = Object.entries(RODILLA_DIAG_LOGIC)
@@ -751,7 +931,7 @@ function _rodillaPrintInforme() {
     .filter(r => r.nivel)
     .sort((a, b) => b.pct - a.pct);
 
-  const totalCompletados = lcaResults.length + spfResults.length + menResults.length + condResults.length;
+  const totalCompletados = lcaResults.length + spfResults.length + menResults.length + condResults.length + itbsResults.length;
 
   // ── Escalas desde DOM ──
   const gt = id => { const el = document.getElementById(id); return (el?.textContent?.trim() || '').replace(/[^0-9.\-]/g,'') || '—'; };
@@ -1069,13 +1249,76 @@ ${hasScales ? `
 
 </div>` : ''}
 
+${hasITBS ? `
+<!-- ── SECCIÓN ITBS ─────────────────────────────────────────── -->
+<div class="page page-break">
+  ${pageHdr}
+
+  <!-- 09 SFBI / ITBS -->
+  <div class="section">
+    ${secHeader('09.', 'SÍNDROME DE FRICCIÓN DE LA BANDA ILIOTIBIAL (SFBI)')}
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12pt;margin-bottom:10pt">
+      <div>
+        <div style="font-size:5.5pt;font-weight:700;letter-spacing:.12em;color:#ffbe00;text-transform:uppercase;margin-bottom:6pt;opacity:.9">ESTADIFICACIÓN CLÍNICA</div>
+        ${itbsGradeInfo ? `
+        <div style="padding:8pt 10pt;background:#2a2600;border:1pt solid #ffbe00;border-radius:4pt">
+          <div style="font-size:9pt;font-weight:800;color:#ffbe00">${itbsGradeInfo.label}</div>
+          <div style="font-size:7.5pt;color:#bbb;margin-top:3pt;line-height:1.5">${itbsGradeInfo.desc}</div>
+        </div>` : `<div style="font-size:7.5pt;color:#555;font-style:italic">Sin estadificación registrada</div>`}
+
+        <div style="margin-top:10pt">
+          <div style="font-size:5.5pt;font-weight:700;letter-spacing:.12em;color:#ffbe00;text-transform:uppercase;margin-bottom:5pt;opacity:.9">PERFIL DE RIESGO</div>
+          ${itbsRFs.length > 0 ? `
+          <div style="padding:7pt 9pt;background:#2a2600;border-radius:3pt;border:1pt solid rgba(255,190,0,.3)">
+            <div style="font-size:8pt;color:#ffbe00;font-weight:700;margin-bottom:4pt">
+              ${itbsRiskPct >= 65 ? 'Alto' : itbsRiskPct >= 35 ? 'Moderado' : 'Bajo'} — ${itbsRiskPct}%
+            </div>
+            ${itbsRFs.map(rf => `<div style="font-size:7pt;color:#aaa;line-height:1.7">• ${rf.label}</div>`).join('')}
+          </div>` : `<div style="font-size:7pt;color:#555;font-style:italic">Sin factores de riesgo registrados</div>`}
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size:5.5pt;font-weight:700;letter-spacing:.12em;color:#ffbe00;text-transform:uppercase;margin-bottom:6pt;opacity:.9">TESTS CLÍNICOS (${itbsResults.length} completados)</div>
+        ${itbsResults.length > 0 ? itbsResults.map(t => {
+          const pos = t.resultado === true;
+          const col = pos ? '#ff4646' : '#39ff7a';
+          const bg  = pos ? '#331515' : '#1a3a25';
+          return `
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:5pt 7pt;margin-bottom:4pt;background:${bg};border-radius:3pt;border:1pt solid ${col}">
+            <div>
+              <div style="font-size:7pt;font-weight:700;color:${col}">${t.nombre}</div>
+              <div style="font-size:5.5pt;color:#888;margin-top:1pt">${t.referencia}</div>
+            </div>
+            <span style="font-size:8pt;font-weight:800;color:${col};white-space:nowrap">${pos ? 'POS' : 'NEG'}</span>
+          </div>`;
+        }).join('') : `<div style="font-size:7.5pt;color:#555;font-style:italic">Sin tests completados</div>`}
+
+        <div style="margin-top:10pt">
+          <div style="font-size:5.5pt;font-weight:700;letter-spacing:.12em;color:#4d9eff;text-transform:uppercase;margin-bottom:5pt;opacity:.9">EVIDENCIA PRONÓSTICA</div>
+          <div style="font-size:7pt;color:#aaa;line-height:1.9;padding:7pt;background:#0d1e3a;border-radius:3pt;border:1pt solid rgba(77,158,255,.2)">
+            44% curación a 8 semanas · 91.7% a 6 meses (Beals & Flanigan 2013)<br>
+            Hip Abductor Strengthening (HAS): ↓27-100% dolor en 2-8 sem (Sanchez-Alvarado 2024)<br>
+            McKay 2020 pilot RCT: HAS superior a estiramiento y ejercicio convencional
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:5.5pt;color:#3a3d3a;font-style:italic;line-height:1.6;padding:5pt 7pt;background:#1a1c1b;border-radius:3pt;border:1pt solid #222">
+      📚 Noble CA. Am J Sports Med 1980 · Sanchez-Alvarado A et al. Front Sports Act Living 2024;6:1386456 · Beals C & Flanigan D. J Sports Med 2013 · McKay J et al. BMC Sports Sci Med Rehab 2020
+    </div>
+  </div>
+</div>` : ''}
+
 <!-- ── PÁGINA FINAL ────────────────────────────────────────────── -->
 <div class="page page-break">
   ${pageHdr}
 
-  <!-- 09 JUICIO CLÍNICO -->
+  <!-- 10 JUICIO CLÍNICO -->
   <div class="section">
-    ${secHeader('09.', 'JUICIO CLÍNICO INTEGRADOR')}
+    ${secHeader('10.', 'JUICIO CLÍNICO INTEGRADOR')}
     <div style="padding:10pt 12pt;background:#1a1c1b;border:1pt solid #2e312e;border-radius:4pt;margin-bottom:9pt;min-height:50pt">
       <div style="font-size:7.5pt;color:#bbb;line-height:1.9">
         ${nombre} presenta una evaluación de rodilla con ${totalCompletados} tests completados.
@@ -1090,7 +1333,7 @@ ${hasScales ? `
 
   <!-- 10 BIBLIOGRAFÍA -->
   <div class="section">
-    ${secHeader('10.', 'BIBLIOGRAFÍA')}
+    ${secHeader('11.', 'BIBLIOGRAFÍA')}
     <div>
       ${refs.map((r, i) => `<div style="font-size:5.5pt;color:#555;padding:2.5pt 0;border-bottom:1pt solid #222">[${i + 1}] ${r}</div>`).join('')}
     </div>
