@@ -2892,7 +2892,7 @@
   <script src="js/sheets/_common.js?v=10"></script>
   <script src="js/sheets/hombro.js?v=13"></script>
   <script src="js/data/papers-rodilla-rules.js?v=5"></script>
-  <script src="js/sheets/rodilla.js?v=8"></script>
+  <script src="js/sheets/rodilla.js?v=9"></script>
   <script src="js/sheets/tobillo.js?v=1"></script>
   <script src="js/sheets/lumbar.js?v=10"></script>
   <script src="js/sheets/groin.js?v=1"></script>
@@ -4043,6 +4043,7 @@
       <button class="btn btn-ghost btn-sm" id="rtab-rtp-btn" onclick="showRTab('rtp',this)" style="white-space:nowrap;font-size:10px">RTP</button>
       <button class="btn btn-ghost btn-sm" id="rtab-cond-btn" onclick="showRTab('cond',this)" style="white-space:nowrap;font-size:10px">Condral</button>
       <button class="btn btn-ghost btn-sm" id="rtab-itbs-btn" onclick="showRTab('itbs',this);buildRodillaITBS()" style="white-space:nowrap;font-size:10px">SFBI/ITBS</button>
+      <button class="btn btn-ghost btn-sm" id="rtab-inf-btn" onclick="showRTab('inf',this);buildRodillaInformePanel()" style="white-space:nowrap;font-size:10px">📄 Informe</button>
     </div>
 
     <!-- SPF -->
@@ -4374,6 +4375,11 @@
     <!-- SFBI / ITBS -->
     <div id="rtab-itbs" style="display:none">
       <div id="rodilla-itbs-fields"></div>
+    </div>
+
+    <!-- INFORME -->
+    <div id="rtab-inf" style="display:none">
+      <div id="rodilla-informe-panel"></div>
     </div>
 
     <!-- Panel diagnóstico algoritmo -->

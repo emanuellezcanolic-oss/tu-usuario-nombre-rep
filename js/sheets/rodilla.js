@@ -882,14 +882,158 @@ function calcWOMET() {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// PANEL DE INFORME — Tab interactivo (patrón hombro)
+// ═══════════════════════════════════════════════════════════════
+function buildRodillaInformePanel() {
+  const c = document.getElementById('rodilla-informe-panel');
+  if (!c) return;
+  // Detect completed sections to pre-check boxes
+  const hasLCAc  = Object.keys(rodState.lca).length > 0;
+  const hasSPFc  = Object.keys(rodState.spf).length > 0;
+  const hasMenc  = Object.keys(rodState.men).length > 0;
+  const hasCondc = Object.keys(rodState.cond).length > 0;
+  const hasITBSc = Object.keys(rodState.itbs).length > 0;
+  const profV    = document.getElementById('prof-nombre')?.value || 'Lic. Emanuel Lezcano';
+
+  c.innerHTML = `
+  <div style="font-size:11px;color:var(--text3);margin-bottom:12px;padding:8px;background:var(--bg4);border-radius:8px;line-height:1.6">
+    <strong style="color:var(--amber)">Informe Clínico de Rodilla</strong> · Genera un PDF profesional con los hallazgos de la evaluación. Solo se incluyen secciones con datos completados.
+  </div>
+
+  <!-- Destinatario -->
+  <div class="card mb-10">
+    <div class="card-header"><h3>Destinatario</h3></div>
+    <div class="card-body">
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px">
+          <input type="radio" name="rinf-dest" value="medico" id="rinf-dest-med" checked
+            onchange="document.getElementById('rinf-med-fields').style.display='block'">
+          Médico / Especialista
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px">
+          <input type="radio" name="rinf-dest" value="paciente" id="rinf-dest-pac"
+            onchange="document.getElementById('rinf-med-fields').style.display='none'">
+          Paciente / Familia
+        </label>
+      </div>
+      <div id="rinf-med-fields">
+        <div class="grid-2" style="gap:8px">
+          <div class="ig"><label class="il">Nombre del médico (Dr./Dra.)</label>
+            <input class="inp" id="rinf-doctor-nombre" placeholder="Ej: Carlos Rodríguez"></div>
+          <div class="ig"><label class="il">Especialidad</label>
+            <input class="inp" id="rinf-doctor-esp" placeholder="Ej: Ortopedia y Traumatología"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firmante -->
+  <div class="card mb-10">
+    <div class="card-header"><h3>Profesional firmante</h3></div>
+    <div class="card-body">
+      <div class="grid-2" style="gap:8px">
+        <div class="ig"><label class="il">Nombre profesional</label>
+          <input class="inp" id="rinf-prof-nombre" placeholder="Lic. Emanuel Lezcano" value="${profV}"></div>
+        <div class="ig"><label class="il">MP / Matrícula</label>
+          <input class="inp" id="rinf-prof-mp" placeholder="MP 12345"></div>
+        <div class="ig"><label class="il">Institución</label>
+          <input class="inp" id="rinf-prof-inst" placeholder="The Move Club"></div>
+        <div class="ig"><label class="il">Diagnóstico kinesiológico</label>
+          <input class="inp" id="rinf-dx-manual" placeholder="Ej: Síndrome Femoro-Patelar crónico bilateral"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Secciones -->
+  <div class="card mb-10">
+    <div class="card-header"><h3>Secciones a incluir</h3></div>
+    <div class="card-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
+          <input type="checkbox" id="rinf-sec-rom" checked> ROM articular
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
+          <input type="checkbox" id="rinf-sec-lca" ${hasLCAc?'checked':''}> Tests LCA/LCP
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
+          <input type="checkbox" id="rinf-sec-spf" ${hasSPFc?'checked':''}> Tests SPF / Patelofemoral
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
+          <input type="checkbox" id="rinf-sec-men" ${hasMenc?'checked':''}> Tests Menisco
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
+          <input type="checkbox" id="rinf-sec-cond" ${hasCondc?'checked':''}> Lesión Condral
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
+          <input type="checkbox" id="rinf-sec-itbs" ${hasITBSc?'checked':''}> SFBI / ITBS
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
+          <input type="checkbox" id="rinf-sec-escalas" checked> Escalas funcionales
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
+          <input type="checkbox" id="rinf-sec-recs" checked> Recomendaciones basadas en evidencia
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notas -->
+  <div class="card mb-12">
+    <div class="card-header"><h3>Notas clínicas adicionales</h3></div>
+    <div class="card-body">
+      <textarea class="inp" id="rinf-notas" rows="3"
+        placeholder="Educación al paciente, contraindicaciones, plan de tratamiento, derivaciones sugeridas..."></textarea>
+    </div>
+  </div>
+
+  <button class="btn btn-neon btn-full" onclick="_rodillaPrintInforme(_getRodillaInformeOpts())" style="font-size:13px">
+    📄 Generar Informe & Abrir para imprimir
+  </button>`;
+}
+
+function _getRodillaInformeOpts() {
+  const chk = id => document.getElementById(id)?.checked ?? true;
+  const val  = id => document.getElementById(id)?.value?.trim() || '';
+  return {
+    doctorNombre: val('rinf-doctor-nombre'),
+    doctorEsp:    val('rinf-doctor-esp'),
+    profNombre:   val('rinf-prof-nombre'),
+    profMp:       val('rinf-prof-mp'),
+    profInst:     val('rinf-prof-inst'),
+    dxManual:     val('rinf-dx-manual'),
+    notas:        val('rinf-notas'),
+    dest:         document.querySelector('input[name="rinf-dest"]:checked')?.value || 'medico',
+    secRom:       chk('rinf-sec-rom'),
+    secLca:       chk('rinf-sec-lca'),
+    secSpf:       chk('rinf-sec-spf'),
+    secMen:       chk('rinf-sec-men'),
+    secCond:      chk('rinf-sec-cond'),
+    secItbs:      chk('rinf-sec-itbs'),
+    secEscalas:   chk('rinf-sec-escalas'),
+    secRecs:      chk('rinf-sec-recs'),
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
 // INFORME IMPRIMIBLE — Rodilla
 // ═══════════════════════════════════════════════════════════════
-function _rodillaPrintInforme() {
+function _rodillaPrintInforme(opts) {
+  opts = opts || {};
   if (!cur) { alert('Seleccioná un atleta primero'); return; }
 
   const nombre   = `${cur.nombre || ''} ${cur.apellido || ''}`.trim();
   const fecha    = new Date().toLocaleDateString('es-AR', {day:'2-digit',month:'long',year:'numeric'});
   const kine     = cur.kine || 'Lic. Emanuel Lezcano';
+
+  // ── Opciones del panel de informe ──
+  const profNombre   = opts.profNombre   || kine;
+  const profMp       = opts.profMp       || '';
+  const profInst     = opts.profInst     || '';
+  const dxManual     = opts.dxManual     || '';
+  const doctorNombre = opts.doctorNombre || '';
+  const doctorEsp    = opts.doctorEsp    || '';
+  const notasInforme = opts.notas        || '';
+  const esMedico     = (opts.dest || 'medico') !== 'paciente';
 
   // ── Reunir resultados ──
   const lcaResults  = RODILLA_LCA_TESTS.map(t => ({
@@ -1023,10 +1167,13 @@ function _rodillaPrintInforme() {
 
   const refs = Object.values(RODILLA_REFS);
   const hasDiag = diagResults.length > 0;
-  const hasLCA  = lcaResults.length > 0;
-  const hasSPF  = spfResults.length > 0;
-  const hasMen  = menResults.length > 0;
-  const hasCond = condResults.length > 0;
+  const hasLCA  = lcaResults.length > 0  && opts.secLca    !== false;
+  const hasSPF  = spfResults.length > 0  && opts.secSpf    !== false;
+  const hasMen  = menResults.length > 0  && opts.secMen    !== false;
+  const hasCond = condResults.length > 0 && opts.secCond   !== false;
+  const showROM   = hasROM     && opts.secRom    !== false;
+  const showScales= hasScales  && opts.secEscalas !== false;
+  const showRecs  = opts.secRecs !== false;
 
   // Composite score menisco — 5 elementos JOSPT 2018 (Logerstedt)
   const compKeys = ['catching_locking','mcmurray','hyperext_forzada','flexion_max','jlt'];
@@ -1036,6 +1183,96 @@ function _rodillaPrintInforme() {
     <div style="font-size:9pt;font-weight:900;color:#fff">MOVEMETRICS <span style="font-weight:400;color:#444">·</span> <span style="font-size:6.5pt;font-weight:600;letter-spacing:.1em;color:#39ff7a;text-transform:uppercase">EVALUACIÓN RODILLA</span></div>
     <div style="font-size:6.5pt;color:#555">${nombre} · ${fecha}</div>
   </div>`;
+
+  // ── Generar recomendaciones basadas en evidencia ──────────────
+  const _recsData = [];
+  const _diagKeys = diagResults.map(r => r.key);
+  const _topDiag  = diagResults[0];
+
+  if (hasLCA || _diagKeys.includes('lca') || _diagKeys.includes('lcp')) {
+    _recsData.push({
+      title: 'Ligamento Cruzado (LCA/LCP)',
+      color: '#4d9eff',
+      items: [
+        'Protocolo de rehabilitación ACL: fortalecimiento progresivo cuádriceps + isquiotibiales (Grado A · Logerstedt 2017)',
+        'Entrenamiento neuromuscular y de control postural desde fase temprana (evidencia Nivel I)',
+        'Criterios RTP: LSI >90% cuádriceps + fuerza bilateral + test funcionales ≥90% (Grado B)',
+        'Derivar a cirugía si inestabilidad funcional persistente + paciente activo (ortopedista/traumatólogo)',
+        'RMN recomendada para confirmar lesión y evaluar lesiones asociadas (menisco, colaterales)',
+      ],
+      ref: 'Logerstedt DS et al. JOSPT 2018 · AAOS CPG 2022 · van Yperen DT Br J Sports Med 2018',
+    });
+  }
+  if (hasSPF || _diagKeys.includes('spf')) {
+    _recsData.push({
+      title: 'Síndrome Femoro-Patelar (SPF)',
+      color: '#63b3ff',
+      items: [
+        'Fortalecimiento de cuádriceps: énfasis en VMO + ejercicios en cadena cinética cerrada (Grado A · Willy 2019)',
+        'Fortalecimiento de cadera: abductores + rotadores externos (evidencia Nivel I · Collins 2018)',
+        'Educación en manejo de carga: modificar actividades que reproducen dolor (escaleras, cuclillas)',
+        'Terapia manual (movilización patelofemoral + tibioastragalina) como adyuvante (Grado B)',
+        'Plantillas con soporte medial si aumento de pronación navicular >10 mm (Grado B)',
+        'Evitar reposo absoluto — mantener actividad modificada con control de dolor',
+      ],
+      ref: 'Willy RW et al. JOSPT 2019 CPG · Collins NJ BJSM 2018 · Crossley KM BJSM 2016',
+    });
+  }
+  if (hasMen || _diagKeys.includes('menisco')) {
+    _recsData.push({
+      title: 'Lesión Meniscal',
+      color: '#f6a35c',
+      items: [
+        'Tratamiento conservador primera elección en desgarros degenerativos (JOSPT 2018 Grado A)',
+        'Fortalecimiento muscular general EEII + ejercicio aeróbico de bajo impacto',
+        'RMN indicada para caracterizar tipo de desgarro (horizontal/radial/complejo) y decisión quirúrgica',
+        'Derivar si: bloqueo articular, desgarro traumático agudo joven activo, fracaso tratamiento 3 meses',
+        'Composite Score ≥3/5 positivos = alta probabilidad → derivar con informe (Logerstedt 2018)',
+      ],
+      ref: 'Logerstedt DS et al. JOSPT 2018 CPG · Herrlin SV Acta Orthop 2013 · Sihvonen R NEJM 2013',
+    });
+  }
+  if (hasCond || _diagKeys.includes('condral')) {
+    _recsData.push({
+      title: 'Lesión Condral / Osteocondral',
+      color: '#ff6464',
+      items: [
+        '⚠ RMN OBLIGATORIA — diagnóstico definitivo (Sn >80% lesiones ≥1cm²)',
+        'Derivar a ortopedista para estadificación (ICRS Grade I-IV) y decisión terapéutica',
+        'Carga progresiva de bajo impacto (hidroterapia, ciclismo) mientras se espera RMN',
+        'Evitar impacto y carga articular máxima hasta confirmar extensión lesional',
+        'Opciones quirúrgicas: microfractura, trasplante osteocondral (OAT), ACI según estadio',
+      ],
+      ref: 'Wilk KE et al. JOSPT 2006 · Logerstedt DS JOSPT 2018 · Mithoefer K AJSM 2009',
+    });
+  }
+  if (hasITBS || _diagKeys.includes('itbs')) {
+    _recsData.push({
+      title: 'Síndrome de Fricción de la Banda Iliotibial (SFBI)',
+      color: '#ffbe00',
+      items: [
+        'Hip Abductor Strengthening (HAS): 1ª línea de tratamiento — ↓27-100% dolor en 2-8 sem (Nivel II)',
+        'Modificación de carga: reducir volumen 50% inicial, eliminar descensos y pista inclinada',
+        'Estiramiento ITB/TFL: 3×30 seg bilateral, 3×/día — eficacia moderada como adyuvante',
+        'Reeducación de carrera: aumentar cadencia +5-10 pasos/min reduce aducción cadera (Nivel III)',
+        'Shockwave focalizada si persistencia >6 semanas (evidencia emergente, Nivel III)',
+        'Prognosis: 44% curación a 8 semanas · 91.7% a 6 meses con manejo conservador',
+      ],
+      ref: 'Sanchez-Alvarado 2024 Front Sports Act Living · Beals & Flanigan 2013 · McKay 2020 BMC Sports',
+    });
+  }
+
+  const recsHTML = showRecs && _recsData.length > 0 ? `
+  <!-- 10B RECOMENDACIONES -->
+  <div class="section" style="margin-bottom:9pt">
+    ${secHeader('10B.', 'RECOMENDACIONES BASADAS EN EVIDENCIA')}
+    ${_recsData.map(r => `
+    <div style="margin-bottom:8pt;padding:8pt 10pt;background:#1a1c1b;border-radius:4pt;border-left:3pt solid ${r.color}">
+      <div style="font-size:7pt;font-weight:800;color:${r.color};letter-spacing:.06em;text-transform:uppercase;margin-bottom:5pt">${r.title}</div>
+      ${r.items.map(item => `<div style="font-size:7pt;color:#bbb;padding:2pt 0;line-height:1.6;padding-left:8pt">• ${item}</div>`).join('')}
+      <div style="font-size:5.5pt;color:#444;margin-top:5pt;font-style:italic">📚 ${r.ref}</div>
+    </div>`).join('')}
+  </div>` : '';
 
   const html = `<!DOCTYPE html>
 <html lang="es">
@@ -1082,7 +1319,8 @@ function _rodillaPrintInforme() {
       <div style="text-align:right;line-height:1.8">
         <div style="font-size:5.5pt;letter-spacing:.12em;text-transform:uppercase;color:#555">FECHA</div>
         <div style="font-size:13pt;font-weight:800;color:#e8e8e8;font-family:monospace">${fecha}</div>
-        <div style="font-size:6.5pt;color:#666">Evaluador: ${kine}</div>
+        <div style="font-size:6.5pt;color:#666">Evaluador: ${profNombre}${profMp ? ' · ' + profMp : ''}${profInst ? ' · ' + profInst : ''}</div>
+        ${esMedico && doctorNombre ? `<div style="font-size:6.5pt;color:#4d9eff;margin-top:2pt">Para: ${doctorNombre}${doctorEsp ? ' — ' + doctorEsp : ''}</div>` : ''}
       </div>
     </div>
   </div>
@@ -1114,7 +1352,7 @@ function _rodillaPrintInforme() {
   </div>
 
   <!-- 02 ROM -->
-  ${hasROM ? `<div class="section">
+  ${showROM ? `<div class="section">
     ${secHeader('02.', 'RANGO DE MOVIMIENTO ARTICULAR')}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12pt">
       <div>
@@ -1194,7 +1432,7 @@ ${hasCond ? `
 
 </div>` : ''}
 
-${hasScales ? `
+${showScales ? `
 <!-- ── PÁGINA ESCALAS ─────────────────────────────────────────── -->
 <div class="page page-break">
   ${pageHdr}
@@ -1319,19 +1557,37 @@ ${hasITBS ? `
   <!-- 10 JUICIO CLÍNICO -->
   <div class="section">
     ${secHeader('10.', 'JUICIO CLÍNICO INTEGRADOR')}
-    <div style="padding:10pt 12pt;background:#1a1c1b;border:1pt solid #2e312e;border-radius:4pt;margin-bottom:9pt;min-height:50pt">
+
+    ${dxManual ? `
+    <div style="padding:7pt 10pt;background:#1a2e1a;border:1.5pt solid #39ff7a;border-radius:4pt;margin-bottom:8pt">
+      <div style="font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#39ff7a;text-transform:uppercase;margin-bottom:3pt">DIAGNÓSTICO KINESIOLÓGICO</div>
+      <div style="font-size:8.5pt;font-weight:700;color:#fff">${dxManual}</div>
+    </div>` : ''}
+
+    <div style="padding:10pt 12pt;background:#1a1c1b;border:1pt solid #2e312e;border-radius:4pt;margin-bottom:9pt;min-height:40pt">
       <div style="font-size:7.5pt;color:#bbb;line-height:1.9">
-        ${nombre} presenta una evaluación de rodilla con ${totalCompletados} tests completados.
-        ${diagResults.length > 0 ? `Los hallazgos de mayor probabilidad diagnóstica son: <strong style="color:#fff">${diagResults.slice(0, 3).map(r => r.label + ' (' + r.pct + '%)').join(', ')}</strong>.` : 'Sin tests diagnósticos registrados.'}
-        ${diagResults.find(r => r.urgente) ? ' <strong style="color:#ff4646">⚠ Se detecta hallazgo urgente — derivar inmediatamente.</strong>' : ''}
+        ${nombre} presenta evaluación de rodilla con <strong style="color:#ccc">${totalCompletados} tests completados</strong>.
+        ${diagResults.length > 0 ? `
+        <br>Presunción diagnóstica de mayor probabilidad: <strong style="color:#fff">${diagResults.slice(0, 3).map(r => r.label + ' (' + r.pct + '%)').join(' · ')}</strong>.` : ''}
+        ${diagResults.find(r => r.urgente) ? '<br><strong style="color:#ff4646">⚠ HALLAZGO URGENTE DETECTADO — derivar con prioridad.</strong>' : ''}
+        ${_topDiag && _topDiag.nivel === 'alto' ? `<br>El patrón clínico es <strong style="color:#ff6464">altamente compatible</strong> con ${_topDiag.label} (probabilidad ${_topDiag.pct}%). Se recomienda profundizar evaluación y/o derivar según hallazgos.` : ''}
       </div>
     </div>
-    <div style="font-size:6pt;color:#555;font-style:italic;padding:5pt 8pt;background:#1a1c1b;border-radius:3pt;line-height:1.6">
-      ⚠ Este informe no reemplaza el juicio clínico del profesional tratante. Los valores de corte (Sn/Sp/LR) provienen de los estudios referenciados. La probabilidad es una estimación basada en likelihood ratios y no constituye diagnóstico definitivo. Lesiones condrales requieren confirmación por RMN.
+
+    ${recsHTML}
+
+    ${notasInforme ? `
+    <div style="margin-top:8pt;padding:8pt 10pt;background:#1a1c1b;border:1pt solid #2e312e;border-radius:4pt">
+      <div style="font-size:5.5pt;font-weight:700;letter-spacing:.1em;color:#aaa;text-transform:uppercase;margin-bottom:4pt">NOTAS CLÍNICAS</div>
+      <div style="font-size:7.5pt;color:#bbb;line-height:1.8;white-space:pre-line">${notasInforme}</div>
+    </div>` : ''}
+
+    <div style="font-size:6pt;color:#444;font-style:italic;padding:5pt 8pt;background:#1a1c1b;border-radius:3pt;line-height:1.6;margin-top:8pt">
+      ⚠ Este informe no reemplaza el juicio clínico del profesional tratante. Los valores de corte (Sn/Sp/LR) provienen de los estudios referenciados. La probabilidad diagnóstica es una estimación basada en likelihood ratios y no constituye diagnóstico definitivo. Lesiones condrales requieren confirmación por RMN.
     </div>
   </div>
 
-  <!-- 10 BIBLIOGRAFÍA -->
+  <!-- 11 BIBLIOGRAFÍA -->
   <div class="section">
     ${secHeader('11.', 'BIBLIOGRAFÍA')}
     <div>
@@ -1343,11 +1599,13 @@ ${hasITBS ? `
   <div style="margin-top:20pt;padding-top:10pt;border-top:1pt solid #2e312e;display:flex;justify-content:space-between;align-items:flex-end">
     <div style="font-size:6pt;color:#3a3d3a">
       <div>MOVEMETRICS · Kinesiología basada en evidencia</div>
-      <div>CPG: Willy 2019 JOSPT · Logerstedt 2018 · Stiell 1995</div>
+      <div>CPG: Willy 2019 JOSPT · Logerstedt 2018 · Stiell 1995 · Sanchez-Alvarado 2024</div>
     </div>
     <div style="text-align:right">
       <div style="width:130pt;border-top:1pt solid #3a3d3a;margin-bottom:4pt"></div>
-      <div style="font-size:8pt;font-weight:700;color:#ccc">${kine}</div>
+      <div style="font-size:8pt;font-weight:700;color:#ccc">${profNombre}</div>
+      ${profMp ? `<div style="font-size:6.5pt;color:#666">${profMp}</div>` : ''}
+      ${profInst ? `<div style="font-size:6pt;color:#555">${profInst}</div>` : ''}
       <div style="font-size:6pt;color:#444">Kinesiólogo/a · Fecha: ${fecha}</div>
     </div>
   </div>
