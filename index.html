@@ -2790,7 +2790,7 @@
 <!-- ════════ SCRIPT ════════ -->
   <!-- ══ JS MODULAR — orden de carga ══ -->
   <script src="js/data/papers-adulto-mayor-rules.js?v=2"></script>
-  <script src="js/data/papers-cadera-rules.js?v=2"></script>
+  <script src="js/data/papers-cadera-rules.js?v=3"></script>
   <script src="js/data/papers-hombro-rules.js?v=2"></script>
   <script src="js/data/papers-codo-rules.js?v=1"></script>
   <script src="js/data/papers-cervical-rules.js?v=1"></script>
@@ -2895,7 +2895,7 @@
   <script src="js/sheets/tobillo.js?v=1"></script>
   <script src="js/sheets/lumbar.js?v=10"></script>
   <script src="js/sheets/groin.js?v=1"></script>
-  <script src="js/sheets/cadera.js?v=1"></script>
+  <script src="js/sheets/cadera.js?v=2"></script>
   <script src="js/sheets/adulto-mayor.js?v=5"></script>
   <script src="js/sheets/codo.js?v=3"></script>
   <script src="js/sheets/cervical.js?v=4"></script>
@@ -3066,6 +3066,7 @@
       <button class="btn btn-ghost btn-sm cad-tab-btn" onclick="showCaderaTab('rom',this)">ROM</button>
       <button class="btn btn-ghost btn-sm cad-tab-btn" onclick="showCaderaTab('tests',this)">Tests</button>
       <button class="btn btn-ghost btn-sm cad-tab-btn" onclick="showCaderaTab('ingle',this)">Ingle/Doha</button>
+      <button class="btn btn-ghost btn-sm cad-tab-btn" onclick="showCaderaTab('gtps',this)">GTPS</button>
       <button class="btn btn-ghost btn-sm cad-tab-btn" onclick="showCaderaTab('esc',this)">Escalas</button>
       <button class="btn btn-ghost btn-sm cad-tab-btn" onclick="showCaderaTab('informe',this)">📄 Informe</button>
     </div>
@@ -3184,8 +3185,17 @@
       </div>
     </div>
 
+    <!-- TAB: GTPS -->
+    <div id="cadtab-gtps" style="display:none">
+      <div id="cad-gtps-fields"></div>
+    </div>
+
     <!-- TAB: ESCALAS -->
     <div id="cadtab-esc" style="display:none">
+      <div class="card mb-12">
+        <div class="card-header"><h3>VISA-G</h3><span class="tag">GTPS /80 · MDC 11</span></div>
+        <div class="card-body"><div id="cad-visag-fields"></div></div>
+      </div>
       <div class="card mb-12">
         <div class="card-header"><h3>mHHS — Modified Harris Hip Score</h3><span class="tag tag-y">Total /91 · MDC 8 pts</span></div>
         <div class="card-body"><div id="cad-esc-mhhs"></div></div>

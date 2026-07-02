@@ -1,11 +1,11 @@
-// js/sheets/cadera.js — Cadera / Ingle / Doha v1
+// js/sheets/cadera.js — Cadera / Ingle / Doha / GTPS v2
 // CPG: Enseki 2023 JOSPT · Reiman 2012/2014 BJSM · Delahunt 2015 Doha · Simel 2019 JAMA
 // Requires: papers-cadera-rules.js (CADERA_RULES, CADERA_ROM), ortho-tests.js (ORTHO_TESTS),
 //           diagnostico-cadera.js (diagnosticarCadera, _colorForKey, _tagClassForCategoria)
 
 // ── Tab switcher ───────────────────────────────────────────────────────────────
 function showCaderaTab(tab, btn) {
-  ['obs','rom','tests','ingle','esc','informe'].forEach(function(t) {
+  ['obs','rom','tests','ingle','gtps','esc','informe'].forEach(function(t) {
     var el = document.getElementById('cadtab-' + t);
     if (el) el.style.display = t === tab ? '' : 'none';
   });
@@ -166,6 +166,7 @@ function _getCaderaModalPositivos() {
   var allTests = [
     ...(typeof ORTHO_TESTS !== 'undefined' && ORTHO_TESTS.cadera             ? ORTHO_TESTS.cadera             : []),
     ...(typeof ORTHO_TESTS !== 'undefined' && ORTHO_TESTS.caderaGluteal      ? ORTHO_TESTS.caderaGluteal      : []),
+    ...(typeof ORTHO_TESTS !== 'undefined' && ORTHO_TESTS.caderaGTPS         ? ORTHO_TESTS.caderaGTPS         : []),
     ...(typeof ORTHO_TESTS !== 'undefined' && ORTHO_TESTS.caderaFractura     ? ORTHO_TESTS.caderaFractura     : []),
     ...(typeof ORTHO_TESTS !== 'undefined' && ORTHO_TESTS.caderaOA           ? ORTHO_TESTS.caderaOA           : []),
     ...(typeof ORTHO_TESTS !== 'undefined' && ORTHO_TESTS.dohaAductores      ? ORTHO_TESTS.dohaAductores      : []),
@@ -198,6 +199,7 @@ function _renderCaderaFromModal() {
   var allTests = [
     ...(typeof ORTHO_TESTS !== 'undefined' && ORTHO_TESTS.cadera             ? ORTHO_TESTS.cadera             : []),
     ...(typeof ORTHO_TESTS !== 'undefined' && ORTHO_TESTS.caderaGluteal      ? ORTHO_TESTS.caderaGluteal      : []),
+    ...(typeof ORTHO_TESTS !== 'undefined' && ORTHO_TESTS.caderaGTPS         ? ORTHO_TESTS.caderaGTPS         : []),
     ...(typeof ORTHO_TESTS !== 'undefined' && ORTHO_TESTS.caderaFractura     ? ORTHO_TESTS.caderaFractura     : []),
     ...(typeof ORTHO_TESTS !== 'undefined' && ORTHO_TESTS.caderaOA           ? ORTHO_TESTS.caderaOA           : []),
     ...(typeof ORTHO_TESTS !== 'undefined' && ORTHO_TESTS.dohaAductores      ? ORTHO_TESTS.dohaAductores      : []),
@@ -264,6 +266,168 @@ function _renderCaderaFromModal() {
   panel.innerHTML = html;
 }
 
+// ── GTPS / Bursitis tab ────────────────────────────────────────────────────────
+function buildCaderaGTPS() {
+  var c = document.getElementById('cad-gtps-fields');
+  if (!c || c.innerHTML) return;
+
+  var infoCard = '<div class="card mb-10" style="border-color:rgba(126,201,87,.3)">' +
+    '<div class="card-header" style="background:rgba(126,201,87,.06)">' +
+      '<h3>🦴 GTPS — Síndrome de Dolor Trocantérico Mayor</h3>' +
+      '<span class="tag tag-b">Extraarticular · EBM 2025</span>' +
+    '</div>' +
+    '<div class="card-body">' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">' +
+        '<div style="padding:8px;background:var(--bg3);border-radius:6px">' +
+          '<div style="font-size:9px;text-transform:uppercase;color:var(--neon);font-weight:700;margin-bottom:4px">Epidemiología</div>' +
+          '<div style="font-size:10px;color:var(--text2);line-height:1.5">' +
+            '1.8–5.6 / 1000 adultos/año<br>Pico: mujeres 40–60 años<br>OA hip concomitante en ~⅔ de casos<br>Autolimitante en mayoría (resolución >90% conservador)' +
+          '</div>' +
+        '</div>' +
+        '<div style="padding:8px;background:var(--bg3);border-radius:6px">' +
+          '<div style="font-size:9px;text-transform:uppercase;color:var(--neon);font-weight:700;margin-bottom:4px">Criterio diagnóstico clínico</div>' +
+          '<div style="font-size:10px;color:var(--text2);line-height:1.5">' +
+            '① Dolor lateral de cadera/muslo<br>② Palpación dolorosa trocánter mayor<br>③ FABER reproduciendo dolor LATERAL<br>Sin dificultad para ponerse calzado<br><span style="color:var(--text3);font-size:9px">Barratt BJSM 2016 · Reid J Orthop 2016</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="padding:8px;background:rgba(126,201,87,.07);border-radius:6px;border-left:2px solid var(--neon)">' +
+        '<div style="font-size:10px;color:var(--text2);line-height:1.5">' +
+          '<strong>Fisiopatología actual:</strong> GTPS = paraguas que incluye tendinopatía glútea med/min + bursitis trocantérica (4-46%) + coxa saltans externa. ' +
+          'Bursitis aislada poco frecuente; la tendinopatía gluteal es el componente principal en estudios histopatológicos.' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+
+  // Tests section
+  var gtpsTests = (typeof ORTHO_TESTS !== 'undefined' && ORTHO_TESTS.caderaGTPS) || [];
+  var glutealTests = (typeof ORTHO_TESTS !== 'undefined' && ORTHO_TESTS.caderaGluteal) || [];
+  var allGtpsTests = gtpsTests.concat(glutealTests);
+
+  var testsHtml = '<div class="card mb-10">' +
+    '<div class="card-header"><h3>Tests diagnósticos GTPS</h3><span class="tag tag-r">Palpación · FABER lateral · Abducción</span></div>' +
+    '<div class="card-body">' +
+      '<div style="font-size:9px;color:var(--text3);margin-bottom:8px">Resisted External Derotation = mejor test individual (LR+ 32.6) · Cluster palpación + abd resistida = 96% — Lequesne 2008 · Reiman BJSM 2012</div>' +
+      allGtpsTests.map(function(t) {
+        return '<div class="card mb-8" data-test-id="' + t.id + '">' +
+          '<div class="card-body" style="padding:8px 10px">' +
+            '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px">' +
+              '<div>' +
+                '<span style="font-size:12px;font-weight:700">' + t.name + '</span>' +
+                '<span class="tag tag-y" style="font-size:9px;margin-left:5px">' + t.sub + '</span>' +
+              '</div>' +
+            '</div>' +
+            '<div style="font-size:9px;color:var(--text3);margin-bottom:8px;font-style:italic">' + t.ref + '</div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">' +
+              '<div class="cad-test-col">' +
+                '<div style="font-size:9px;color:var(--text3);text-align:center;margin-bottom:4px">DERECHA / BILATERAL</div>' +
+                '<div style="display:flex;gap:4px;justify-content:center;margin-bottom:6px">' +
+                  '<button class="ot-btn" style="font-size:9px;padding:3px 8px" onclick="toggleOTCadera(this,\'pos\')">+ POS</button>' +
+                  '<button class="ot-btn" style="font-size:9px;padding:3px 8px" onclick="toggleOTCadera(this,\'neg\')">– NEG</button>' +
+                '</div>' +
+                '<div style="display:flex;align-items:center;gap:4px">' +
+                  '<span style="font-size:9px;color:var(--text3);min-width:22px">EVA</span>' +
+                  '<input type="range" class="eva-slider cad-eva-slider" min="0" max="10" value="0" disabled oninput="this.nextElementSibling.textContent=this.value" style="flex:1">' +
+                  '<span style="font-family:var(--mono);font-size:11px;min-width:14px">0</span>' +
+                '</div>' +
+              '</div>' +
+              '<div class="cad-test-col">' +
+                '<div style="font-size:9px;color:var(--text3);text-align:center;margin-bottom:4px">IZQUIERDA</div>' +
+                '<div style="display:flex;gap:4px;justify-content:center;margin-bottom:6px">' +
+                  '<button class="ot-btn" style="font-size:9px;padding:3px 8px" onclick="toggleOTCadera(this,\'pos\')">+ POS</button>' +
+                  '<button class="ot-btn" style="font-size:9px;padding:3px 8px" onclick="toggleOTCadera(this,\'neg\')">– NEG</button>' +
+                '</div>' +
+                '<div style="display:flex;align-items:center;gap:4px">' +
+                  '<span style="font-size:9px;color:var(--text3);min-width:22px">EVA</span>' +
+                  '<input type="range" class="eva-slider cad-eva-slider" min="0" max="10" value="0" disabled oninput="this.nextElementSibling.textContent=this.value" style="flex:1">' +
+                  '<span style="font-family:var(--mono);font-size:11px;min-width:14px">0</span>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('') +
+    '</div>' +
+  '</div>';
+
+  // Treatment evidence
+  var tratHtml = '<div class="card mb-10">' +
+    '<div class="card-header"><h3>Evidencia de tratamiento GTPS</h3><span class="tag tag-g">Barratt 2016 · Lustenberger 2011 · Reid 2016</span></div>' +
+    '<div class="card-body">' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
+        _gtpsTratCard('Fase 1 — Corto plazo (0–3 m)', 'var(--amber)',
+          'Inyección corticosteroide (CSI)',
+          'Superior a cuidados habituales y RSWT al 1 mes. Mejor resultado a las 6 semanas. Efecto no mantenido a 12-15 meses. Guiada por imagen NO superior a landmark (Cohen RCT 2009). Dosis 24 mg betametasona con mayor beneficio sostenido a 26 semanas (Shbeeb). Riesgo degeneración tendinosa con dosis repetidas.',
+          'Barratt BJSM 2016 (SR 8 estudios, n=696) · Cohen BMJ 2009 (RCT)') +
+        _gtpsTratCard('Fase 2 — Mediano plazo (1–4 m)', 'var(--neon)',
+          'Ondas de choque radiales (RSWT)',
+          'Superior a CSI y home training a 4 meses (Rompe Am J Sports Med 2009, n=229). Mejora media VAS 3.9 pts y HHS 30.3 pts vs baseline. Sin diferencia vs home training a 15 meses. Opción cuando CSI es insuficiente.',
+          'Rompe Am J Sports Med 2009 (RCT nivel I) · Furia Am J Sports Med 2009') +
+        _gtpsTratCard('Fase 3 — Largo plazo (3–15 m)', 'var(--neon)',
+          'Ejercicio en carga progresiva (EE)',
+          'Superior a CSI a 15 meses (Rompe 2009). Home training: 64% retorno a la actividad vs 49% CSI. Protocolo: fortalecimiento glúteo med/min, isométricos en carga, excéntricos en carga progresiva. Evitar ITB stretch (compresión del tendón). Estiramiento piriformis + SLR + sentadillas asistidas.',
+          'Rompe Am J Sports Med 2009 (RCT) · Barratt BJSM 2016 · Lustenberger Clin J Sport Med 2011') +
+        _gtpsTratCard('Fase 4 — Refractario / Quirúrgico', 'var(--red)',
+          'Cirugía (bursectomía · liberación ITB · reparación glútea)',
+          '≥3 meses sin respuesta al tratamiento conservador. Bursectomía endoscópica: VAS −3.4. Z-plasty distal ITB: mayor mejora VAS (7.0) y HHS (30). Reparación glútea: 88–100% satisfacción. Técnicas endoscópicas: menor tiempo hospitalario, menor dolor post-op.',
+          'Lustenberger Clin J Sport Med 2011 (SR 24 estudios, >950 casos) · Reid J Orthop 2016 (SR)') +
+      '</div>' +
+      '<div style="margin-top:10px;padding:8px;background:var(--bg3);border-radius:6px;font-size:9px;color:var(--text3);line-height:1.5">' +
+        '⚠️ Evitar: compresión del tendón (no cruzar piernas, no adducción en carga, no ITB stretching agresivo). Factores pronóstico negativos: OA hip coexistente (×4.8 riesgo persistencia al año), síntomas prolongados, inyecciones previas múltiples — Lievense 2005.' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+
+  c.innerHTML = infoCard + testsHtml + tratHtml;
+}
+
+function _gtpsTratCard(titulo, color, interv, desc, ref) {
+  return '<div style="padding:10px;border:1px solid var(--border);border-left:3px solid ' + color + ';border-radius:6px">' +
+    '<div style="font-size:10px;font-weight:700;color:' + color + ';margin-bottom:4px">' + titulo + '</div>' +
+    '<div style="font-size:11px;font-weight:600;margin-bottom:4px">' + interv + '</div>' +
+    '<div style="font-size:10px;color:var(--text2);line-height:1.4;margin-bottom:4px">' + desc + '</div>' +
+    '<div style="font-size:9px;color:var(--text3);font-style:italic">' + ref + '</div>' +
+  '</div>';
+}
+
+// ── VISA-G ─────────────────────────────────────────────────────────────────────
+var visagVals = [];
+
+function buildVISAG() {
+  var c = document.getElementById('cad-visag-fields');
+  if (!c || c.innerHTML) return;
+  var items = (typeof VISAG_ITEMS !== 'undefined') ? VISAG_ITEMS : [];
+  visagVals = new Array(items.length).fill(null);
+  c.innerHTML = items.map(function(item, i) {
+    return '<div style="padding:8px 0;border-bottom:1px solid var(--border)">' +
+      '<div style="font-size:12px;margin-bottom:6px">' + (i + 1) + '. ' + item.q + '</div>' +
+      '<div style="font-size:9px;color:var(--text3);margin-bottom:4px">0 = peor / sin actividad &nbsp;·&nbsp; 10 = sin dolor / actividad completa</div>' +
+      '<input type="range" class="eva-slider" min="0" max="10" value="0"' +
+        ' oninput="visagVals[' + i + ']=+this.value;this.nextElementSibling.textContent=this.value;_calcVISAG()">' +
+      '<div style="font-family:var(--mono);font-size:14px;text-align:center;color:var(--neon)">0</div>' +
+    '</div>';
+  }).join('') +
+  '<div id="visag-total" style="margin-top:12px;padding:10px;border-radius:8px;background:var(--bg3);text-align:center">' +
+    '<span style="font-size:10px;color:var(--text3)">Total VISA-G:</span>' +
+    '<span style="font-size:22px;font-weight:900;font-family:var(--mono);margin-left:8px;color:var(--text3)">0</span>' +
+    '<span style="font-size:10px;color:var(--text3)">/80</span>' +
+  '</div>';
+}
+
+function _calcVISAG() {
+  var total = visagVals.reduce(function(a, b) { return a + (b || 0); }, 0);
+  var el = document.getElementById('visag-total');
+  if (!el) return;
+  var color = total >= 60 ? 'var(--neon)' : total >= 40 ? 'var(--amber)' : 'var(--red)';
+  var interp = total >= 60 ? 'Función conservada' : total >= 40 ? 'Afectación moderada' : 'Afectación severa';
+  el.innerHTML = '<span style="font-size:10px;color:var(--text3)">Total VISA-G:</span>' +
+    '<span style="font-size:22px;font-weight:900;font-family:var(--mono);margin-left:8px;color:' + color + '">' + total + '</span>' +
+    '<span style="font-size:10px;color:var(--text3)">/80</span>' +
+    '<span style="font-size:10px;color:' + color + ';margin-left:8px">· ' + interp + '</span>' +
+    '<div style="font-size:9px;color:var(--text3);margin-top:4px">MDC ~11 pts · MCID ~12 pts (Fearon AM et al. Man Ther 2015;20(6):805-13)</div>';
+}
+
 // ── Build test groups ──────────────────────────────────────────────────────────
 function buildCaderaTests() {
   _buildCaderaTestGroup('cad-tests-intra',    (typeof ORTHO_TESTS !== 'undefined' && ORTHO_TESTS.cadera)          || []);
@@ -319,6 +483,9 @@ function buildCaderaEscalas() {
     '<div style="margin-top:8px;font-size:10px;color:var(--text3);padding:6px;background:rgba(251,146,60,.06);border-radius:6px">' +
       '📋 Ver pestaña Ingle/Doha para HAGOS (Hip And Groin Outcome Score).' +
     '</div>';
+
+  // VISA-G
+  buildVISAG();
 
   // HAGOS note in escalas tab
   var hagosCont = document.getElementById('hagos-sheet-fields');
@@ -382,6 +549,7 @@ function generarInformeCadera() {
   var allTestDefs = [
     ...(typeof ORTHO_TESTS !== 'undefined' && ORTHO_TESTS.cadera             ? ORTHO_TESTS.cadera             : []),
     ...(typeof ORTHO_TESTS !== 'undefined' && ORTHO_TESTS.caderaGluteal      ? ORTHO_TESTS.caderaGluteal      : []),
+    ...(typeof ORTHO_TESTS !== 'undefined' && ORTHO_TESTS.caderaGTPS         ? ORTHO_TESTS.caderaGTPS         : []),
     ...(typeof ORTHO_TESTS !== 'undefined' && ORTHO_TESTS.caderaFractura     ? ORTHO_TESTS.caderaFractura     : []),
     ...(typeof ORTHO_TESTS !== 'undefined' && ORTHO_TESTS.caderaOA           ? ORTHO_TESTS.caderaOA           : []),
     ...(typeof ORTHO_TESTS !== 'undefined' && ORTHO_TESTS.dohaAductores      ? ORTHO_TESTS.dohaAductores      : []),
@@ -417,6 +585,10 @@ function generarInformeCadera() {
   }, 0);
   mhhsTotal = Math.round(mhhsTotal);
   var hasMhhs = CAD_MHHS_ITEMS.some(function(item) { return !!document.getElementById('cad-mhhs-' + item.id)?.value; });
+
+  // VISA-G
+  var visagTotal = visagVals.reduce(function(a, b) { return a + (b || 0); }, 0);
+  var hasVisag = visagVals.some(function(v) { return v !== null && v > 0; });
 
   var css = [
     'body{font-family:Inter,Arial,sans-serif;margin:0;background:#fff;color:#1a1a1a;font-size:12px;line-height:1.5}',
@@ -517,16 +689,28 @@ function generarInformeCadera() {
     }).join('')
   ) : '';
 
-  var mhhsColor = mhhsTotal >= 80 ? '#2d7a2d' : mhhsTotal >= 70 ? '#b87a00' : '#cc3333';
-  var mhhsInterp = mhhsTotal >= 80 ? 'Buen resultado' : mhhsTotal >= 70 ? 'Resultado aceptable' : 'Resultado malo';
-  var sec05 = hasMhhs ? (
-    _sec('05','Escalas funcionales') +
-    '<div class="intro-box">mHHS: Modified Harris Hip Score (máx 91). MDC 8 pts · MCID 14 pts. Byrd 2003.</div>' +
+
+  var visagColor = visagTotal >= 60 ? '#2d7a2d' : visagTotal >= 40 ? '#b87a00' : '#cc3333';
+  var visagInterp = visagTotal >= 60 ? 'Función conservada' : visagTotal >= 40 ? 'Limitación moderada' : 'Limitación severa';
+  var sec05b = hasVisag ? (
+    '<div style="margin-top:12px">' +
+    '<div class="intro-box">VISA-G: Victorian Institute of Sport Assessment – Gluteal. 8 ítems /80. MDC ~11 pts · MCID ~12 pts. Fearon AM et al. Man Ther 2015;20(6):805-13.</div>' +
     '<div style="background:#f7f4fb;border-radius:6px;padding:12px;border:1px solid #e8e0f0;text-align:center">' +
+      '<div style="font-size:9px;text-transform:uppercase;color:#7e5ba8;font-weight:700;margin-bottom:4px">VISA-G</div>' +
+      '<div style="font-size:28px;font-weight:900;color:' + visagColor + '">' + visagTotal + '<span style="font-size:14px;color:#888">/80</span></div>' +
+      '<div style="font-size:11px;color:' + visagColor + ';font-weight:600">' + visagInterp + '</div>' +
+    '</div></div>'
+  ) : '';
+
+  var sec05combined = (hasMhhs || hasVisag) ? (
+    _sec('05','Escalas funcionales') +
+    (hasMhhs ? ('<div class="intro-box">mHHS: Modified Harris Hip Score (máx 91). MDC 8 pts · MCID 14 pts. Byrd 2003.</div>' +
+    '<div style="background:#f7f4fb;border-radius:6px;padding:12px;border:1px solid #e8e0f0;text-align:center;margin-bottom:10px">' +
       '<div style="font-size:9px;text-transform:uppercase;color:#7e5ba8;font-weight:700;margin-bottom:4px">mHHS</div>' +
-      '<div style="font-size:28px;font-weight:900;color:' + mhhsColor + '">' + mhhsTotal + '<span style="font-size:14px;color:#888">/91</span></div>' +
-      '<div style="font-size:11px;color:' + mhhsColor + ';font-weight:600">' + mhhsInterp + '</div>' +
-    '</div>'
+      '<div style="font-size:28px;font-weight:900;color:' + (mhhsTotal >= 80 ? '#2d7a2d' : mhhsTotal >= 70 ? '#b87a00' : '#cc3333') + '">' + mhhsTotal + '<span style="font-size:14px;color:#888">/91</span></div>' +
+      '<div style="font-size:11px;color:' + (mhhsTotal >= 80 ? '#2d7a2d' : mhhsTotal >= 70 ? '#b87a00' : '#cc3333') + ';font-weight:600">' + (mhhsTotal >= 80 ? 'Buen resultado' : mhhsTotal >= 70 ? 'Resultado aceptable' : 'Resultado malo') + '</div>' +
+    '</div>') : '') +
+    sec05b
   ) : '';
 
   var win = window.open('', '_blank');
@@ -535,11 +719,11 @@ function generarInformeCadera() {
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:3px solid #7e5ba8">' +
       '<div>' +
         '<div style="font-size:22px;font-weight:900;color:#2a1a42">Informe de evaluación</div>' +
-        '<div style="font-size:14px;color:#7e5ba8;font-weight:700">🦴 Cadera — Enseki 2023 CPG · Reiman 2012/2014 · Doha 2015 · Simel 2019</div>' +
+        '<div style="font-size:14px;color:#7e5ba8;font-weight:700">🦴 Cadera — Enseki 2023 CPG · Reiman 2012/2014 · Doha 2015 · Simel 2019 · Barratt BJSM 2016</div>' +
       '</div>' +
       '<div style="text-align:right;font-size:10px;color:#888">' + fecha + '<br><span style="font-size:9px">MoveMetrics v12</span></div>' +
     '</div>' +
-    sec01 + sec02 + sec03 + sec04 + sec05 +
+    sec01 + sec02 + sec03 + sec04 + sec05combined +
     '<div style="margin-top:32px;padding-top:16px;border-top:1px solid #e8e0f0;font-size:9px;color:#aaa;text-align:center">' +
       'Enseki K et al. JOSPT 2023 · Reiman MP et al. BJSM 2012;2014 · Delahunt E et al. BJSM 2015 (Doha) · Simel DL et al. JAMA 2019 · Griffin DR et al. BJSM 2016 · No reemplaza el juicio clínico' +
     '</div>' +
@@ -553,6 +737,7 @@ function initCaderaSheet() {
   buildCaderaROM();
   buildCaderaTests();
   buildCaderaIngle();
+  buildCaderaGTPS();
   buildCaderaEscalas();
 }
 
@@ -567,7 +752,12 @@ window._getCaderaModalPositivos = _getCaderaModalPositivos;
 window._renderCaderaFromModal = _renderCaderaFromModal;
 window.buildCaderaTests       = buildCaderaTests;
 window.buildCaderaIngle       = buildCaderaIngle;
+window.buildCaderaGTPS        = buildCaderaGTPS;
 window.buildCaderaEscalas     = buildCaderaEscalas;
 window._calcMHHS              = _calcMHHS;
+window.buildVISAG             = buildVISAG;
+window._calcVISAG             = _calcVISAG;
+window._gtpsTratCard          = _gtpsTratCard;
+window.visagVals              = visagVals;
 window.generarInformeCadera   = generarInformeCadera;
 window.initCaderaSheet        = initCaderaSheet;

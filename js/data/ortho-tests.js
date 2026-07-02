@@ -77,6 +77,12 @@ const ORTHO_TESTS = {
     { id:'resisted-hip-abduction', name:'Resisted Hip Abduction',     sub:'Tendinopatía glútea',          ref:'Sn 0.71 / Sp 0.84 / LR+ 5.50 — Reiman 2012' },
     { id:'resisted-ext-derotation',name:'Resisted External Derotation',sub:'Tendinopatía glútea — mejor test', ref:'Sn 88% / Sp 97.3% / LR+ 32.6 — Lequesne 2008' }
   ],
+  caderaGTPS: [
+    { id:'gtps-palpacion-gt',     name:'Palpación trocánter mayor',   sub:'GTPS — criterio diagnóstico principal', ref:'Criterio clínico obligatorio — Barratt BJSM 2016' },
+    { id:'gtps-faber-lateral',    name:'FABER reproduciendo dolor lateral', sub:'GTPS — criterio confirmatorio', ref:'Criterio diagnóstico GTPS — Barratt BJSM 2016 · Reid J Orthop 2016' },
+    { id:'gtps-sls-30s',          name:'Single-Leg Stand 30 s (Trendelenburg dinámico)', sub:'Función abductora / GTPS', ref:'Evaluación hipabductora — Reid J Orthop 2016' },
+    { id:'gtps-dolor-decubito',   name:'Dolor en decúbito lateral afectado', sub:'Síntoma nocturno / GTPS', ref:'Criterio clínico — Lustenberger Clin J Sport Med 2011' }
+  ],
   caderaFractura: [
     { id:'pppt',         name:'PPPT (Patela-Pubis Percussion)',  sub:'Fractura cuello femoral',          ref:'Sn 95% / Sp 86% / LR+ 6.11 — Reiman 2012 meta-análisis' },
     { id:'fulcrum-test', name:'Fulcrum test (Stress fracture)',  sub:'Fractura de estrés fémur',         ref:'Sn 88-93% / Sp 13-75% — Johnson & Kang' }

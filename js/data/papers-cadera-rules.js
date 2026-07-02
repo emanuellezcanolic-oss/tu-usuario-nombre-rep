@@ -220,6 +220,20 @@ const CADERA_RULES = {
   ]
 };
 
+// ── VISA-G — Victorian Institute of Sport Assessment – Gluteal (Fearon 2015) ──
+const VISAG_ITEMS = [
+  { q:'¿Cuánto dolor tiene al caminar por terreno plano durante 30 minutos?',                        max:10 },
+  { q:'¿Cuánto dolor tiene al subir o bajar escaleras?',                                              max:10 },
+  { q:'¿Cuánto dolor tiene al acostarse sobre el lado afectado durante la noche?',                   max:10 },
+  { q:'¿Cuánto dolor tiene al ponerse las medias o el calzado?',                                     max:10 },
+  { q:'¿Cuánto dolor tiene al pararse sobre una sola pierna (30 segundos)?',                         max:10 },
+  { q:'¿Cuánto dolor tiene al hacer actividad física de más de 30 minutos?',                         max:10 },
+  { q:'¿En qué medida el dolor de cadera afecta sus actividades de la vida diaria?',                 max:10 },
+  { q:'¿Cuántas semanas de las últimas 4 semanas pudo entrenar / ejercitarse con normalidad?',       max:10 },
+];
+// 0 = peor / sin actividad  |  10 = sin dolor / actividad completa
+// Total /80  ·  MDC ~11 pts  ·  MCID ~12 pts  ·  Fuente: Fearon AM et al. Man Ther 2015;20(6):805-13
+
 const CADERA_ROM = [
   { id:'flex',  label:'Flexión',           ref:'100–120°', mdc:'5°' },
   { id:'ext',   label:'Extensión',          ref:'20–30°',  mdc:'4°' },
