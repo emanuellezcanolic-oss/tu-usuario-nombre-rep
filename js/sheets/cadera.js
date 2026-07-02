@@ -511,6 +511,197 @@ function _calcMHHS() {
     '<div style="font-size:9px;color:var(--text3);margin-top:4px">MDC 8 pts · MCID 14 pts (Harris 1969, mod. Byrd 2003)</div>';
 }
 
+// ── Recomendaciones EBM por diagnóstico ───────────────────────────────────────
+var _RECOM = {
+  'fractura-cuello': { urgencia: true, fases:[
+    { label:'⚠️ URGENCIA', color:'#cc3333', items:['No cargar peso — inmovilización inmediata','Derivar guardia con Rx pelvis AP urgente','Analgesia IV si está disponible'] }
+  ], ref:'Reiman MP et al. BJSM 2012' },
+
+  'fai-sindrome': { fases:[
+    { label:'Fase 1 — Control del dolor (sem 0–4)', color:'#b87a00', items:[
+      'Educación: evitar flexión >90° + rotación interna combinadas (posición de pinzamiento)',
+      'Descarga relativa de actividades provocativas · crioterapia 10–15 min × 3/día',
+      'Ejercicio sin impacto: bicicleta sin resistencia, hidroterapia, marcha en piscina'
+    ]},
+    { label:'Fase 2 — Fortalecimiento (sem 4–12)', color:'#2d7a2d', items:[
+      'Glúteo medio y mayor: clamshell con banda, side step, puente unilateral progresivo',
+      'Core profundo lumbopélvico: dead bug, bird-dog, pallof press',
+      'ROM dirigido: movilidad en extensión y RE — evitar extremo de flexión + RI bajo carga'
+    ]},
+    { label:'Fase 3 — Retorno funcional (sem 8–16)', color:'#2563a8', items:[
+      'Pliometría progresiva y cambios de dirección sin reproducir síntomas',
+      'Retorno deportivo por etapas: Trote → Carrera → Corte → Deporte específico',
+      'Imagen si no mejora o confirmar morfología: Rx pelvis AP + MRA (ángulo alfa Cam > 55°)',
+      'Criterio alta: abductores ≥ 85% bilateral · FADIR sin dolor · escala funcional > 80'
+    ]}
+  ], ref:'Enseki K et al. JOSPT 2023 CPG · Griffin DR et al. BJSM 2016 (Warwick Agreement) · Ishøi L et al. BJSM 2021' },
+
+  'lesion-labral': { fases:[
+    { label:'Fase 1 — Protección (sem 0–4)', color:'#b87a00', items:[
+      'Descarga relativa: evitar rotaciones extremas y flexión bajo carga',
+      'Crioterapia · AINE tópico si necesario · actividad acuática si tolera',
+      'Solicitar Artro-RM para confirmación diagnóstica (Sn 87–91%)'
+    ]},
+    { label:'Fase 2 — Estabilización (sem 4–12)', color:'#2d7a2d', items:[
+      'Fortalecimiento glúteo profundo y rotadores externos: side-lying ER, clamshell, step-up lateral',
+      'Control motor: conciencia de posición neutral de cadera · evitar click/dolor en ejercicio',
+      'Cadena cinética cerrada progresiva: squat parcial → completo → unilateral'
+    ]},
+    { label:'Fase 3 — Decisión (> 12 sem)', color:'#2563a8', items:[
+      'Si no mejora: valorar artroscopia (desbridamiento o reparación labral)',
+      'Post-cirugía: rehabilitación 4–6 meses para retorno deportivo completo',
+      'Criterios alta: VAS ≤ 2, déficit fuerza ≤ 15%, single-leg squat sin compensación'
+    ]}
+  ], ref:'Enseki K et al. JOSPT 2023 CPG · Reiman MP et al. BJSM 2012;2014' },
+
+  'microinestabilidad': { fases:[
+    { label:'Fase 1 — Estabilización (sem 0–8)', color:'#b87a00', items:[
+      'Evitar posiciones de apprehension: hiperextensión + RE extrema',
+      'Fortalecimiento rotadores externos profundos y glúteo menor (hip ER en neutro)',
+      'Propiocepción monopodal: balance board, superficies inestables progresivas',
+      'Evaluar hiperlaxitud sistémica (Beighton) — si ≥ 4 derivar evaluación displasia'
+    ]},
+    { label:'Fase 2 — Funcional (sem 8–16)', color:'#2d7a2d', items:[
+      'Carga progresiva en posiciones de riesgo controladas',
+      'Entrenamiento neuromuscular: perturbaciones reactivas, plyos de baja amplitud',
+      'MRA para descartar lesión capsular o labral asociada'
+    ]}
+  ], ref:'Wong SE et al. Curr Rev Musculoskelet Med 2022 · Enseki K et al. JOSPT 2023 CPG' },
+
+  'displasia-ddh': { fases:[
+    { label:'Conservador (sem 0–12)', color:'#b87a00', items:[
+      'Fortalecimiento periarticular: glúteos, rotadores, core pélvico (estabilización activa)',
+      'Evitar movimientos de inestabilidad: extensión + RE extrema bajo carga',
+      'Rx pelvis con protocolo: medir ángulo CE (normal > 25°) y ángulo AI'
+    ]},
+    { label:'Decisión quirúrgica (> 12 sem)', color:'#cc3333', items:[
+      'CEA < 18°: derivar cirugía ortopédica para osteotomía periacetabular (PAO)',
+      'CEA 18–25° (borderline): prueba conservadora extendida + reevaluación',
+      'Post-PAO: rehabilitación 9–12 meses para retorno deportivo completo'
+    ]}
+  ], ref:'Enseki K et al. JOSPT 2023 CPG · Wong SE et al. Curr Rev Musculoskelet Med 2022' },
+
+  'tendinopatia-glutea': { fases:[
+    { label:'Fase 1 — Descarga y educación (sem 0–4)', color:'#b87a00', items:[
+      '⚠️ EDUCACIÓN CLAVE: evitar compresión tendinosa — no cruzar piernas, no aducción, no inclinación lateral del tronco',
+      'Posición al dormir: almohada entre rodillas en decúbito lateral · evitar posición "fig. 4"',
+      'Isométrico analgésico: abducción de cadera contra pared lateral (30–45 seg × 5 series)'
+    ]},
+    { label:'Fase 2 — Carga progresiva (sem 4–12)', color:'#2d7a2d', items:[
+      'Isotónico: clamshell con banda → abducción en bipedestación → puente glúteo unilateral',
+      'RSWT si meseta terapéutica: 2000 pulsos 0.16 mJ/mm², 3–4 sesiones (superior a CSI a 4 meses)',
+      'Evitar masaje transverso profundo y estiramiento de banda iliotibial en fase aguda'
+    ]},
+    { label:'Fase 3 — Carga funcional y retorno (sem 8–20)', color:'#2563a8', items:[
+      'Single-leg squat progresivo, step-up lateral, sentadilla con banda, lateral band walk',
+      'Trote en línea recta antes de agregar cambios de dirección y velocidad',
+      'VISA-G ≥ 70/80 como criterio de retorno deportivo · MDC ~11 · MCID ~12',
+      'CSI (corticosteroide): beneficio a 1–3 meses pero inferior al ejercicio a 15 meses (Barratt 2016)'
+    ]}
+  ], ref:'Barratt PA et al. BJSM 2016 · Lustenberger DP et al. Clin J Sport Med 2011 · Reid D. J Orthop Sports Phys Ther 2016 · Lequesne M et al. Arthritis Rheum 2008' },
+
+  'coxa-saltans': { fases:[
+    { label:'Conservador (sem 0–8)', color:'#b87a00', items:[
+      'Estiramiento banda iliotibial y psoas · liberación miofascial (foam roller)',
+      'Fortalecimiento glúteo: abordar debilidad abductora subyacente',
+      'Resolución espontánea frecuente — informar al paciente'
+    ]},
+    { label:'Si refractario (> 3 meses)', color:'#2563a8', items:[
+      'Infiltración ecoguiada de bursa o vaina tendinosa si sintomático severo',
+      'Fisioterapia intensiva con control motor y patrones de movimiento'
+    ]}
+  ], ref:'Enseki K et al. JOSPT 2023 CPG' },
+
+  'ingle-aductor': { fases:[
+    { label:'Aguda (sem 0–2)', color:'#b87a00', items:[
+      'Reducción de carga: evitar sprint, cambios de dirección y adducción bajo carga',
+      'Crioterapia 15 min × 3/día · compresión elástica de cadera/ingle',
+      'Marcha sin dolor → trote suave como criterio de progresión'
+    ]},
+    { label:'Rehabilitación — Copenhagen Protocol (sem 2–8)', color:'#2d7a2d', items:[
+      'Copenhagen Adductor Exercise: la intervención con mayor evidencia (Harøy et al. BJSM 2019)',
+      'Progresión: aductor isométrico sentado → excéntrico lateral tumbado → Copenhagen completo',
+      'Complemento: core, abductores, psoas en cadena · 3 sesiones/semana'
+    ]},
+    { label:'Retorno deportivo (sem 8–16)', color:'#2563a8', items:[
+      'Criterio retorno: squeeze test bilateral sin dolor · fuerza aductora ≥ 90% contralateral',
+      'Progresión: Trote → Sprint → Cambios de dirección → Entrenamiento específico → Competición',
+      'Criterio alta: HAGOS Deporte > 80/100 · adductor strength test sin dolor'
+    ]}
+  ], ref:'Delahunt E et al. BJSM 2015 (Doha) · Harøy J et al. BJSM 2019 (Copenhagen Adductor Exercise)' },
+
+  'ingle-psoas': { fases:[
+    { label:'Aguda (sem 0–2)', color:'#b87a00', items:[
+      'Reducción de carga: evitar flexión de cadera contra resistencia y sprint',
+      'Crioterapia · compresión · AINE tópico si necesario'
+    ]},
+    { label:'Rehabilitación (sem 2–10)', color:'#2d7a2d', items:[
+      'Fortalecimiento excéntrico progresivo de flexores de cadera',
+      'Control motor lumbopélvico: disociación lumbo-cadera, estabilización anti-extensión',
+      'Estiramiento suave de psoas en fase subaguda (no en aguda)'
+    ]},
+    { label:'Retorno (sem 8–12)', color:'#2563a8', items:[
+      'Progresión: trote → aceleración → sprint completo · sin dolor en flexión resistida',
+      'Criterio: Thomas test sin limitación significativa · HAGOS ≥ 80'
+    ]}
+  ], ref:'Delahunt E et al. BJSM 2015 (Doha)' },
+
+  'ingle-inguinal': { fases:[
+    { label:'Conservador (sem 0–6)', color:'#b87a00', items:[
+      'Reducción actividades provocativas: sprint, Valsalva, cambios de dirección bruscos',
+      'Fortalecimiento core y pared abdominal: crunch oblicuo, plancha, pallof press',
+      'Derivar cirugía si no mejora en 6 semanas (hernia deportiva generalmente requiere reparación)'
+    ]},
+    { label:'Quirúrgico (si indicado)', color:'#2563a8', items:[
+      'Reparación laparoscópica de pared posterior (TEP/TAPP): mejor evidencia disponible',
+      'Retorno deportivo post-cirugía: 6–8 semanas con protocolo progresivo específico'
+    ]}
+  ], ref:'Delahunt E et al. BJSM 2015 (Doha)' },
+
+  'osteitis-pubis': { fases:[
+    { label:'Aguda — reposo relativo (sem 0–4)', color:'#b87a00', items:[
+      'Reducción de carga de alta intensidad · actividad en piscina si tolera',
+      'Infiltración corticoide en sínfisis si dolor severo (alivio 1–4 semanas)',
+      'RMN: confirmar edema óseo bilateral en sínfisis pubis'
+    ]},
+    { label:'Rehabilitación (sem 4–16)', color:'#2d7a2d', items:[
+      'Core y estabilización pélvica: prioridad absoluta (transverso abdominal, oblicuos)',
+      'Fortalecimiento de aductores y abductores de forma progresiva y bilateral',
+      'Recuperación lenta: 3–6 meses en promedio para retorno deportivo completo'
+    ]}
+  ], ref:'Delahunt E et al. BJSM 2015 (Doha)' },
+
+  'artrosis-cadera': { fases:[
+    { label:'Manejo conservador activo (continuo)', color:'#b87a00', items:[
+      'Ejercicio aeróbico: 150 min/semana de intensidad moderada — Evidencia A (ACR 2019)',
+      'Fortalecimiento: cuádriceps, glúteos, core — mínimo 2× semana con progresión de carga',
+      'Control de peso: -5–10% reduce dolor y mejora función significativamente',
+      'Educación: dolor ≠ daño — movimiento seguro es medicina · autogestión activa'
+    ]},
+    { label:'Manejo farmacológico / infiltración', color:'#2d7a2d', items:[
+      'AINE tópico (diclofenaco gel): primera línea farmacológica OA leve-moderada',
+      'Corticosteroide intraarticular: alivio 4–8 semanas · repetir con imagen si necesario',
+      'Ácido hialurónico: beneficio modesto en OA leve-moderada · alternativa a corticoide'
+    ]},
+    { label:'Criterios derivación quirúrgica', color:'#cc3333', items:[
+      'Indicación ATC: dolor severo refractario + discapacidad + fracaso conservador ≥ 3 meses',
+      'Post-ATC: fisioterapia intensiva primeras 12 semanas · retorno actividad ≥ 6 meses',
+      'Artroplastia = mayor MCID en dolor y función a 1 año (> cualquier intervención conservadora)'
+    ]}
+  ], ref:'Simel DL et al. JAMA 2019 · Enseki K et al. JOSPT 2023 CPG · Kolasinski SL et al. ACR 2019' },
+
+  'ligamento-redondo': { fases:[
+    { label:'Conservador (sem 0–8)', color:'#b87a00', items:[
+      'Evitar movimientos de rotación con carga que reproduzcan el click/dolor',
+      'Estabilización dinámica de cadera: rotadores, glúteo, core'
+    ]},
+    { label:'Quirúrgico (si refractario)', color:'#2563a8', items:[
+      'Artroscopia diagnóstica y terapéutica: desbridamiento o reparación ligamentum teres',
+      'Retorno deportivo post-cirugía: 3–4 meses con protocolo progresivo'
+    ]}
+  ], ref:'Enseki K et al. JOSPT 2023 CPG' }
+};
+
 // ── Informe ────────────────────────────────────────────────────────────────────
 function generarInformeCadera() {
   if (!cur) { alert('Abrí la ficha del paciente primero'); return; }
@@ -589,6 +780,10 @@ function generarInformeCadera() {
   // VISA-G
   var visagTotal = visagVals.reduce(function(a, b) { return a + (b || 0); }, 0);
   var hasVisag = visagVals.some(function(v) { return v !== null && v > 0; });
+
+  // HAGOS subscale scores
+  var hagosScores = typeof _getHAGOSScores === 'function' ? _getHAGOSScores() : [];
+  var hasHagos = hagosScores.length > 0;
 
   var css = [
     'body{font-family:Inter,Arial,sans-serif;margin:0;background:#fff;color:#1a1a1a;font-size:12px;line-height:1.5}',
@@ -702,7 +897,21 @@ function generarInformeCadera() {
     '</div></div>'
   ) : '';
 
-  var sec05combined = (hasMhhs || hasVisag) ? (
+  var hagosTableRows = hagosScores.map(function(s) {
+    var interp = s.score >= 75 ? 'Leve / normal' : s.score >= 50 ? 'Moderado' : 'Severo';
+    var c = s.score >= 75 ? '#2d7a2d' : s.score >= 50 ? '#b87a00' : '#cc3333';
+    return '<tr><td><strong>' + s.label + '</strong></td>' +
+      '<td style="font-weight:700;color:' + c + ';text-align:center">' + s.score + '/100</td>' +
+      '<td style="color:' + c + '">' + interp + '</td></tr>';
+  }).join('');
+  var sec05hagos = hasHagos ? (
+    '<div style="margin-top:12px">' +
+    '<div class="intro-box">HAGOS: Hip And Groin Outcome Score · Thorborg K et al. BJSM 2011 · 37 ítems · 6 subescalas · 0 = máximos síntomas · 100 = sin síntomas</div>' +
+    '<table><tr><th>Subescala</th><th>Score</th><th>Severidad</th></tr>' + hagosTableRows + '</table>' +
+    '</div>'
+  ) : '';
+
+  var sec05combined = (hasMhhs || hasVisag || hasHagos) ? (
     _sec('05','Escalas funcionales') +
     (hasMhhs ? ('<div class="intro-box">mHHS: Modified Harris Hip Score (máx 91). MDC 8 pts · MCID 14 pts. Byrd 2003.</div>' +
     '<div style="background:#f7f4fb;border-radius:6px;padding:12px;border:1px solid #e8e0f0;text-align:center;margin-bottom:10px">' +
@@ -710,8 +919,35 @@ function generarInformeCadera() {
       '<div style="font-size:28px;font-weight:900;color:' + (mhhsTotal >= 80 ? '#2d7a2d' : mhhsTotal >= 70 ? '#b87a00' : '#cc3333') + '">' + mhhsTotal + '<span style="font-size:14px;color:#888">/91</span></div>' +
       '<div style="font-size:11px;color:' + (mhhsTotal >= 80 ? '#2d7a2d' : mhhsTotal >= 70 ? '#b87a00' : '#cc3333') + ';font-weight:600">' + (mhhsTotal >= 80 ? 'Buen resultado' : mhhsTotal >= 70 ? 'Resultado aceptable' : 'Resultado malo') + '</div>' +
     '</div>') : '') +
-    sec05b
+    sec05b + sec05hagos
   ) : '';
+
+  // Sec 06 — Recomendaciones EBM
+  var topDx = dxResult.diagnosticos[0] || null;
+  var sec06 = '';
+  if (topDx) {
+    var recomData = _RECOM[topDx.id];
+    var colorMap6 = { red:'#cc3333', neon:'#2d7a2d', amber:'#b87a00', blue:'#2563a8', orange:'#b05a00', text:'#444' };
+    var dxColor6 = colorMap6[topDx.colorKey] || '#7e5ba8';
+    if (recomData) {
+      sec06 = _sec('06','Recomendaciones EBM — ' + topDx.nombre) +
+        '<div class="intro-box">Plan de tratamiento basado en evidencia para el diagnóstico principal. Adaptar según etapa clínica, tolerancia y respuesta individual. No reemplaza el juicio clínico.</div>' +
+        recomData.fases.map(function(fase) {
+          return '<div style="margin-bottom:12px;border-left:3px solid ' + fase.color + ';padding:10px 14px;background:#fafafa;border-radius:0 6px 6px 0">' +
+            '<div style="font-size:10px;font-weight:800;color:' + fase.color + ';text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">' + fase.label + '</div>' +
+            '<ul style="margin:0;padding-left:16px;font-size:10px;line-height:1.75;color:#333">' +
+            fase.items.map(function(it) { return '<li style="margin-bottom:2px">' + it + '</li>'; }).join('') +
+            '</ul></div>';
+        }).join('') +
+        '<div style="font-size:9px;color:#888;font-style:italic;margin-top:6px">Referencias: ' + recomData.ref + '</div>';
+    } else {
+      sec06 = _sec('06','Recomendaciones EBM — ' + topDx.nombre) +
+        '<div class="intro-box">Plan basado en el tratamiento recomendado para el diagnóstico principal.</div>' +
+        '<ul style="font-size:10px;line-height:1.8;color:#333;padding-left:20px;margin:0">' +
+        topDx.tratamiento.split('·').map(function(it) { return '<li>' + it.trim() + '</li>'; }).join('') + '</ul>' +
+        '<div style="font-size:9px;color:#888;font-style:italic;margin-top:6px">' + topDx.ref.replace(/\n/g,' · ') + '</div>';
+    }
+  }
 
   var win = window.open('', '_blank');
   win.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Informe Cadera — ' + nombre + '</title><style>' + css + '</style></head>' +
@@ -723,9 +959,9 @@ function generarInformeCadera() {
       '</div>' +
       '<div style="text-align:right;font-size:10px;color:#888">' + fecha + '<br><span style="font-size:9px">MoveMetrics v12</span></div>' +
     '</div>' +
-    sec01 + sec02 + sec03 + sec04 + sec05combined +
+    sec01 + sec02 + sec03 + sec04 + sec05combined + sec06 +
     '<div style="margin-top:32px;padding-top:16px;border-top:1px solid #e8e0f0;font-size:9px;color:#aaa;text-align:center">' +
-      'Enseki K et al. JOSPT 2023 · Reiman MP et al. BJSM 2012;2014 · Delahunt E et al. BJSM 2015 (Doha) · Simel DL et al. JAMA 2019 · Griffin DR et al. BJSM 2016 · No reemplaza el juicio clínico' +
+      'Enseki K et al. JOSPT 2023 · Reiman MP et al. BJSM 2012;2014 · Delahunt E et al. BJSM 2015 (Doha) · Simel DL et al. JAMA 2019 · Griffin DR et al. BJSM 2016 · Thorborg K et al. BJSM 2011 · No reemplaza el juicio clínico' +
     '</div>' +
     '<script>setTimeout(function(){window.print();},400)<\/script>' +
     '</body></html>');
