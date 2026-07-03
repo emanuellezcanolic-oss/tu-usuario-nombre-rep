@@ -175,6 +175,30 @@ const VISAP_P_ITEMS = [
 ];
 
 // ═══════════════════════════════════════════════════════════════
+// ACL-RSI — Anterior Cruciate Ligament Return to Sport after Injury Scale
+// Webster KE & Feller JA. Br J Sports Med. 2016;50(2):66-67
+// Validación española: Baez SE et al. J Orthop Sports Phys Ther. 2018;48(2):95-101
+// 12 ítems · 0–100 por ítem (0=nada · 100=completamente)
+// Score final = media de ítems ajustados (negativos invertidos) → 0–100
+// Cutoff: >56 = preparado psicológicamente para RTS · MCID ≈ 10 pts
+// 3 dominios: Emociones · Confianza en rendimiento · Percepción de riesgo
+// ═══════════════════════════════════════════════════════════════
+const ACL_RSI_ITEMS = [
+  { q:'Me siento confiado/a en que puedo rendir al mismo nivel deportivo que antes de la lesión.', reversed:false, dominio:'confianza' },
+  { q:'Siento nerviosismo ante la idea de volver a practicar mi deporte.', reversed:true, dominio:'emociones' },
+  { q:'Tengo confianza en mi rodilla operada.', reversed:false, dominio:'confianza' },
+  { q:'Siento dudas o vacilación ante la idea de volver al deporte.', reversed:true, dominio:'emociones' },
+  { q:'Tengo miedo de aterrizar sobre la rodilla y volver a lesionarme.', reversed:true, dominio:'riesgo' },
+  { q:'Me siento seguro/a de mi capacidad para rendir bien en el deporte después de la lesión/cirugía.', reversed:false, dominio:'confianza' },
+  { q:'Pienso que practicar deporte representa un riesgo para mi rodilla.', reversed:true, dominio:'riesgo' },
+  { q:'Tengo miedo de volver a lesionarme la rodilla practicando deporte.', reversed:true, dominio:'riesgo' },
+  { q:'Siento confianza en poder manejar las exigencias físicas de mi deporte.', reversed:false, dominio:'confianza' },
+  { q:'Me siento frustrado/a porque debo tener cuidado al usar la rodilla durante el deporte.', reversed:true, dominio:'emociones' },
+  { q:'Me siento listo/a para volver a competir.', reversed:false, dominio:'confianza' },
+  { q:'Me siento tranquilo/a ante la perspectiva de volver al deporte.', reversed:false, dominio:'emociones' },
+];
+
+// ═══════════════════════════════════════════════════════════════
 // TESTS LCA / LCP
 // Fuentes: Benjaminse A AJSM 2006 · Solomon DH JAMA 2001
 //          Rubinstein RA AJSM 1994 · Lelli A KSSTA 2014

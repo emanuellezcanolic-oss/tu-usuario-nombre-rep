@@ -2890,8 +2890,8 @@
   <!-- Clinical sheets split por articulación (originalmente klinical.js 1163 LOC) -->
   <script src="js/sheets/_common.js?v=10"></script>
   <script src="js/sheets/hombro.js?v=13"></script>
-  <script src="js/data/papers-rodilla-rules.js?v=5"></script>
-  <script src="js/sheets/rodilla.js?v=9"></script>
+  <script src="js/data/papers-rodilla-rules.js?v=6"></script>
+  <script src="js/sheets/rodilla.js?v=10"></script>
   <script src="js/data/papers-tobillo-rules.js?v=1"></script>
   <script src="js/sheets/tobillo.js?v=2"></script>
   <script src="js/sheets/lumbar.js?v=10"></script>
@@ -4369,9 +4369,34 @@
         <div class="card-body">
           <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Hop Tests LSI: criterio RTP &gt;90% en todos</div>
           <div id="hop-tests-rtp"></div>
-          <div class="grid-2" style="gap:8px;margin-top:10px">
-            <div class="ig"><label class="il">IKDC (0–100)</label><input class="inp inp-mono" type="number" placeholder="Score"></div>
-            <div class="ig"><label class="il">ACL-RSI (0–100)</label><input class="inp inp-mono" type="number" placeholder="Psico-readiness"></div>
+          <div class="ig" style="margin-top:10px">
+            <label class="il">IKDC Subjetivo (0–100)</label>
+            <input class="inp inp-mono" type="number" id="rod-ikdc-score" placeholder="Score">
+          </div>
+        </div>
+      </div>
+      <!-- ACL-RSI Scale -->
+      <div class="card mt-10" style="border-color:rgba(167,139,250,.3)">
+        <div class="card-header" style="cursor:pointer" onclick="toggleSheetSection('acl-rsi-body')">
+          <h3 style="color:#A78BFA">ACL-RSI — Disposición Psicológica RTS</h3>
+          <span class="tag" style="background:rgba(167,139,250,.15);color:#A78BFA;font-size:9px">Webster 2016 · Cutoff &gt;56</span>
+        </div>
+        <div id="acl-rsi-body" style="display:none">
+          <div class="card-body">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:12px">12 ítems · 0=nada · 100=completamente · Webster KE &amp; Feller JA 2016 · validación española Baez SE et al. JOSPT 2018</div>
+            <div id="acl-rsi-fields"></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--border);margin-top:6px">
+              <div style="font-size:12px;font-weight:600;color:#A78BFA">ACL-RSI Total</div>
+              <div style="text-align:right">
+                <div id="aclrsi-total" style="font-family:var(--mono);font-size:28px;font-weight:800;color:var(--text3)">—</div>
+                <div id="aclrsi-label" style="font-size:10px;color:var(--text3)">Completá los ítems</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+              <div id="aclrsi-d-emo" style="padding:4px 8px;border-radius:4px;background:rgba(167,139,250,.1);font-size:10px;color:#A78BFA">Emociones: —</div>
+              <div id="aclrsi-d-conf" style="padding:4px 8px;border-radius:4px;background:rgba(57,255,122,.08);font-size:10px;color:var(--neon)">Confianza: —</div>
+              <div id="aclrsi-d-risk" style="padding:4px 8px;border-radius:4px;background:rgba(255,190,0,.08);font-size:10px;color:var(--amber)">Riesgo: —</div>
+            </div>
           </div>
         </div>
       </div>

@@ -3,6 +3,8 @@
 // Algoritmo diagnóstico + informe imprimible basado en evidencia
 // ═══════════════════════════════════════════════════════════════
 
+var aclRsiVals = [];
+
 // Estado interno de los tests completados
 const rodState = {
   lca:   {},  // { lachman: bool|null, cajon_ant: bool|null, ... }
@@ -881,6 +883,82 @@ function calcWOMET() {
   }
 }
 
+// ── ACL-RSI ───────────────────────────────────────────────────
+// Webster KE & Feller JA 2016 · Versión española Baez SE et al. JOSPT 2018
+// 12 ítems 0–100 · ítems negativos invertidos · Total = media → 0–100
+// Cutoff: >56 = preparado · MCID ≈ 10 pts
+function buildACLRSI() {
+  const c = document.getElementById('acl-rsi-fields');
+  if (!c || c.innerHTML) return;
+  aclRsiVals = new Array(12).fill(null);
+
+  const domColors = {
+    emociones: { color:'#A78BFA', label:'Emociones' },
+    confianza:  { color:'var(--neon)', label:'Confianza en rendimiento' },
+    riesgo:     { color:'var(--amber)', label:'Percepción de riesgo' },
+  };
+
+  c.innerHTML = ACL_RSI_ITEMS.map((item, i) => {
+    const dom = domColors[item.dominio];
+    const inv = item.reversed ? ' · ítem inverso' : '';
+    return `
+    <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:5px">
+        <span style="font-size:10px;font-weight:700;color:var(--text3);min-width:18px">${i+1}.</span>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--text1);line-height:1.4">${item.q}</div>
+          <span style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(255,255,255,.06);color:${dom.color}">${dom.label}${inv}</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:9px;color:var(--red);min-width:36px;line-height:1.3">0<br>Nada</span>
+        <input type="range" class="eva-slider" min="0" max="100" value="0" style="flex:1"
+          oninput="aclRsiVals[${i}]=+this.value;document.getElementById('aclv-${i}').textContent=this.value;calcACLRSI()">
+        <span style="font-size:9px;color:var(--neon);min-width:42px;text-align:right;line-height:1.3">100<br>Totalmente</span>
+        <div id="aclv-${i}" style="font-family:var(--mono);font-size:16px;font-weight:800;color:var(--neon);min-width:28px;text-align:center">0</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function calcACLRSI() {
+  if (!ACL_RSI_ITEMS) return;
+  const scores = aclRsiVals.map((v, i) => {
+    if (v === null) return null;
+    return ACL_RSI_ITEMS[i].reversed ? (100 - v) : v;
+  });
+  const valid = scores.filter(s => s !== null);
+  if (valid.length === 0) return;
+  const total = Math.round(valid.reduce((a,b)=>a+b,0) / valid.length);
+
+  const el = document.getElementById('aclrsi-total');
+  if (el) {
+    const c = total >= 80 ? 'var(--neon)' : total >= 56 ? 'var(--amber)' : 'var(--red)';
+    el.textContent = total;
+    el.style.color = c;
+  }
+  const label = document.getElementById('aclrsi-label');
+  if (label) {
+    label.textContent = total >= 80
+      ? `✓ Alta disposición psicológica (${valid.length}/12 ítems)`
+      : total >= 56
+      ? `⚠ Disposición suficiente >56 (${valid.length}/12 ítems)`
+      : `✗ Insuficiente <56 — no iniciar RTS (${valid.length}/12 ítems)`;
+    label.style.color = total >= 80 ? 'var(--neon)' : total >= 56 ? 'var(--amber)' : 'var(--red)';
+  }
+
+  // Dominios
+  const byDomain = { emociones:[], confianza:[], riesgo:[] };
+  scores.forEach((s, i) => { if (s !== null) byDomain[ACL_RSI_ITEMS[i].dominio].push(s); });
+  const mean = arr => arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : null;
+  const dEmo = mean(byDomain.emociones);
+  const dConf = mean(byDomain.confianza);
+  const dRisk = mean(byDomain.riesgo);
+  const emoEl = document.getElementById('aclrsi-d-emo'); if (emoEl && dEmo!==null) emoEl.textContent = `Emociones: ${dEmo}`;
+  const confEl = document.getElementById('aclrsi-d-conf'); if (confEl && dConf!==null) confEl.textContent = `Confianza: ${dConf}`;
+  const riskEl = document.getElementById('aclrsi-d-risk'); if (riskEl && dRisk!==null) riskEl.textContent = `Riesgo: ${dRisk}`;
+}
+
 // ═══════════════════════════════════════════════════════════════
 // PANEL DE INFORME — Tab interactivo (patrón hombro)
 // ═══════════════════════════════════════════════════════════════
@@ -1083,6 +1161,7 @@ function _rodillaPrintInforme(opts) {
 
   const visapRaw    = gt('visap-total');
   const kujalaRaw   = gv('kujala-input');
+  const aclRsiRaw   = gt('aclrsi-total');
   const koosDolor   = gt('koos-sub-dolor');
   const koosSint    = gt('koos-sub-sintomas');
   const koosAvd     = gt('koos-sub-avd');
@@ -1100,7 +1179,7 @@ function _rodillaPrintInforme(opts) {
   const romFlexD = gv('rom-flex-d');
   const romFlexI = gv('rom-flex-i');
   const hasROM   = [romExtD, romExtI, romFlexD, romFlexI].some(v => v !== '—');
-  const hasScales = [visapRaw, kujalaRaw, lysholmRaw, marxRaw, wometRaw].some(v => v !== '—');
+  const hasScales = [visapRaw, kujalaRaw, lysholmRaw, marxRaw, wometRaw, aclRsiRaw].some(v => v !== '—');
 
   // ── Paleta de colores (print-safe, hex) ──
   const C = {
@@ -1453,6 +1532,7 @@ ${showScales ? `
         ${scaleRow('Lysholm Score', lysholmRaw !== '—' ? lysholmRaw + '/100' : '—', 'Lysholm 1982 · LCA / menisco', '10 pts')}
         ${scaleRow('Tegner Activity', tegnerVal !== '—' ? 'Nivel ' + tegnerVal + ' / 10' : '—', 'Tegner & Lysholm 1985', '1 nivel')}
         ${scaleRow('Marx Activity Rating', marxRaw !== '—' ? marxRaw + '/16' : '—', 'Marx et al. AJSM 2001 · RTP', '4 pts')}
+        ${scaleRow('ACL-RSI', aclRsiRaw !== '—' ? aclRsiRaw + '/100' : '—', 'Webster 2016 · RTP psicológico · cutoff >56', '10 pts')}
       </div>
 
       <div>
