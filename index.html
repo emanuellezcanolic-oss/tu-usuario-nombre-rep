@@ -2892,7 +2892,8 @@
   <script src="js/sheets/hombro.js?v=13"></script>
   <script src="js/data/papers-rodilla-rules.js?v=5"></script>
   <script src="js/sheets/rodilla.js?v=9"></script>
-  <script src="js/sheets/tobillo.js?v=1"></script>
+  <script src="js/data/papers-tobillo-rules.js?v=1"></script>
+  <script src="js/sheets/tobillo.js?v=2"></script>
   <script src="js/sheets/lumbar.js?v=10"></script>
   <script src="js/sheets/groin.js?v=2"></script>
   <script src="js/sheets/cadera.js?v=3"></script>
@@ -4420,20 +4421,58 @@
     <div class="modal-handle"></div>
     <div class="flex-b mb-12">
       <div><div class="modal-title" style="font-size:18px">🦶 Tobillo</div>
-        <div style="font-size:12px;color:var(--text2)">IAC · Lunge · SEBT · CAIT · FAAM · VISA-A</div></div>
+        <div style="font-size:12px;color:var(--text2)">Esguince · Sindesmosis · Aquiles · IAC · CAIT · FAAM · VISA-A</div></div>
       <button class="btn btn-ghost btn-sm" onclick="closeModal('sheet-tobillo')">✕</button>
     </div>
     <div style="display:flex;gap:3px;background:var(--bg4);border-radius:8px;padding:3px;margin-bottom:16px;overflow-x:auto">
-      <button class="btn btn-neon btn-sm" id="ttab-lig-btn" onclick="showTTab('lig',this)" style="white-space:nowrap;font-size:10px">Ligamentos</button>
+      <button class="btn btn-neon btn-sm" id="ttab-esguince-btn" onclick="showTTab('esguince',this)" style="white-space:nowrap;font-size:10px">Esguince</button>
+      <button class="btn btn-ghost btn-sm" id="ttab-sindes-btn" onclick="showTTab('sindes',this)" style="white-space:nowrap;font-size:10px">Sindesmosis</button>
+      <button class="btn btn-ghost btn-sm" id="ttab-aquiles-btn" onclick="showTTab('aquiles',this)" style="white-space:nowrap;font-size:10px">Aquiles</button>
       <button class="btn btn-ghost btn-sm" id="ttab-func-btn" onclick="showTTab('func',this)" style="white-space:nowrap;font-size:10px">Funcional</button>
-      <button class="btn btn-ghost btn-sm" id="ttab-cuest-btn" onclick="showTTab('tcuest',this)" style="white-space:nowrap;font-size:10px">CAIT / FAAM</button>
-      <button class="btn btn-ghost btn-sm" id="ttab-visa-btn" onclick="showTTab('tvisa',this)" style="white-space:nowrap;font-size:10px">VISA-A</button>
+      <button class="btn btn-ghost btn-sm" id="ttab-escalas-btn" onclick="showTTab('escalas',this)" style="white-space:nowrap;font-size:10px">Escalas</button>
+      <button class="btn btn-ghost btn-sm" id="ttab-tinforme-btn" onclick="showTTab('tinforme',this)" style="white-space:nowrap;font-size:10px">📄 Informe</button>
     </div>
-    <!-- Ligamentos -->
-    <div id="ttab-lig">
-      <!-- Lunge -->
+    <!-- Esguince -->
+    <div id="ttab-esguince">
+      <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Ligamentos laterales</div>
+      <div id="tob-esguince-lat"></div>
+      <div style="font-size:10px;font-weight:700;color:var(--text2);margin:12px 0 6px;text-transform:uppercase;letter-spacing:.5px">Ligamentos mediales</div>
+      <div id="tob-esguince-med"></div>
+      <div class="card mt-10" style="border-color:rgba(239,68,68,.3)">
+        <div class="card-header"><h3>Ottawa Ankle / Foot Rules</h3><span class="tag tag-r">Sn 96–98% · Polzer 2012 · Gomes 2022</span></div>
+        <div class="card-body">
+          <div style="font-size:10px;color:var(--text2);margin-bottom:8px">Radiografía indicada si sensibilidad ósea en zona maleolar O mediopié + incapacidad de carga (4 pasos). Stiell Lancet 1992 · Bachmann Ann Intern Med 2003.</div>
+          <div id="tob-ottawa-items"></div>
+          <div id="tob-ottawa-result" style="margin-top:10px;font-size:12px;padding:8px;background:var(--bg3);border-radius:6px;text-align:center;color:var(--text3)">Marcar ítems para interpretar</div>
+        </div>
+      </div>
+    </div>
+    <!-- Sindesmosis -->
+    <div id="ttab-sindes" style="display:none">
+      <div class="card mb-10" style="background:var(--bg3);border:none;padding:8px 10px;border-radius:8px">
+        <div style="font-size:11px;color:var(--text2)"><strong>Interpretación:</strong> ≥2 tests positivos = sospecha sindesmosial alta. Examen físico aislado detecta solo el 75% de lesiones — imagen obligatoria para confirmar. RM: gold standard (Sn >91%, Sp 100%). Torre SEMCPT 2019.</div>
+      </div>
+      <div id="tob-sindes-fields"></div>
+    </div>
+    <!-- Aquiles -->
+    <div id="ttab-aquiles" style="display:none">
+      <div id="tob-aquiles-fields"></div>
+      <div class="card mt-8">
+        <div class="card-header"><h3>Single Heel Rise test</h3><span class="tag tag-b">≥25 reps = normal · &lt;15 = déficit severo</span></div>
+        <div class="card-body">
+          <div style="font-size:9px;color:var(--text3);margin-bottom:8px">Maffulli 1999 · Meredith 2025 — criterio de alta funcional en tendinopatía Aquiles</div>
+          <div class="grid-2" style="gap:8px">
+            <div class="ig"><label class="il">Reps D</label><input class="inp inp-mono" type="number" id="tob-shr-d" placeholder="0" oninput="_calcSHR()"></div>
+            <div class="ig"><label class="il">Reps I</label><input class="inp inp-mono" type="number" id="tob-shr-i" placeholder="0" oninput="_calcSHR()"></div>
+          </div>
+          <div id="tob-shr-result" style="font-size:11px;margin-top:6px"></div>
+        </div>
+      </div>
+    </div>
+    <!-- Funcional -->
+    <div id="ttab-func" style="display:none">
       <div class="card mb-10">
-        <div class="card-header"><h3>Lunge Test — Dorsiflexión</h3><span class="tag tag-b">ROM · &gt;40° verde · 35–40° amarillo · &lt;35° rojo</span></div>
+        <div class="card-header"><h3>Lunge Test — Dorsiflexión</h3><span class="tag tag-b">&gt;40° verde · 35–40° amarillo · &lt;35° rojo</span></div>
         <div class="card-body">
           <div class="grid-2" style="gap:8px">
             <div class="ig"><label class="il">Derecho (°)</label>
@@ -4446,32 +4485,28 @@
           <div id="tob-lunge-asim" style="font-size:12px;color:var(--text3);margin-top:6px">Asimetría: completá ambos lados</div>
         </div>
       </div>
-      <!-- Tests ligamentarios -->
-      <div id="tobillo-lig-fields"></div>
-      <!-- Drop navicular tobillo -->
-      <div class="card mt-10">
-        <div class="card-header"><h3>Drop Navicular</h3><span class="tag tag-b">&gt;10mm = pronación excesiva</span></div>
+      <div class="card mb-10">
+        <div class="card-header"><h3>Drop Navicular</h3><span class="tag tag-b">&gt;10 mm = pronación excesiva</span></div>
         <div class="card-body">
           <div class="grid-2" style="gap:8px">
-            <div class="ig"><label class="il">Drop D (mm)</label><input class="inp inp-mono" type="number" placeholder="0"></div>
-            <div class="ig"><label class="il">Drop I (mm)</label><input class="inp inp-mono" type="number" placeholder="0"></div>
+            <div class="ig"><label class="il">Nav. desc. D (mm)</label><input class="inp inp-mono" type="number" id="nav-desc-d" placeholder="0" oninput="calcDropNavicular('d')"></div>
+            <div class="ig"><label class="il">Nav. carg. D (mm)</label><input class="inp inp-mono" type="number" id="nav-carg-d" placeholder="0" oninput="calcDropNavicular('d')"></div>
+            <div class="ig"><label class="il">Nav. desc. I (mm)</label><input class="inp inp-mono" type="number" id="nav-desc-i" placeholder="0" oninput="calcDropNavicular('i')"></div>
+            <div class="ig"><label class="il">Nav. carg. I (mm)</label><input class="inp inp-mono" type="number" id="nav-carg-i" placeholder="0" oninput="calcDropNavicular('i')"></div>
           </div>
+          <div id="nav-result-d" style="font-size:11px;margin-top:6px"></div>
+          <div id="nav-result-i" style="font-size:11px;margin-top:4px"></div>
         </div>
       </div>
-    </div>
-    <!-- Funcional -->
-    <div id="ttab-func" style="display:none">
-      <!-- SEBT -->
       <div class="card mb-10">
-        <div class="card-header"><h3>SEBT — Star Excursion Balance Test</h3><span class="tag tag-b">Funcional</span></div>
+        <div class="card-header"><h3>SEBT — Star Excursion Balance Test</h3><span class="tag tag-b">Asimetría &gt;4 cm = déficit · Plisky JOSPT 2006</span></div>
         <div class="card-body">
-          <div class="ig"><label class="il">Largo miembro inferior (cm)</label><input class="inp inp-mono" type="number" id="sebt-llm" placeholder="90"></div>
+          <div class="ig mb-8"><label class="il">Largo miembro inferior (cm)</label><input class="inp inp-mono" type="number" id="sebt-llm" placeholder="90"></div>
           <div id="sebt-sheet-fields"></div>
         </div>
       </div>
-      <!-- Balance monopodal -->
-      <div class="card">
-        <div class="card-header"><h3>Balance monopodal</h3></div>
+      <div class="card mb-10">
+        <div class="card-header"><h3>Balance monopodal</h3><span class="tag tag-b">OA &gt;30 s / OC &gt;20 s = normal</span></div>
         <div class="card-body">
           <div class="grid-2" style="gap:8px">
             <div class="ig"><label class="il">D ojos abiertos (s)</label><input class="inp inp-mono" type="number" step="0.1" placeholder="0.0"></div>
@@ -4481,20 +4516,26 @@
           </div>
         </div>
       </div>
+      <div class="card">
+        <div class="card-header"><h3>Hop Tests funcionales (IAC)</h3><span class="tag tag-b">Galleher CPG 2020 · Hiller JOSPT 2006</span></div>
+        <div class="card-body">
+          <div id="tob-hop-fields"></div>
+        </div>
+      </div>
     </div>
-    <!-- CAIT / FAAM -->
-    <div id="ttab-tcuest" style="display:none">
+    <!-- Escalas -->
+    <div id="ttab-escalas" style="display:none">
       <div class="card mb-10" style="border-color:rgba(45,212,191,.2)">
         <div class="card-header" style="cursor:pointer" onclick="toggleSheetSection('cait-body')">
-          <h3>CAIT</h3><span class="tag" style="background:rgba(45,212,191,.15);color:var(--teal)">0–30 · IAC ≤27</span>
+          <h3>CAIT</h3><span class="tag" style="background:rgba(45,212,191,.15);color:var(--teal)">0–30 · IAC &lt;28 · MCID 3 pts</span>
         </div>
         <div id="cait-body" style="display:none">
           <div class="card-body">
-            <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Cumberland Ankle Instability Tool · 9 ítems. Versión española SECOT.</div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Cumberland Ankle Instability Tool · 9 ítems · Versión española SECOT · Hiller JOSPT 2006 · CPG APTA 2013 Nivel I</div>
             <div id="cait-sheet-fields"></div>
             <div class="card mt-10" style="border-color:rgba(45,212,191,.3)">
               <div class="card-body" style="display:flex;justify-content:space-between;align-items:center">
-                <div><div style="font-size:12px;font-weight:600">CAIT total</div><div style="font-size:10px;color:var(--text2)">IAC: ≤27 pts</div></div>
+                <div><div style="font-size:12px;font-weight:600">CAIT total</div><div style="font-size:10px;color:var(--text2)">IAC: &lt;28 pts (≤27)</div></div>
                 <div><div id="cait-sheet-total" style="font-family:var(--mono);font-size:28px;font-weight:800;color:var(--neon)">—</div>
                 <div id="cait-sheet-interp" style="font-size:10px;text-align:right"></div></div>
               </div>
@@ -4502,13 +4543,13 @@
           </div>
         </div>
       </div>
-      <div class="card" style="border-color:rgba(45,212,191,.2)">
+      <div class="card mb-10" style="border-color:rgba(45,212,191,.2)">
         <div class="card-header" style="cursor:pointer" onclick="toggleSheetSection('faam-body')">
-          <h3>FAAM</h3><span class="tag" style="background:rgba(45,212,191,.15);color:var(--teal)">% función</span>
+          <h3>FAAM</h3><span class="tag" style="background:rgba(45,212,191,.15);color:var(--teal)">% función · Quick-FAAM MCID 6.5%</span>
         </div>
         <div id="faam-body" style="display:none">
           <div class="card-body">
-            <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Foot and Ankle Ability Measure · AVD (21 ítems) + Deportiva (8 ítems)</div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Foot and Ankle Ability Measure · AVD (21 ítems) + Deportiva (8 ítems) · CPG APTA 2013 Nivel I</div>
             <div style="display:flex;gap:4px;background:var(--bg4);border-radius:8px;padding:3px;margin-bottom:12px">
               <button class="btn btn-neon btn-sm" id="faam-avd-btn" onclick="setFAAMTab2('avd',this)" style="flex:1;font-size:10px">AVD (21)</button>
               <button class="btn btn-ghost btn-sm" id="faam-dep-btn" onclick="setFAAMTab2('dep',this)" style="flex:1;font-size:10px">Deportiva (8)</button>
@@ -4532,22 +4573,28 @@
           </div>
         </div>
       </div>
-    </div>
-    <!-- VISA-A -->
-    <div id="ttab-tvisa" style="display:none">
       <div class="card" style="border-color:rgba(45,212,191,.2)">
-        <div class="card-header"><h3>VISA-A (tendinopatía Aquiles)</h3><span class="tag" style="background:rgba(45,212,191,.15);color:var(--teal)">0–100 · MCID 8</span></div>
-        <div class="card-body">
-          <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Victorian Institute of Sport Assessment — Achilles. 8 ítems. 100 = asintomático. &lt;75 = sintomático.</div>
-          <div id="visaa-fields"></div>
-          <div class="card mt-10" style="border-color:rgba(45,212,191,.3)">
-            <div class="card-body" style="display:flex;justify-content:space-between;align-items:center">
-              <div><div style="font-size:12px;font-weight:600">VISA-A total</div><div style="font-size:10px;color:var(--text2)">MCID: 8 pts · &lt;75 = sintomático</div></div>
-              <div id="visaa-total" style="font-family:var(--mono);font-size:28px;font-weight:800;color:var(--neon)">—</div>
+        <div class="card-header" style="cursor:pointer" onclick="toggleSheetSection('visaa-body')">
+          <h3>VISA-A (tendinopatía Aquiles)</h3><span class="tag" style="background:rgba(45,212,191,.15);color:var(--teal)">0–100 · &lt;75 sintomático · MCID 8</span>
+        </div>
+        <div id="visaa-body" style="display:none">
+          <div class="card-body">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Victorian Institute of Sport Assessment — Achilles · 8 ítems · 100 = asintomático · Lohrer 2016 · Meredith 2025</div>
+            <div id="visaa-fields"></div>
+            <div class="card mt-10" style="border-color:rgba(45,212,191,.3)">
+              <div class="card-body" style="display:flex;justify-content:space-between;align-items:center">
+                <div><div style="font-size:12px;font-weight:600">VISA-A total</div><div style="font-size:10px;color:var(--text2)">MCID: 8 pts · &lt;75 = sintomático</div></div>
+                <div id="visaa-total" style="font-family:var(--mono);font-size:28px;font-weight:800;color:var(--neon)">—</div>
+              </div>
             </div>
           </div>
         </div>
       </div>
+    </div>
+    <!-- Informe -->
+    <div id="ttab-tinforme" style="display:none">
+      <button class="btn btn-neon btn-full mb-12" onclick="generarInformeTobillo()">📄 Generar Informe Tobillo</button>
+      <div id="tob-informe-container"></div>
     </div>
     <div class="divider"></div>
     <button class="btn btn-neon btn-full" onclick="saveKlinicalSheet('tobillo');closeModal('sheet-tobillo')">💾 Guardar evaluación tobillo</button>

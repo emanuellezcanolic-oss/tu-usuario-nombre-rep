@@ -40,9 +40,19 @@ const ORTHO_TESTS = {
     { id:'ratio-iq',   name:'Ratio I/Q (HHD)',  sub:'<0.60 = déficit',       ref:'Valkyria / PushPull' }
   ],
   tobillo: [
-    { id:'drawer-tob',  name:'Anterior Drawer', sub:'ATFL',          ref:'Sn 0.73 / Sp 0.60' },
-    { id:'talar-tilt',  name:'Talar Tilt',      sub:'CFL',           ref:'Sn 0.50 / Sp 0.88' },
-    { id:'thompson',    name:'Thompson',         sub:'Tendón Aquiles',ref:'Sn 0.96 / Sp 0.93' }
+    // Ligamentos laterales
+    { id:'drawer-tob',    name:'Anterior Drawer',              sub:'ATFL — inestabilidad anterior',      ref:'Sn 96% / Sp 84% exam diferido — Polzer 2012' },
+    { id:'talar-tilt',    name:'Talar Tilt',                   sub:'CFL — desgarro grado II-III',        ref:'Sn 0.50 / Sp 0.88 / LR+ 4.2 — van Dijk 1996' },
+    { id:'kleiger-tob',   name:'Rotación externa (Kleiger)',    sub:'Deltoides / sindesmosis distal',     ref:'Sn 0.71 / Sp 0.63 — Alonso 1992' },
+    // Sindesmosis
+    { id:'squeeze-sindes',name:'Squeeze test (sind.)',          sub:'Compresión tibia-peroné proximal',   ref:'Sp 0.93 / valor pronóstico — Torre SEMCPT 2019' },
+    { id:'kleiger-sindes',name:'Kleiger (sind.)',               sub:'RE forzada — menos FP de todos',     ref:'Torre 2019; Alonso 1992' },
+    { id:'crossed-leg',   name:'Crossed-Leg test',              sub:'Pierna cruzada sobre rodilla contra',ref:'Beumer AJSM 2003; Torre 2019' },
+    // Aquiles
+    { id:'thompson',      name:'Thompson',                      sub:'Ruptura tendón Aquiles',             ref:'Sn 0.96 / Sp 0.93 — Maffulli BMJ 1999' },
+    { id:'matles',        name:'Matles test',                   sub:'Asimetría FP prono = ruptura',       ref:'Sn 0.88 / Sp 0.85 — Maffulli 1998' },
+    { id:'royal-london',  name:'Royal London Hospital',         sub:'Midporción tendinopatía Aquiles',    ref:'Meredith 2025; Crisp AJSM 2008' },
+    { id:'silfverskiold', name:'Silfverskiöld',                 sub:'Contractura gastrocnemio vs sóleo',  ref:'DiGiovanni Foot Ankle Int 2002' },
   ],
   lumbar: [
     { id:'slr',        name:'SLR (Lasègue)', sub:'L4-S1 · Pos <60°',    ref:'Sn 0.91 / Sp 0.26' },

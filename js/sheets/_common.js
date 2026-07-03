@@ -74,7 +74,10 @@ function initRodillaSheet() {
 }
 
 function initTobilloSheet() {
-  buildTobilloLig();
+  buildTobilloEsguince();
+  buildTobilloSindesmosis();
+  buildTobilloAquiles();
+  buildTobilloHopTests();
   buildSEBT();
   buildCAIT2();
   buildFAAM2();
@@ -113,7 +116,7 @@ function showRTab(tab, btn) {
   if(btn) { btn.className = 'btn btn-neon btn-sm'; btn.style.whiteSpace='nowrap'; btn.style.fontSize='10px'; }
 }
 function showTTab(tab, btn) {
-  ['lig','func','tcuest','tvisa'].forEach(t => {
+  ['esguince','sindes','aquiles','func','escalas','tinforme'].forEach(t => {
     const el = document.getElementById('ttab-' + t); if(el) el.style.display = t === tab ? 'block' : 'none';
   });
   document.querySelectorAll('#sheet-tobillo .btn').forEach(b => {
