@@ -1,4 +1,4 @@
-// sheets/tobillo.js v3 — Tobillo módulo completo + Fasciopatía plantar + SEBT composite + Informe mejorado
+// sheets/tobillo.js v4 — Tobillo módulo completo + nuevos tests Aquiles (Hutchison 2013 / Chimenti 2024)
 // Tabs: Esguince | Sindesmosis | Aquiles | Funcional | Escalas | Informe
 
 // ─── ESGUINCE ───────────────────────────────────────────────────────────────
@@ -418,9 +418,16 @@ function generarInformeTobillo() {
   const matlesPos   = aquiles.some(t => t.includes('Matles'));
   if (thompsonPos || matlesPos) diagnoses.push('ruptura-aquiles');
   if (sindes.length >= 2) diagnoses.push('lesion-sindesmosial');
-  const hasAquilesSymptoms = (!isNaN(visaaScore) && visaaScore < 75) || aquiles.some(t => t.includes('Royal London') || t.includes('Arc'));
+  const aquilesTendinopathyTests = ['Royal London','Arc','Palpación porción','Rigidez matinal','Dolor con carga'];
+  const hasAquilesSymptoms = (!isNaN(visaaScore) && visaaScore < 75) ||
+    aquiles.some(t => aquilesTendinopathyTests.some(k => t.includes(k)));
   if (hasAquilesSymptoms && !diagnoses.includes('ruptura-aquiles')) {
-    diagnoses.push(aquiles.some(t => t.includes('Arc')) ? 'tendinopatia-aquiles-ins' : 'tendinopatia-aquiles-mid');
+    // Arc sign insercional = bulto persiste; Arc + Royal London = midportion; sin arc = mid por defecto
+    const arcPos = aquiles.some(t => t.includes('Arc'));
+    const royalPos = aquiles.some(t => t.includes('Royal London'));
+    // Insercional: Arc+ pero Royal London- (alivio en FP falta = insercional)
+    const isInsercional = arcPos && !royalPos;
+    diagnoses.push(isInsercional ? 'tendinopatia-aquiles-ins' : 'tendinopatia-aquiles-mid');
   }
   const drawerPos = esguinceLat.some(t => t.includes('Drawer'));
   const talarPos  = esguinceLat.some(t => t.includes('Talar'));

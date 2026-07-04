@@ -1,7 +1,8 @@
-// data/papers-tobillo-rules.js v2 — Datos clínicos y diagnósticos tobillo
+// data/papers-tobillo-rules.js v3 — Datos clínicos y diagnósticos tobillo
 // Fuentes: Polzer 2012 · Gomes 2022 · Vuurberg 2018 · Doherty 2017 · Torre 2019
 //          Meredith 2025 · Alfredson 1998 · Beyer 2015 · Hiller 2006 · Plisky 2006
 //          Martin JOSPT CPG 2014 · DiGiovanni Foot Ankle Int 2002 · Riddle JOSPT 2004
+//          Chimenti JOSPT CPG 2024 · Hutchison Foot Ankle Surg 2013 · Matthews PeerJ 2021
 
 var TOBILLO_LIG_LAT = [
   { id:'drawer-tob',  name:'Anterior Drawer (ATFL)',      sub:'ATFL — inestabilidad anterior',       ref:'Sn 96% / Sp 84% (exam diferido 3–5 d) — Polzer 2012 (n=282)' },
@@ -33,10 +34,17 @@ var TOBILLO_SINDES_TESTS = [
 ];
 
 var TOBILLO_AQUILES_TESTS = [
-  { id:'thompson',      name:'Thompson test',                sub:'Squeeze pantorrilla → pérdida plantar flexión = ruptura',         ref:'Sn 0.96 / Sp 0.93 — Maffulli BMJ 1999' },
-  { id:'matles',        name:'Matles test',                  sub:'Prono, rodillas 90° → pérdida FP pasiva = ruptura completa',     ref:'Sn 0.88 / Sp 0.85 — Maffulli 1998' },
-  { id:'arc-sign',      name:'Arc sign (signo del arco)',    sub:'Bulto palpable desaparece en DF = midporción; persiste = insercional', ref:'Maffulli 2003; Meredith Curr Rev Musculoskel 2025' },
-  { id:'royal-london',  name:'Royal London Hospital test',   sub:'Palpación midporción en DF vs. FP — dolor diferencial',         ref:'Meredith 2025; Crisp AJSM 2008 — específico midporción' },
+  // ── Ruptura ──────────────────────────────────────────────────────────────────
+  { id:'thompson',      name:'Thompson test',                sub:'Squeeze pantorrilla → pérdida plantar flexión = ruptura',               ref:'Sn 0.96 / Sp 0.93 — Maffulli BMJ 1999' },
+  { id:'matles',        name:'Matles test',                  sub:'Prono, rodillas 90° → pérdida FP pasiva = ruptura completa',            ref:'Sn 0.88 / Sp 0.85 — Maffulli 1998' },
+  // ── Tendinopatía — diferenciación midporción / insercional ───────────────────
+  { id:'arc-sign',      name:'Arc sign (signo del arco)',    sub:'Bulto palpable desaparece en DF = midporción; persiste = insercional',   ref:'Maffulli 2003; Meredith Curr Rev Musculoskel 2025; Matthews PeerJ 2021' },
+  { id:'royal-london',  name:'Royal London Hospital test',   sub:'Palpación midporción en DF vs. FP — dolor diferencial midporción',      ref:'Meredith 2025; Crisp AJSM 2008; Chimenti JOSPT CPG 2024' },
+  // ── Tendinopatía — tests clínicos (evidencia Hutchison 2013 / CPG 2024) ──────
+  { id:'palp-midportion', name:'Palpación porción media (2–6 cm sobre inserción)', sub:'Dolor reproducible a palpación local — zona avascular midporción', ref:'Mayor validez diagnóstica TA — Hutchison Foot Ankle Surg 2013 · Matthews PeerJ 2021 (n=159)' },
+  { id:'rigidez-matinal', name:'Rigidez matinal (Morning stiffness)',               sub:'Dolor/rigidez al inicio de movimiento tras reposo nocturno o prolongado', ref:'K=0.75 fiabilidad inter/intraobs — Hutchison 2013; Palp+rigidez: Sn 83% / Sp 89%' },
+  { id:'carga-dolor',     name:'Dolor con carga tendinosa (SLHR + salto)',          sub:'Reproducción dolor en elevación talón unipodal o salto → Core Outcome Set TA', ref:'Core Outcome Set TA — Chimenti JOSPT CPG 2024; Matthews PeerJ 2021; Carcia JOSPT 2010 CPG' },
+  // ── Diferenciación gastroc / sóleo ───────────────────────────────────────────
   { id:'silfverskiold', name:'Silfverskiöld test',           sub:'DF con rodilla extendida vs. flexionada — diferenciar gastrocnemio vs. sóleo', ref:'DiGiovanni Foot Ankle Int 2002; Meredith 2025' },
 ];
 
@@ -66,17 +74,28 @@ var TOBILLO_RULES = [
     id: 'tendinopatia-aquiles-mid',
     label: 'Tendinopatía Aquiles (midporción)',
     color: 'var(--amber)',
-    tests: ['royal-london','arc-sign'],
-    criterios: ['Royal London + (dolor en DF, alivio en FP)', 'Arc sign midporción', 'VISA-A <75 · Dolor 2–6 cm sobre inserción'],
-    tratamiento: 'Protocolo Alfredson excéntrico o HSR 12 semanas. ESWT complementario.'
+    tests: ['royal-london','arc-sign','palp-midportion','rigidez-matinal','carga-dolor'],
+    criterios: [
+      'Palpación dolorosa 2–6 cm sobre inserción (Hutchison 2013)',
+      'Rigidez matinal presente (K=0.75 fiabilidad)',
+      'Dolor con carga (SLHR / salto) — Core Outcome Set TA',
+      'Arc sign midporción (bulto desaparece en DF)',
+      'Royal London Hospital + (dolor DF, alivio FP)',
+      'VISA-A <75 / dolor insidioso post-actividad'
+    ],
+    tratamiento: 'Carga tendinosa progresiva (Grado A CPG 2024). VISA-A + SHR como Core Outcome Set. Sin reposo completo.'
   },
   {
     id: 'tendinopatia-aquiles-ins',
     label: 'Tendinopatía Aquiles (insercional)',
     color: 'var(--amber)',
-    tests: ['arc-sign'],
-    criterios: ['Arc sign insercional (bulto persiste en reposo)', 'Dolor inserción calcánea', 'VISA-A <75'],
-    tratamiento: 'HSR modificado sin DF completa. Heel lift 1.5 cm. ESWT enfocado en inserción.'
+    tests: ['arc-sign','palp-midportion','carga-dolor'],
+    criterios: [
+      'Arc sign insercional (bulto persiste en reposo/FP)',
+      'Dolor en inserción calcánea (no en midporción)',
+      'VISA-A <75 · Dolor con DF o en ascenso/descenso escaleras'
+    ],
+    tratamiento: 'HSR modificado sin DF completa. Heel lift 1.5 cm. ESWT enfocado en inserción. Evitar estiramientos en DF extrema.'
   },
   {
     id: 'lesion-sindesmosial',
@@ -158,47 +177,55 @@ var TOBILLO_RECOM = {
   ], ref:'Willits JBJS 2010 · Maffulli BMJ 1999' },
 
   'tendinopatia-aquiles-mid': { fases:[
-    { label:'Fase 1 — Isométricos + control dolor (sem 0–4)', color:'#b87a00', items:[
-      'VISA-A baseline — objetivo ≥90% al alta (Lohrer 2016)',
-      'Isométricos: 5 × 45 s elevación talón bilateral → alivio dolor inmediato (Rio BJSM 2015)',
-      'Reducir carga de impacto si EVA >3/10 post-entrenamiento — Meredith 2025',
-      'Heel lift bilateral 1.5 cm — reduce tensión tendinosa en carga'
-    ], ref:'Rio BJSM 2015 · Meredith Curr Rev Musculoskel 2025' },
-    { label:'Fase 2 — Heavy Slow Resistance (sem 4–12)', color:'#2d7a2d', items:[
-      'Protocolo Alfredson excéntrico: 3 × 15 reps rodilla recta + flexionada, 2×/día — Alfredson AJSM 1998',
-      'Alternativa HSR: 3×/sem en máquinas — igual eficacia, mejor adherencia (Beyer AJSM 2015)',
-      'Progresión: peso corporal → mochila → prensa/leg press',
-      'Reiniciar carrera cuando EVA post-carga ≤3/10 y VISA-A ≥40',
-      'ESWT complementario desde semana 6 si respuesta insuficiente — Meredith 2025'
-    ], ref:'Alfredson AJSM 1998 · Beyer AJSM 2015' },
+    { label:'Fase 1 — Carga inicial + educación (sem 0–4) · Grado A/B CPG 2024', color:'#b87a00', items:[
+      'Core Outcome Set TA: VISA-A baseline + SHR reps sin dolor + dolor con actividad — Chimenti JOSPT CPG 2024',
+      'Carga tendinosa desde el inicio, intensidad máxima tolerada — NO reposo completo (Grado A + B CPG 2024)',
+      'Isométricos: 5 × 45 s elevación talón bilateral → analgesia inmediata — Rio BJSM 2015',
+      'Educación: enfoque ciencia del dolor O patoanatómico — ambos válidos combinados con ejercicio (Grado B CPG 2024)',
+      'Reducir carga de impacto si EVA >3/10 post-entrenamiento; heel lift 1.5 cm transitorio',
+      'Factores pronósticos: TMK (kinesiofobia), VISA-A, BMI, fuerza — Hanlon et al., Chimenti 2024'
+    ], ref:'Chimenti JOSPT CPG 2024 (Grado A/B) · Rio BJSM 2015' },
+    { label:'Fase 2 — Heavy Slow Resistance ≥3×/sem (sem 4–12) · Grado A/E CPG 2024', color:'#2d7a2d', items:[
+      'Carga tendinosa mínimo 3×/sem con intensidad máxima tolerada — Grado E CPG 2024 (Van der Vlist, Charles meta-análisis)',
+      'HSR: igual eficacia que excéntrico Alfredson, mayor adherencia — Beyer AJSM 2015; ESWT + ejercicio ≈ ejercicio solo (Gatz RCT 2020)',
+      'Protocolo Alfredson: 3 × 15 reps rodilla recta + flexionada, 2×/día — Alfredson AJSM 1998 (alternativa válida)',
+      'Progresión: peso corporal → mochila → prensa — carrera cuando EVA post-carga ≤3/10 + VISA-A ≥40',
+      'ESWT complementario sem 6–8 si respuesta insuficiente (no superior a ejercicio solo en meta-análisis)',
+      'Terapia manual (movilización muscular/articular/fascia): puede utilizarse — Grado F CPG 2024'
+    ], ref:'Chimenti JOSPT CPG 2024 (Grado A/E/F) · Beyer AJSM 2015 · Alfredson AJSM 1998' },
     { label:'Fase 3 — Retorno deportivo (sem 12–24)', color:'#2563a8', items:[
-      'VISA-A ≥90 + Single Heel Rise ≥25 reps sin dolor → alta funcional',
-      'Pliometría progresiva: bipodal → unipodal → drop jumps',
-      'Prevención recaída: HSR 1–2×/sem continuo en temporada',
-      'Educación: pico de carga y carga acumulada = principales factores de riesgo'
-    ], ref:'Beyer AJSM 2015 · Meredith 2025' }
-  ], ref:'Alfredson AJSM 1998 · Beyer AJSM 2015 · Meredith 2025' },
+      'Alta funcional: VISA-A ≥90 + SHR ≥25 reps sin dolor + ausencia dolor con carga (Core Outcome Set — Chimenti 2024)',
+      'Pliometría progresiva: bipodal → unipodal → drop jumps → específico del deporte',
+      'Prevención recaída: HSR de mantenimiento 1–2×/sem en temporada — Meredith 2025',
+      'Educación carga: pico semanal y carga acumulada = principales factores de recidiva',
+      'Microtenotomía por radiofrecuencia si respuesta insuficiente a 2 años (Al-ani RCT, Nivel I)'
+    ], ref:'Chimenti JOSPT CPG 2024 · Beyer AJSM 2015 · Meredith 2025' }
+  ], ref:'Chimenti JOSPT CPG 2024 · Alfredson AJSM 1998 · Beyer AJSM 2015 · Hutchison Foot Ankle Surg 2013 · Matthews PeerJ 2021' },
 
   'tendinopatia-aquiles-ins': { fases:[
-    { label:'Fase 1 — Modificación carga (sem 0–4)', color:'#b87a00', items:[
-      'EVITAR dorsiflexión completa — incrementa compresión insercional (Jonsson 2008)',
-      'Isométricos posición neutra: 5 × 45 s, 2×/día — Rio BJSM 2015',
-      'Heel wedge bilateral 1.5 cm constante en calzado — reduce compresión insertional',
-      'Suspender running en pendiente negativa / descensos'
+    { label:'Fase 1 — Control compresión insercional (sem 0–4)', color:'#b87a00', items:[
+      'VISA-A baseline — criterio alta ≥80; Core Outcome Set: VISA-A + SHR + dolor con actividad',
+      'EVITAR dorsiflexión completa — aumenta compresión en inserción calcánea — Jonsson Br J Sports Med 2008',
+      'Isométricos en posición neutra: 5 × 45 s, 2×/día — analgesia y carga tendinosa inicial — Rio BJSM 2015',
+      'Heel wedge bilateral 1.5 cm constante en calzado — reduce estrés insertional',
+      'Suspender descensos, pendiente negativa y estiramientos en DF extrema',
+      'Educación: diferencia midporción vs. insercional — ajustar expectativas de tiempo de recuperación'
     ], ref:'Jonsson Br J Sports Med 2008 · Rio BJSM 2015' },
-    { label:'Fase 2 — HSR modificado (sem 4–12)', color:'#2d7a2d', items:[
-      'HSR en plano liso — NO plataforma con talón hacia abajo (Jonsson modificado)',
-      'Elevación talón: 3 × 15, rango 0° a FP máxima, sin superar el plano',
-      'Glúteos + isquiosurales (cadena posterior) — complementario',
-      'ESWT enfocado en inserción ≥4 sesiones semanas 4–8 — Meredith 2025'
-    ], ref:'Jonsson 2008 · Meredith 2025' },
-    { label:'Fase 3 — Retorno (sem 12–20)', color:'#2563a8', items:[
-      'VISA-A ≥80 + Single Heel Rise ≥20 reps sin dolor → retorno carrera',
-      'Mantener heel lift 6 meses durante entrenamiento',
-      'Si calcificación Haglund prominente: valorar bursectomía con ortopedia — Meredith 2025',
-      'Seguimiento VISA-A mensual — respuesta esperada ≥15 pts en 12 semanas'
-    ], ref:'Jonsson 2008 · Meredith 2025' }
-  ], ref:'Jonsson Br J Sports Med 2008 · Beyer AJSM 2015 · Meredith 2025' },
+    { label:'Fase 2 — HSR modificado + ESWT (sem 4–12)', color:'#2d7a2d', items:[
+      'HSR en plano neutro/liso — sin descenso talón bajo plano horizontal (Jonsson modificado)',
+      'Elevación talón: 3 × 15 reps, rango 0° a FP máxima; 3×/sem, intensidad progresiva — Chimenti CPG 2024',
+      'Cadena posterior complementaria: glúteos, isquiosurales, tibial posterior',
+      'ESWT focalizado en inserción: ≥3–4 sesiones semanas 4–8 — evidencia superior a excéntrico en insercional (Meredith 2025)',
+      'Terapia manual: movilización articular + tejidos blandos puede utilizarse — Grado F Chimenti 2024'
+    ], ref:'Jonsson 2008 · Meredith 2025 · Chimenti JOSPT CPG 2024' },
+    { label:'Fase 3 — Retorno y seguimiento (sem 12–20)', color:'#2563a8', items:[
+      'Alta funcional: VISA-A ≥80 + SHR ≥20 reps sin dolor + ausencia dolor primer paso post-actividad',
+      'Mantener heel lift 6 meses durante entrenamiento de carga',
+      'Deformidad de Haglund prominente + bursitis: valorar derivación a ortopedia — Meredith 2025',
+      'Seguimiento VISA-A mensual — respuesta esperada ≥15 pts en 12 semanas',
+      'Fasciotomía o bursectomía: considerar si >12 meses sin respuesta conservadora'
+    ], ref:'Jonsson 2008 · Meredith 2025 · Chimenti 2024' }
+  ], ref:'Jonsson Br J Sports Med 2008 · Meredith 2025 · Chimenti JOSPT CPG 2024 · Rio BJSM 2015' },
 
   'lesion-sindesmosial': { fases:[
     { label:'Fase 1 — Inmovilización (sem 0–6)', color:'#b87a00', items:[
