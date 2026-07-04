@@ -80,6 +80,7 @@ function initTobilloSheet() {
   buildTobilloAquiles();
   buildTobilloHopTests();
   buildSEBT();
+  buildFascitisPlantar();
   buildCAIT2();
   buildFAAM2();
   buildVISAA();

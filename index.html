@@ -2892,8 +2892,8 @@
   <script src="js/sheets/hombro.js?v=13"></script>
   <script src="js/data/papers-rodilla-rules.js?v=6"></script>
   <script src="js/sheets/rodilla.js?v=10"></script>
-  <script src="js/data/papers-tobillo-rules.js?v=1"></script>
-  <script src="js/sheets/tobillo.js?v=2"></script>
+  <script src="js/data/papers-tobillo-rules.js?v=2"></script>
+  <script src="js/sheets/tobillo.js?v=3"></script>
   <script src="js/sheets/lumbar.js?v=10"></script>
   <script src="js/sheets/groin.js?v=2"></script>
   <script src="js/sheets/cadera.js?v=3"></script>
@@ -4471,6 +4471,18 @@
           <div id="tob-ottawa-result" style="margin-top:10px;font-size:12px;padding:8px;background:var(--bg3);border-radius:6px;text-align:center;color:var(--text3)">Marcar ítems para interpretar</div>
         </div>
       </div>
+      <!-- Fasciopatía plantar -->
+      <div class="card mt-10" style="border-color:rgba(245,158,11,.3)">
+        <div class="card-header" style="cursor:pointer" onclick="toggleSheetSection('fascitis-body')">
+          <h3>Fasciopatía plantar</h3><span class="tag" style="background:rgba(245,158,11,.12);color:var(--amber)">Windlass Sp 100% · Martin CPG 2014</span>
+        </div>
+        <div id="fascitis-body" style="display:none">
+          <div class="card-body">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Windlass Sp 100% — Palpación calcánea Sn 78% — DF restringida OR 23.3 para fasciopatía (Riddle JOSPT 2004 · DiGiovanni Foot Ankle Int 2002)</div>
+            <div id="tob-fascitis-fields"></div>
+          </div>
+        </div>
+      </div>
     </div>
     <!-- Sindesmosis -->
     <div id="ttab-sindes" style="display:none">
@@ -4526,8 +4538,9 @@
       <div class="card mb-10">
         <div class="card-header"><h3>SEBT — Star Excursion Balance Test</h3><span class="tag tag-b">Asimetría &gt;4 cm = déficit · Plisky JOSPT 2006</span></div>
         <div class="card-body">
-          <div class="ig mb-8"><label class="il">Largo miembro inferior (cm)</label><input class="inp inp-mono" type="number" id="sebt-llm" placeholder="90"></div>
+          <div class="ig mb-8"><label class="il">Largo miembro inferior (cm)</label><input class="inp inp-mono" type="number" id="sebt-llm" placeholder="90" oninput="_calcSEBT()"></div>
           <div id="sebt-sheet-fields"></div>
+          <div id="sebt-composite-result" style="font-size:11px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);color:var(--text3)">Ingresar valores y largo miembro para composite score</div>
         </div>
       </div>
       <div class="card mb-10">
@@ -4618,7 +4631,10 @@
     </div>
     <!-- Informe -->
     <div id="ttab-tinforme" style="display:none">
-      <button class="btn btn-neon btn-full mb-12" onclick="generarInformeTobillo()">📄 Generar Informe Tobillo</button>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="btn btn-neon" style="flex:1" onclick="generarInformeTobillo()">📄 Generar Informe Tobillo</button>
+        <button class="btn btn-ghost" style="flex:0 0 auto" onclick="imprimirInformeTobillo()">🖨️ Imprimir</button>
+      </div>
       <div id="tob-informe-container"></div>
     </div>
     <div class="divider"></div>

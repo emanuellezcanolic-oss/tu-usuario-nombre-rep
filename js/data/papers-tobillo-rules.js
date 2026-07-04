@@ -1,6 +1,7 @@
-// data/papers-tobillo-rules.js — Datos clínicos y diagnósticos tobillo
+// data/papers-tobillo-rules.js v2 — Datos clínicos y diagnósticos tobillo
 // Fuentes: Polzer 2012 · Gomes 2022 · Vuurberg 2018 · Doherty 2017 · Torre 2019
 //          Meredith 2025 · Alfredson 1998 · Beyer 2015 · Hiller 2006 · Plisky 2006
+//          Martin JOSPT CPG 2014 · DiGiovanni Foot Ankle Int 2002 · Riddle JOSPT 2004
 
 var TOBILLO_LIG_LAT = [
   { id:'drawer-tob',  name:'Anterior Drawer (ATFL)',      sub:'ATFL — inestabilidad anterior',       ref:'Sn 96% / Sp 84% (exam diferido 3–5 d) — Polzer 2012 (n=282)' },
@@ -37,6 +38,13 @@ var TOBILLO_AQUILES_TESTS = [
   { id:'arc-sign',      name:'Arc sign (signo del arco)',    sub:'Bulto palpable desaparece en DF = midporción; persiste = insercional', ref:'Maffulli 2003; Meredith Curr Rev Musculoskel 2025' },
   { id:'royal-london',  name:'Royal London Hospital test',   sub:'Palpación midporción en DF vs. FP — dolor diferencial',         ref:'Meredith 2025; Crisp AJSM 2008 — específico midporción' },
   { id:'silfverskiold', name:'Silfverskiöld test',           sub:'DF con rodilla extendida vs. flexionada — diferenciar gastrocnemio vs. sóleo', ref:'DiGiovanni Foot Ankle Int 2002; Meredith 2025' },
+];
+
+var TOBILLO_PIE_TESTS = [
+  { id:'windlass',    name:'Windlass test',                         sub:'Extensión pasiva 1° MF en bipedestación → dolor talón medial',    ref:'Sp 100% (Sn 13–32%) — Thomas Foot Ankle Int 2019; Martin JOSPT CPG 2014' },
+  { id:'calc-palp',  name:'Palpación tuberosidad calcánea medial', sub:'Dolor reproducible en inserción de fascia plantar',                ref:'Sn 78% — criterio clínico principal — Martin JOSPT CPG 2014 (APTA Nivel I)' },
+  { id:'first-step', name:'Dolor primer paso (First-step pain)',    sub:'Dolor intenso al levantarse por mañana o tras reposo prolongado', ref:'Sn 70–80% — síntoma cardinal fasciopatía plantar — Riddle JOSPT 2004' },
+  { id:'silfver-fp', name:'Silfverskiöld (equino gastroc.)',        sub:'DF <0° con rodilla extendida — contractura gastrocnemio',         ref:'OR 23.3 para fasciopatía si DF<0° — Riddle JOSPT 2004; DiGiovanni Foot Ankle Int 2002' },
 ];
 
 var TOBILLO_HOP_TESTS = [
@@ -116,6 +124,14 @@ var TOBILLO_RULES = [
     color: 'var(--red)',
     criterios: ['Ottawa Ankle/Foot Rules positivo — Sn 96–98% (Polzer 2012; Bachmann 2003)'],
     tratamiento: 'Radiografía urgente tobillo y/o pie. No iniciar rehabilitación hasta descartar fractura.'
+  },
+  {
+    id: 'fasciopatia-plantar',
+    label: 'Fasciopatía plantar',
+    color: 'var(--amber)',
+    tests: ['windlass','calc-palp','first-step','silfver-fp'],
+    criterios: ['Windlass + (Sp 100%)', 'Dolor en tuberosidad calcánea medial (Sn 78%)', 'Dolor primer paso (Sn 70–80%)', 'DF restringida rodilla extendida (OR 23.3)'],
+    tratamiento: 'Carga progresiva + estiramiento Windlass + ESWT. Heel lift si equino gastroc asociado.'
   }
 ];
 
@@ -291,5 +307,29 @@ var TOBILLO_RECOM = {
       'Inmovilización provisional: vendaje compresivo + crioterapia + elevación',
       'Si fractura confirmada: derivar ortopedia para plan específico'
     ], ref:'Stiell Lancet 1992 · Gomes BMC Musculoskel 2022 · Polzer 2012' }
-  ], ref:'Polzer Orthop Rev 2012 · Gomes BMC 2022 (n=8.560)' }
+  ], ref:'Polzer Orthop Rev 2012 · Gomes BMC 2022 (n=8.560)' },
+
+  'fasciopatia-plantar': { fases:[
+    { label:'Fase 1 — Manejo dolor y carga inicial (sem 0–4)', color:'#b87a00', items:[
+      'Estiramiento Windlass: 3 × 10 extensiones pasivas 1° MF en descarga antes de levantarse — DiGiovanni JBJS 2003',
+      'Estiramiento gastrocnemio aislado (si Silfverskiöld +): 3 × 30 s × 2/día — DiGiovanni Foot Ankle Int 2002',
+      'Heel lift bilateral 1 cm transitorio si DF <0° con rodilla extendida — reduce carga insercional',
+      'Low-Dye taping o plantilla prefabricada arco longitudinal medial — reducción dolor inmediata — Martin CPG 2014',
+      'Crioterapia local 15 min × 3/día en fase aguda'
+    ], ref:'DiGiovanni JBJS 2003 · Martin JOSPT CPG 2014' },
+    { label:'Fase 2 — Carga progresiva / HSR (sem 4–12)', color:'#2d7a2d', items:[
+      'Ejercicios intrínsecos pie: short foot exercise, toe curl — carga intrínseca progresiva',
+      'Heel raise excéntrico en escalón: 3 × 15 reps, 3×/sem — Rathleff BJSM 2015',
+      'ESWT (ondas de choque): ≥3 sesiones semanas 4–8 si respuesta insuficiente — Maffulli 2010; Martin CPG 2014',
+      'Inicio carrera en línea recta semana 8 si EVA post-actividad ≤3/10',
+      'Monitoreo: recidiva de dolor primer paso = indicador de sobrecarga'
+    ], ref:'Rathleff BJSM 2015 · Martin JOSPT CPG 2014' },
+    { label:'Fase 3 — Retorno y prevención (sem 8–20)', color:'#2563a8', items:[
+      'Alta funcional: caminata 5 km sin dolor + Windlass negativo + Dolor primer paso ausente',
+      'Calzado con soporte arco longitudinal medial — primer año de seguimiento',
+      'Plantilla personalizada si pie plano asociado o recidiva — DiGiovanni 2002',
+      'Mantenimiento: estiramiento Windlass diario + cargas progresivas de pie',
+      'Fasciotomía plantar parcial: sólo si >12 meses sin respuesta conservadora — Martin CPG 2014'
+    ], ref:'Martin JOSPT CPG 2014 · DiGiovanni Foot Ankle Int 2002' }
+  ], ref:'DiGiovanni Foot Ankle Int 2002 · Martin JOSPT CPG 2014 · Rathleff BJSM 2015 · Riddle JOSPT 2004' }
 };

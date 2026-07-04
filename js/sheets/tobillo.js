@@ -1,4 +1,4 @@
-// sheets/tobillo.js v2 — Tobillo módulo completo
+// sheets/tobillo.js v3 — Tobillo módulo completo + Fasciopatía plantar + SEBT composite + Informe mejorado
 // Tabs: Esguince | Sindesmosis | Aquiles | Funcional | Escalas | Informe
 
 // ─── ESGUINCE ───────────────────────────────────────────────────────────────
@@ -161,12 +161,68 @@ function calcCadencia() {
 
 function buildSEBT() {
   const c = document.getElementById('sebt-sheet-fields'); if(!c || c.innerHTML) return;
-  c.innerHTML = ['Anterior','Posteromedial','Posterolateral'].map(dir => `
+  const dirs = ['Anterior','Posteromedial','Posterolateral'];
+  const ids  = ['ant','pm','pl'];
+  c.innerHTML = dirs.map((dir, idx) => `
     <div style="margin-bottom:8px">
       <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px">${dir}</div>
       <div class="grid-2" style="gap:6px">
-        <div class="ig"><label class="il">D (cm)</label><input class="inp inp-mono" type="number" placeholder="0"></div>
-        <div class="ig"><label class="il">I (cm)</label><input class="inp inp-mono" type="number" placeholder="0"></div>
+        <div class="ig"><label class="il">D (cm)</label><input class="inp inp-mono" type="number" id="sebt-${ids[idx]}-d" placeholder="0" oninput="_calcSEBT()"></div>
+        <div class="ig"><label class="il">I (cm)</label><input class="inp inp-mono" type="number" id="sebt-${ids[idx]}-i" placeholder="0" oninput="_calcSEBT()"></div>
+      </div>
+    </div>`).join('');
+}
+
+function _calcSEBT() {
+  const llm = parseFloat(document.getElementById('sebt-llm')?.value) || 0;
+  const g = id => parseFloat(document.getElementById(id)?.value) || 0;
+  const antD=g('sebt-ant-d'), pmD=g('sebt-pm-d'), plD=g('sebt-pl-d');
+  const antI=g('sebt-ant-i'), pmI=g('sebt-pm-i'), plI=g('sebt-pl-i');
+  const el = document.getElementById('sebt-composite-result'); if(!el) return;
+  let html = '';
+  const dirs = ['Ant','PM','PL'];
+  const diffs = [Math.abs(antD-antI), Math.abs(pmD-pmI), Math.abs(plD-plI)];
+  const hasDiffs = diffs.some(d => d > 0);
+  if (hasDiffs) {
+    const maxAsim = Math.max(...diffs);
+    const asimC = maxAsim > 4 ? 'var(--red)' : 'var(--neon)';
+    const detail = diffs.map((d,i) => d > 0 ? `${dirs[i]} ${d.toFixed(1)} cm` : '').filter(Boolean).join(' · ');
+    html += `<div style="font-size:11px">Asimetría: <span style="font-weight:700;color:${asimC}">${maxAsim.toFixed(1)} cm máx</span> ${maxAsim>4?'⚠️ >4 cm':'✓ <4 cm'}<br><span style="color:var(--text3)">${detail}</span></div>`;
+  }
+  if (llm > 0) {
+    if (antD && pmD && plD) {
+      const cD = ((antD+pmD+plD)/(3*llm)*100).toFixed(1);
+      html += `<div style="font-size:11px;margin-top:4px">Composite D: <span style="font-weight:700;font-family:var(--mono);color:${parseFloat(cD)<89?'var(--amber)':'var(--neon)'}">${cD}%</span> ${parseFloat(cD)<89?'⚠️ <89%':'✓'}</div>`;
+    }
+    if (antI && pmI && plI) {
+      const cI = ((antI+pmI+plI)/(3*llm)*100).toFixed(1);
+      html += `<div style="font-size:11px;margin-top:2px">Composite I: <span style="font-weight:700;font-family:var(--mono);color:${parseFloat(cI)<89?'var(--amber)':'var(--neon)'}">${cI}%</span> ${parseFloat(cI)<89?'⚠️ <89%':'✓'}</div>`;
+    }
+  }
+  el.innerHTML = html || '<span style="color:var(--text3);font-size:11px">Ingresar valores y largo miembro para composite score</span>';
+}
+
+// ─── FASCIOPATÍA PLANTAR ──────────────────────────────────────────────────────
+function buildFascitisPlantar() {
+  const c = document.getElementById('tob-fascitis-fields'); if(!c || c.innerHTML) return;
+  c.innerHTML = TOBILLO_PIE_TESTS.map(t => `
+    <div class="card mb-8">
+      <div class="card-header">
+        <h3>${t.name}</h3>
+        <span class="tag tag-r" style="font-size:9px">${t.sub}</span>
+      </div>
+      <div class="card-body">
+        <div style="font-size:9px;color:var(--text3);margin-bottom:6px">${t.ref}</div>
+        <div class="grid-2" style="gap:8px">
+          <div><div class="il mb-4">D</div><div style="display:flex;gap:6px">
+            <button class="ot-btn" onclick="toggleOT(this,'pos')">+ POS</button>
+            <button class="ot-btn" onclick="toggleOT(this,'neg')">– NEG</button>
+          </div></div>
+          <div><div class="il mb-4">I</div><div style="display:flex;gap:6px">
+            <button class="ot-btn" onclick="toggleOT(this,'pos')">+ POS</button>
+            <button class="ot-btn" onclick="toggleOT(this,'neg')">– NEG</button>
+          </div></div>
+        </div>
       </div>
     </div>`).join('');
 }
@@ -304,58 +360,96 @@ function _tob_getPosTests(containerId) {
   return pos;
 }
 
+function _scaleChip(label, value, interp, color) {
+  return `<div style="background:var(--bg3);border-radius:8px;padding:8px 10px;min-width:75px;text-align:center">
+    <div style="font-size:9px;color:var(--text2)">${label}</div>
+    <div style="font-size:20px;font-weight:800;font-family:var(--mono);color:${color}">${value}</div>
+    <div style="font-size:9px;color:${color}">${interp}</div></div>`;
+}
+
 function generarInformeTobillo() {
   const container = document.getElementById('tob-informe-container'); if(!container) return;
   container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3)">Generando informe...</div>';
 
-  const ottawaPos = TOBILLO_OTTAWA_ITEMS.filter(item => document.getElementById(item.id)?.checked);
+  // ── recolectar tests positivos
+  const ottawaPos  = TOBILLO_OTTAWA_ITEMS.filter(item => document.getElementById(item.id)?.checked);
   const esguinceLat = _tob_getPosTests('tob-esguince-lat');
   const esguinceMed = _tob_getPosTests('tob-esguince-med');
-  const sindes = _tob_getPosTests('tob-sindes-fields');
-  const aquiles = _tob_getPosTests('tob-aquiles-fields');
+  const sindes      = _tob_getPosTests('tob-sindes-fields');
+  const aquiles     = _tob_getPosTests('tob-aquiles-fields');
+  const fascitis    = _tob_getPosTests('tob-fascitis-fields');
 
-  const caitEl = document.getElementById('cait-sheet-total');
-  const caitScore = caitEl ? parseInt(caitEl.textContent) : NaN;
-  const visaaEl = document.getElementById('visaa-total');
-  const visaaScore = visaaEl ? parseInt(visaaEl.textContent) : NaN;
+  // ── escalas numéricas
+  const caitRaw   = document.getElementById('cait-sheet-total')?.textContent;
+  const caitScore = caitRaw && caitRaw !== '—' ? parseInt(caitRaw) : NaN;
+  const visaaRaw  = document.getElementById('visaa-total')?.textContent;
+  const visaaScore = visaaRaw && visaaRaw !== '—' ? parseInt(visaaRaw) : NaN;
+  const faamAvdRaw = document.getElementById('faam-avd-sheet-total')?.textContent;
+  const faamDepRaw = document.getElementById('faam-dep-sheet-total')?.textContent;
+
+  // ── medidas funcionales
   const lungeD = parseFloat(document.getElementById('tob-lunge-d')?.value)||0;
   const lungeI = parseFloat(document.getElementById('tob-lunge-i')?.value)||0;
-  const shrD = parseInt(document.getElementById('tob-shr-d')?.value)||0;
-  const shrI = parseInt(document.getElementById('tob-shr-i')?.value)||0;
+  const shrD   = parseInt(document.getElementById('tob-shr-d')?.value)||0;
+  const shrI   = parseInt(document.getElementById('tob-shr-i')?.value)||0;
+  const navDrop_d = (+document.getElementById('nav-carg-d')?.value||0) - (+document.getElementById('nav-desc-d')?.value||0);
+  const navDrop_i = (+document.getElementById('nav-carg-i')?.value||0) - (+document.getElementById('nav-desc-i')?.value||0);
+  const navHasData = document.getElementById('nav-carg-d')?.value || document.getElementById('nav-carg-i')?.value;
 
-  // Diagnostic logic
+  // ── Hop tests
+  const hopResults = TOBILLO_HOP_TESTS.map(t => {
+    const d = parseFloat(document.getElementById('hop-'+t.id+'-d')?.value);
+    const i = parseFloat(document.getElementById('hop-'+t.id+'-i')?.value);
+    return { t, d: isNaN(d)?null:d, i: isNaN(i)?null:i };
+  }).filter(r => r.d !== null || r.i !== null);
+
+  // ── SEBT composite
+  const llm = parseFloat(document.getElementById('sebt-llm')?.value)||0;
+  const sg = id => parseFloat(document.getElementById(id)?.value)||0;
+  const sebtAntD=sg('sebt-ant-d'),sebtPmD=sg('sebt-pm-d'),sebtPlD=sg('sebt-pl-d');
+  const sebtAntI=sg('sebt-ant-i'),sebtPmI=sg('sebt-pm-i'),sebtPlI=sg('sebt-pl-i');
+  const sebtCompD = llm>0&&sebtAntD&&sebtPmD&&sebtPlD ? ((sebtAntD+sebtPmD+sebtPlD)/(3*llm)*100).toFixed(1) : null;
+  const sebtCompI = llm>0&&sebtAntI&&sebtPmI&&sebtPlI ? ((sebtAntI+sebtPmI+sebtPlI)/(3*llm)*100).toFixed(1) : null;
+
+  // ── lógica diagnóstica
   const diagnoses = [];
   if (ottawaPos.length) diagnoses.push('ottawa-positivo');
   const thompsonPos = aquiles.some(t => t.includes('Thompson'));
-  const matlesPos = aquiles.some(t => t.includes('Matles'));
+  const matlesPos   = aquiles.some(t => t.includes('Matles'));
   if (thompsonPos || matlesPos) diagnoses.push('ruptura-aquiles');
   if (sindes.length >= 2) diagnoses.push('lesion-sindesmosial');
   const hasAquilesSymptoms = (!isNaN(visaaScore) && visaaScore < 75) || aquiles.some(t => t.includes('Royal London') || t.includes('Arc'));
   if (hasAquilesSymptoms && !diagnoses.includes('ruptura-aquiles')) {
-    const arcPos = aquiles.some(t => t.includes('Arc'));
-    diagnoses.push(arcPos ? 'tendinopatia-aquiles-ins' : 'tendinopatia-aquiles-mid');
+    diagnoses.push(aquiles.some(t => t.includes('Arc')) ? 'tendinopatia-aquiles-ins' : 'tendinopatia-aquiles-mid');
   }
   const drawerPos = esguinceLat.some(t => t.includes('Drawer'));
-  const talarPos = esguinceLat.some(t => t.includes('Talar'));
+  const talarPos  = esguinceLat.some(t => t.includes('Talar'));
   if (drawerPos || talarPos || (!isNaN(caitScore) && caitScore <= 27)) {
-    if (!isNaN(caitScore) && caitScore <= 27) diagnoses.push('esguince-lateral-cronico');
-    else diagnoses.push('esguince-agudo-lateral');
+    diagnoses.push((!isNaN(caitScore) && caitScore <= 27) ? 'esguince-lateral-cronico' : 'esguince-agudo-lateral');
   }
   if (aquiles.some(t => t.includes('Silfverskiöld'))) diagnoses.push('contractura-gastrocnemio');
+  if (sebtCompD && parseFloat(sebtCompD) < 89 || sebtCompI && parseFloat(sebtCompI) < 89) diagnoses.push('sebt-deficit');
+  if (fascitis.some(t => t.includes('Windlass') || t.includes('calcánea') || t.includes('primer paso'))) diagnoses.push('fasciopatia-plantar');
+
+  // ── gradación esguince
+  let esguinceGrade = '';
+  if (drawerPos && talarPos) esguinceGrade = 'Grado III (ATFL + CFL)';
+  else if (drawerPos) esguinceGrade = 'Grado II (ATFL parcial-completo)';
+  else if (esguinceLat.length || esguinceMed.length) esguinceGrade = 'Grado I (estable)';
 
   const validDxs = [...new Set(diagnoses)].map(id => TOBILLO_RULES.find(r => r.id === id)).filter(Boolean);
-  const now = new Date().toLocaleDateString('es-AR');
+  const now     = new Date().toLocaleDateString('es-AR');
   const patName = typeof cur !== 'undefined' && cur?.nombre ? cur.nombre : '—';
 
   let html = `<div style="font-family:var(--sans);color:var(--text1)">`;
 
-  // Header
+  // ── Encabezado
   html += `<div style="background:var(--bg3);border-radius:10px;padding:12px 14px;margin-bottom:12px">
     <div style="font-size:15px;font-weight:800">Informe Evaluación Tobillo</div>
     <div style="font-size:11px;color:var(--text2)">${patName} · ${now}</div>
   </div>`;
 
-  // Ottawa alert
+  // ── Ottawa alerta
   if (ottawaPos.length) {
     html += `<div style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);border-radius:8px;padding:10px 12px;margin-bottom:12px">
       <div style="font-size:13px;font-weight:800;color:var(--red)">⚠️ OTTAWA POSITIVO — DERIVAR A IMAGEN</div>
@@ -364,12 +458,14 @@ function generarInformeTobillo() {
     </div>`;
   }
 
-  // Tests positivos
-  const allPos = [...esguinceLat, ...esguinceMed, ...sindes, ...aquiles];
+  // ── Tests positivos
+  const allPos = [...esguinceLat,...esguinceMed,...sindes,...aquiles,...fascitis];
   if (allPos.length) {
-    html += `<div class="card mb-10"><div class="card-header"><h3>Tests positivos</h3></div><div class="card-body">`;
+    html += `<div class="card mb-10"><div class="card-header"><h3>Tests positivos</h3>`;
+    if (esguinceGrade) html += `<span class="tag tag-r">${esguinceGrade}</span>`;
+    html += `</div><div class="card-body">`;
     if (esguinceLat.length || esguinceMed.length) {
-      html += `<div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px">Ligamentos</div>
+      html += `<div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px">Ligamentos${esguinceGrade?' — '+esguinceGrade:''}</div>
         <div style="font-size:11px;margin-bottom:8px">${[...esguinceLat,...esguinceMed].join(' · ')}</div>`;
     }
     if (sindes.length) {
@@ -378,53 +474,81 @@ function generarInformeTobillo() {
     }
     if (aquiles.length) {
       html += `<div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px">Aquiles</div>
-        <div style="font-size:11px">${aquiles.join(' · ')}</div>`;
+        <div style="font-size:11px;margin-bottom:8px">${aquiles.join(' · ')}</div>`;
+    }
+    if (fascitis.length) {
+      html += `<div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px">Fasciopatía plantar</div>
+        <div style="font-size:11px">${fascitis.join(' · ')}</div>`;
     }
     html += `</div></div>`;
   }
 
-  // Scores
-  const hasScores = !isNaN(caitScore) || !isNaN(visaaScore) || lungeD || lungeI || shrD || shrI;
+  // ── Escalas y medidas
+  const faamAvdHas = faamAvdRaw && faamAvdRaw !== '—';
+  const faamDepHas = faamDepRaw && faamDepRaw !== '—';
+  const hasScores = !isNaN(caitScore) || !isNaN(visaaScore) || faamAvdHas || faamDepHas || lungeD || lungeI || shrD || shrI || navHasData || hopResults.length || sebtCompD || sebtCompI;
+
   if (hasScores) {
-    html += `<div class="card mb-10"><div class="card-header"><h3>Escalas y medidas funcionales</h3></div>
-      <div class="card-body" style="display:flex;flex-wrap:wrap;gap:8px">`;
+    html += `<div class="card mb-10"><div class="card-header"><h3>Escalas y medidas funcionales</h3></div><div class="card-body">`;
+
+    // chips numéricas
+    html += `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px">`;
     if (!isNaN(caitScore)) {
-      const cc = caitScore <= 27 ? 'var(--red)' : 'var(--neon)';
-      html += `<div style="background:var(--bg3);border-radius:8px;padding:8px 10px;min-width:75px;text-align:center">
-        <div style="font-size:9px;color:var(--text2)">CAIT</div>
-        <div style="font-size:22px;font-weight:800;font-family:var(--mono);color:${cc}">${caitScore}</div>
-        <div style="font-size:9px;color:${cc}">${caitScore<=27?'⚠️ IAC':'✓ Normal'}</div></div>`;
+      const cc = caitScore<=27?'var(--red)':'var(--neon)';
+      html += _scaleChip('CAIT', caitScore, caitScore<=27?'⚠️ IAC':'✓ Normal', cc);
     }
     if (!isNaN(visaaScore)) {
       const vc = visaaScore>=75?'var(--neon)':visaaScore>=50?'var(--amber)':'var(--red)';
-      html += `<div style="background:var(--bg3);border-radius:8px;padding:8px 10px;min-width:75px;text-align:center">
-        <div style="font-size:9px;color:var(--text2)">VISA-A</div>
-        <div style="font-size:22px;font-weight:800;font-family:var(--mono);color:${vc}">${visaaScore}</div>
-        <div style="font-size:9px;color:${vc}">${visaaScore>=75?'✓ OK':visaaScore>=50?'⚠️ Moder.':'🔴 Severo'}</div></div>`;
+      html += _scaleChip('VISA-A', visaaScore, visaaScore>=75?'✓ OK':visaaScore>=50?'⚠️ Moder.':'🔴 Severo', vc);
     }
+    if (faamAvdHas) html += _scaleChip('FAAM AVD', faamAvdRaw, 'AVD', 'var(--teal)');
+    if (faamDepHas) html += _scaleChip('FAAM Dep.', faamDepRaw, 'Deportiva', 'var(--teal)');
     const lC = v => v<35?'var(--red)':v<=40?'var(--amber)':'var(--neon)';
-    if (lungeD) html += `<div style="background:var(--bg3);border-radius:8px;padding:8px 10px;min-width:75px;text-align:center">
-      <div style="font-size:9px;color:var(--text2)">Lunge D</div>
-      <div style="font-size:22px;font-weight:800;font-family:var(--mono);color:${lC(lungeD)}">${lungeD}°</div></div>`;
-    if (lungeI) html += `<div style="background:var(--bg3);border-radius:8px;padding:8px 10px;min-width:75px;text-align:center">
-      <div style="font-size:9px;color:var(--text2)">Lunge I</div>
-      <div style="font-size:22px;font-weight:800;font-family:var(--mono);color:${lC(lungeI)}">${lungeI}°</div></div>`;
+    if (lungeD) html += _scaleChip('Lunge D', lungeD+'°', lungeD<35?'🔴 <35°':lungeD<=40?'⚠️ límite':'✓ normal', lC(lungeD));
+    if (lungeI) html += _scaleChip('Lunge I', lungeI+'°', lungeI<35?'🔴 <35°':lungeI<=40?'⚠️ límite':'✓ normal', lC(lungeI));
     const sC = v => v>=25?'var(--neon)':v>=15?'var(--amber)':'var(--red)';
-    if (shrD) html += `<div style="background:var(--bg3);border-radius:8px;padding:8px 10px;min-width:75px;text-align:center">
-      <div style="font-size:9px;color:var(--text2)">SHR D</div>
-      <div style="font-size:22px;font-weight:800;font-family:var(--mono);color:${sC(shrD)}">${shrD}</div>
-      <div style="font-size:9px;color:var(--text2)">reps</div></div>`;
-    if (shrI) html += `<div style="background:var(--bg3);border-radius:8px;padding:8px 10px;min-width:75px;text-align:center">
-      <div style="font-size:9px;color:var(--text2)">SHR I</div>
-      <div style="font-size:22px;font-weight:800;font-family:var(--mono);color:${sC(shrI)}">${shrI}</div>
-      <div style="font-size:9px;color:var(--text2)">reps</div></div>`;
+    if (shrD) html += _scaleChip('SHR D', shrD+' reps', shrD>=25?'✓ Normal':shrD>=15?'⚠️ déficit':'🔴 severo', sC(shrD));
+    if (shrI) html += _scaleChip('SHR I', shrI+' reps', shrI>=25?'✓ Normal':shrI>=15?'⚠️ déficit':'🔴 severo', sC(shrI));
+    if (sebtCompD) html += _scaleChip('SEBT D', sebtCompD+'%', parseFloat(sebtCompD)<89?'⚠️ <89%':'✓', parseFloat(sebtCompD)<89?'var(--amber)':'var(--neon)');
+    if (sebtCompI) html += _scaleChip('SEBT I', sebtCompI+'%', parseFloat(sebtCompI)<89?'⚠️ <89%':'✓', parseFloat(sebtCompI)<89?'var(--amber)':'var(--neon)');
+    html += `</div>`;
+
+    // Navicular drop
+    if (navHasData) {
+      html += `<div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px">Drop Navicular</div>
+        <div style="font-size:11px;margin-bottom:8px">`;
+      if (document.getElementById('nav-carg-d')?.value) {
+        const nc = navDrop_d>10?'var(--red)':navDrop_d>6?'var(--amber)':'var(--neon)';
+        html += `D: <span style="font-family:var(--mono);font-weight:700;color:${nc}">${navDrop_d} mm</span> ${navDrop_d>10?'⚠️ pronación excesiva':navDrop_d>6?'⚠️ límite':'✓ normal'}  `;
+      }
+      if (document.getElementById('nav-carg-i')?.value) {
+        const nc = navDrop_i>10?'var(--red)':navDrop_i>6?'var(--amber)':'var(--neon)';
+        html += `I: <span style="font-family:var(--mono);font-weight:700;color:${nc}">${navDrop_i} mm</span> ${navDrop_i>10?'⚠️ pronación excesiva':navDrop_i>6?'⚠️ límite':'✓ normal'}`;
+      }
+      html += `</div>`;
+    }
+
+    // Hop tests
+    if (hopResults.length) {
+      html += `<div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px">Hop Tests (IAC)</div>`;
+      hopResults.forEach(r => {
+        const {t,d,i} = r;
+        const getC = v => t.worse==='mayor' ? (v>t.cut?'var(--red)':'var(--neon)') : (v<t.cut?'var(--red)':'var(--neon)');
+        const getL = v => t.worse==='mayor' ? (v>t.cut?`⚠️ >${t.cut}${t.unit}`:`✓`) : (v<t.cut?`⚠️ <${t.cut}${t.unit}`:`✓`);
+        let row = `<span style="font-size:11px;font-weight:600">${t.name}:</span> `;
+        if (d!==null) row += `D <span style="font-family:var(--mono);font-weight:700;color:${getC(d)}">${d}${t.unit}</span> ${getL(d)}  `;
+        if (i!==null) row += `I <span style="font-family:var(--mono);font-weight:700;color:${getC(i)}">${i}${t.unit}</span> ${getL(i)}`;
+        html += `<div style="font-size:11px;margin-bottom:4px">${row}</div>`;
+      });
+    }
     html += `</div></div>`;
   }
 
-  // Diagnoses + recommendations
+  // ── Diagnósticos + recomendaciones EBM
   if (!validDxs.length) {
     html += `<div style="text-align:center;color:var(--text3);padding:20px;font-size:12px">Completar evaluación para generar diagnósticos presuntivos.</div>`;
   } else {
+    html += `<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Diagnóstico presuntivo y plan EBM</div>`;
     validDxs.forEach(dx => {
       const recom = TOBILLO_RECOM[dx.id];
       html += `<div class="card mb-10" style="border-left:3px solid ${dx.color||'var(--border)'}">
@@ -449,9 +573,15 @@ function generarInformeTobillo() {
   }
 
   html += `<div style="font-size:9px;color:var(--text3);text-align:center;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
-    MoveMetrics Clinical Assessment · Tobillo v2 · ${now}<br>
-    Polzer 2012 · Vuurberg BJSM 2018 · Doherty BJSports Med 2017 · Alfredson AJSM 1998 · Torre SEMCPT 2019 · Meredith 2025 · Galleher CPG 2020
+    MoveMetrics Clinical Assessment · Tobillo v3 · ${now}<br>
+    Polzer 2012 · Vuurberg BJSM 2018 · Doherty BJSports Med 2017 · Alfredson AJSM 1998 · Torre SEMCPT 2019 · Meredith 2025 · Galleher CPG 2020 · Martin JOSPT CPG 2014
   </div></div>`;
 
   container.innerHTML = html;
+}
+
+function imprimirInformeTobillo() {
+  const el = document.getElementById('tob-informe-container');
+  if (!el || !el.innerHTML.trim()) { generarInformeTobillo(); }
+  setTimeout(() => window.print(), 200);
 }
