@@ -165,6 +165,15 @@ function buildPieFuerzaROM() {
         <div class="ig"><label class="il">Dorsiflexión I (Lunge)</label>
           <input class="inp inp-mono" id="pie-lunge-i" type="number" placeholder="cm talón-pared">
         </div>
+        <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 4px">Diferenciación Gastroc vs Sóleo</div>
+        <div style="font-size:9px;color:var(--text3);margin-bottom:8px">DF rodilla extendida (NWB arriba) = gastroc+sóleo. DF rodilla 90° = sóleo solo. Si NWB ext &lt;10° y NWB flex &ge;10° → gastroc aislado. Koc JOSPT CPG 2023</div>
+        <div class="ig"><label class="il">DF D (rodilla 90° flex)</label>
+          <input class="inp inp-mono" id="pie-df-flex-d" type="number" placeholder="°" oninput="interpretGastrocSoleo()">
+        </div>
+        <div class="ig"><label class="il">DF I (rodilla 90° flex)</label>
+          <input class="inp inp-mono" id="pie-df-flex-i" type="number" placeholder="°" oninput="interpretGastrocSoleo()">
+        </div>
+        <div id="pie-gastroc-interp" style="font-size:10px;padding:6px 8px;background:var(--bg4);border-radius:6px;margin-top:4px;display:none"></div>
         <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px">ROM 1° MTF (°)</div>
         <div class="ig"><label class="il">Dorsiflexión D</label>
           <input class="inp inp-mono" id="pie-mtf-df-d" type="number" placeholder="Normal 70°">
@@ -210,6 +219,33 @@ function buildPieFuerzaROM() {
         </div>
       </div>
     </div>`;
+}
+
+function interpretGastrocSoleo() {
+  const extD = parseFloat(document.getElementById('pie-df-d')?.value);
+  const extI = parseFloat(document.getElementById('pie-df-i')?.value);
+  const flexD = parseFloat(document.getElementById('pie-df-flex-d')?.value);
+  const flexI = parseFloat(document.getElementById('pie-df-flex-i')?.value);
+  const el = document.getElementById('pie-gastroc-interp');
+  if (!el) return;
+  const lines = [];
+  const CUTOFF = 10;
+  function classify(ext, flex, side) {
+    if (isNaN(ext) || isNaN(flex)) return null;
+    if (ext >= CUTOFF) return `${side}: DF normal (${ext}°) — sin restricción significativa`;
+    if (ext < CUTOFF && flex >= CUTOFF) return `${side}: Restricción GASTROCNEMIO aislado (ext ${ext}° / flex ${flex}°) → estirar gastroc`;
+    return `${side}: Restricción GASTROC + SÓLEO (ext ${ext}° / flex ${flex}°) → estirar ambos`;
+  }
+  const rD = classify(extD, flexD, 'D');
+  const rI = classify(extI, flexI, 'I');
+  if (rD) lines.push(rD);
+  if (rI) lines.push(rI);
+  if (lines.length) {
+    el.style.display = 'block';
+    el.innerHTML = lines.join('<br>');
+  } else {
+    el.style.display = 'none';
+  }
 }
 
 // ── BUILD: ESCALAS ────────────────────────────────────────────────────────────
@@ -301,6 +337,8 @@ function generarInformePie() {
   const navI = parseFloat(document.getElementById('pie-nav-drop-i')?.value) || null;
   const fasciaD = parseFloat(document.getElementById('pie-fascia-d')?.value) || null;
   const fasciaI = parseFloat(document.getElementById('pie-fascia-i')?.value) || null;
+  const dfFlexD = parseFloat(document.getElementById('pie-df-flex-d')?.value) || null;
+  const dfFlexI = parseFloat(document.getElementById('pie-df-flex-i')?.value) || null;
   const heelRaiseD = parseInt(document.getElementById('pie-heel-raise-d')?.value) || null;
   const heelRaiseI = parseInt(document.getElementById('pie-heel-raise-i')?.value) || null;
   const lado = document.getElementById('pie-lado')?.value || '';
@@ -336,6 +374,17 @@ function generarInformePie() {
   if (fasciaI !== null && fasciaI >= 4) hallazgos.push(`Grosor fascia I: ${fasciaI} mm (≥4 mm — engrosamiento ecográfico FP)`);
   if (heelRaiseD !== null && heelRaiseD < 25) hallazgos.push(`Heel raise D: ${heelRaiseD} reps (<25 — debilidad gastrosoleo)`);
   if (heelRaiseI !== null && heelRaiseI < 25) hallazgos.push(`Heel raise I: ${heelRaiseI} reps (<25 — debilidad gastrosoleo)`);
+  // Gastroc vs soleus classification
+  if (dfD !== null && dfFlexD !== null && dfD < 10) {
+    hallazgos.push(dfFlexD >= 10
+      ? `Restricción gastroc aislado D: DF ext ${dfD}° / flex ${dfFlexD}° → estirar gastrocnemio`
+      : `Restricción gastroc+sóleo D: DF ext ${dfD}° / flex ${dfFlexD}° → estirar ambos`);
+  }
+  if (dfI !== null && dfFlexI !== null && dfI < 10) {
+    hallazgos.push(dfFlexI >= 10
+      ? `Restricción gastroc aislado I: DF ext ${dfI}° / flex ${dfFlexI}° → estirar gastrocnemio`
+      : `Restricción gastroc+sóleo I: DF ext ${dfI}° / flex ${dfFlexI}° → estirar ambos`);
+  }
 
   // Render
   let html = `<div style="font-family:var(--mono);font-size:11px;line-height:1.7">`;
