@@ -353,6 +353,7 @@
         <button class="btn btn-ghost btn-sm" onclick="showKinePanel('rodilla','Rodilla')" style="font-size:10px">Rodilla</button>
         <button class="btn btn-ghost btn-sm" onclick="showKinePanel('tobillo','Tobillo')" style="font-size:10px">Tobillo</button>
         <button class="btn btn-ghost btn-sm" onclick="openModal('sheet-mano');initManoSheet();showMTab('stc',document.getElementById('mtab-stc-btn'))" style="font-size:10px">Mano</button>
+        <button class="btn btn-ghost btn-sm" onclick="openModal('sheet-pie');initPieSheet();showPTab('obs',document.getElementById('ptab-obs-btn'))" style="font-size:10px">Pie</button>
       </div>
 
       <!-- Panel hombro -->
@@ -2896,6 +2897,8 @@
   <script src="js/sheets/tobillo.js?v=4"></script>
   <script src="js/data/papers-mano-rules.js?v=1"></script>
   <script src="js/sheets/mano.js?v=1"></script>
+  <script src="js/data/papers-pie-rules.js?v=1"></script>
+  <script src="js/sheets/pie.js?v=1"></script>
   <script src="js/sheets/lumbar.js?v=10"></script>
   <script src="js/sheets/groin.js?v=2"></script>
   <script src="js/sheets/cadera.js?v=3"></script>
@@ -4731,6 +4734,61 @@
 
     <div class="divider"></div>
     <button class="btn btn-neon btn-full" onclick="saveKlinicalSheet('mano');closeModal('sheet-mano')">💾 Guardar evaluación mano</button>
+  </div>
+</div>
+
+<!-- SHEET: PIE / FOOT -->
+<div class="modal" id="sheet-pie">
+  <div class="modal-sheet" style="max-width:min(900px,96vw)">
+    <div class="modal-handle"></div>
+    <div class="flex-b mb-12">
+      <div><div class="modal-title" style="font-size:18px">🦶 Pie / Foot</div>
+        <div style="font-size:12px;color:var(--text2)">Koc JOSPT CPG 2023 · Ettinger 2025 · Tien SR&MA 2026 · ACR 2025</div></div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('sheet-pie')">✕</button>
+    </div>
+    <!-- Tab strip -->
+    <div style="display:flex;gap:3px;background:var(--bg4);border-radius:8px;padding:3px;margin-bottom:16px;overflow-x:auto">
+      <button class="btn btn-neon btn-sm" id="ptab-obs-btn" onclick="showPTab('obs',this)" style="white-space:nowrap;font-size:10px">Observación</button>
+      <button class="btn btn-ghost btn-sm" id="ptab-tests-btn" onclick="showPTab('tests',this)" style="white-space:nowrap;font-size:10px">Tests</button>
+      <button class="btn btn-ghost btn-sm" id="ptab-fuerza-btn" onclick="showPTab('fuerza',this)" style="white-space:nowrap;font-size:10px">Fuerza·ROM</button>
+      <button class="btn btn-ghost btn-sm" id="ptab-escalas-btn" onclick="showPTab('escalas',this)" style="white-space:nowrap;font-size:10px">Escalas</button>
+      <button class="btn btn-ghost btn-sm" id="ptab-pinforme-btn" onclick="showPTab('pinforme',this)" style="white-space:nowrap;font-size:10px">📄 Informe</button>
+    </div>
+
+    <!-- TAB: Observación -->
+    <div id="ptab-obs" style="display:block">
+      <div id="pie-obs-fields"></div>
+    </div>
+
+    <!-- TAB: Tests -->
+    <div id="ptab-tests" style="display:none">
+      <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Fascitis Plantar / Dolor de Talón</div>
+      <div id="pie-fascitis-tests"></div>
+      <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 10px">Hallux Valgus / 1° MTF</div>
+      <div id="pie-hallux-tests"></div>
+    </div>
+
+    <!-- TAB: Fuerza·ROM -->
+    <div id="ptab-fuerza" style="display:none">
+      <div id="pie-fuerza-fields"></div>
+    </div>
+
+    <!-- TAB: Escalas -->
+    <div id="ptab-escalas" style="display:none">
+      <div id="pie-escalas-fields"></div>
+    </div>
+
+    <!-- TAB: Informe -->
+    <div id="ptab-pinforme" style="display:none">
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="btn btn-neon" style="flex:1" onclick="generarInformePie()">📄 Generar Informe Pie</button>
+        <button class="btn btn-ghost" style="flex:0 0 auto" onclick="imprimirInformePie()">🖨️ Imprimir</button>
+      </div>
+      <div id="pie-informe-container"></div>
+    </div>
+
+    <div class="divider"></div>
+    <button class="btn btn-neon btn-full" onclick="saveKlinicalSheet('pie');closeModal('sheet-pie')">💾 Guardar evaluación pie</button>
   </div>
 </div>
 

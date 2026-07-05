@@ -28,7 +28,8 @@ function initKlinicalSheet(panel) {
   }
   if (panel === 'cadera' || panel === 'gluteo' || panel === 'ingle') { initCaderaSheet(); return; }
   if (panel === 'rodilla') initRodillaSheet();
-  if (panel === 'tobillo' || panel === 'pantorrilla' || panel === 'pie') initTobilloSheet();
+  if (panel === 'tobillo' || panel === 'pantorrilla') initTobilloSheet();
+  if (panel === 'pie') initPieSheet();
   if (panel === 'mano' || panel === 'muneca' || panel === 'dedos') initManoSheet();
   if (panel === 'cervical') {
     initCervicalSheet();
@@ -220,5 +221,6 @@ document.addEventListener('DOMContentLoaded', function() {
   try { if(typeof initCervicalSheet==='function') initCervicalSheet(); } catch(e) { console.error('initCervicalSheet',e); }
   try { if(typeof initCaderaSheet==='function')  initCaderaSheet();  } catch(e) { console.error('initCaderaSheet',e); }
   try { if(typeof initManoSheet==='function')    initManoSheet();    } catch(e) { console.error('initManoSheet',e); }
+  try { if(typeof initPieSheet==='function')     initPieSheet();     } catch(e) { console.error('initPieSheet',e); }
 });
 
