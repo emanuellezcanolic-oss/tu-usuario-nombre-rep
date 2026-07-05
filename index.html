@@ -352,7 +352,7 @@
         <button class="btn btn-ghost btn-sm" onclick="openModal('sheet-cadera');initCaderaSheet();showCaderaTab('obs',null)" style="font-size:10px">Cadera</button>
         <button class="btn btn-ghost btn-sm" onclick="showKinePanel('rodilla','Rodilla')" style="font-size:10px">Rodilla</button>
         <button class="btn btn-ghost btn-sm" onclick="showKinePanel('tobillo','Tobillo')" style="font-size:10px">Tobillo</button>
-        <button class="btn btn-ghost btn-sm" onclick="showKinePanel('muneca','Muneca y Pie')" style="font-size:10px">Muneca / Pie</button>
+        <button class="btn btn-ghost btn-sm" onclick="openModal('sheet-mano');initManoSheet();showMTab('stc',document.getElementById('mtab-stc-btn'))" style="font-size:10px">Mano</button>
       </div>
 
       <!-- Panel hombro -->
@@ -2894,6 +2894,8 @@
   <script src="js/sheets/rodilla.js?v=10"></script>
   <script src="js/data/papers-tobillo-rules.js?v=3"></script>
   <script src="js/sheets/tobillo.js?v=4"></script>
+  <script src="js/data/papers-mano-rules.js?v=1"></script>
+  <script src="js/sheets/mano.js?v=1"></script>
   <script src="js/sheets/lumbar.js?v=10"></script>
   <script src="js/sheets/groin.js?v=2"></script>
   <script src="js/sheets/cadera.js?v=3"></script>
@@ -4639,6 +4641,96 @@
     </div>
     <div class="divider"></div>
     <button class="btn btn-neon btn-full" onclick="saveKlinicalSheet('tobillo');closeModal('sheet-tobillo')">💾 Guardar evaluación tobillo</button>
+  </div>
+</div>
+
+<!-- SHEET: MANO / MUÑECA -->
+<div class="modal" id="sheet-mano">
+  <div class="modal-sheet" style="max-width:min(900px,96vw)">
+    <div class="modal-handle"></div>
+    <div class="flex-b mb-12">
+      <div><div class="modal-title" style="font-size:18px">✋ Mano / Muñeca</div>
+        <div style="font-size:12px;color:var(--text2)">STC · De Quervain · Dedo en Gatillo · CMC · Neuropatía · QuickDASH · PRWE</div></div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('sheet-mano')">✕</button>
+    </div>
+    <!-- Tab strip -->
+    <div style="display:flex;gap:3px;background:var(--bg4);border-radius:8px;padding:3px;margin-bottom:16px;overflow-x:auto">
+      <button class="btn btn-neon btn-sm" id="mtab-stc-btn" onclick="showMTab('stc',this)" style="white-space:nowrap;font-size:10px">STC</button>
+      <button class="btn btn-ghost btn-sm" id="mtab-tendones-btn" onclick="showMTab('tendones',this)" style="white-space:nowrap;font-size:10px">Tendones</button>
+      <button class="btn btn-ghost btn-sm" id="mtab-cmc-btn" onclick="showMTab('cmc',this)" style="white-space:nowrap;font-size:10px">CMC · Neuro</button>
+      <button class="btn btn-ghost btn-sm" id="mtab-fuerza-btn" onclick="showMTab('fuerza',this)" style="white-space:nowrap;font-size:10px">Fuerza · ROM</button>
+      <button class="btn btn-ghost btn-sm" id="mtab-escalas-btn" onclick="showMTab('escalas',this)" style="white-space:nowrap;font-size:10px">Escalas</button>
+      <button class="btn btn-ghost btn-sm" id="mtab-minforme-btn" onclick="showMTab('minforme',this)" style="white-space:nowrap;font-size:10px">📄 Informe</button>
+    </div>
+
+    <!-- TAB: STC -->
+    <div id="mtab-stc">
+      <div class="card mb-8" style="background:rgba(57,255,122,.05);border-color:rgba(57,255,122,.2)">
+        <div class="card-body" style="font-size:11px;color:var(--text2);line-height:1.6">
+          <strong style="color:var(--neon)">Síndrome Túnel Carpiano (STC):</strong> ≥3/5 factores clínicos (age>45, shaking alivia, pérdida sensorial pulgar, CTQ-SSS >1.9, wrist ratio >0.67) → alta probabilidad STC. Durkan = mejor test único (Sn 0.87 / Sp 0.90). <em>JOSPT CPG 2019 Grade B.</em>
+        </div>
+      </div>
+      <div id="mano-stc-fields"></div>
+    </div>
+
+    <!-- TAB: TENDONES -->
+    <div id="mtab-tendones" style="display:none">
+      <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">De Quervain — 1er compartimento dorsal (APL + EPB)</div>
+      <div id="mano-dequervain-fields"></div>
+      <div style="font-size:10px;font-weight:700;color:var(--text2);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.5px">Dedo en Gatillo (Trigger Finger) — Polea A1</div>
+      <div id="mano-gatillo-fields"></div>
+    </div>
+
+    <!-- TAB: CMC + NEURO -->
+    <div id="mtab-cmc" style="display:none">
+      <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">CMC / Osteoartritis Mano</div>
+      <div id="mano-cmc-fields"></div>
+      <div style="font-size:10px;font-weight:700;color:var(--text2);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.5px">Neuropatía Cubital · Canal de Guyon · Dupuytren</div>
+      <div id="mano-neuro-fields"></div>
+    </div>
+
+    <!-- TAB: FUERZA + ROM -->
+    <div id="mtab-fuerza" style="display:none">
+      <div id="mano-fuerza-fields"></div>
+    </div>
+
+    <!-- TAB: ESCALAS -->
+    <div id="mtab-escalas" style="display:none">
+      <div class="card mb-12">
+        <div class="card-header" style="cursor:pointer" onclick="toggleSheetSection('mano-qdash-body')">
+          <h3>QuickDASH — Discapacidad brazo/hombro/mano</h3>
+          <span class="tag tag-b">11 ítems · 0–100 · JOSPT CPG 2019 Grade A</span>
+        </div>
+        <div id="mano-qdash-body">
+          <div class="card-body">
+            <div id="mano-qdash-fields"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" style="cursor:pointer" onclick="toggleSheetSection('mano-prwe-body')">
+          <h3>PRWE — Patient-Rated Wrist Evaluation</h3>
+          <span class="tag tag-b">15 ítems · 0–100 · MacDermid 1996</span>
+        </div>
+        <div id="mano-prwe-body">
+          <div class="card-body">
+            <div id="mano-prwe-fields"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: INFORME -->
+    <div id="mtab-minforme" style="display:none">
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="btn btn-neon" style="flex:1" onclick="generarInformeMano()">📄 Generar Informe Mano</button>
+        <button class="btn btn-ghost" style="flex:0 0 auto" onclick="imprimirInformeMano()">🖨️ Imprimir</button>
+      </div>
+      <div id="mano-informe-container"></div>
+    </div>
+
+    <div class="divider"></div>
+    <button class="btn btn-neon btn-full" onclick="saveKlinicalSheet('mano');closeModal('sheet-mano')">💾 Guardar evaluación mano</button>
   </div>
 </div>
 
