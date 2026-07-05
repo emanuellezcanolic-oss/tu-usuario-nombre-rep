@@ -1,4 +1,4 @@
-// sheets/pie.js v1
+// sheets/pie.js v3
 // Tabs: Observación | Tests | Fuerza·ROM | Escalas | Informe
 // Evidencia: Koc JOSPT CPG 2023 · Nweke 2025 · Tien et al. 2026 · Ettinger 2025 · ACR 2025
 
@@ -33,7 +33,8 @@ function _pie_getPosTests(containerId) {
 // ── BUILD: OBSERVACIÓN ────────────────────────────────────────────────────────
 function buildPieObs() {
   const el = document.getElementById('pie-obs-fields');
-  if (!el || el.innerHTML) return;
+  if (!el || el.dataset.built) return;
+  el.dataset.built = '1';
   el.innerHTML = `
     <div class="grid-2" style="gap:12px">
       <div>
@@ -111,7 +112,8 @@ function buildPieObs() {
 // ── BUILD: TESTS ──────────────────────────────────────────────────────────────
 function buildPieFascitisPlantar() {
   const el = document.getElementById('pie-fascitis-tests');
-  if (!el || el.innerHTML) return;
+  if (!el || el.dataset.built) return;
+  el.dataset.built = '1';
   const tests = typeof PIE_FASCITIS_TESTS !== 'undefined' ? PIE_FASCITIS_TESTS : [];
   el.innerHTML = tests.map(t => `
     <div class="card" style="margin-bottom:10px">
@@ -129,7 +131,8 @@ function buildPieFascitisPlantar() {
 
 function buildPieHallux() {
   const el = document.getElementById('pie-hallux-tests');
-  if (!el || el.innerHTML) return;
+  if (!el || el.dataset.built) return;
+  el.dataset.built = '1';
   const tests = typeof PIE_HALLUX_TESTS !== 'undefined' ? PIE_HALLUX_TESTS : [];
   el.innerHTML = tests.map(t => `
     <div class="card" style="margin-bottom:10px">
@@ -148,7 +151,8 @@ function buildPieHallux() {
 // ── BUILD: FUERZA · ROM ───────────────────────────────────────────────────────
 function buildPieFuerzaROM() {
   const el = document.getElementById('pie-fuerza-fields');
-  if (!el || el.innerHTML) return;
+  if (!el || el.dataset.built) return;
+  el.dataset.built = '1';
   el.innerHTML = `
     <div class="grid-2" style="gap:12px">
       <div>
@@ -266,7 +270,8 @@ let pieFaamVals = new Array(21).fill(null);
 
 function buildPieEscalas() {
   const el = document.getElementById('pie-escalas-fields');
-  if (!el || el.innerHTML) return;
+  if (!el || el.dataset.built) return;
+  el.dataset.built = '1';
 
   const faamHtml = PIE_FAAM_ITEMS.map((item, i) => `
     <div style="padding:6px 0;border-bottom:1px solid var(--bg4)">
@@ -449,10 +454,10 @@ function imprimirInformePie() {
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 function initPieSheet() {
-  buildPieObs();
-  buildPieFascitisPlantar();
-  buildPieHallux();
-  buildPieFuerzaROM();
-  buildPieEscalas();
+  try { buildPieObs(); } catch(e) { console.error('buildPieObs', e); }
+  try { buildPieFascitisPlantar(); } catch(e) { console.error('buildPieFascitisPlantar', e); }
+  try { buildPieHallux(); } catch(e) { console.error('buildPieHallux', e); }
+  try { buildPieFuerzaROM(); } catch(e) { console.error('buildPieFuerzaROM', e); }
+  try { buildPieEscalas(); } catch(e) { console.error('buildPieEscalas', e); }
   pieFaamVals = new Array(21).fill(null);
 }
