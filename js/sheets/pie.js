@@ -325,15 +325,12 @@ function _calcPieFAAM() {
 
 // ── GENERAR INFORME ───────────────────────────────────────────────────────────
 function generarInformePie() {
-  const container = document.getElementById('pie-informe-container');
-  if (!container) return;
-
   // Collect positive tests
   const fascitisPos = _pie_getPosTests('pie-fascitis-tests');
   const halluxPos = _pie_getPosTests('pie-hallux-tests');
   const allPos = [...fascitisPos, ...halluxPos];
 
-  // Scores
+  // Scores y mediciones
   const nrs = parseInt(document.getElementById('pie-nrs')?.value) || null;
   const faamScore = _calcPieFAAM();
   const dfD = parseFloat(document.getElementById('pie-df-d')?.value) || null;
@@ -351,25 +348,20 @@ function generarInformePie() {
   const lado = document.getElementById('pie-lado')?.value || '';
   const evolucion = document.getElementById('pie-evolucion')?.value || '';
 
-  // Diagnostic rules
+  // Diagnóstico por reglas EBM
   const reglas = typeof PIE_REGLAS !== 'undefined' ? PIE_REGLAS : [];
   const diagnoses = [];
-
   for (const regla of reglas) {
     const posMatch = allPos.filter(t => regla.criterios.some(c => t.toLowerCase().includes(c.toLowerCase())));
-    if (posMatch.length >= regla.minPos) {
-      diagnoses.push(regla);
-    }
+    if (posMatch.length >= regla.minPos) diagnoses.push(regla);
   }
-
-  // Check heel squeeze → fractura estrés (override if hallux squeeze pos)
-  const heelSqueezePos = fascitisPos.some(t => t.includes('Heel Squeeze') || t.includes('squeeze'));
+  const heelSqueezePos = allPos.some(t => t.includes('Heel Squeeze') || t.includes('squeeze'));
   if (heelSqueezePos && !diagnoses.some(d => d.id === 'fractura-estres-calcaneo')) {
     const fr = reglas.find(r => r.id === 'fractura-estres-calcaneo');
     if (fr) diagnoses.unshift(fr);
   }
 
-  // Build imbalances / findings
+  // Hallazgos clínicos
   const hallazgos = [];
   if (dfD !== null && dfD < 10) hallazgos.push(`Déficit dorsiflexión D: ${dfD}° (<10° — factor de riesgo FP)`);
   if (dfI !== null && dfI < 10) hallazgos.push(`Déficit dorsiflexión I: ${dfI}° (<10° — factor de riesgo FP)`);
@@ -381,7 +373,6 @@ function generarInformePie() {
   if (fasciaI !== null && fasciaI >= 4) hallazgos.push(`Grosor fascia I: ${fasciaI} mm (≥4 mm — engrosamiento ecográfico FP)`);
   if (heelRaiseD !== null && heelRaiseD < 25) hallazgos.push(`Heel raise D: ${heelRaiseD} reps (<25 — debilidad gastrosoleo)`);
   if (heelRaiseI !== null && heelRaiseI < 25) hallazgos.push(`Heel raise I: ${heelRaiseI} reps (<25 — debilidad gastrosoleo)`);
-  // Gastroc vs soleus classification
   if (dfD !== null && dfFlexD !== null && dfD < 10) {
     hallazgos.push(dfFlexD >= 10
       ? `Restricción gastroc aislado D: DF ext ${dfD}° / flex ${dfFlexD}° → estirar gastrocnemio`
@@ -393,65 +384,282 @@ function generarInformePie() {
       : `Restricción gastroc+sóleo I: DF ext ${dfI}° / flex ${dfFlexI}° → estirar ambos`);
   }
 
-  // Render
-  let html = `<div style="font-family:var(--mono);font-size:11px;line-height:1.7">`;
-  html += `<div style="font-size:14px;font-weight:700;color:var(--neon);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--verde20)">📄 INFORME EVALUACIÓN PIE / FOOT</div>`;
+  // Datos del paciente
+  const profNombre = 'Lic. Emanuel Lezcano';
+  const profMP = '';
+  const profInst = 'The Move Club';
+  const fecha = new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'});
+  const nombre  = typeof cur!=='undefined'?(cur?.nombre||'—'):'—';
+  const edad    = typeof cur!=='undefined'?(cur?.edad||''):'';
+  const sexo    = typeof cur!=='undefined'?(cur?.sexo||''):'';
+  const peso    = typeof cur!=='undefined'?(cur?.peso||''):'';
+  const talla   = typeof cur!=='undefined'?(cur?.talla||''):'';
+  const deporte = typeof cur!=='undefined'?(cur?.deporte||''):'';
+  const nivel   = typeof cur!=='undefined'?(cur?.nivel||''):'';
+  const objetivo= typeof cur!=='undefined'?(cur?.objetivo||''):'';
+  const lesionMC= typeof cur!=='undefined'?(cur?.lesion||''):'';
 
-  // Header data
-  html += `<div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:12px;font-size:11px">`;
-  if (lado) html += `<div><span style="color:var(--text2)">Pie:</span> <strong>${lado}</strong></div>`;
-  if (evolucion) html += `<div><span style="color:var(--text2)">Evolución:</span> <strong>${evolucion}</strong></div>`;
-  if (nrs !== null && !isNaN(nrs)) html += `<div><span style="color:var(--text2)">NRS dolor:</span> <strong>${nrs}/10</strong></div>`;
-  if (faamScore !== null) html += `<div><span style="color:var(--text2)">FAAM-ADL:</span> <strong>${faamScore}/100</strong></div>`;
-  html += `</div>`;
+  // ── CSS ──
+  const css = typeof _tmcCSS!=='undefined' ? _tmcCSS() : 'body{font-family:Arial,sans-serif;font-size:12px}table{width:100%;border-collapse:collapse}th{background:#798254;color:#fff;padding:6px}td{padding:5px;border-bottom:1px solid #ddd}';
 
-  // Tests positivos
-  if (allPos.length > 0) {
-    html += `<div style="margin-bottom:12px"><div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Tests Positivos</div>`;
-    html += `<ul style="margin:0;padding-left:18px">${allPos.map(t => `<li>${t}</li>`).join('')}</ul></div>`;
-  }
+  // ── SEC 01 — Perfil ──
+  const _R = (k,v) => typeof _tmcRow!=='undefined' ? _tmcRow(k,v) : `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee;font-size:11px"><span style="color:#555">${k}</span><span style="font-weight:600">${v||'—'}</span></div>`;
+  const sec01 = `
+    <div class="sec-wrap"><div class="sec-head"><span class="sec-badge">01</span><span class="sec-title">Perfil del Atleta</span></div>
+    <div class="sec-desc">Identificación del paciente, miembro afectado y contexto clínico de la consulta.</div>
+    <div class="grid-2">
+      <div class="card-data"><div class="card-label">Datos del Paciente</div>
+        ${_R('Nombre',nombre)}
+        ${edad?_R('Edad',edad+(sexo?' · '+sexo:'')):(sexo?_R('Sexo',sexo):'')}
+        ${(peso||talla)?_R('Morfología',[peso?peso+' kg':'',talla?talla+' cm':''].filter(Boolean).join(' / ')):''}
+        ${deporte?_R('Deporte',deporte+(nivel?' — '+nivel:'')):''}
+        ${objetivo?_R('Objetivo',objetivo):''}
+        ${lesionMC?_R('Motivo de consulta',lesionMC):''}
+        ${_R('Fecha evaluación',fecha)}
+      </div>
+      <div class="card-data"><div class="card-label">Contexto Clínico</div>
+        ${lado?_R('Pie afectado',lado):''}
+        ${evolucion?_R('Evolución',evolucion):''}
+        ${nrs!==null?_R('NRS Dolor',nrs+'/10'):''}
+        ${faamScore!==null?_R('FAAM-ADL',faamScore+'/100 — '+(faamScore>=90?'Mínima limitación':faamScore>=70?'Leve':faamScore>=50?'Moderada':'Severa')):''}
+      </div>
+    </div></div>`;
 
-  // Hallazgos mediciones
-  if (hallazgos.length > 0) {
-    html += `<div style="margin-bottom:12px"><div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Hallazgos Funcionales</div>`;
-    html += `<ul style="margin:0;padding-left:18px">${hallazgos.map(h => `<li>${h}</li>`).join('')}</ul></div>`;
-  }
+  // ── SEC 02 — ROM ──
+  const hasROM = dfD||dfI||lungeD||lungeI||navD||navI||dfFlexD||dfFlexI;
+  const romRadarItems = [
+    (dfD||dfI)?{label:'DF Rodilla ext.',D:dfD||0,I:dfI||0,max:20,ref:10}:null,
+    (lungeD||lungeI)?{label:'Lunge Test',D:lungeD||0,I:lungeI||0,max:12,ref:4}:null,
+    (navD||navI)?{label:'Nav.Drop (inv)',D:navD?Math.max(0,15-navD):0,I:navI?Math.max(0,15-navI):0,max:15,ref:10}:null,
+    (dfFlexD||dfFlexI)?{label:'DF Rodilla flex.',D:dfFlexD||0,I:dfFlexI||0,max:25,ref:10}:null,
+  ].filter(Boolean);
+  const _romRadar = (typeof _tmcRadarChart!=='undefined' && romRadarItems.length>=3)
+    ? _tmcRadarChart(romRadarItems,{title:'Perfil ROM Tobillo/Pie',size:270})
+    : '';
+  const sec02 = hasROM ? `
+    <div class="sec-wrap"><div class="sec-head"><span class="sec-badge">02</span><span class="sec-title">ROM y Mediciones Funcionales</span></div>
+    <div class="sec-desc">Movilidad articular y tests de movilidad funcional. La dorsiflexión (DF) y el Lunge Test son los parámetros más sensibles para FP y tendinopatía. Referencia: Koc CPG JOSPT 2023 · Rathleff 2022.</div>
+    <table>
+      <tr><th>Medición</th><th>Referencia</th><th>D</th><th>I</th><th>Interpretación</th></tr>
+      ${dfD||dfI?`<tr><td><strong>Dorsiflexión (rod. extendida)</strong></td><td>≥10°</td>
+        <td class="${dfD!==null&&dfD<10?'alerta':'ok'}">${dfD!==null?dfD+'°':'—'}</td>
+        <td class="${dfI!==null&&dfI<10?'alerta':'ok'}">${dfI!==null?dfI+'°':'—'}</td>
+        <td style="font-size:10px">${[dfD,dfI].filter(v=>v!==null&&v<10).length?'⚠ Déficit FP (gastroc)':'✓ Normal'}</td></tr>`:''}
+      ${dfFlexD||dfFlexI?`<tr><td><strong>Dorsiflexión (rod. flex.)</strong></td><td>≥10°</td>
+        <td class="${dfFlexD!==null&&dfFlexD<10?'alerta':'ok'}">${dfFlexD!==null?dfFlexD+'°':'—'}</td>
+        <td class="${dfFlexI!==null&&dfFlexI<10?'alerta':'ok'}">${dfFlexI!==null?dfFlexI+'°':'—'}</td>
+        <td style="font-size:10px">${(dfD!==null&&dfFlexD!==null&&dfD<10)?(dfFlexD>=10?'Restricción gastroc aislado':'Gastroc+sóleo'):'—'}</td></tr>`:''}
+      ${lungeD||lungeI?`<tr><td><strong>Lunge Test</strong></td><td>≥4 cm</td>
+        <td class="${lungeD!==null&&lungeD<4?'alerta':'ok'}">${lungeD!==null?lungeD+' cm':'—'}</td>
+        <td class="${lungeI!==null&&lungeI<4?'alerta':'ok'}">${lungeI!==null?lungeI+' cm':'—'}</td>
+        <td style="font-size:10px">${[lungeD,lungeI].filter(v=>v!==null&&v<4).length?'⚠ Déficit significativo':'✓ Normal'}</td></tr>`:''}
+      ${navD||navI?`<tr><td><strong>Navicular Drop</strong></td><td>≤10 mm</td>
+        <td class="${navD!==null&&navD>10?'alerta':'ok'}">${navD!==null?navD+' mm':'—'}</td>
+        <td class="${navI!==null&&navI>10?'alerta':'ok'}">${navI!==null?navI+' mm':'—'}</td>
+        <td style="font-size:10px">${[navD,navI].filter(v=>v!==null&&v>10).length?'⚠ Pronación excesiva':'✓ Normal'}</td></tr>`:''}
+    </table>${_romRadar}</div>` : '';
 
-  // Diagnoses
+  // ── SEC 03 — Tests ortopédicos ──
+  const fascitisTestsDef = typeof PIE_FASCITIS_TESTS!=='undefined' ? PIE_FASCITIS_TESTS : [];
+  const halluxTestsDef   = typeof PIE_HALLUX_TESTS!=='undefined'   ? PIE_HALLUX_TESTS   : [];
+  const allTestsWithRes = [];
+  fascitisTestsDef.forEach(t => {
+    const dEl = document.getElementById(`fascitis-${t.id}-d`);
+    const iEl = document.getElementById(`fascitis-${t.id}-i`);
+    const dR = dEl?.dataset?.val?.toUpperCase()||null;
+    const iR = iEl?.dataset?.val?.toUpperCase()||null;
+    if (dR||iR) allTestsWithRes.push({name:t.name,sub:t.sub||'',ref:t.ref||'',dR,iR});
+  });
+  halluxTestsDef.forEach(t => {
+    const el = document.getElementById(`hallux-${t.id}`);
+    const r = el?.dataset?.val?.toUpperCase()||null;
+    if (r) allTestsWithRes.push({name:t.name,sub:t.sub||'',ref:t.ref||'',dR:r,iR:null});
+  });
+  const sec03 = allTestsWithRes.length ? `
+    <div class="sec-wrap"><div class="sec-head"><span class="sec-badge">03</span><span class="sec-title">Tests Ortopédicos de Provocación</span></div>
+    <div class="sec-desc">Maniobras clínicas estandarizadas para reproducir síntomas y orientar diagnóstico diferencial. POSITIVO = reproduce el dolor o genera respuesta anormal. Ref: Physio Practice 2024 · Weel BJSM 2016.</div>
+    <table>
+      <tr><th>Test</th><th>Referencia EBM</th><th>D</th><th>I</th></tr>
+      ${allTestsWithRes.map(t=>`<tr>
+        <td><strong>${t.name}</strong>${t.sub?`<br><span style="font-size:9px;color:#888">${t.sub}</span>`:''}</td>
+        <td style="font-size:10px;color:#666">${t.ref||'—'}</td>
+        <td class="${t.dR==='POS'?'pos':t.dR==='NEG'?'neg':''}">${t.dR==='POS'?'✚ POS':t.dR==='NEG'?'— NEG':'—'}</td>
+        <td class="${t.iR==='POS'?'pos':t.iR==='NEG'?'neg':''}">${t.iR==='POS'?'✚ POS':t.iR==='NEG'?'— NEG':'—'}</td>
+      </tr>`).join('')}
+    </table></div>` : '';
+
+  // ── SEC 04 — Fuerza ──
+  const hasFuerza = heelRaiseD||heelRaiseI||fasciaD||fasciaI;
+  const asimHR = (heelRaiseD&&heelRaiseI)?((Math.abs(heelRaiseD-heelRaiseI)/Math.max(heelRaiseD,heelRaiseI))*100).toFixed(1):null;
+  const _barItems = (heelRaiseD||heelRaiseI)?[{label:'Heel Raises',D:heelRaiseD,I:heelRaiseI,unit:' reps',ref:25,asim:asimHR}]:[];
+  const _fuerzaBar = (typeof _tmcBarChart!=='undefined' && _barItems.length>0)
+    ? _tmcBarChart(_barItems,{title:'Perfil de Fuerza — Gastrosoleo'})
+    : '';
+  const sec04 = hasFuerza ? `
+    <div class="sec-wrap"><div class="sec-head"><span class="sec-badge">04</span><span class="sec-title">Evaluaciones de Fuerza y Morfología</span></div>
+    <div class="sec-desc">La fuerza del tríceps sural (gastrosoleo) es el principal factor de carga para la fascia plantar. Heel Raise ≥25 reps = normal. Grosor fascia ≥4 mm (ecografía) confirma proceso activo. Ref: Sartori 2024 · Martin JOSPT 2021.</div>
+    <table>
+      <tr><th>Medición</th><th>Referencia</th><th>D</th><th>I</th><th>Asimetría</th><th>Interpretación</th></tr>
+      ${heelRaiseD||heelRaiseI?`<tr>
+        <td><strong>Heel Raise Test</strong></td><td>≥25 reps</td>
+        <td class="${heelRaiseD!==null&&heelRaiseD<25?'alerta':'ok'}">${heelRaiseD!==null?heelRaiseD+' reps':'—'}</td>
+        <td class="${heelRaiseI!==null&&heelRaiseI<25?'alerta':'ok'}">${heelRaiseI!==null?heelRaiseI+' reps':'—'}</td>
+        <td class="${asimHR?+asimHR>=20?'alerta':+asimHR>=15?'limite':'ok':''}">${asimHR?asimHR+'%':'—'}</td>
+        <td style="font-size:10px">${[heelRaiseD,heelRaiseI].filter(v=>v!==null&&v<25).length?'⚠ Déficit muscular':'✓ Normal'}</td>
+      </tr>`:''}
+      ${fasciaD||fasciaI?`<tr>
+        <td><strong>Grosor Fascia (eco)</strong></td><td>&lt;4 mm</td>
+        <td class="${fasciaD!==null&&fasciaD>=4?'alerta':'ok'}">${fasciaD!==null?fasciaD+' mm':'—'}</td>
+        <td class="${fasciaI!==null&&fasciaI>=4?'alerta':'ok'}">${fasciaI!==null?fasciaI+' mm':'—'}</td>
+        <td>—</td>
+        <td style="font-size:10px">${[fasciaD,fasciaI].filter(v=>v!==null&&v>=4).length?'⚠ Engrosamiento FP':'✓ Normal'}</td>
+      </tr>`:''}
+    </table>${_fuerzaBar}</div>` : '';
+
+  // ── SEC 05 — Dashboard ──
+  const hasDashboard = faamScore!==null || nrs!==null;
+  const _faamGauge = (typeof _tmcGauge!=='undefined' && faamScore!==null)
+    ? _tmcGauge(faamScore,100,{label:'FAAM-ADL',sub:faamScore>=90?'Mínima limitación':faamScore>=70?'Leve':faamScore>=50?'Moderada':'Severa',size:160})
+    : '';
+  const _nrsGauge = (typeof _tmcGauge!=='undefined' && nrs!==null)
+    ? _tmcGauge(nrs,10,{label:'NRS Dolor',sub:'0=sin dolor · 10=máximo',size:140,colorFn:(v)=>v<=3?'#798254':v<=6?'#b06000':'#c03030'})
+    : '';
+  const dashboard = hasDashboard ? `
+    <div class="sec-wrap"><div class="sec-head"><span class="sec-badge">05</span><span class="sec-title">Dashboard — Indicadores Clave</span></div>
+    <div class="sec-desc">Resumen visual de scores clínicos. FAAM-ADL 0–100 (MCID: 8 pts · MDC: 5.7 pts). NRS: dolor 0–10. Score FAAM ≥90 = criterio de retorno deportivo Koc CPG 2023.</div>
+    <div style="display:flex;gap:32px;justify-content:center;margin:16px 0 12px;flex-wrap:wrap">
+      ${_faamGauge}${_nrsGauge}
+    </div></div>` : '';
+
+  // ── SEC 06 — Escalas funcionales ──
+  const sec06 = faamScore!==null ? `
+    <div class="sec-wrap"><div class="sec-head"><span class="sec-badge">06</span><span class="sec-title">Escalas Funcionales</span></div>
+    <div class="sec-desc">Instrumentos validados de resultado reportado por el paciente (PRO). Monitorear progresión y detectar MCID (Mínima Diferencia Clínicamente Importante) a lo largo del tratamiento.</div>
+    <table>
+      <tr><th>Escala</th><th>Score</th><th>MCID</th><th>Interpretación</th></tr>
+      <tr>
+        <td><strong>FAAM-ADL</strong><br><span style="font-size:9px;color:#888">Foot and Ankle Ability Measure — Actividades de la vida diaria (Martin 2005)</span></td>
+        <td><strong>${faamScore}/100</strong></td>
+        <td>8 pts · MDC 5.7</td>
+        <td class="${faamScore>=90?'ok':faamScore>=70?'limite':'alerta'}">${faamScore>=90?'✓ Función mínimamente limitada (RTS ready)':faamScore>=70?'Limitación leve':faamScore>=50?'Limitación moderada':'Discapacidad severa'}</td>
+      </tr>
+      ${nrs!==null?`<tr>
+        <td><strong>NRS — Dolor</strong><br><span style="font-size:9px;color:#888">Numeric Rating Scale · 0 = sin dolor, 10 = dolor máximo imaginable</span></td>
+        <td><strong>${nrs}/10</strong></td><td>≤3/10 retorno</td>
+        <td class="${nrs<=3?'ok':nrs<=6?'limite':'alerta'}">${nrs<=3?'✓ Tolerable (criterio RTS)':nrs<=6?'Moderado':'⚠ Severo'}</td>
+      </tr>`:''}
+    </table></div>` : '';
+
+  // ── SEC 07 — Diagnóstico presuntivo ──
+  let dxHTML = '';
   if (diagnoses.length > 0) {
-    html += `<div style="margin-bottom:16px"><div style="font-size:10px;font-weight:700;color:var(--neon);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Presunto Diagnóstico</div>`;
-    diagnoses.forEach((dx, i) => {
-      html += `<div style="padding:10px;background:var(--verde04);border:1px solid var(--verde20);border-radius:8px;margin-bottom:10px">`;
-      html += `<div style="font-weight:700;font-size:13px;margin-bottom:4px">${i+1}. ${dx.nombre}</div>`;
-      html += `<div style="font-size:11px;color:var(--text2);margin-bottom:8px">${dx.descripcion}</div>`;
-      html += `<div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase">Plan de Tratamiento EBM:</div>`;
-      dx.recom.forEach(r => {
-        html += `<div style="font-size:10px;padding:4px 0;border-bottom:1px solid var(--bg4)">${r}</div>`;
-      });
-      html += `<div style="font-size:9px;color:var(--text3);margin-top:6px;font-style:italic">Ref: ${dx.ref}</div>`;
-      html += `</div>`;
+    diagnoses.forEach((dx,i) => {
+      dxHTML += `<div style="border:1.5px solid #b0c070;border-radius:8px;overflow:hidden;margin-bottom:12px">
+        <div style="background:#798254;padding:10px 14px">
+          <div style="font-size:9px;letter-spacing:1px;color:rgba(255,255,255,.65);margin-bottom:2px">DIAGNÓSTICO ${i===0?'PRINCIPAL':'DIFERENCIAL'} — EBM</div>
+          <div style="font-size:13px;font-weight:900;color:#fff">${dx.nombre}</div>
+        </div>
+        <div style="padding:12px 14px">
+          <div style="font-size:11px;color:#444;line-height:1.75;margin-bottom:10px">${dx.descripcion}</div>
+          <div style="font-size:10px;font-weight:700;color:#444;margin-bottom:6px;text-transform:uppercase">Plan de Tratamiento EBM:</div>
+          ${dx.recom.map(r=>`<div style="font-size:10px;padding:4px 0;border-bottom:1px solid #eaeee0">${r}</div>`).join('')}
+          <div style="font-size:9px;color:#aaa;font-style:italic;text-align:right;margin-top:6px">${dx.ref}</div>
+        </div>
+      </div>`;
     });
   } else if (allPos.length > 0) {
-    html += `<div style="padding:10px;background:var(--bg4);border-radius:8px;font-size:11px;color:var(--text2);margin-bottom:12px">Tests positivos presentes — no se cumplieron criterios mínimos para diagnóstico específico. Ampliar evaluación.</div>`;
+    dxHTML = `<div style="padding:12px;background:#f6f8ee;border-radius:8px;font-size:11px;color:#444">Tests positivos presentes — no se cumplieron criterios mínimos para diagnóstico específico. Ampliar evaluación.</div>`;
   } else {
-    html += `<div style="padding:10px;background:var(--bg4);border-radius:8px;font-size:11px;color:var(--text2);margin-bottom:12px">Sin tests positivos registrados. Complete la evaluación para generar presunto diagnóstico.</div>`;
+    dxHTML = `<div style="padding:12px;background:#f6f8ee;border-radius:8px;font-size:11px;color:#888">Sin tests positivos registrados. Complete la evaluación clínica para generar presunto diagnóstico.</div>`;
   }
+  const sec07 = `
+    <div class="sec-wrap"><div class="sec-head"><span class="sec-badge">07</span><span class="sec-title">Diagnóstico Kinesiológico Presuntivo</span></div>
+    <div class="sec-desc">Motor de inferencia EBM basado en criterios diagnósticos validados por CPG nivel I. El diagnóstico presuntivo requiere correlación con imagen y juicio médico para confirmación definitiva.</div>
+    ${dxHTML}
+    <div style="font-size:9px;color:#aaa;font-style:italic;text-align:right;margin-top:6px">Koc M. et al. JOSPT 2023 · Nweke 2025 · Ettinger Dtsch Arztebl Int 2025 · ACR Chronic Foot Pain 2025</div>
+    </div>`;
 
-  // Footer
-  html += `<div style="font-size:9px;color:var(--text3);margin-top:12px;padding-top:8px;border-top:1px solid var(--bg4)">
-    Generado con MoveMetrics · Basado en: Koc JOSPT CPG 2023 · Nweke 2025 · Tien et al. Scientific Reports 2026 · Ettinger Dtsch Arztebl Int 2025 · ACR Chronic Foot Pain 2025
-  </div></div>`;
+  // ── SEC 08 — Tratamiento ──
+  const sec08 = `
+    <div class="sec-wrap"><div class="sec-head"><span class="sec-badge">08</span><span class="sec-title">Ruta de Tratamiento — EBM</span></div>
+    <div class="sec-desc">Protocolo de tratamiento en fases progresivas según CPG 2023 (Koc et al., JOSPT) para patología de pie y tobillo. La progresión entre fases depende del cumplimiento de criterios funcionales objetivos, no solo del tiempo.</div>
+    <div class="grid-2">
+      ${[
+        ['FASE 1 — Reducción de carga','Sem. 1–3','Modificación de actividad. Hielo + AINEs tópicos. Plantillas ortopédicas o taping de descarga medial. Estiramiento gastrosoleo separado (gastroc 3×30s, sóleo 3×30s/día) con rodilla en extensión y flexión.'],
+        ['FASE 2 — Fortalecimiento (HSR)','Sem. 4–8','Heavy Slow Resistance: heel raise excéntrico 3×15 reps 3s bajada. Carga progresiva en fascia plantar: toe curls con toalla. Propiocepción monopodal estático → dinámico.'],
+        ['FASE 3 — Carga funcional','Sem. 9–12','Pliometría progresiva tren inferior. Lunge cargado con déficit. Carrera progresiva: volumen → intensidad. Objetivo FAAM-ADL ≥80. Navicular drop y DF tobillo dentro de rango normal.'],
+        ['FASE 4 — RTS / Retorno deportivo','Sem. 13+','Simulación gestual del deporte específico. Sprint + cambios de dirección. Criterios de alta: Heel raise ≥25 reps + FAAM-ADL ≥90 + NRS ≤3/10.'],
+      ].map(([titulo,sem,desc])=>`
+      <div class="phase-box">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <strong style="font-size:10px;color:#1e1e1b">${titulo}</strong>
+          <span class="phase-sem">${sem}</span>
+        </div>
+        <div style="font-size:10px;color:#555;line-height:1.55">${desc}</div>
+      </div>`).join('')}
+    </div></div>`;
 
-  container.innerHTML = html;
+  // ── FIRMA ──
+  const firma = typeof _tmcFirma!=='undefined'
+    ? _tmcFirma({profNombre,profMP,profInst})
+    : `<div style="margin-top:32px;padding-top:16px;border-top:2px solid #dde5c4;text-align:right">
+        <div style="width:140px;border-top:1.5px solid #1e1e1b;margin-left:auto;margin-bottom:5px"></div>
+        <div style="font-size:11px;font-weight:700">${profNombre}</div>
+        <div style="font-size:10px;color:#666">${profInst}</div>
+      </div>`;
+
+  // ── ASSEMBLE HTML ──
+  const bodyContent = sec01+sec02+sec03+sec04+dashboard+sec06+sec07+sec08+firma;
+  const headerHTML = typeof _tmcHeader!=='undefined'
+    ? _tmcHeader({profNombre,profMP,profInst,fecha,refs:'Basado en evidencia · Koc CPG JOSPT 2023'})
+    : `<header style="background:#1e1e1b;padding:24px 40px;display:flex;justify-content:space-between"><div style="color:#96a566;font-size:24px;font-weight:900">THE MOVE CLUB</div><div style="color:#fff;text-align:right"><div style="font-size:15px;font-weight:700;color:#96a566">${fecha}</div><div>${profNombre}</div></div></header>`;
+  const footerHTML = typeof _tmcFooter!=='undefined'
+    ? _tmcFooter('Pie y Tobillo','CPG 2023 · Koc JOSPT')
+    : `<footer style="background:#1e1e1b;color:rgba(255,255,255,.35);padding:10px 44px;display:flex;justify-content:space-between;font-size:9px"><span>THE MOVE CLUB</span><span>Informe Pie · EBM</span></footer>`;
+  const toolbar = typeof _tmcToolbar!=='undefined'
+    ? _tmcToolbar
+    : `<div class="no-print" style="background:#1e1e1b;padding:10px 20px;display:flex;gap:8px"><button onclick="window.print()" style="background:#798254;color:#fff;border:none;border-radius:4px;padding:8px 18px;font-weight:700;cursor:pointer">🖨 Imprimir / PDF</button></div>`;
+
+  const fullHTML = `<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Informe Pie y Tobillo — ${nombre} — ${fecha}</title>
+<style>${css}</style>
+</head><body>
+${toolbar}
+${headerHTML}
+<main id="report-body" style="padding:8px 44px 32px;max-width:820px;margin:0 auto">${bodyContent}</main>
+${footerHTML}
+</body></html>`;
+
+  // ── Abrir ventana ──
+  const win = window.open('','_blank','width=980,height=860,resizable=yes,scrollbars=yes');
+  if (!win) { alert('Habilitá popups para este sitio para abrir el informe.'); return; }
+  win.document.write(fullHTML);
+  win.document.close();
+
+  // ── Actualizar modal con resumen ──
+  const container = document.getElementById('pie-informe-container');
+  if (container) {
+    const dxNames = diagnoses.map(d=>d.nombre).join(', ');
+    container.innerHTML = `
+      <div style="font-family:var(--mono);font-size:11px;line-height:1.7">
+        <div style="font-size:13px;font-weight:700;color:var(--neon);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--verde20)">✓ Informe generado — se abrió en nueva ventana</div>
+        <div style="padding:10px;background:var(--verde04);border:1px solid var(--verde20);border-radius:8px;margin-bottom:12px;font-size:11px">
+          ${faamScore!==null?`<div><b>FAAM-ADL:</b> ${faamScore}/100 — ${faamScore>=90?'Mínima limitación':faamScore>=70?'Leve':faamScore>=50?'Moderada':'Severa'}</div>`:''}
+          ${nrs!==null?`<div><b>NRS Dolor:</b> ${nrs}/10</div>`:''}
+          ${hallazgos.length?`<div><b>Hallazgos:</b> ${hallazgos.length} detectados</div>`:''}
+          ${allPos.length?`<div><b>Tests (+):</b> ${allPos.join(' · ')}</div>`:''}
+          ${dxNames?`<div><b>Presunto Dx:</b> ${dxNames}</div>`:''}
+        </div>
+        <button onclick="generarInformePie()" class="btn btn-neon btn-sm" style="font-size:10px">🔄 Regenerar informe</button>
+      </div>`;
+  }
   showPTab('pinforme', document.getElementById('ptab-pinforme-btn'));
 }
 
 function imprimirInformePie() {
-  const content = document.getElementById('pie-informe-container')?.innerHTML;
-  if (!content) { generarInformePie(); return; }
-  const w = window.open('', '_blank');
-  w.document.write(`<html><head><title>Informe Pie</title><style>body{font-family:monospace;font-size:12px;padding:20px;color:#111}ul{margin:4px 0;padding-left:20px}div{margin-bottom:4px}</style></head><body>${content}</body></html>`);
-  w.document.close(); w.print();
+  generarInformePie();
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────

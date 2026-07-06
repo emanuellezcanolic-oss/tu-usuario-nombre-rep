@@ -994,17 +994,17 @@ function buildHombroInforme() {
 
 // Helper: EVA slider color
 function _iColor(val, low, high) {
-  return +val <= low ? '#2d7a2d' : +val <= high ? '#c65a00' : '#cc3333';
+  return +val <= low ? '#2d6b1a' : +val <= high ? '#b06000' : '#c03030';
 }
 // Helper: LSI color
 function _lsiColor(pct) {
-  return +pct >= 90 ? '#2d7a2d' : +pct >= 80 ? '#c65a00' : '#cc3333';
+  return +pct >= 90 ? '#2d6b1a' : +pct >= 80 ? '#b06000' : '#c03030';
 }
 // Helper: section header
 function _infSecHead(num, title) {
-  return `<div style="display:flex;align-items:center;gap:8px;margin:20px 0 10px;padding-bottom:5px;border-bottom:2px solid #e8f0d4">
-    <span style="background:#8fa845;color:#fff;font-size:9px;font-weight:900;padding:2px 9px;border-radius:3px;letter-spacing:1px">${num}</span>
-    <span style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#1e2d0e">${title}</span>
+  return `<div style="display:flex;align-items:center;gap:8px;margin:20px 0 10px;padding-bottom:5px;border-bottom:2px solid #dde5c4">
+    <span style="background:#798254;color:#fff;font-size:9px;font-weight:900;padding:2px 9px;border-radius:3px;letter-spacing:1px">${num}</span>
+    <span style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#1e1e1b">${title}</span>
   </div>`;
 }
 // Helper: data row
@@ -1518,39 +1518,41 @@ function generarInformeHombro() {
   const css = `
     body{font-family:Inter,Arial,sans-serif;margin:0;background:#fff;color:#1a1a1a;font-size:12px;line-height:1.5}
     table{width:100%;border-collapse:collapse;font-size:11px}
-    th{background:#8fa845;color:#fff;padding:6px 8px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
-    td{padding:5px 8px;border-bottom:1px solid #e8f0d4}
-    tr:nth-child(even) td{background:#f8faf2}
-    .pos{color:#2d7a2d;font-weight:700}
+    th{background:#798254;color:#fff;padding:6px 8px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+    td{padding:5px 8px;border-bottom:1px solid #dde5c4}
+    tr:nth-child(even) td{background:#f6f8ee}
+    .pos{color:#2d6b1a;font-weight:700}
     .neg{color:#888}
-    .alerta{color:#cc3333;font-weight:700}
-    .limite{color:#c65a00;font-weight:700}
-    .ok{color:#2d7a2d;font-weight:700}
-    .sec-badge{display:inline-block;background:#8fa845;color:#fff;font-size:9px;font-weight:900;padding:2px 9px;border-radius:3px;letter-spacing:1px;margin-right:8px}
-    .sec-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#1e2d0e}
-    .sec-head{display:flex;align-items:center;margin:20px 0 10px;padding-bottom:6px;border-bottom:2px solid #e8f0d4}
-    .metric-box{background:#f5f7ee;border-radius:6px;padding:10px;text-align:center;border:1px solid #e8f0d4}
+    .alerta{color:#c03030;font-weight:700}
+    .limite{color:#b06000;font-weight:700}
+    .ok{color:#2d6b1a;font-weight:700}
+    .sec-badge{display:inline-block;background:#798254;color:#fff;font-size:9px;font-weight:900;padding:2px 9px;border-radius:3px;letter-spacing:1px;margin-right:8px}
+    .sec-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#1e1e1b}
+    .sec-head{display:flex;align-items:center;margin:20px 0 10px;padding-bottom:6px;border-bottom:2px solid #dde5c4}
+    .metric-box{background:#f6f8ee;border-radius:6px;padding:10px;text-align:center;border:1px solid #dde5c4}
     .metric-val{font-size:22px;font-weight:900;line-height:1}
     .metric-lbl{font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
     .metric-sub{font-size:8px;color:#999;margin-top:3px}
+    .chart-block{-webkit-print-color-adjust:exact;print-color-adjust:exact}
     @media print{
       .no-print{display:none!important}
       body{font-size:11px}
-      header{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-      .sec-badge,.pos,.neg,.metric-box{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      header,footer{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      .sec-badge,.pos,.neg,.metric-box,.chart-block{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      svg{-webkit-print-color-adjust:exact;print-color-adjust:exact}
     }
   `;
 
   // Intro paragraph
   const intro = dest === 'medico'
-    ? `<div style="padding:16px 32px;background:#f8f9f3;border-left:4px solid #8fa845;font-size:11px;line-height:1.8;color:#2a2a2a">
+    ? `<div style="padding:16px 32px;background:#f8f9f3;border-left:4px solid #798254;font-size:11px;line-height:1.8;color:#2a2a2a">
         ${docNombre ? `Dr./Dra. <strong>${docNombre}</strong>${docEsp?` (${docEsp})`:''},<br><br>` : ''}
         Me dirijo a Ud. y su equipo ${docEsp||'médico'} con el agrado de presentarle el informe kinesiológico del/la paciente
         <strong>${nombre}</strong>${edad?' de '+edad+' años':''}. La evaluación fue realizada con fecha <strong>${fecha}</strong>
         siguiendo los lineamientos de la Guía de Práctica Clínica CPG 2025 (Desmeules et al., JOSPT) para patología de hombro,
         con pruebas de rendimiento diagnóstico validadas por meta-análisis (Zhao 2024).
        </div>`
-    : `<div style="padding:16px 32px;background:#f8f9f3;border-left:4px solid #8fa845;font-size:11px;line-height:1.8;color:#2a2a2a">
+    : `<div style="padding:16px 32px;background:#f8f9f3;border-left:4px solid #798254;font-size:11px;line-height:1.8;color:#2a2a2a">
         Estimado/a <strong>${nombre}</strong>:<br><br>
         A continuación presentamos los resultados de su evaluación kinesiológica del <strong>${fecha}</strong>.
         Este informe resume los hallazgos sobre su hombro, incluyendo movilidad, fuerza, pruebas clínicas y
@@ -1560,12 +1562,12 @@ function generarInformeHombro() {
   // 01 — Perfil & Screening
   const sec01 = `
     ${_infSecHead('01','Perfil del atleta & Screening')}
-    <div style="font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f8faf2;border-radius:5px;border-left:3px solid #8fa845">
+    <div style="font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f6f8ee;border-radius:5px;border-left:3px solid #798254">
       Esta sección resume los datos de identificación del paciente y el screening inicial de señales de alerta (banderas rojas) realizado al inicio de la evaluación. Las banderas rojas son hallazgos que, si están presentes, requieren derivación médica inmediata y suspensión del tratamiento kinesiológico hasta su descarte. Se registra también el motivo de consulta, los objetivos del paciente y factores pronósticos que pueden influir en la evolución clínica.
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div style="background:#f5f7ee;border-radius:6px;padding:12px;border:1px solid #e8f0d4">
-        <div style="font-size:9px;text-transform:uppercase;color:#8fa845;font-weight:700;letter-spacing:1px;margin-bottom:8px">Datos del Paciente</div>
+      <div style="background:#f6f8ee;border-radius:6px;padding:12px;border:1px solid #dde5c4">
+        <div style="font-size:9px;text-transform:uppercase;color:#798254;font-weight:700;letter-spacing:1px;margin-bottom:8px">Datos del Paciente</div>
         ${_infRow('Nombre completo', nombre)}
         ${edad ? _infRow('Edad', edad+' años'+(sexo?' · '+sexo:'')) : (sexo?_infRow('Sexo', sexo):'')}
         ${(peso||talla) ? _infRow('Morfología', [peso?peso+' kg':'', talla?talla+' cm':''].filter(Boolean).join(' / ')) : ''}
@@ -1574,18 +1576,18 @@ function generarInformeHombro() {
         ${lesionMC ? _infRow('Motivo de consulta', lesionMC) : ''}
         ${_infRow('Fecha de evaluación', fecha)}
       </div>
-      <div style="background:#f5f7ee;border-radius:6px;padding:12px;border:1px solid #e8f0d4">
-        <div style="font-size:9px;text-transform:uppercase;color:#8fa845;font-weight:700;letter-spacing:1px;margin-bottom:8px">Screening STAR-Hombro (Nivel 1–3)</div>
-        <div style="font-size:11px;font-weight:700;margin-bottom:8px;color:${redflags?'#cc3333':'#2d7a2d'}">
+      <div style="background:#f6f8ee;border-radius:6px;padding:12px;border:1px solid #dde5c4">
+        <div style="font-size:9px;text-transform:uppercase;color:#798254;font-weight:700;letter-spacing:1px;margin-bottom:8px">Screening STAR-Hombro (Nivel 1–3)</div>
+        <div style="font-size:11px;font-weight:700;margin-bottom:8px;color:${redflags?'#c03030':'#2d6b1a'}">
           ${redflags ? '⚠ BANDERAS ROJAS DETECTADAS — DERIVAR' : '✓ Nivel 1: Sin banderas rojas'}
         </div>
-        ${redflagLabels.length ? redflagLabels.map(l=>`<div style="font-size:10px;color:#cc3333">⚠ ${l}</div>`).join('') : ''}
-        ${progList.length ? `<div style="font-size:10px;color:#c65a00;font-weight:600;margin-top:6px;margin-bottom:4px">Factores pronósticos activos:</div>
-          ${progList.map(f=>`<div style="font-size:10px;color:#c65a00">• ${f}</div>`).join('')}`
+        ${redflagLabels.length ? redflagLabels.map(l=>`<div style="font-size:10px;color:#c03030">⚠ ${l}</div>`).join('') : ''}
+        ${progList.length ? `<div style="font-size:10px;color:#b06000;font-weight:600;margin-top:6px;margin-bottom:4px">Factores pronósticos activos:</div>
+          ${progList.map(f=>`<div style="font-size:10px;color:#b06000">• ${f}</div>`).join('')}`
         : `<div style="font-size:10px;color:#666;margin-top:6px">Sin factores pronósticos relevantes</div>`}
         ${starIrrit ? `
-          <div style="margin-top:10px;padding:8px;background:${starIrrit==='alta'?'#fff0f0':starIrrit==='moderada'?'#fff8e8':'#f0fff6'};border-radius:5px;border-left:3px solid ${starIrrit==='alta'?'#cc3333':starIrrit==='moderada'?'#c07000':'#2d7a2d'}">
-            <div style="font-size:9px;text-transform:uppercase;font-weight:700;color:${starIrrit==='alta'?'#cc3333':starIrrit==='moderada'?'#c07000':'#2d7a2d'};letter-spacing:.5px;margin-bottom:2px">STAR Nivel 3 — Irritabilidad tisular</div>
+          <div style="margin-top:10px;padding:8px;background:${starIrrit==='alta'?'#fff0f0':starIrrit==='moderada'?'#fff8e8':'#f0fff6'};border-radius:5px;border-left:3px solid ${starIrrit==='alta'?'#c03030':starIrrit==='moderada'?'#c07000':'#2d6b1a'}">
+            <div style="font-size:9px;text-transform:uppercase;font-weight:700;color:${starIrrit==='alta'?'#c03030':starIrrit==='moderada'?'#c07000':'#2d6b1a'};letter-spacing:.5px;margin-bottom:2px">STAR Nivel 3 — Irritabilidad tisular</div>
             <div style="font-size:11px;font-weight:700">${starLabels[starIrrit]||starIrrit.toUpperCase()}</div>
             <div style="font-size:10px;color:#555;margin-top:2px">Foco: ${starFoco[starIrrit]||''}</div>
           </div>` : ''}
@@ -1593,10 +1595,20 @@ function generarInformeHombro() {
       </div>
     </div>`;
 
-  // 02 — ROM
+  // 02 — ROM (con radar chart)
+  const _radarItems = romRows.filter(r => parseFloat(r.ref) > 0).slice(0, 8).map(r => ({
+    label: r.label.replace('Rotación','Rot.').replace(' / ','/').replace('Abducción','Abd.').replace('Aducción','Adc.').replace('Flexión','Flex.').replace('Extensión','Ext.'),
+    D: parseFloat(r.actD) || 0,
+    I: parseFloat(r.actI) || 0,
+    max: parseFloat(r.ref) || 90,
+    ref: parseFloat(r.ref) || 90,
+  }));
+  const _romRadar = (typeof _tmcRadarChart !== 'undefined' && _radarItems.length >= 3)
+    ? _tmcRadarChart(_radarItems, {title:'ROM Spider — Activo (°)', size:300})
+    : '';
   const sec02 = (secROM && romRows.length) ? `
     ${_infSecHead('02','Análisis de rango de movimiento (ROM)')}
-    <div style="font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f8faf2;border-radius:5px;border-left:3px solid #8fa845">
+    <div style="font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f6f8ee;border-radius:5px;border-left:3px solid #798254">
       El rango de movimiento (ROM) cuantifica en grados la amplitud de cada movimiento del hombro. Se mide de forma <strong>activa</strong> (el paciente mueve el brazo por su cuenta) y <strong>pasiva</strong> (el kinesiólogo guía el movimiento sin esfuerzo del paciente). Comparar ambas modalidades permite identificar si la restricción tiene origen muscular, capsular o estructural. Se evalúan ambos miembros para detectar asimetrías. El <strong>TROM</strong> (Total Rotational Motion = Rotación Interna + Rotación Externa) es un indicador específico en deportistas de cabeza de húmero, donde déficits ≥18° (GIRD) se asocian a riesgo de lesión. Referencia: CPG 2025 Rec.#6 · MDC activo: 8–23°.
     </div>
     <table>
@@ -1610,12 +1622,12 @@ function generarInformeHombro() {
         <td colspan="2"><strong>TROM (RI+RE)</strong></td>
         <td><strong>${tromD}</strong></td><td><strong>${tromI}</strong></td><td></td><td></td>
       </tr>` : ''}
-    </table>` : '';
+    </table>${_romRadar}` : '';
 
   // 03 — Tests ortopédicos
   const sec03 = (secTests && tests.length) ? `
     ${_infSecHead('03','Mapeo ortopédico de provocación')}
-    <div style="font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f8faf2;border-radius:5px;border-left:3px solid #8fa845">
+    <div style="font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f6f8ee;border-radius:5px;border-left:3px solid #798254">
       Los tests ortopédicos de provocación son maniobras clínicas estandarizadas que el kinesiólogo aplica para reproducir de forma controlada los síntomas del paciente. Cada test está diseñado para evaluar una estructura específica del hombro (manguito rotador, labrum, bíceps, espacio subacromial). Un resultado <strong>POSITIVO</strong> indica que la maniobra reproduce el dolor o genera una respuesta anormal; un resultado <strong>NEGATIVO</strong> permite reducir la probabilidad de compromiso de esa estructura. La columna EVA registra la intensidad del dolor reproducido (0 = sin dolor · 10 = máximo dolor imaginable). El rendimiento diagnóstico de cada test (Sn/Sp/LR) proviene de meta-análisis internacionales de alto nivel de evidencia (Zhao 2024, CPG 2025).
     </div>
     <table>
@@ -1630,10 +1642,17 @@ function generarInformeHombro() {
       </tr>`).join('')}
     </table>` : '';
 
-  // 04 — Fuerza HHD
+  // 04 — Fuerza HHD (con bar chart)
+  const _barItems = fuerzaRows.map(r => ({
+    label: r.label.length > 26 ? r.label.substring(0, 26) : r.label,
+    D: r.d || null, I: r.i || null, unit: ' N', ref: null, asim: r.asim,
+  }));
+  const _fuerzaBar = (typeof _tmcBarChart !== 'undefined' && _barItems.length > 0)
+    ? _tmcBarChart(_barItems, {title:'Perfil de Fuerza Muscular (N) — D vs I'})
+    : '';
   const sec04 = (secFuerza && fuerzaRows.length) ? `
     ${_infSecHead('04','Perfil de fuerza dinamométrica (HHD)')}
-    <div style="font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f8faf2;border-radius:5px;border-left:3px solid #8fa845">
+    <div style="font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f6f8ee;border-radius:5px;border-left:3px solid #798254">
       La dinamometría con handheld dynamometer (HHD) es la herramienta gold standard para cuantificar la fuerza muscular de forma objetiva y reproducible. Los valores se expresan en <strong>Newtons (N)</strong> y se comparan entre el miembro dominante y no dominante para calcular la <strong>asimetría</strong>. Una asimetría ≥15% supera el MDC (Mínima Diferencia Detectable) y es clínicamente relevante; asimetrías ≥20% son consideradas críticas y se asocian a mayor riesgo de re-lesión y rendimiento deportivo disminuido. Se evalúan los principales grupos musculares del manguito rotador y la cintura escapular. Referencia: CPG 2025 Rec.#7.
     </div>
     <table>
@@ -1644,30 +1663,30 @@ function generarInformeHombro() {
         <td class="${r.asim?+r.asim>=20?'alerta':+r.asim>=15?'limite':'ok':''}">${r.asim?r.asim+'%':'—'}</td>
         <td style="font-size:10px">${r.asim?(+r.asim>=20?'⚠ CRÍTICO >MDC':+r.asim>=15?'Límite MDC':'✓ Normal'):'—'}</td>
       </tr>`).join('')}
-    </table>` : '';
+    </table>${_fuerzaBar}` : '';
 
   // Dashboard metrics
   const dashboard = (hasEscalas || hasRTP) ? `
     ${_infSecHead('05','Dashboard — Indicadores clínicos clave')}
-    <div style="font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f8faf2;border-radius:5px;border-left:3px solid #8fa845">
+    <div style="font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f6f8ee;border-radius:5px;border-left:3px solid #798254">
       Resumen visual de los scores clínicos más relevantes obtenidos en esta evaluación. Permite una lectura rápida del estado funcional del paciente y facilita la comparación longitudinal entre sesiones. El <strong>MCID</strong> (Mínima Diferencia Clínicamente Importante) indica el cambio mínimo en puntos que debe ocurrir para considerar que hubo una mejoría real percibida por el paciente, más allá del error de medición.
     </div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
       ${ases&&ases!=='—'?`<div class="metric-box">
         <div class="metric-lbl">ASES Score</div>
-        <div class="metric-val" style="color:${+ases>=80?'#2d7a2d':+ases>=60?'#c65a00':'#cc3333'}">${ases}</div>
+        <div class="metric-val" style="color:${+ases>=80?'#2d6b1a':+ases>=60?'#b06000':'#c03030'}">${ases}</div>
         <div class="metric-sub">MCID: 6.4–21.9 · /100</div></div>`:''}
       ${worc&&worc!=='—'?`<div class="metric-box">
         <div class="metric-lbl">WORC</div>
-        <div class="metric-val" style="color:${worcP?'#2d7a2d':'#c65a00'}">${worcP||worc}</div>
+        <div class="metric-val" style="color:${worcP?'#2d6b1a':'#b06000'}">${worcP||worc}</div>
         <div class="metric-sub">MCID: 245.3 · /2100</div></div>`:''}
       ${dash&&dash!=='—'?`<div class="metric-box">
         <div class="metric-lbl">DASH</div>
-        <div class="metric-val" style="color:${+dash<=30?'#2d7a2d':+dash<=50?'#c65a00':'#cc3333'}">${dash}</div>
+        <div class="metric-val" style="color:${+dash<=30?'#2d6b1a':+dash<=50?'#b06000':'#c03030'}">${dash}</div>
         <div class="metric-sub">MCID: 10.2 · /100</div></div>`:''}
       ${wosiMod&&wosiMod!=='—'?`<div class="metric-box">
         <div class="metric-lbl">WOSI mod.</div>
-        <div class="metric-val" style="color:${+wosiMod>=95?'#2d7a2d':+wosiMod>=90?'#c65a00':'#cc3333'}">${wosiMod}</div>
+        <div class="metric-val" style="color:${+wosiMod>=95?'#2d6b1a':+wosiMod>=90?'#b06000':'#c03030'}">${wosiMod}</div>
         <div class="metric-sub">≥95 competencia</div></div>`:''}
     </div>` : '';
 
@@ -1701,7 +1720,7 @@ function generarInformeHombro() {
   // 07 — RTP
   const sec07 = (secRTP && hasRTP) ? `
     ${_infSecHead('07','Criterios de retorno al juego (RTP)')}
-    <div style="font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f8faf2;border-radius:5px;border-left:3px solid #8fa845">
+    <div style="font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f6f8ee;border-radius:5px;border-left:3px solid #798254">
       Los criterios de retorno deportivo (Return to Play / RTP) son indicadores objetivos que determinan si el paciente está en condiciones de reincorporarse de forma segura a la práctica o competencia. Se evalúan aspectos <strong>psicológicos</strong> (readiness, miedo a re-lesión vía SIRSI/KJOC) y <strong>funcionales</strong> (simetría de fuerza, dolor máximo tolerable, rendimiento en test de campo). El alta deportiva se otorga únicamente cuando todos los umbrales están cumplidos simultáneamente. Fuente: Kurz BMJ Open 2023 · Otley et al. 2024.
     </div>
     <table>
@@ -1728,7 +1747,7 @@ function generarInformeHombro() {
   const _tnOf     = id => (_htl.find(t=>t.id===id)?.name||id);
   let _dxC = '';
 
-  if (dxManual) _dxC += '<div style="background:#f5f7ee;border-radius:6px;padding:10px;border:2px solid #8fa845;font-size:12px;font-weight:700;color:#1e2d0e;margin-bottom:12px">'+dxManual+'</div>';
+  if (dxManual) _dxC += '<div style="background:#f6f8ee;border-radius:6px;padding:10px;border:2px solid #798254;font-size:12px;font-weight:700;color:#1e1e1b;margin-bottom:12px">'+dxManual+'</div>';
 
   if (tests.length > 0) {
     // ── Narrative paragraph ──
@@ -1746,7 +1765,7 @@ function generarInformeHombro() {
       const _nNames = _negTests.slice(0,4).map(t=>'<em>'+t.name+'</em>').join(', ')+(_negTests.length>4?' y '+(_negTests.length-4)+' más':'');
       _nar += _negTests.length+' test'+(_negTests.length>1?'s':'')+' result'+(_negTests.length>1?'aron':'ó')+' negativo'+(_negTests.length>1?'s':'')+' ('+_nNames+'), lo que permite reducir la probabilidad de diagnósticos alternativos relacionados. ';
     }
-    _dxC += '<div style="font-size:11px;line-height:1.85;color:#333;margin-bottom:12px;padding:11px 13px;background:#fafbf7;border-radius:6px;border:1px solid #e8f0d4">'+_nar+'</div>';
+    _dxC += '<div style="font-size:11px;line-height:1.85;color:#333;margin-bottom:12px;padding:11px 13px;background:#fafbf7;border-radius:6px;border:1px solid #dde5c4">'+_nar+'</div>';
 
     // ── EBM Diagnosis engine ──
     if (_modalPos.length > 0 && typeof diagnosticarHombro==='function') {
@@ -1755,7 +1774,7 @@ function generarInformeHombro() {
         const _top = _res.diagnosticos[0];
         // Main diagnosis box
         _dxC += '<div style="border:1px solid #b8d060;border-radius:8px;overflow:hidden;margin-bottom:12px">'
-          +'<div style="background:#8fa845;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">'
+          +'<div style="background:#798254;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">'
           +'<div><div style="font-size:9px;letter-spacing:1px;color:rgba(255,255,255,.7);margin-bottom:2px">DIAGNÓSTICO PRINCIPAL — EVALUACIÓN BASADA EN EVIDENCIA</div>'
           +'<div style="font-size:13px;font-weight:900;color:#fff">'+_top.nombre+'</div></div>'
           +'<div style="background:rgba(255,255,255,.2);color:#fff;font-size:9px;padding:3px 10px;border-radius:4px;text-align:center">'+_top.confianzaLabel+'<br><strong>'+_top.confidence+'%</strong></div></div>'
@@ -1766,7 +1785,7 @@ function generarInformeHombro() {
           +_top.mainHits.map(t=>'<span style="background:#f9eaea;color:#8b2020;font-size:9px;padding:2px 8px;border-radius:3px;border:1px solid #f0cece">'+_tnOf(t)+'</span>').join('')
           +_top.supportHits.map(t=>'<span style="background:#fdf5e0;color:#7a5500;font-size:9px;padding:2px 8px;border-radius:3px;border:1px solid #f0e0a0">'+_tnOf(t)+'</span>').join('')
           +'</div>'
-          +'<div style="font-size:10px;color:#444;line-height:1.7;padding:10px;background:#f5f7ee;border-radius:5px;margin-bottom:8px"><strong style="color:#2d5a0e">Ruta de tratamiento recomendada (CPG 2025):</strong><br>'+_top.tratamiento+'</div>'
+          +'<div style="font-size:10px;color:#444;line-height:1.7;padding:10px;background:#f6f8ee;border-radius:5px;margin-bottom:8px"><strong style="color:#2d5a0e">Ruta de tratamiento recomendada (CPG 2025):</strong><br>'+_top.tratamiento+'</div>'
           +'<div style="font-size:9px;color:#aaa;font-style:italic">'+_top.ref+'</div>'
           +'</div></div>';
 
@@ -1795,13 +1814,13 @@ function generarInformeHombro() {
   } else if (!dxManual) {
     _dxC += '<div style="font-size:11px;color:#888;font-style:italic;padding:10px;background:#f8f8f8;border-radius:5px">No se registraron tests ortopédicos en esta evaluación. Complete el tab Tests del modal hombro para activar el diagnóstico diferencial automático basado en evidencia.</div>';
   }
-  const _sec08Intro = '<div style="font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f8faf2;border-radius:5px;border-left:3px solid #8fa845">El diagnóstico kinesiológico es la conclusión clínica del kinesiólogo basada en la integración de todos los hallazgos de la evaluación: ROM, fuerza, tests ortopédicos y escalas funcionales. Es un diagnóstico <strong>presuntivo</strong>, ya que requiere correlación con imagen (ecografía, RMN) y juicio médico para confirmación definitiva. El motor de inferencia EBM pondera automáticamente los tests positivos según su razón de verosimilitud (LR+/LR−) proveniente de meta-análisis internacionales, calculando la probabilidad de cada diagnóstico diferencial.</div>';
+  const _sec08Intro = '<div style="font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f6f8ee;border-radius:5px;border-left:3px solid #798254">El diagnóstico kinesiológico es la conclusión clínica del kinesiólogo basada en la integración de todos los hallazgos de la evaluación: ROM, fuerza, tests ortopédicos y escalas funcionales. Es un diagnóstico <strong>presuntivo</strong>, ya que requiere correlación con imagen (ecografía, RMN) y juicio médico para confirmación definitiva. El motor de inferencia EBM pondera automáticamente los tests positivos según su razón de verosimilitud (LR+/LR−) proveniente de meta-análisis internacionales, calculando la probabilidad de cada diagnóstico diferencial.</div>';
   const sec08 = _infSecHead('08','Diagnóstico kinesiológico presuntivo') + _sec08Intro + _dxC;
 
   // 09 — Plan de tratamiento
   const sec09 = secTrat ? `
     ${_infSecHead('09','Ruta de tratamiento basada en evidencia')}
-    <div style="font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f8faf2;border-radius:5px;border-left:3px solid #8fa845">
+    <div style="font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f6f8ee;border-radius:5px;border-left:3px solid #798254">
       El plan de tratamiento se estructura en fases progresivas basadas en los lineamientos de la Guía de Práctica Clínica CPG 2025 para patología de hombro. Cada fase tiene objetivos específicos, duración estimada e intervenciones con respaldo de evidencia. La progresión entre fases depende del cumplimiento de criterios funcionales objetivos, no exclusivamente del tiempo transcurrido.
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -1811,10 +1830,10 @@ function generarInformeHombro() {
         ['FASE 3 — Potencia y cadena cinética', 'Sem. 9–12', 'Pliometría tren superior. Lanzamientos balísticos. Integración de patrones de empuje cruzado con apoyo monopodal.'],
         ['FASE 4 — RTS específico', 'Sem. 13+', 'Simulación gestual del deporte. Perturbaciones externas reactivas en overhead. Exposición progresiva con criterios objetivos.'],
       ].map(([titulo,sem,desc])=>`
-      <div style="background:#f5f7ee;border-radius:6px;padding:10px;border:1px solid #e8f0d4">
+      <div style="background:#f6f8ee;border-radius:6px;padding:10px;border:1px solid #dde5c4">
         <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-          <strong style="font-size:10px;color:#1e2d0e">${titulo}</strong>
-          <span style="background:#8fa845;color:#fff;font-size:8px;padding:1px 6px;border-radius:3px">${sem}</span>
+          <strong style="font-size:10px;color:#1e1e1b">${titulo}</strong>
+          <span style="background:#798254;color:#fff;font-size:8px;padding:1px 6px;border-radius:3px">${sem}</span>
         </div>
         <div style="font-size:10px;color:#555;line-height:1.5">${desc}</div>
       </div>`).join('')}
@@ -1826,14 +1845,15 @@ function generarInformeHombro() {
     <div style="background:#fdfde8;border-radius:6px;padding:12px;border:1px solid #e8e0a0;font-size:11px;line-height:1.7;white-space:pre-wrap">${notasExtra}</div>` : '';
 
   // Firma
-  const firma = `
-    <div style="margin-top:32px;padding-top:16px;border-top:2px solid #e8f0d4;display:flex;justify-content:space-between;align-items:flex-end">
+  const firma = typeof _tmcFirma !== 'undefined'
+    ? _tmcFirma({profNombre, profMP, profInst})
+    : `<div style="margin-top:32px;padding-top:16px;border-top:2px solid #dde5c4;display:flex;justify-content:space-between;align-items:flex-end">
       <div style="font-size:10px;color:#888">
         <div>THE MOVE CLUB · Kinesiología de Alto Rendimiento</div>
         <div>CPG 2025 · Desmeules et al. · Zhao 2024 meta-análisis</div>
       </div>
       <div style="text-align:right">
-        <div style="width:140px;border-top:1px solid #1e2d0e;margin-bottom:4px"></div>
+        <div style="width:140px;border-top:1.5px solid #1e1e1b;margin-bottom:4px"></div>
         <div style="font-size:11px;font-weight:700">${profNombre}</div>
         ${profMP?`<div style="font-size:10px;color:#666">${profMP}</div>`:''}
         <div style="font-size:10px;color:#666">${profInst}</div>
@@ -1850,29 +1870,32 @@ function generarInformeHombro() {
   <title>Informe Kinesiológico — ${nombre} — ${fecha}</title>
   <style>${css}</style>
 </head><body>
-<div class="no-print" style="background:#1e2d0e;padding:12px 24px;display:flex;gap:8px;align-items:center;position:sticky;top:0;z-index:100">
-  <button onclick="window.print()" style="background:#8fa845;color:#fff;border:none;border-radius:4px;padding:8px 16px;font-weight:700;cursor:pointer;font-size:12px">🖨 Imprimir / Guardar PDF</button>
-  <button onclick="toggleEditMode()" id="edit-btn" style="background:#555;color:#fff;border:none;border-radius:4px;padding:8px 14px;cursor:pointer;font-size:12px">✏ Editar</button>
-  <span style="font-size:11px;color:rgba(255,255,255,.5);margin-left:8px">En imprimir → elegir "Guardar como PDF"</span>
+<div class="no-print" style="background:#1e1e1b;padding:10px 20px;display:flex;gap:8px;align-items:center;position:sticky;top:0;z-index:100">
+  <button onclick="window.print()" style="background:#798254;color:#fff;border:none;border-radius:4px;padding:8px 18px;font-weight:700;cursor:pointer;font-size:12px;letter-spacing:.3px">🖨 Imprimir / Guardar PDF</button>
+  <button onclick="toggleEditMode()" id="edit-btn" style="background:#444;color:#fff;border:none;border-radius:4px;padding:8px 14px;cursor:pointer;font-size:12px">✏ Editar</button>
+  <span style="font-size:10px;color:rgba(255,255,255,.35);margin-left:6px">Imprimir → «Guardar como PDF» para exportar</span>
 </div>
-<header style="background:#1e2d0e;padding:24px 40px;display:flex;justify-content:space-between;align-items:flex-start">
-  <div>
-    <div style="font-size:26px;font-weight:900;letter-spacing:-.5px;color:#c8e06b">THE MOVE CLUB</div>
-    <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.45);margin-top:2px">REPORTE CLÍNICO KINESIOLÓGICO</div>
-    <div style="font-size:11px;color:rgba(255,255,255,.65);margin-top:6px">Basado en evidencia · CPG 2025 · Desmeules et al. (JOSPT)</div>
+<header style="background:#1e1e1b;padding:26px 44px;display:flex;justify-content:space-between;align-items:flex-start">
+  <div style="display:flex;align-items:flex-start;gap:16px">
+    <div style="opacity:.95;margin-top:2px">${typeof TMC_ISOTIPO_SVG!=='undefined'?TMC_ISOTIPO_SVG('#798254',52):''}</div>
+    <div>
+      <div style="font-size:26px;font-weight:900;letter-spacing:-.5px;color:#96a566;line-height:1">THE MOVE CLUB</div>
+      <div style="font-size:10px;letter-spacing:3.5px;text-transform:uppercase;color:rgba(255,255,255,.38);margin-top:4px">REPORTE CLÍNICO KINESIOLÓGICO</div>
+      <div style="font-size:10.5px;color:rgba(255,255,255,.58);margin-top:7px">Basado en evidencia · CPG 2025 · Desmeules et al. (JOSPT)</div>
+    </div>
   </div>
-  <div style="text-align:right;color:rgba(255,255,255,.8);font-size:11px">
-    <div style="font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px">Fecha evaluación</div>
-    <div style="font-size:16px;font-weight:700;color:#c8e06b">${fecha}</div>
-    <div style="margin-top:6px">${profNombre}${profMP?' · '+profMP:''}</div>
-    <div style="font-size:10px;color:rgba(255,255,255,.5)">${profInst}</div>
+  <div style="text-align:right;color:rgba(255,255,255,.75);font-size:11px">
+    <div style="font-size:9px;color:rgba(255,255,255,.32);text-transform:uppercase;letter-spacing:1.2px">FECHA EVALUACIÓN</div>
+    <div style="font-size:16px;font-weight:700;color:#96a566;margin-top:3px">${fecha}</div>
+    <div style="margin-top:7px;font-size:11.5px;font-weight:600">${profNombre}${profMP?' · '+profMP:''}</div>
+    <div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:2px">${profInst}</div>
   </div>
 </header>
 ${intro}
 <main id="report-body" style="padding:8px 40px 32px;max-width:800px;margin:0 auto">${bodyContent}</main>
-<footer style="background:#1e2d0e;color:rgba(255,255,255,.4);padding:10px 40px;display:flex;justify-content:space-between;font-size:9px">
+<footer style="background:#1e1e1b;color:rgba(255,255,255,.35);padding:10px 44px;display:flex;justify-content:space-between;font-size:9px;margin-top:8px">
   <span>THE MOVE CLUB · DEPARTAMENTO DE BIOMECÁNICA Y RENDIMIENTO</span>
-  <span>Informe Clínico Kinesiológico · CPG 2025</span>
+  <span>Informe Clínico Kinesiológico — Hombro · CPG 2025 · Desmeules et al.</span>
 </footer>
 <script>
 function toggleEditMode(){
@@ -1882,9 +1905,9 @@ function toggleEditMode(){
   const editing = body.contentEditable === 'true';
   body.contentEditable = editing ? 'false' : 'true';
   if (intro) intro.contentEditable = body.contentEditable;
-  body.style.outline = editing ? 'none' : '2px dashed #8fa845';
+  body.style.outline = editing ? 'none' : '2px dashed #798254';
   btn.textContent = editing ? '✏ Editar' : '✓ Listo';
-  btn.style.background = editing ? '#555' : '#8fa845';
+  btn.style.background = editing ? '#555' : '#798254';
 }
 </script>
 </body></html>`;
