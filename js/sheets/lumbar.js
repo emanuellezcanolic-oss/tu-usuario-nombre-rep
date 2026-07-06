@@ -722,35 +722,36 @@ function generarInformeLumbar() {
 
   const hasMotor = myoRows.length > 0 || refRows.length > 0;
 
-  const css = `
-    body{font-family:Inter,Arial,sans-serif;margin:0;background:#fff;color:#1a1a1a;font-size:12px;line-height:1.5}
-    table{width:100%;border-collapse:collapse;font-size:11px}
-    th{background:#8fa845;color:#fff;padding:6px 8px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
-    td{padding:5px 8px;border-bottom:1px solid #e8f0d4}
-    tr:nth-child(even) td{background:#f5f7ee}
-    .pos{color:#2d7a2d;font-weight:700} .neg{color:#888}
-    .alerta{color:#cc3333;font-weight:700} .limite{color:#c65a00;font-weight:700} .ok{color:#2d7a2d;font-weight:700}
-    .asym{color:#cc3333;font-weight:700}
-    .sec-badge{display:inline-block;background:#8fa845;color:#fff;font-size:9px;font-weight:900;padding:2px 9px;border-radius:3px;letter-spacing:1px;margin-right:8px}
-    .sec-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#1e2d0e}
-    .sec-head{display:flex;align-items:center;margin:20px 0 10px;padding-bottom:6px;border-bottom:2px solid #e8f0d4}
-    .intro-box{font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f5f7ee;border-radius:5px;border-left:3px solid #8fa845}
-    .dx-card{padding:10px;border:1px solid #e8f0d4;border-radius:6px;margin-bottom:8px}
-    .dx-lrp{border-color:#cc3333;background:#fff8f8}
-    .dx-sij{border-color:#b05a00;background:#fff8f0}
-    .dx-estabilidad{border-color:#2d7a2d;background:#f0fff4}
-    .dx-estenosis{border-color:#b87a00;background:#fffbf0}
-    @media print{header{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-  `;
+  const css = typeof _tmcCSS !== 'undefined' ? _tmcCSS() : '';
 
-  const _sec = (num, title) => `<div class="sec-head"><span class="sec-badge">${num}</span><span class="sec-title">${title}</span></div>`;
+  const _sec = (num, title) => typeof _tmcSecHead !== 'undefined'
+    ? _tmcSecHead(num, title)
+    : `<div class="sec-head"><span class="sec-badge">${num}</span><span class="sec-title">${title}</span></div>`;
+
+  const _lbpOdiScore = odiScore && odiScore !== '—' ? +odiScore : null;
+  const _lbpOdiGauge = (typeof _tmcGauge !== 'undefined' && _lbpOdiScore !== null)
+    ? _tmcGauge(_lbpOdiScore, 100, {
+        label: 'ODI',
+        sub: '/100 · 0=sin discapacidad',
+        size: 140,
+        colorFn: v => v <= 20 ? '#2d7a2d' : v <= 40 ? '#798254' : v <= 60 ? '#c65a00' : '#cc3333',
+      }) : '';
+
+  const _lbpRomItems = romRows.map(r => ({
+    label: r.label.replace('Flexión','Flex').replace('Extensión','Ext').replace('Lateral','Lat').substring(0, 14),
+    D: parseFloat(r.act) || 0, I: 0,
+    max: parseFloat((r.ref || '').match(/\d+/g) || [60])[0] || 60,
+    ref: parseFloat((r.ref || '').match(/\d+/g) || [60])[0] || 60,
+  }));
+  const _lbpRomBar = (typeof _tmcBarChart !== 'undefined' && _lbpRomItems.filter(it => it.D > 0).length >= 2)
+    ? _tmcBarChart(_lbpRomItems.map(it => ({...it, I: undefined})), {title: 'ROM Lumbar — Activo (°)'}) : '';
 
   const sec01 = `
     ${_sec('01','Perfil del paciente')}
     <div class="intro-box">Datos de identificación y contexto clínico registrados al inicio de la evaluación lumbar.</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div style="background:#f5f7ee;border-radius:6px;padding:12px;border:1px solid #e8f0d4">
-        <div style="font-size:9px;text-transform:uppercase;color:#8fa845;font-weight:700;letter-spacing:1px;margin-bottom:8px">Datos del Paciente</div>
+        <div style="font-size:9px;text-transform:uppercase;color:#798254;font-weight:700;letter-spacing:1px;margin-bottom:8px">Datos del Paciente</div>
         ${nombre?`<div style="margin-bottom:4px"><span style="font-size:10px;color:#888">Nombre:</span> <strong>${nombre}</strong></div>`:''}
         ${edad?`<div style="margin-bottom:4px"><span style="font-size:10px;color:#888">Edad:</span> ${edad} años${sexo?' · '+sexo:''}</div>`:''}
         ${deporte?`<div style="margin-bottom:4px"><span style="font-size:10px;color:#888">Deporte:</span> ${deporte}</div>`:''}
@@ -758,7 +759,7 @@ function generarInformeLumbar() {
         <div><span style="font-size:10px;color:#888">Fecha:</span> ${fecha}</div>
       </div>
       <div style="background:#f5f7ee;border-radius:6px;padding:12px;border:1px solid #e8f0d4">
-        <div style="font-size:9px;text-transform:uppercase;color:#8fa845;font-weight:700;letter-spacing:1px;margin-bottom:8px">Datos Clínicos</div>
+        <div style="font-size:9px;text-transform:uppercase;color:#798254;font-weight:700;letter-spacing:1px;margin-bottom:8px">Datos Clínicos</div>
         ${tiempo?`<div style="margin-bottom:4px"><span style="font-size:10px;color:#888">Evolución:</span> ${tiempo}</div>`:''}
         ${mecanismo?`<div style="margin-bottom:4px"><span style="font-size:10px;color:#888">Mecanismo:</span> ${mecanismo}</div>`:''}
         ${nprs?`<div style="margin-bottom:4px"><span style="font-size:10px;color:#888">NPRS:</span> ${nprs}/10</div>`:''}
@@ -770,7 +771,7 @@ function generarInformeLumbar() {
     ${_sec('02','Presentación clínica reportada')}
     <div class="intro-box">Síntomas referidos durante la anamnesis. Orientan el diagnóstico diferencial pre-tests.</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
-      ${symptomLabels.map(l => `<span style="background:#f5f7ee;border:1px solid #b8d08a;border-radius:4px;padding:4px 10px;font-size:10px;color:#1e2d0e">${l}</span>`).join('')}
+      ${symptomLabels.map(l => `<span style="background:#f5f7ee;border:1px solid #b8d08a;border-radius:4px;padding:4px 10px;font-size:10px;color:#1e1e1b">${l}</span>`).join('')}
     </div>` : '';
 
   const dolorosos = romRows.filter(r => r.eva > 0).map(r => `${r.label} (EVA ${r.eva}/10)`);
@@ -819,7 +820,7 @@ function generarInformeLumbar() {
     <table style="margin-bottom:10px">
       <tr><th>Nivel</th><th>Movimiento</th><th>D</th><th>I</th><th>Asimetría</th></tr>
       ${myoRows.map(m=>`<tr>
-        <td style="font-family:monospace;font-weight:700;color:#8fa845">${m.nivel}</td>
+        <td style="font-family:monospace;font-weight:700;color:#798254">${m.nivel}</td>
         <td>${m.mov}</td><td>${m.d||'—'}</td><td>${m.i||'—'}</td>
         <td class="${m.asym?'asym':''}">${m.asym?'⚠️ Asimetría':'—'}</td>
       </tr>`).join('')}
@@ -829,7 +830,7 @@ function generarInformeLumbar() {
       <tr><th>Reflejo</th><th>Nivel</th><th>Derecha</th><th>Izquierda</th></tr>
       ${refRows.map(r=>`<tr>
         <td><strong>${r.nombre}</strong></td>
-        <td style="font-family:monospace;font-size:10px;color:#8fa845">${r.nivel}</td>
+        <td style="font-family:monospace;font-size:10px;color:#798254">${r.nivel}</td>
         <td>${r.d||'—'}</td><td>${r.i||'—'}</td>
       </tr>`).join('')}
     </table>` : ''}` : '';
@@ -839,17 +840,17 @@ function generarInformeLumbar() {
     <div class="intro-box">STarT Back: estratificación de riesgo (bajo/medio/alto) guía intensidad de tratamiento. ODI: discapacidad funcional (MCID 10 pts). PSFS: actividades limitadas específicas (MCID 2 pts).</div>
     <div style="display:grid;grid-template-columns:${[sbResult,odiScore,psfsRes].filter(Boolean).length >= 2 ? '1fr 1fr':'1fr'};gap:12px">
       ${sbResult ? `<div style="background:#f5f7ee;border-radius:6px;padding:10px;border:1px solid #e8f0d4;text-align:center">
-        <div style="font-size:9px;text-transform:uppercase;color:#8fa845;font-weight:700;margin-bottom:4px">STarT Back</div>
-        <div style="font-size:14px;font-weight:700;color:#1e2d0e">${sbResult}</div>
+        <div style="font-size:9px;text-transform:uppercase;color:#798254;font-weight:700;margin-bottom:4px">STarT Back</div>
+        <div style="font-size:14px;font-weight:700;color:#1e1e1b">${sbResult}</div>
       </div>` : ''}
       ${odiScore ? `<div style="background:#f5f7ee;border-radius:6px;padding:10px;border:1px solid #e8f0d4;text-align:center">
-        <div style="font-size:9px;text-transform:uppercase;color:#8fa845;font-weight:700;margin-bottom:4px">ODI</div>
-        <div style="font-size:22px;font-weight:900;color:#1e2d0e">${odiScore}%</div>
+        <div style="font-size:9px;text-transform:uppercase;color:#798254;font-weight:700;margin-bottom:4px">ODI</div>
+        <div style="font-size:22px;font-weight:900;color:#1e1e1b">${odiScore}%</div>
         <div style="font-size:10px;color:#888">${+odiScore<=20?'Mínima':+odiScore<=40?'Moderada':+odiScore<=60?'Grave':'Muy grave'} · MCID 10 pts</div>
       </div>` : ''}
       ${psfsRes ? `<div style="background:#f5f7ee;border-radius:6px;padding:10px;border:1px solid #e8f0d4">
-        <div style="font-size:9px;text-transform:uppercase;color:#8fa845;font-weight:700;margin-bottom:4px">PSFS</div>
-        <div style="font-size:11px;color:#1e2d0e">${psfsRes}</div>
+        <div style="font-size:9px;text-transform:uppercase;color:#798254;font-weight:700;margin-bottom:4px">PSFS</div>
+        <div style="font-size:11px;color:#1e1e1b">${psfsRes}</div>
         <div style="font-size:9px;color:#888;margin-top:4px">MCID 2 pts promedio</div>
       </div>` : ''}
     </div>` : '';
@@ -862,7 +863,7 @@ function generarInformeLumbar() {
     <div class="intro-box">Motor de inferencia EBM basado en CPG Delitto 2012 (JOSPT) + Cook 2006 + Hicks 2003. Pondera tests ortopédicos (55%), apoyo (15%) y clínica (30%). Cluster SIJ Cook: ≥3/6 tests positivos confirman.</div>
     ${dxResult.diagnosticos.map((dx, i) => {
       const colorMap = { red:'#cc3333', neon:'#2d7a2d', amber:'#b87a00', orange:'#b05a00' };
-      const c = colorMap[dx.colorKey] || '#8fa845';
+      const c = colorMap[dx.colorKey] || '#798254';
       const clsMap = { 'LRP':'dx-lrp', 'SIJ':'dx-sij', 'Estabilidad':'dx-estabilidad', 'Estenosis':'dx-estenosis' };
       const cls = clsMap[dx.categoria] || 'dx-card';
       return `
@@ -877,7 +878,7 @@ function generarInformeLumbar() {
         <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">
           ${dx.mainHits.map(t=>`<span style="background:#ffd0d0;color:#cc3333;padding:2px 6px;border-radius:3px;font-size:9px">✚ ${nm(t)}</span>`).join('')}
           ${dx.supportHits.map(t=>`<span style="background:#fff3cd;color:#b87a00;padding:2px 6px;border-radius:3px;font-size:9px">+ ${nm(t)}</span>`).join('')}
-          ${dx.symptomHits.map(s=>`<span style="background:#e8f0d4;color:#1e2d0e;padding:2px 6px;border-radius:3px;font-size:9px">Sx: ${ns(s)}</span>`).join('')}
+          ${dx.symptomHits.map(s=>`<span style="background:#e8f0d4;color:#1e1e1b;padding:2px 6px;border-radius:3px;font-size:9px">Sx: ${ns(s)}</span>`).join('')}
         </div>`:''
         }
         <div style="font-size:10px;line-height:1.4;color:#1a1a1a;padding-top:4px;border-top:1px solid #e8f0d4"><strong>Tratamiento CPG:</strong> ${dx.tratamiento.replace(/\n/g,' · ')}</div>
@@ -931,7 +932,7 @@ function generarInformeLumbar() {
     if (!r) return '';
     return `
       <div style="padding:8px 12px;background:#f5f7ee;border-radius:4px;margin-bottom:8px;font-size:10px">
-        <strong style="color:#1e2d0e">Por tiempo de evolución (${tiempoLabel[tiempoKey]||tiempoKey}):</strong>
+        <strong style="color:#1e1e1b">Por tiempo de evolución (${tiempoLabel[tiempoKey]||tiempoKey}):</strong>
         <ul style="margin:6px 0 0;padding-left:16px;line-height:1.7">${r}</ul>
       </div>`;
   };
@@ -948,8 +949,8 @@ function generarInformeLumbar() {
     };
     const rec = recMap[top.id] || top.tratamiento?.split('\n')[0] || '';
     return `
-      <div style="padding:8px 12px;border-left:3px solid #8fa845;background:#f5f7ee;border-radius:4px;margin-bottom:8px;font-size:10px">
-        <strong style="color:#1e2d0e">Por diagnóstico principal (${top.nombre}):</strong><br>
+      <div style="padding:8px 12px;border-left:3px solid #798254;background:#f5f7ee;border-radius:4px;margin-bottom:8px;font-size:10px">
+        <strong style="color:#1e1e1b">Por diagnóstico principal (${top.nombre}):</strong><br>
         <span style="line-height:1.7">${rec}</span>
       </div>`;
   };
@@ -964,24 +965,32 @@ function generarInformeLumbar() {
       Referencias: George et al. J Orthop Sports Phys Ther 2021;51(11):CPG1-CPG60 · WHO Guideline non-surgical LBP 2023 (ISBN 978-92-4-008178-9) · Keele STarT Back Tool (Hill 2008) · Delitto JOSPT 2012
     </div>` : '';
 
-  const win = window.open('', '_blank');
-  win.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
-    <title>Informe Lumbar — ${nombre}</title>
-    <style>${css}</style></head><body style="padding:32px;max-width:860px;margin:0 auto">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:3px solid #8fa845">
-      <div>
-        <div style="font-size:22px;font-weight:900;color:#1e2d0e">Informe de evaluación</div>
-        <div style="font-size:14px;color:#8fa845;font-weight:700">🔶 Columna Lumbar — CPG 2012 · Delitto et al. JOSPT</div>
-      </div>
-      <div style="text-align:right;font-size:10px;color:#888">${fecha}<br><span style="font-size:9px">MoveMetrics v12</span></div>
-    </div>
-    ${sec01}${sec02}${sec03}${sec04}${sec05}${sec06}${sec07}${sec08}
-    <div style="margin-top:32px;padding-top:16px;border-top:1px solid #e8f0d4;font-size:9px;color:#aaa;text-align:center">
-      CPG Delitto JOSPT 2012 · George et al. CPG 2021 · WHO 2023 · Cook Spine 2006 · Alqarni 2010 · Stuber JCCA 2014 · Laslett 2005 · Hicks 2003 · No reemplaza el juicio clínico
-    </div>
-    <script>setTimeout(()=>window.print(),400)</script>
-    </body></html>`);
-  win.document.close();
+  const _lbpBody = [
+    sec01, sec02,
+    sec03 ? sec03 + _lbpRomBar : '',
+    sec04, sec05,
+    _lbpOdiGauge ? sec06 + `<div style="display:flex;justify-content:center;margin-top:14px">${_lbpOdiGauge}</div>` : sec06,
+    sec07, sec08,
+  ].join('');
+
+  const _profNmLbp = cur?.kine || 'Lic. Emanuel Lezcano';
+  const _hLbp = typeof _tmcHeader  !== 'undefined' ? _tmcHeader({profNombre:_profNmLbp,subtitulo:'EVALUACIÓN KINESIOLÓGICA — COLUMNA LUMBAR',refs:'CPG Delitto 2012 · George 2021 · WHO 2023'}) : '';
+  const _fLbp = typeof _tmcFooter  !== 'undefined' ? _tmcFooter('Lumbar','CPG Delitto 2012 · George et al. 2021 · WHO 2023') : '';
+  const _firmaLbp = typeof _tmcFirma !== 'undefined' ? _tmcFirma({profNombre:_profNmLbp}) : '';
+  const _tbLbp = typeof _tmcToolbar !== 'undefined' ? _tmcToolbar : '';
+
+  const fullHTML = `<!DOCTYPE html><html lang="es"><head>
+  <meta charset="UTF-8"><title>Informe Lumbar — ${nombre}</title>
+  <style>${css}</style></head><body>
+  ${_tbLbp}${_hLbp}
+  <div id="report-body" style="padding:32px 44px;max-width:920px;margin:0 auto">
+    ${_lbpBody}${_firmaLbp}
+  </div>
+  ${_fLbp}
+  </body></html>`;
+
+  if (typeof _tmcOpenWindow !== 'undefined') { _tmcOpenWindow(fullHTML, `Informe Lumbar — ${nombre}`); }
+  else { const w=window.open('','_blank','width=980,height=880,resizable=yes,scrollbars=yes'); if(w){w.document.write(fullHTML);w.document.close();} }
 }
 
 window.initLumbarSheet      = initLumbarSheet;

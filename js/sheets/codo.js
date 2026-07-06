@@ -603,29 +603,33 @@ function generarInformeCodo() {
   const positivos = _getCodoModalPositivos();
   const dxResult  = (typeof diagnosticarCodo === 'function') ? diagnosticarCodo(positivos, selSymptoms) : { diagnosticos: [] };
 
-  const _infSecHead = (num, title) => `
-    <div class="sec-head">
-      <span class="sec-badge">${num}</span>
-      <span class="sec-title">${title}</span>
-    </div>`;
+  const _infSecHead = (num, title) => typeof _tmcSecHead !== 'undefined'
+    ? _tmcSecHead(num, title)
+    : `<div class="sec-head"><span class="sec-badge">${num}</span><span class="sec-title">${title}</span></div>`;
+  const css = typeof _tmcCSS !== 'undefined' ? _tmcCSS() : '';
 
-  const css = `
-    body{font-family:Inter,Arial,sans-serif;margin:0;background:#fff;color:#1a1a1a;font-size:12px;line-height:1.5}
-    table{width:100%;border-collapse:collapse;font-size:11px}
-    th{background:#6b7e20;color:#fff;padding:6px 8px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
-    td{padding:5px 8px;border-bottom:1px solid #e8f0d4}
-    tr:nth-child(even) td{background:#f8faf2}
-    .pos{color:#2d7a2d;font-weight:700} .neg{color:#888}
-    .alerta{color:#cc3333;font-weight:700} .limite{color:#c65a00;font-weight:700} .ok{color:#2d7a2d;font-weight:700}
-    .sec-badge{display:inline-block;background:#6b7e20;color:#fff;font-size:9px;font-weight:900;padding:2px 9px;border-radius:3px;letter-spacing:1px;margin-right:8px}
-    .sec-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#1e2d0e}
-    .sec-head{display:flex;align-items:center;margin:20px 0 10px;padding-bottom:6px;border-bottom:2px solid #e8f0d4}
-    .intro-box{font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f8faf2;border-radius:5px;border-left:3px solid #6b7e20}
-    .metric-box{background:#f5f7ee;border-radius:6px;padding:10px;text-align:center;border:1px solid #e8f0d4}
-    .metric-val{font-size:22px;font-weight:900;line-height:1}
-    .metric-lbl{font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
-    @media print{.no-print{display:none!important}header{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-  `;
+  // ── Charts ─────────────────────────────────────────────────────────────────
+  const _codoRadarItems = romRows.map(r => ({
+    label: r.label.replace('antebrazo','AF').replace('muñeca','Muñ').replace('radial','Rad').replace('cubital','Cub').substring(0,14),
+    D: parseFloat(r.actD)||0, I: parseFloat(r.actI)||0,
+    max: parseFloat((r.ref||'').match(/\d+/g)||[90])[0]||90,
+    ref: parseFloat((r.ref||'').match(/\d+/g)||[90])[0]||90,
+  }));
+  const _codoRomRadar = (typeof _tmcRadarChart!=='undefined' && _codoRadarItems.filter(it=>it.max>0).length>=3)
+    ? _tmcRadarChart(_codoRadarItems, {title:'ROM Codo/Muñeca — Activo (°)',size:280}) : '';
+
+  const _asimPct = (d,i) => (d&&i) ? parseFloat((Math.abs(parseFloat(d)-parseFloat(i))/Math.max(parseFloat(d),parseFloat(i))*100).toFixed(1)) : null;
+  const _codoFuerzaItems = [];
+  if (pfgsD||pfgsI) _codoFuerzaItems.push({label:'PFGS sin dolor',D:pfgsD?parseFloat(pfgsD):null,I:pfgsI?parseFloat(pfgsI):null,unit:' kg',ref:null,asim:_asimPct(pfgsD,pfgsI)});
+  if (gripD||gripI) _codoFuerzaItems.push({label:'Prensión máxima',D:gripD?parseFloat(gripD):null,I:gripI?parseFloat(gripI):null,unit:' kg',ref:null,asim:_asimPct(gripD,gripI)});
+  if (pptD||pptI)  _codoFuerzaItems.push({label:'PPT epicóndilo',D:pptD?parseFloat(pptD):null,I:pptI?parseFloat(pptI):null,unit:' kg/cm²',ref:null,asim:null});
+  const _codoFuerzaBar = (typeof _tmcBarChart!=='undefined' && _codoFuerzaItems.length>0)
+    ? _tmcBarChart(_codoFuerzaItems, {title:'Perfil de Fuerza — D vs I'}) : '';
+
+  const _prteeG = (typeof _tmcGauge!=='undefined' && prteeT && prteeT!=='—')
+    ? _tmcGauge(+prteeT,100,{label:'PRTEE',sub:'/100 · 0=mejor',size:140,colorFn:v=>v<=20?'#798254':v<=50?'#b06000':'#c03030'}) : '';
+  const _qdashG = (typeof _tmcGauge!=='undefined' && qdashT && qdashT!=='—')
+    ? _tmcGauge(+qdashT,100,{label:'QuickDASH',sub:'/100 · 0=sin discap.',size:140,colorFn:v=>v<=30?'#798254':v<=50?'#b06000':'#c03030'}) : '';
 
   // Build sections
   const sec01 = `
@@ -633,7 +637,7 @@ function generarInformeCodo() {
     <div class="intro-box">Datos de identificación y contexto clínico del paciente registrados al inicio de la evaluación de codo.</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div style="background:#f5f7ee;border-radius:6px;padding:12px;border:1px solid #e8f0d4">
-        <div style="font-size:9px;text-transform:uppercase;color:#6b7e20;font-weight:700;letter-spacing:1px;margin-bottom:8px">Datos del Paciente</div>
+        <div style="font-size:9px;text-transform:uppercase;color:#798254;font-weight:700;letter-spacing:1px;margin-bottom:8px">Datos del Paciente</div>
         ${nombre ? `<div style="margin-bottom:4px"><span style="font-size:10px;color:#888">Nombre:</span> <strong>${nombre}</strong></div>` : ''}
         ${edad   ? `<div style="margin-bottom:4px"><span style="font-size:10px;color:#888">Edad:</span> ${edad} años${sexo?' · '+sexo:''}</div>` : ''}
         ${(peso||talla) ? `<div style="margin-bottom:4px"><span style="font-size:10px;color:#888">Morfología:</span> ${[peso?peso+' kg':'',talla?talla+' cm':''].filter(Boolean).join(' / ')}</div>` : ''}
@@ -643,7 +647,7 @@ function generarInformeCodo() {
         <div style="margin-bottom:4px"><span style="font-size:10px;color:#888">Fecha:</span> ${fecha}</div>
       </div>
       <div style="background:#f5f7ee;border-radius:6px;padding:12px;border:1px solid #e8f0d4">
-        <div style="font-size:9px;text-transform:uppercase;color:#6b7e20;font-weight:700;letter-spacing:1px;margin-bottom:8px">Datos del Codo</div>
+        <div style="font-size:9px;text-transform:uppercase;color:#798254;font-weight:700;letter-spacing:1px;margin-bottom:8px">Datos del Codo</div>
         <div style="margin-bottom:4px"><span style="font-size:10px;color:#888">Dominancia:</span> ${dominancia}</div>
         <div style="margin-bottom:4px"><span style="font-size:10px;color:#888">Lado afectado:</span> ${ladoAfect}</div>
         <div style="margin-bottom:4px"><span style="font-size:10px;color:#888">Evolución:</span> ${tiempo}</div>
@@ -656,7 +660,7 @@ function generarInformeCodo() {
     ${_infSecHead('02','Presentación clínica reportada')}
     <div class="intro-box">Síntomas referidos por el paciente durante la anamnesis inicial, organizados por región anatómica. Orientan hacia el pre-diagnóstico diferencial antes de los tests ortopédicos.</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
-      ${symptomLabels.map(l => `<span style="background:#f5f7ee;border:1px solid #c8d88a;border-radius:4px;padding:4px 10px;font-size:10px;color:#1e2d0e">${l}</span>`).join('')}
+      ${symptomLabels.map(l => `<span style="background:#f5f7ee;border:1px solid #c8d88a;border-radius:4px;padding:4px 10px;font-size:10px;color:#1e1e1b">${l}</span>`).join('')}
     </div>` : '';
 
   const sec03 = romRows.length ? `
@@ -727,7 +731,7 @@ function generarInformeCodo() {
     const top = dxResult.diagnosticos[0];
     const confColor = top.confidence >= 65 ? '#2d7a2d' : top.confidence >= 35 ? '#c65a00' : '#888';
     _dxC += `<div style="border:1px solid #b8d060;border-radius:8px;overflow:hidden;margin-bottom:12px">
-      <div style="background:#6b7e20;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">
+      <div style="background:#798254;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">
         <div><div style="font-size:9px;letter-spacing:1px;color:rgba(255,255,255,.7);margin-bottom:2px">DIAGNÓSTICO PRINCIPAL — EBM CODO</div>
         <div style="font-size:13px;font-weight:900;color:#fff">${top.nombre}</div></div>
         <div style="background:rgba(255,255,255,.2);color:#fff;font-size:9px;padding:3px 10px;border-radius:4px;text-align:center">${top.confianzaLabel}<br><strong>${top.confidence}%</strong></div>
@@ -759,40 +763,33 @@ function generarInformeCodo() {
 
   const sec07 = _infSecHead('07','Diagnóstico kinesiológico presuntivo') + _dxC;
 
-  const bodyContent = sec01 + sec02 + sec03 + sec04 + sec05 + sec06 + sec07;
+  const bodyContent = [
+    sec01, sec02,
+    sec03 ? sec03 + _codoRomRadar : '',
+    sec04,
+    hasFuerza ? sec05 + _codoFuerzaBar : sec05,
+    hasEscalas && (_prteeG||_qdashG) ? sec06 + `<div style="display:flex;gap:20px;justify-content:center;margin-top:14px;flex-wrap:wrap">${_prteeG}${_qdashG}</div>` : sec06,
+    sec07
+  ].join('');
+
+  const _profNmCodo = cur?.kine || 'Lic. Emanuel Lezcano';
+  const _hCodo = typeof _tmcHeader  !== 'undefined' ? _tmcHeader({profNombre:_profNmCodo,subtitulo:'EVALUACIÓN KINESIOLÓGICA — CODO',refs:'CPG Lucado 2022 · Tahir 2026 · Bobos 2019'}) : '';
+  const _fCodo = typeof _tmcFooter  !== 'undefined' ? _tmcFooter('Codo','CPG Lucado 2022 · Tahir 2026') : '';
+  const _firmaCodo = typeof _tmcFirma !== 'undefined' ? _tmcFirma({profNombre:_profNmCodo}) : '';
+  const _tbCodo = typeof _tmcToolbar !== 'undefined' ? _tmcToolbar : '';
 
   const fullHTML = `<!DOCTYPE html><html lang="es"><head>
-  <meta charset="UTF-8"><title>Informe Kinesiológico Codo — ${nombre}</title>
+  <meta charset="UTF-8"><title>Informe Codo — ${nombre}</title>
   <style>${css}</style></head><body>
-  <div class="no-print" style="background:#1e2d0e;padding:12px 24px;display:flex;gap:8px;align-items:center;position:sticky;top:0;z-index:100">
-    <button onclick="window.print()" style="background:#6b7e20;color:#fff;border:none;border-radius:4px;padding:8px 16px;font-weight:700;cursor:pointer;font-size:12px">🖨 Imprimir / Guardar PDF</button>
-    <span style="font-size:11px;color:rgba(255,255,255,.5);margin-left:8px">En imprimir → elegir "Guardar como PDF"</span>
+  ${_tbCodo}${_hCodo}
+  <div id="report-body" style="padding:32px 44px;max-width:920px;margin:0 auto">
+    ${bodyContent}${_firmaCodo}
   </div>
-  <header style="background:#1e2d0e;padding:24px 40px;display:flex;justify-content:space-between;align-items:flex-start">
-    <div>
-      <div style="font-size:26px;font-weight:900;letter-spacing:-.5px;color:#c8e06b">THE MOVE CLUB</div>
-      <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:4px">Kinesiología de Alto Rendimiento · Evaluación de Codo</div>
-    </div>
-    <div style="text-align:right">
-      <div style="font-size:11px;color:rgba(255,255,255,.5)">Informe Kinesiológico — Codo</div>
-      <div style="font-size:13px;font-weight:700;color:#c8e06b">${nombre}</div>
-      <div style="font-size:10px;color:rgba(255,255,255,.4)">${fecha}</div>
-    </div>
-  </header>
-  <div style="padding:32px 40px;max-width:900px;margin:0 auto">
-    ${bodyContent}
-    <div style="margin-top:32px;padding-top:16px;border-top:2px solid #e8f0d4;display:flex;justify-content:space-between;align-items:flex-end">
-      <div style="font-size:10px;color:#888"><div>THE MOVE CLUB · Kinesiología de Alto Rendimiento</div>
-      <div>CPG 2022 Lucado et al. JOSPT · Tahir et al. Cureus 2026 · Bobos et al. Arch PMR 2019</div></div>
-      <div style="text-align:right"><div style="width:140px;border-top:1px solid #1e2d0e;margin-bottom:4px"></div>
-      <div style="font-size:11px;font-weight:700">Kinesiólogo/a</div></div>
-    </div>
-  </div>
+  ${_fCodo}
   </body></html>`;
 
-  const w = window.open('', '_blank');
-  if (w) { w.document.write(fullHTML); w.document.close(); }
-  else { alert('Permitir ventanas emergentes para generar el informe.'); }
+  if (typeof _tmcOpenWindow !== 'undefined') { _tmcOpenWindow(fullHTML, `Informe Codo — ${nombre}`); }
+  else { const w=window.open('','_blank','width=980,height=880,resizable=yes,scrollbars=yes'); if(w){w.document.write(fullHTML);w.document.close();} }
 }
 
 function calcCodoFuerza() {

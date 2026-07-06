@@ -350,155 +350,162 @@ function _calcManoPRWE() {
 
 // ─── INFORME ──────────────────────────────────────────────────────────────────
 function generarInformeMano() {
-  const container = document.getElementById('mano-informe-container');
-  if (!container) return;
-  container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3)">Generando informe...</div>';
+  if (!cur) { alert('Abrí la ficha del paciente primero'); return; }
 
-  // Recolectar tests positivos por sección
-  const stcPos     = _mano_getPosTests('mano-stc-fields');
-  const dqPos      = _mano_getPosTests('mano-dequervain-fields');
-  const gatPos     = _mano_getPosTests('mano-gatillo-fields');
-  const cmcPos     = _mano_getPosTests('mano-cmc-fields');
-  const neuroPos   = _mano_getPosTests('mano-neuro-fields');
-  const allPos     = [...stcPos, ...dqPos, ...gatPos, ...cmcPos, ...neuroPos];
+  const nombre  = cur?.nombre  || '—';
+  const edad    = cur?.edad    || '';
+  const deporte = cur?.deporte || '';
+  const fecha   = new Date().toLocaleDateString('es-AR', {day:'2-digit',month:'long',year:'numeric'});
 
-  // Grip y PRWE/QuickDASH scores
+  const stcPos   = _mano_getPosTests('mano-stc-fields');
+  const dqPos    = _mano_getPosTests('mano-dequervain-fields');
+  const gatPos   = _mano_getPosTests('mano-gatillo-fields');
+  const cmcPos   = _mano_getPosTests('mano-cmc-fields');
+  const neuroPos = _mano_getPosTests('mano-neuro-fields');
+  const allPos   = [...stcPos, ...dqPos, ...gatPos, ...cmcPos, ...neuroPos];
+
   const gripD = parseFloat(document.getElementById('grip-d-mano')?.value) || 0;
   const gripI = parseFloat(document.getElementById('grip-i-mano')?.value) || 0;
-  const qdashRaw = document.getElementById('mano-qdash-result')?.textContent || '';
-  const prweRaw  = document.getElementById('mano-prwe-result')?.textContent || '';
 
-  // ── Lógica diagnóstica ──────────────────────────────────────────────────────
   const diagnoses = [];
-
-  // STC: Durkan o (Phalen + Tinel)
   const durkanPos  = stcPos.some(t => t.includes('Durkan') || t.includes('Compresión'));
   const phalenPos  = stcPos.some(t => t.includes('Phalen') && !t.includes('invertido'));
   const tinelTCPos = stcPos.some(t => t.includes('Tinel') && t.includes('túnel'));
   if (durkanPos || (phalenPos && tinelTCPos)) diagnoses.push('stc');
-
-  // De Quervain: Finkelstein o Muckard
   if (dqPos.some(t => t.includes('Finkelstein') || t.includes('Muckard') || t.includes('1er compartimento'))) diagnoses.push('dequervain');
-
-  // Dedo en gatillo: polea A1 o bloqueo
   if (gatPos.some(t => t.includes('polea') || t.includes('resorte') || t.includes('Bloqueo'))) diagnoses.push('trigger-finger');
-
-  // Rizartrosis: Grind CMC
   if (cmcPos.some(t => t.includes('Grind'))) diagnoses.push('rizartrosis');
-
-  // OA mano: Heberden o Bouchard
   if (cmcPos.some(t => t.includes('Heberden') || t.includes('Bouchard'))) diagnoses.push('oa-mano');
-
-  // Guyon/neuropatía cubital: Tinel Guyon, Froment o Wartenberg
   if (neuroPos.some(t => t.includes('Guyon') || t.includes('Froment') || t.includes('Wartenberg'))) diagnoses.push('guyon');
-
-  // Dupuytren: cuerda palpable o table test
   if (neuroPos.some(t => t.includes('Dupuytren') || t.includes('Table') || t.includes('Hueston'))) diagnoses.push('dupuytren');
 
   const validDxs = [...new Set(diagnoses)].map(id => MANO_RULES.find(r => r.id === id)).filter(Boolean);
-  const now = new Date().toLocaleDateString('es-AR');
-  const patName = typeof cur !== 'undefined' && cur?.nombre ? cur.nombre : '—';
 
-  let html = `<div style="font-family:var(--sans);color:var(--text1)">`;
-
-  // Encabezado
-  html += `<div style="background:var(--bg3);border-radius:10px;padding:12px 14px;margin-bottom:12px">
-    <div style="font-size:15px;font-weight:800">✋ Informe Evaluación Mano / Muñeca</div>
-    <div style="font-size:11px;color:var(--text2)">${patName} · ${now}</div>
-  </div>`;
-
-  // Tests positivos
-  if (allPos.length) {
-    html += `<div class="card mb-10"><div class="card-header"><h3>Tests positivos</h3><span class="tag tag-r">${allPos.length} hallazgos</span></div><div class="card-body">`;
-    if (stcPos.length)   html += `<div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:3px;text-transform:uppercase">STC</div><div style="font-size:11px;margin-bottom:8px">${stcPos.join(' · ')}</div>`;
-    if (dqPos.length)    html += `<div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:3px;text-transform:uppercase">De Quervain</div><div style="font-size:11px;margin-bottom:8px">${dqPos.join(' · ')}</div>`;
-    if (gatPos.length)   html += `<div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:3px;text-transform:uppercase">Dedo en Gatillo</div><div style="font-size:11px;margin-bottom:8px">${gatPos.join(' · ')}</div>`;
-    if (cmcPos.length)   html += `<div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:3px;text-transform:uppercase">CMC / OA</div><div style="font-size:11px;margin-bottom:8px">${cmcPos.join(' · ')}</div>`;
-    if (neuroPos.length) html += `<div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:3px;text-transform:uppercase">Neuropatía</div><div style="font-size:11px">${neuroPos.join(' · ')}</div>`;
-    html += `</div></div>`;
-  }
-
-  // Fuerza
-  if (gripD || gripI) {
-    const mayor = Math.max(gripD, gripI), menor = Math.min(gripD, gripI);
-    const asim = mayor > 0 ? ((mayor - menor) / mayor * 100).toFixed(1) : 0;
-    const color = +asim > 10 ? 'var(--red)' : +asim > 5 ? 'var(--amber)' : 'var(--neon)';
-    html += `<div class="card mb-10"><div class="card-header"><h3>Fuerza de puño</h3></div><div class="card-body">
-      <div style="font-size:12px">D: <strong>${gripD} kg</strong> · I: <strong>${gripI} kg</strong> · Asimetría: <strong style="color:${color}">${asim}%</strong></div>
-      ${+asim > 10 ? '<div style="font-size:10px;color:var(--amber);margin-top:4px">⚠️ Asimetría >10% — déficit clínicamente relevante (Chávez Delgado UNAM 2024)</div>' : ''}
-    </div></div>`;
-  }
-
-  // Sin hallazgos
-  if (!allPos.length && !diagnoses.length) {
-    html += `<div class="card mb-10" style="background:var(--bg3)"><div class="card-body">
-      <div style="font-size:12px;color:var(--text2)">Sin tests positivos registrados. Completar evaluación clínica antes de generar informe.</div>
-    </div></div>`;
-  }
-
-  // Diagnósticos presuntivos + recomendaciones
-  if (validDxs.length) {
-    html += `<div style="font-size:11px;font-weight:700;color:var(--neon);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">DIAGNÓSTICOS PRESUNTIVOS</div>`;
-    validDxs.forEach(rule => {
-      html += `<div class="card mb-10" style="border-color:rgba(57,255,122,.25)">
-        <div class="card-header"><h3>${rule.label}</h3><span class="tag tag-g">Presuntivo</span></div>
-        <div class="card-body">
-          <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase">Criterios diagnósticos</div>
-          <ul style="margin:0 0 10px;padding-left:16px;font-size:11px;color:var(--text2)">
-            ${rule.criterios.map(c => `<li style="margin-bottom:3px">${c}</li>`).join('')}
-          </ul>`;
-      rule.recom.forEach(fase => {
-        html += `<div style="font-size:10px;font-weight:700;color:var(--amber);margin-bottom:4px;text-transform:uppercase;margin-top:8px">${fase.fase}</div>
-          <ul style="margin:0 0 6px;padding-left:16px;font-size:11px;color:var(--text2)">
-            ${fase.items.map(item => `<li style="margin-bottom:3px">${item}</li>`).join('')}
-          </ul>`;
-      });
-      html += `</div></div>`;
-    });
-  }
-
-  // Escalas
   const qdashScore = manoQDashVals.filter(v=>v!==null).length === 11
-    ? ((manoQDashVals.reduce((a,b)=>a+b,0) - 11) / 44 * 100).toFixed(1)
+    ? +((manoQDashVals.reduce((a,b)=>a+b,0) - 11) / 44 * 100).toFixed(1)
     : null;
-  const prweD = manoPrewDolorVals.filter(v=>v!==null).length === 5;
+  const prweD  = manoPrewDolorVals.filter(v=>v!==null).length === 5;
   const prweFE = manoPrewFuncEspVals.filter(v=>v!==null).length === 6;
   const prweFU = manoPrewFuncUsualVals.filter(v=>v!==null).length === 4;
   const prweTotal = (prweD && prweFE && prweFU)
     ? Math.round(manoPrewDolorVals.reduce((a,b)=>a+b,0) + (manoPrewFuncEspVals.reduce((a,b)=>a+b,0) + manoPrewFuncUsualVals.reduce((a,b)=>a+b,0)) / 2)
     : null;
 
-  if (qdashScore !== null || prweTotal !== null) {
-    html += `<div class="card mb-10"><div class="card-header"><h3>Escalas funcionales</h3></div><div class="card-body" style="font-size:11px">`;
-    if (qdashScore !== null) {
-      const q = +qdashScore;
-      const qcolor = q < 30 ? 'var(--neon)' : q < 60 ? 'var(--amber)' : 'var(--red)';
-      html += `<div style="margin-bottom:6px"><strong>QuickDASH:</strong> <span style="color:${qcolor};font-size:14px;font-weight:800">${qdashScore}</span>/100 (${q<30?'Leve':q<60?'Moderado':'Severo'}) — 0=sin discapacidad</div>`;
-    }
-    if (prweTotal !== null) {
-      const p = prweTotal;
-      const pcolor = p < 30 ? 'var(--neon)' : p < 55 ? 'var(--amber)' : 'var(--red)';
-      html += `<div><strong>PRWE:</strong> <span style="color:${pcolor};font-size:14px;font-weight:800">${prweTotal}</span>/100 (${p<30?'Leve':p<55?'Moderado':'Severo'}) — Patient-Rated Wrist Evaluation · MacDermid 1996</div>`;
-    }
-    html += `</div></div>`;
-  }
+  const css = typeof _tmcCSS !== 'undefined' ? _tmcCSS() : '';
+  const _msec = (num, title) => typeof _tmcSecHead !== 'undefined'
+    ? _tmcSecHead(num, title)
+    : `<div class="sec-head"><span class="sec-badge">${num}</span><span class="sec-title">${title}</span></div>`;
 
-  // Footer evidencia
-  html += `<div style="font-size:9px;color:var(--text3);padding:10px;border-top:1px solid var(--border);margin-top:4px">
-    Fuentes: JOSPT CPG 2019 (STC) · HANDGUIDE 2014 (De Quervain / Trigger Finger) · EULAR 2018 Ann Rheum Dis 2019 (OA Mano) · HANDGUIDE BJSM 2013 (Guyon) · HANDGUIDE PRS 2013 (Dupuytren) · Chávez Delgado UNAM Rev Fac Med 2024 · Lluch Bergadà &amp; García Elías UNIA 2020
-  </div>`;
+  // Charts
+  const _mGripBar = (typeof _tmcBarChart !== 'undefined' && (gripD || gripI))
+    ? _tmcBarChart([{label:'Puño',D:gripD,I:gripI,unit:'kg',ref:40,asim:gripD&&gripI?Math.abs(gripD-gripI)/Math.max(gripD,gripI)*100:0}], {title:'Fuerza de Puño D vs I (kg)'})
+    : '';
+  const _mQdashG = (typeof _tmcGauge !== 'undefined' && qdashScore !== null)
+    ? _tmcGauge(qdashScore, 100, {label:'QuickDASH', sub:'/100 · 0=sin discapacidad', size:140, colorFn: v=>v<30?'#2d7a2d':v<60?'#798254':'#cc3333'}) : '';
+  const _mPrweG  = (typeof _tmcGauge !== 'undefined' && prweTotal !== null)
+    ? _tmcGauge(prweTotal,  100, {label:'PRWE',      sub:'/100 · 0=sin discapacidad', size:140, colorFn: v=>v<30?'#2d7a2d':v<55?'#798254':'#cc3333'}) : '';
 
-  html += `</div>`;
-  container.innerHTML = html;
+  // Sec 01 — Perfil
+  const sec01 = _msec('01','Perfil del paciente') + `
+    <div class="intro-box">Datos de identificación registrados al inicio de la evaluación de mano y muñeca.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div style="background:#f6f8ee;border-radius:6px;padding:12px;border:1px solid #dde5c4">
+        <div style="font-size:9px;text-transform:uppercase;color:#798254;font-weight:700;letter-spacing:1px;margin-bottom:8px">Datos del Paciente</div>
+        ${nombre?`<div style="margin-bottom:4px"><span style="font-size:10px;color:#888">Nombre:</span> <strong>${nombre}</strong></div>`:''}
+        ${edad?`<div style="margin-bottom:4px"><span style="font-size:10px;color:#888">Edad:</span> ${edad} años</div>`:''}
+        ${deporte?`<div style="margin-bottom:4px"><span style="font-size:10px;color:#888">Deporte:</span> ${deporte}</div>`:''}
+        <div><span style="font-size:10px;color:#888">Fecha:</span> ${fecha}</div>
+      </div>
+      <div style="background:#f6f8ee;border-radius:6px;padding:12px;border:1px solid #dde5c4">
+        <div style="font-size:9px;text-transform:uppercase;color:#798254;font-weight:700;letter-spacing:1px;margin-bottom:8px">Hallazgos</div>
+        <div style="font-size:11px;color:#1e1e1b"><strong>${allPos.length}</strong> tests positivos registrados</div>
+        <div style="font-size:11px;color:#1e1e1b;margin-top:4px"><strong>${validDxs.length}</strong> diagnósticos presuntivos</div>
+        ${gripD||gripI?`<div style="margin-top:4px;font-size:10px;color:#888">Grip D: ${gripD} kg · I: ${gripI} kg</div>`:''}
+      </div>
+    </div>`;
+
+  // Sec 02 — Tests positivos
+  const sec02 = allPos.length ? _msec('02','Tests ortopédicos positivos') + `
+    <div class="intro-box">Tests estandarizados con resultado POSITIVO. Fuentes: JOSPT CPG 2019 · HANDGUIDE 2014 · EULAR 2018.</div>
+    <table>
+      <tr><th>Sección</th><th>Tests positivos</th></tr>
+      ${stcPos.length?`<tr><td><strong>Síndrome Túnel Carpiano</strong></td><td>${stcPos.join(' · ')}</td></tr>`:''}
+      ${dqPos.length?`<tr><td><strong>De Quervain</strong></td><td>${dqPos.join(' · ')}</td></tr>`:''}
+      ${gatPos.length?`<tr><td><strong>Dedo en Gatillo</strong></td><td>${gatPos.join(' · ')}</td></tr>`:''}
+      ${cmcPos.length?`<tr><td><strong>CMC / OA Mano</strong></td><td>${cmcPos.join(' · ')}</td></tr>`:''}
+      ${neuroPos.length?`<tr><td><strong>Neuropatía / Otros</strong></td><td>${neuroPos.join(' · ')}</td></tr>`:''}
+    </table>` : '';
+
+  // Sec 03 — Fuerza de puño
+  const asim = gripD && gripI ? ((Math.abs(gripD-gripI)/Math.max(gripD,gripI))*100).toFixed(1) : null;
+  const sec03 = (gripD || gripI) ? _msec('03','Fuerza de puño') + `
+    <div class="intro-box">Dinamometría manual. Referencia ≥ 35 kg adulto activo. Asimetría &gt;10% = déficit clínicamente relevante (Chávez Delgado 2024).</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;text-align:center">
+      <div style="background:#f6f8ee;border-radius:6px;padding:10px;border:1px solid #dde5c4">
+        <div style="font-size:9px;color:#798254;font-weight:700;text-transform:uppercase;margin-bottom:4px">Derecho</div>
+        <div style="font-size:22px;font-weight:900;color:#1e1e1b">${gripD}<span style="font-size:12px;color:#888"> kg</span></div>
+      </div>
+      <div style="background:#f6f8ee;border-radius:6px;padding:10px;border:1px solid #dde5c4">
+        <div style="font-size:9px;color:#798254;font-weight:700;text-transform:uppercase;margin-bottom:4px">Izquierdo</div>
+        <div style="font-size:22px;font-weight:900;color:#1e1e1b">${gripI}<span style="font-size:12px;color:#888"> kg</span></div>
+      </div>
+      <div style="background:#f6f8ee;border-radius:6px;padding:10px;border:1px solid #dde5c4">
+        <div style="font-size:9px;color:#798254;font-weight:700;text-transform:uppercase;margin-bottom:4px">Asimetría</div>
+        <div style="font-size:22px;font-weight:900;color:${asim&&+asim>10?'#cc3333':asim&&+asim>5?'#c65a00':'#2d7a2d'}">${asim||'—'}<span style="font-size:12px;color:#888">%</span></div>
+      </div>
+    </div>
+    ${_mGripBar}` : '';
+
+  // Sec 04 — Diagnósticos
+  const sec04 = validDxs.length ? _msec('04','Diagnósticos presuntivos') + `
+    <div class="intro-box">Motor diagnóstico basado en: JOSPT CPG 2019 (STC) · HANDGUIDE 2014 · EULAR Ann Rheum Dis 2019 · Doha Consensus BJSM 2013–2015. No reemplaza el juicio clínico.</div>
+    ${validDxs.map((rule,i) => `
+    <div class="dx-card" style="${i===0?'border-color:#798254;border-width:2px':''}">
+      <div class="dx-head"><span style="font-size:12px;font-weight:800;color:#798254">${i===0?'🏆 ':''}${rule.label}</span></div>
+      <div class="dx-body">
+        <div style="font-size:10px;font-weight:700;color:#798254;text-transform:uppercase;margin-bottom:6px">Criterios diagnósticos</div>
+        <ul style="margin:0 0 10px;padding-left:16px;font-size:10px;line-height:1.7;color:#444">
+          ${rule.criterios.map(c=>`<li>${c}</li>`).join('')}
+        </ul>
+        ${rule.recom.map(fase=>`
+        <div style="margin-top:8px;padding:8px 12px;border-left:3px solid #798254;background:#f6f8ee;border-radius:0 5px 5px 0">
+          <div style="font-size:10px;font-weight:800;color:#1e1e1b;text-transform:uppercase;margin-bottom:4px">${fase.fase}</div>
+          <ul style="margin:0;padding-left:16px;font-size:10px;line-height:1.7;color:#333">
+            ${fase.items.map(it=>`<li>${it}</li>`).join('')}
+          </ul>
+        </div>`).join('')}
+      </div>
+    </div>`).join('')}` : '';
+
+  // Sec 05 — Escalas
+  const sec05 = (qdashScore !== null || prweTotal !== null) ? _msec('05','Escalas funcionales') + `
+    <div class="intro-box">QuickDASH: Discapacidad miembro superior · MCID 15 pts · 0=sin discapacidad. PRWE: Dolor y función muñeca · MacDermid 1996 · 0=sin limitación.</div>
+    <div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin-top:14px">
+      ${_mQdashG}${_mPrweG}
+    </div>` : '';
+
+  const _manoBody = [sec01, sec02, sec03, sec04, sec05].join('');
+
+  const _profNmMano = cur?.kine || 'Lic. Emanuel Lezcano';
+  const _hMano = typeof _tmcHeader  !== 'undefined' ? _tmcHeader({profNombre:_profNmMano,subtitulo:'EVALUACIÓN KINESIOLÓGICA — MANO Y MUÑECA',refs:'JOSPT CPG 2019 · HANDGUIDE 2014 · EULAR 2018'}) : '';
+  const _fMano = typeof _tmcFooter  !== 'undefined' ? _tmcFooter('Mano','JOSPT CPG 2019 · HANDGUIDE 2014 · MacDermid 1996') : '';
+  const _firmaMano = typeof _tmcFirma !== 'undefined' ? _tmcFirma({profNombre:_profNmMano}) : '';
+  const _tbMano = typeof _tmcToolbar !== 'undefined' ? _tmcToolbar : '';
+
+  const fullHTML = `<!DOCTYPE html><html lang="es"><head>
+  <meta charset="UTF-8"><title>Informe Mano — ${nombre}</title>
+  <style>${css}</style></head><body>
+  ${_tbMano}${_hMano}
+  <div id="report-body" style="padding:32px 44px;max-width:920px;margin:0 auto">
+    ${_manoBody}${_firmaMano}
+  </div>
+  ${_fMano}
+  </body></html>`;
+
+  if (typeof _tmcOpenWindow !== 'undefined') { _tmcOpenWindow(fullHTML, `Informe Mano — ${nombre}`); }
+  else { const w=window.open('','_blank','width=980,height=880,resizable=yes,scrollbars=yes'); if(w){w.document.write(fullHTML);w.document.close();} }
 }
 
 function imprimirInformeMano() {
-  const el = document.getElementById('mano-informe-container');
-  if (!el || !el.innerHTML.trim()) { generarInformeMano(); setTimeout(imprimirInformeMano, 300); return; }
-  const w = window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html><head><title>Informe Mano</title>
-    <style>body{font-family:sans-serif;margin:24px;font-size:13px} h3{margin:4px 0} ul{margin:4px 0 8px} li{margin-bottom:3px} .card{border:1px solid #ccc;border-radius:8px;padding:10px;margin-bottom:10px}</style>
-    </head><body>${el.innerHTML}</body></html>`);
-  w.document.close();
-  w.print();
+  generarInformeMano();
 }

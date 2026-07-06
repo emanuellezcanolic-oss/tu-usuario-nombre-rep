@@ -785,37 +785,53 @@ function generarInformeCadera() {
   var hagosScores = typeof _getHAGOSScores === 'function' ? _getHAGOSScores() : [];
   var hasHagos = hagosScores.length > 0;
 
-  var css = [
-    'body{font-family:Inter,Arial,sans-serif;margin:0;background:#fff;color:#1a1a1a;font-size:12px;line-height:1.5}',
-    'table{width:100%;border-collapse:collapse;font-size:11px}',
-    'th{background:#7e5ba8;color:#fff;padding:6px 8px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}',
-    'td{padding:5px 8px;border-bottom:1px solid #e8e0f0}',
-    'tr:nth-child(even) td{background:#f7f4fb}',
-    '.pos{color:#2d7a2d;font-weight:700} .neg{color:#888}',
-    '.sec-badge{display:inline-block;background:#7e5ba8;color:#fff;font-size:9px;font-weight:900;padding:2px 9px;border-radius:3px;letter-spacing:1px;margin-right:8px}',
-    '.sec-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#2a1a42}',
-    '.sec-head{display:flex;align-items:center;margin:20px 0 10px;padding-bottom:6px;border-bottom:2px solid #e8e0f0}',
-    '.intro-box{font-size:10px;color:#444;margin-bottom:10px;line-height:1.65;padding:9px 12px;background:#f7f4fb;border-radius:5px;border-left:3px solid #7e5ba8}',
-    '.dx-card{padding:10px;border:1px solid #e8e0f0;border-radius:6px;margin-bottom:8px}',
-    '@media print{header{-webkit-print-color-adjust:exact;print-color-adjust:exact}}'
-  ].join('');
+  var css = typeof _tmcCSS !== 'undefined' ? _tmcCSS() : '';
 
   var _sec = function(num, title) {
-    return '<div class="sec-head"><span class="sec-badge">' + num + '</span><span class="sec-title">' + title + '</span></div>';
+    return typeof _tmcSecHead !== 'undefined'
+      ? _tmcSecHead(num, title)
+      : '<div class="sec-head"><span class="sec-badge">' + num + '</span><span class="sec-title">' + title + '</span></div>';
   };
+
+  var _cadMhhsGauge = (typeof _tmcGauge !== 'undefined' && hasMhhs)
+    ? _tmcGauge(mhhsTotal, 91, {
+        label: 'mHHS',
+        sub: '/91 · MDC 8 · MCID 14',
+        size: 140,
+        colorFn: function(v) { return v >= 80 ? '#2d7a2d' : v >= 70 ? '#798254' : '#cc3333'; },
+      }) : '';
+
+  var _cadVisagGauge = (typeof _tmcGauge !== 'undefined' && hasVisag)
+    ? _tmcGauge(visagTotal, 80, {
+        label: 'VISA-G',
+        sub: '/80 · MDC 11 · MCID 12',
+        size: 140,
+        colorFn: function(v) { return v >= 60 ? '#2d7a2d' : v >= 40 ? '#798254' : '#cc3333'; },
+      }) : '';
+
+  var _cadRomItems = romRows.map(function(r) {
+    return {
+      label: r.label.replace('Flexión','Flex').replace('Extensión','Ext').replace('Abducción','Abd').replace('Aducción','Adu').replace('Rotación','Rot').replace('Externa','Ext').replace('Interna','Int').substring(0, 14),
+      D: parseFloat(r.act) || 0, I: 0,
+      max: parseFloat((r.ref || '').match(/\d+/g) || [90])[0] || 90,
+      ref: parseFloat((r.ref || '').match(/\d+/g) || [90])[0] || 90,
+    };
+  });
+  var _cadRomBar = (typeof _tmcBarChart !== 'undefined' && _cadRomItems.filter(function(it) { return it.D > 0; }).length >= 2)
+    ? _tmcBarChart(_cadRomItems.map(function(it) { return {label:it.label, D:it.D, I:undefined, ref:it.ref}; }), {title: 'ROM Cadera — Activo (°)'}) : '';
 
   var sec01 = _sec('01','Perfil del paciente') +
     '<div class="intro-box">Datos clínicos registrados al inicio de la evaluación de cadera.</div>' +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
-      '<div style="background:#f7f4fb;border-radius:6px;padding:12px;border:1px solid #e8e0f0">' +
-        '<div style="font-size:9px;text-transform:uppercase;color:#7e5ba8;font-weight:700;letter-spacing:1px;margin-bottom:8px">Datos del Paciente</div>' +
+      '<div style="background:#f6f8ee;border-radius:6px;padding:12px;border:1px solid #dde5c4">' +
+        '<div style="font-size:9px;text-transform:uppercase;color:#798254;font-weight:700;letter-spacing:1px;margin-bottom:8px">Datos del Paciente</div>' +
         (nombre ? '<div style="margin-bottom:4px"><span style="font-size:10px;color:#888">Nombre:</span> <strong>' + nombre + '</strong></div>' : '') +
         (edad   ? '<div style="margin-bottom:4px"><span style="font-size:10px;color:#888">Edad:</span> ' + edad + ' años</div>' : '') +
         (deporte ? '<div style="margin-bottom:4px"><span style="font-size:10px;color:#888">Deporte:</span> ' + deporte + '</div>' : '') +
         '<div><span style="font-size:10px;color:#888">Fecha:</span> ' + fecha + '</div>' +
       '</div>' +
-      '<div style="background:#f7f4fb;border-radius:6px;padding:12px;border:1px solid #e8e0f0">' +
-        '<div style="font-size:9px;text-transform:uppercase;color:#7e5ba8;font-weight:700;letter-spacing:1px;margin-bottom:8px">Datos Clínicos</div>' +
+      '<div style="background:#f6f8ee;border-radius:6px;padding:12px;border:1px solid #dde5c4">' +
+        '<div style="font-size:9px;text-transform:uppercase;color:#798254;font-weight:700;letter-spacing:1px;margin-bottom:8px">Datos Clínicos</div>' +
         (nprs       ? '<div style="margin-bottom:4px"><span style="font-size:10px;color:#888">NPRS:</span> ' + nprs + '/10</div>' : '') +
         (tiempo     ? '<div style="margin-bottom:4px"><span style="font-size:10px;color:#888">Evolución:</span> ' + tiempo + '</div>' : '') +
         (mecanismo  ? '<div style="margin-bottom:4px"><span style="font-size:10px;color:#888">Mecanismo:</span> ' + mecanismo + '</div>' : '') +
@@ -867,7 +883,7 @@ function generarInformeCadera() {
     '<div class="intro-box">Motor de inferencia basado en: Enseki 2023 CPG · Reiman BJSM 2012/2014 · Delahunt Doha 2015 · Simel JAMA 2019. No reemplaza el juicio clínico.</div>' +
     dxResult.diagnosticos.map(function(dx, i) {
       var colorMap = { red:'#cc3333', neon:'#2d7a2d', amber:'#b87a00', blue:'#2563a8', orange:'#b05a00', text:'#1a1a1a' };
-      var c = colorMap[dx.colorKey] || '#7e5ba8';
+      var c = colorMap[dx.colorKey] || '#798254';
       return '<div class="dx-card" style="border-color:' + c + '44">' +
         '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">' +
           '<span style="font-size:12px;font-weight:800;color:' + c + '">' + (i === 0 ? '🏆 ' : '') + dx.nombre + '</span>' +
@@ -878,7 +894,7 @@ function generarInformeCadera() {
           dx.mainHits.map(function(t) { return '<span style="background:#ffd0d0;color:#cc3333;padding:2px 6px;border-radius:3px;font-size:9px">+ ' + nm(t) + '</span>'; }).join('') +
           dx.supportHits.map(function(t) { return '<span style="background:#fff3cd;color:#b87a00;padding:2px 6px;border-radius:3px;font-size:9px">+ ' + nm(t) + '</span>'; }).join('') +
         '</div>' : '') +
-        '<div style="font-size:10px;line-height:1.4;color:#1a1a1a;padding-top:4px;border-top:1px solid #e8e0f0"><strong>Tratamiento:</strong> ' + dx.tratamiento.replace(/\n/g,' · ') + '</div>' +
+        '<div style="font-size:10px;line-height:1.4;color:#1a1a1a;padding-top:4px;border-top:1px solid #dde5c4"><strong>Tratamiento:</strong> ' + dx.tratamiento.replace(/\n/g,' · ') + '</div>' +
         '<div style="font-size:9px;color:#888;margin-top:4px;font-style:italic">' + dx.ref + '</div>' +
       '</div>';
     }).join('')
@@ -890,8 +906,8 @@ function generarInformeCadera() {
   var sec05b = hasVisag ? (
     '<div style="margin-top:12px">' +
     '<div class="intro-box">VISA-G: Victorian Institute of Sport Assessment – Gluteal. 8 ítems /80. MDC ~11 pts · MCID ~12 pts. Fearon AM et al. Man Ther 2015;20(6):805-13.</div>' +
-    '<div style="background:#f7f4fb;border-radius:6px;padding:12px;border:1px solid #e8e0f0;text-align:center">' +
-      '<div style="font-size:9px;text-transform:uppercase;color:#7e5ba8;font-weight:700;margin-bottom:4px">VISA-G</div>' +
+    '<div style="background:#f6f8ee;border-radius:6px;padding:12px;border:1px solid #dde5c4;text-align:center">' +
+      '<div style="font-size:9px;text-transform:uppercase;color:#798254;font-weight:700;margin-bottom:4px">VISA-G</div>' +
       '<div style="font-size:28px;font-weight:900;color:' + visagColor + '">' + visagTotal + '<span style="font-size:14px;color:#888">/80</span></div>' +
       '<div style="font-size:11px;color:' + visagColor + ';font-weight:600">' + visagInterp + '</div>' +
     '</div></div>'
@@ -914,8 +930,8 @@ function generarInformeCadera() {
   var sec05combined = (hasMhhs || hasVisag || hasHagos) ? (
     _sec('05','Escalas funcionales') +
     (hasMhhs ? ('<div class="intro-box">mHHS: Modified Harris Hip Score (máx 91). MDC 8 pts · MCID 14 pts. Byrd 2003.</div>' +
-    '<div style="background:#f7f4fb;border-radius:6px;padding:12px;border:1px solid #e8e0f0;text-align:center;margin-bottom:10px">' +
-      '<div style="font-size:9px;text-transform:uppercase;color:#7e5ba8;font-weight:700;margin-bottom:4px">mHHS</div>' +
+    '<div style="background:#f6f8ee;border-radius:6px;padding:12px;border:1px solid #dde5c4;text-align:center;margin-bottom:10px">' +
+      '<div style="font-size:9px;text-transform:uppercase;color:#798254;font-weight:700;margin-bottom:4px">mHHS</div>' +
       '<div style="font-size:28px;font-weight:900;color:' + (mhhsTotal >= 80 ? '#2d7a2d' : mhhsTotal >= 70 ? '#b87a00' : '#cc3333') + '">' + mhhsTotal + '<span style="font-size:14px;color:#888">/91</span></div>' +
       '<div style="font-size:11px;color:' + (mhhsTotal >= 80 ? '#2d7a2d' : mhhsTotal >= 70 ? '#b87a00' : '#cc3333') + ';font-weight:600">' + (mhhsTotal >= 80 ? 'Buen resultado' : mhhsTotal >= 70 ? 'Resultado aceptable' : 'Resultado malo') + '</div>' +
     '</div>') : '') +
@@ -928,7 +944,7 @@ function generarInformeCadera() {
   if (topDx) {
     var recomData = _RECOM[topDx.id];
     var colorMap6 = { red:'#cc3333', neon:'#2d7a2d', amber:'#b87a00', blue:'#2563a8', orange:'#b05a00', text:'#444' };
-    var dxColor6 = colorMap6[topDx.colorKey] || '#7e5ba8';
+    var dxColor6 = colorMap6[topDx.colorKey] || '#798254';
     if (recomData) {
       sec06 = _sec('06','Recomendaciones EBM — ' + topDx.nombre) +
         '<div class="intro-box">Plan de tratamiento basado en evidencia para el diagnóstico principal. Adaptar según etapa clínica, tolerancia y respuesta individual. No reemplaza el juicio clínico.</div>' +
@@ -949,23 +965,35 @@ function generarInformeCadera() {
     }
   }
 
-  var win = window.open('', '_blank');
-  win.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Informe Cadera — ' + nombre + '</title><style>' + css + '</style></head>' +
-    '<body style="padding:32px;max-width:860px;margin:0 auto">' +
-    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:3px solid #7e5ba8">' +
-      '<div>' +
-        '<div style="font-size:22px;font-weight:900;color:#2a1a42">Informe de evaluación</div>' +
-        '<div style="font-size:14px;color:#7e5ba8;font-weight:700">🦴 Cadera — Enseki 2023 CPG · Reiman 2012/2014 · Doha 2015 · Simel 2019 · Barratt BJSM 2016</div>' +
-      '</div>' +
-      '<div style="text-align:right;font-size:10px;color:#888">' + fecha + '<br><span style="font-size:9px">MoveMetrics v12</span></div>' +
-    '</div>' +
-    sec01 + sec02 + sec03 + sec04 + sec05combined + sec06 +
-    '<div style="margin-top:32px;padding-top:16px;border-top:1px solid #e8e0f0;font-size:9px;color:#aaa;text-align:center">' +
-      'Enseki K et al. JOSPT 2023 · Reiman MP et al. BJSM 2012;2014 · Delahunt E et al. BJSM 2015 (Doha) · Simel DL et al. JAMA 2019 · Griffin DR et al. BJSM 2016 · Thorborg K et al. BJSM 2011 · No reemplaza el juicio clínico' +
-    '</div>' +
-    '<script>setTimeout(function(){window.print();},400)<\/script>' +
-    '</body></html>');
-  win.document.close();
+  var _cadGaugesHtml = (_cadMhhsGauge || _cadVisagGauge)
+    ? '<div style="display:flex;gap:20px;justify-content:center;margin-top:14px;flex-wrap:wrap">' + _cadMhhsGauge + _cadVisagGauge + '</div>'
+    : '';
+
+  var _cadBody = [
+    sec01,
+    sec02 ? sec02 + _cadRomBar : '',
+    sec03, sec04,
+    _cadGaugesHtml ? sec05combined + _cadGaugesHtml : sec05combined,
+    sec06,
+  ].join('');
+
+  var _profNmCad = (cur && cur.kine) ? cur.kine : 'Lic. Emanuel Lezcano';
+  var _hCad = typeof _tmcHeader  !== 'undefined' ? _tmcHeader({profNombre:_profNmCad,subtitulo:'EVALUACIÓN KINESIOLÓGICA — CADERA',refs:'Enseki 2023 CPG · Reiman 2012/2014 · Doha 2015'}) : '';
+  var _fCad = typeof _tmcFooter  !== 'undefined' ? _tmcFooter('Cadera','Enseki 2023 · Reiman 2012/2014 · Doha 2015') : '';
+  var _firmaCad = typeof _tmcFirma !== 'undefined' ? _tmcFirma({profNombre:_profNmCad}) : '';
+  var _tbCad = typeof _tmcToolbar !== 'undefined' ? _tmcToolbar : '';
+
+  var fullHTML = '<!DOCTYPE html><html lang="es"><head>' +
+    '<meta charset="UTF-8"><title>Informe Cadera — ' + nombre + '</title>' +
+    '<style>' + css + '</style></head><body>' +
+    _tbCad + _hCad +
+    '<div id="report-body" style="padding:32px 44px;max-width:920px;margin:0 auto">' +
+    _cadBody + _firmaCad +
+    '</div>' + _fCad +
+    '</body></html>';
+
+  if (typeof _tmcOpenWindow !== 'undefined') { _tmcOpenWindow(fullHTML, 'Informe Cadera — ' + nombre); }
+  else { var w=window.open('','_blank','width=980,height=880,resizable=yes,scrollbars=yes'); if(w){w.document.write(fullHTML);w.document.close();} }
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────────
