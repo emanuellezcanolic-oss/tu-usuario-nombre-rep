@@ -1,11 +1,13 @@
-// sheets/pie.js v3
+// sheets/pie.js v4
 // Tabs: Observación | Tests | Fuerza·ROM | Escalas | Informe
 // Evidencia: Koc JOSPT CPG 2023 · Nweke 2025 · Tien et al. 2026 · Ettinger 2025 · ACR 2025
 
 // ── TAB SWITCHER ──────────────────────────────────────────────────────────────
 function showPTab(tab, btn) {
+  // Scope dentro de #sheet-pie para evitar conflicto con ptab-fuerza del módulo F-V principal
+  const sheet = document.getElementById('sheet-pie');
   ['obs','tests','fuerza','escalas','pinforme'].forEach(t => {
-    const el = document.getElementById('ptab-' + t);
+    const el = sheet ? sheet.querySelector('#ptab-' + t) : document.getElementById('ptab-' + t);
     if (el) el.style.display = t === tab ? 'block' : 'none';
   });
   document.querySelectorAll('#sheet-pie .btn').forEach(b => {
